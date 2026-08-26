@@ -213,6 +213,7 @@ export async function POST(request: Request) {
             mode: fields.mode,
             durationMs: validatedAudio.durationMs,
             safetyIdentifier: scope,
+            requestId,
           });
         } catch (error) {
           try {
