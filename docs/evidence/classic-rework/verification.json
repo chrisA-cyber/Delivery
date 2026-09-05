@@ -1,0 +1,43 @@
+{
+  "date": "2026-09-05",
+  "branch": "codex/classic-rework",
+  "base": "97ed5d3",
+  "lint": "passed",
+  "typecheck": "passed",
+  "unit": {
+    "passed": 203,
+    "skipped": 2,
+    "skips": "explicit live evaluation gates"
+  },
+  "playwright": {
+    "passed": 52,
+    "viewports": [
+      320,
+      390,
+      768,
+      1440
+    ],
+    "microphone": "Chromium synthetic device / controlled failure fixtures",
+    "judge": "explicit local fixture",
+    "additionalApiImageRegressionPassed": 3,
+    "uniquePassingTests": 53
+  },
+  "build": "passed after qs6.16.0 patch and share preview update",
+  "postPatchFocusedTests": 12,
+  "dependencyAudit": "zero vulnerabilities reported after compatible qs6.16.0 update",
+  "liveScribe": {
+    "passed": 1,
+    "synthetic": true,
+    "durationMs": 2525,
+    "wordCount": 4,
+    "exactMatch": true
+  },
+  "databasePgTap": "not run; no configured local database",
+  "liveOpenAI": "not run; no credentials",
+  "signedInIntegrations": "mocked API contracts/UI only",
+  "review": "four findings addressed; independent38retryand2consenttests passed",
+  "deployed": false,
+  "pushed": false,
+  "productionMigrations": false,
+  "publicSharePreview": "200 PNG, private/unavailable state visually inspected"
+}

@@ -59,3 +59,22 @@ describe("server URL configuration", () => {
     expect(() => getServerEnv()).toThrow("invalid");
   });
 });
+
+describe("transcription configuration", () => {
+  it("keeps the existing direct-audio transcription contract by default", () => {
+    vi.stubEnv("DELIVERY_TRANSCRIPTION_PROVIDER", undefined);
+    vi.stubEnv("ELEVENLABS_ZERO_RETENTION", undefined);
+    resetEnvCacheForTests();
+    expect(getServerEnv().DELIVERY_TRANSCRIPTION_PROVIDER).toBe("audio-judge");
+    expect(getServerEnv().ELEVENLABS_ZERO_RETENTION).toBe(false);
+  });
+
+  it("permits the explicit Scribe provider and rejects unknown switches", () => {
+    vi.stubEnv("DELIVERY_TRANSCRIPTION_PROVIDER", "elevenlabs");
+    resetEnvCacheForTests();
+    expect(getServerEnv().DELIVERY_TRANSCRIPTION_PROVIDER).toBe("elevenlabs");
+    vi.stubEnv("DELIVERY_TRANSCRIPTION_PROVIDER", "automatic-fallback");
+    resetEnvCacheForTests();
+    expect(() => getServerEnv()).toThrow("invalid");
+  });
+});

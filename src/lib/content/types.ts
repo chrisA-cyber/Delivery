@@ -13,7 +13,7 @@ export type PromptCategory =
   | "wildcard";
 
 export type PromptDifficulty = "easy" | "medium" | "hard" | "impossible";
-export type ContentRating = "everyone" | "teen";
+export type ContentRating = "everyone" | "teen" | "mature";
 export type PackAccess = "free" | "pro" | "rotating";
 
 export type ScoringDimension =

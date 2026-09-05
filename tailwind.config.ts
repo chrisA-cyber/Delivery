@@ -9,21 +9,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "var(--ink)",
-        paper: "var(--paper)",
-        acid: "var(--acid)",
-        hot: "var(--hot)",
-        electric: "var(--electric)",
-        violet: "var(--violet)",
+        ink: "rgb(var(--ink-rgb) / <alpha-value>)",
+        paper: "rgb(var(--paper-rgb) / <alpha-value>)",
+        acid: "rgb(var(--acid-rgb) / <alpha-value>)",
+        hot: "rgb(var(--hot-rgb) / <alpha-value>)",
+        electric: "rgb(var(--electric-rgb) / <alpha-value>)",
+        violet: "rgb(var(--violet-rgb) / <alpha-value>)",
       },
       fontFamily: {
-        display: ["Arial Black", "Haettenschweiler", "Impact", "sans-serif"],
-        sans: ["Inter", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
+        display: ["Barlow Condensed", "Impact", "Arial Narrow", "sans-serif"],
+        sans: ["DM Sans", "Segoe UI", "Arial", "sans-serif"],
         mono: ["JetBrains Mono", "SFMono-Regular", "Consolas", "monospace"],
       },
       boxShadow: {
-        acid: "0 0 0 1px rgba(201,255,52,.35), 0 18px 80px rgba(201,255,52,.16)",
-        hot: "0 0 0 1px rgba(255,70,199,.4), 0 18px 80px rgba(255,70,199,.18)",
+        acid: "0 8px 28px rgba(255,116,92,.12)",
+        hot: "0 8px 28px rgba(201,183,239,.12)",
       },
       animation: {
         marquee: "marquee 28s linear infinite",

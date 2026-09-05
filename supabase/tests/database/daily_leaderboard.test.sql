@@ -5,10 +5,10 @@ set local search_path = public, extensions;
 
 select plan(28);
 
-select has_view('public', 'daily_leaderboard_live');
-select has_function('public', 'is_canonical_daily_ranked_delivery', array['uuid']);
-select has_function('public', 'get_daily_leaderboard_position', array['text', 'text']);
-select has_index('public', 'deliveries', 'deliveries_ranked_daily_board_idx');
+select has_view('public'::name, 'daily_leaderboard_live'::name);
+select has_function('public'::name, 'is_canonical_daily_ranked_delivery'::name, array['uuid']);
+select has_function('public'::name, 'get_daily_leaderboard_position'::name, array['text', 'text']);
+select has_index('public'::name, 'deliveries'::name, 'deliveries_ranked_daily_board_idx'::name);
 select ok(
   (select p.prosecdef from pg_proc p
    where p.oid = 'public.is_canonical_daily_ranked_delivery(uuid)'::regprocedure),
@@ -257,7 +257,7 @@ select ok(
 );
 
 update public.deliveries
-set moderation_labels = array['publish-approved', 'publish-limited']
+set visibility = 'private', moderation_labels = array['publish-approved', 'publish-limited']
 where id = '21212121-2121-4121-8121-212121212101';
 
 select ok(

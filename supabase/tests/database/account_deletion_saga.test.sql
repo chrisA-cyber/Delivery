@@ -5,10 +5,10 @@ set local search_path = public, extensions;
 
 select plan(24);
 
-select has_table('public', 'account_deletion_jobs');
-select has_column('public', 'account_deletion_jobs', 'checkpoint');
-select has_column('public', 'account_deletion_jobs', 'stripe_customer_id');
-select has_column('public', 'account_deletion_jobs', 'last_error_code');
+select has_table('public'::name, 'account_deletion_jobs'::name);
+select has_column('public'::name, 'account_deletion_jobs'::name, 'checkpoint'::name, 'account_deletion_jobs.checkpoint exists');
+select has_column('public'::name, 'account_deletion_jobs'::name, 'stripe_customer_id'::name, 'account_deletion_jobs.stripe_customer_id exists');
+select has_column('public'::name, 'account_deletion_jobs'::name, 'last_error_code'::name, 'account_deletion_jobs.last_error_code exists');
 select ok(
   (select c.relrowsecurity from pg_catalog.pg_class c where c.oid = 'public.account_deletion_jobs'::regclass),
   'account deletion receipts have RLS enabled'
@@ -21,10 +21,10 @@ select ok(
   not has_table_privilege('authenticated', 'public.account_deletion_jobs', 'INSERT,UPDATE,DELETE'),
   'browser clients cannot forge or advance deletion receipts'
 );
-select has_function('public', 'begin_account_deletion', array['uuid']);
+select has_function('public'::name, 'begin_account_deletion'::name, array['uuid']);
 select has_function(
-  'public',
-  'advance_account_deletion',
+  'public'::name,
+  'advance_account_deletion'::name,
   array['uuid', 'text', 'text', 'text', 'text']
 );
 select ok(
@@ -45,10 +45,10 @@ select ok(
   ),
   'only the service can advance deletion'
 );
-select has_trigger('public', 'deliveries', 'deliveries_reject_account_deletion');
+select has_trigger('public'::name, 'deliveries'::name, 'deliveries_reject_account_deletion'::name);
 select has_function(
-  'public',
-  'reconcile_completed_account_deletions',
+  'public'::name,
+  'reconcile_completed_account_deletions'::name,
   array['integer']
 );
 select ok(

@@ -5,36 +5,36 @@ set local search_path = public, extensions;
 
 select plan(54);
 
-select has_table('public', 'profiles');
-select has_table('public', 'profile_preferences');
-select has_table('public', 'content_packs');
-select has_table('public', 'prompts');
-select has_table('public', 'energy_modifiers');
-select has_table('public', 'deliveries');
-select has_table('public', 'delivery_scores');
-select has_table('public', 'challenges');
-select has_table('public', 'line_submissions');
-select has_table('public', 'subscriptions');
-select has_table('public', 'reports');
-select has_table('public', 'leaderboard_snapshots');
-select has_table('public', 'trend_campaigns');
-select has_table('public', 'blocks');
-select has_table('public', 'judged_play_claims');
-select has_table('public', 'stripe_webhook_events');
-select has_view('public', 'delivery_feed');
-select has_view('public', 'leaderboard_live');
-select has_view('public', 'user_submissions');
-select has_function('public', 'reserve_judged_play', array['text', 'uuid']);
-select has_function('public', 'release_judged_play', array['uuid', 'uuid']);
-select has_function('public', 'set_delivery_visibility', array['uuid', 'delivery_visibility', 'uuid']);
-select has_function('public', 'claim_stripe_webhook_event', array['text', 'text', 'timestamp with time zone', 'boolean', 'text']);
-select has_function('public', 'apply_stripe_subscription_event', array['text', 'uuid', 'plan_tier', 'subscription_state', 'text', 'text', 'text', 'boolean', 'timestamp with time zone', 'timestamp with time zone', 'timestamp with time zone', 'timestamp with time zone', 'jsonb']);
-select has_function('public', 'finish_stripe_webhook_event', array['text', 'stripe_webhook_event_state', 'text']);
-select has_trigger('public', 'deliveries', 'deliveries_require_public_approval');
+select has_table('public'::name, 'profiles'::name);
+select has_table('public'::name, 'profile_preferences'::name);
+select has_table('public'::name, 'content_packs'::name);
+select has_table('public'::name, 'prompts'::name);
+select has_table('public'::name, 'energy_modifiers'::name);
+select has_table('public'::name, 'deliveries'::name);
+select has_table('public'::name, 'delivery_scores'::name);
+select has_table('public'::name, 'challenges'::name);
+select has_table('public'::name, 'line_submissions'::name);
+select has_table('public'::name, 'subscriptions'::name);
+select has_table('public'::name, 'reports'::name);
+select has_table('public'::name, 'leaderboard_snapshots'::name);
+select has_table('public'::name, 'trend_campaigns'::name);
+select has_table('public'::name, 'blocks'::name);
+select has_table('public'::name, 'judged_play_claims'::name);
+select has_table('public'::name, 'stripe_webhook_events'::name);
+select has_view('public'::name, 'delivery_feed'::name);
+select has_view('public'::name, 'leaderboard_live'::name);
+select has_view('public'::name, 'user_submissions'::name);
+select has_function('public'::name, 'reserve_judged_play'::name, array['text', 'uuid']);
+select has_function('public'::name, 'release_judged_play'::name, array['uuid', 'uuid']);
+select has_function('public'::name, 'set_delivery_visibility'::name, array['uuid', 'delivery_visibility', 'uuid']);
+select has_function('public'::name, 'claim_stripe_webhook_event'::name, array['text', 'text', 'timestamp with time zone', 'boolean', 'text']);
+select has_function('public'::name, 'apply_stripe_subscription_event'::name, array['text', 'uuid', 'plan_tier', 'subscription_state', 'text', 'text', 'text', 'boolean', 'timestamp with time zone', 'timestamp with time zone', 'timestamp with time zone', 'timestamp with time zone', 'jsonb']);
+select has_function('public'::name, 'finish_stripe_webhook_event'::name, array['text', 'stripe_webhook_event_state', 'text']);
+select has_trigger('public'::name, 'deliveries'::name, 'deliveries_require_public_approval'::name);
 
-select col_default_is('public', 'deliveries', 'visibility', '''private''::delivery_visibility');
-select col_is_pk('public', 'delivery_scores', array['delivery_id']);
-select col_is_pk('public', 'prompt_favorites', array['user_id', 'prompt_id']);
+select col_default_is('public'::name, 'deliveries'::name, 'visibility'::name, 'private', 'column default remains compatible');
+select col_is_pk('public'::name, 'delivery_scores'::name, array['delivery_id']);
+select col_is_pk('public'::name, 'prompt_favorites'::name, array['user_id', 'prompt_id']);
 
 select is(
   (select array_agg(policyname::text order by policyname::text) from pg_policies where schemaname = 'public' and tablename = 'deliveries'),
@@ -74,10 +74,10 @@ select ok((select relrowsecurity from pg_class where oid = 'public.delivery_scor
 select ok((select relrowsecurity from pg_class where oid = 'public.line_submissions'::regclass), 'line_submissions has RLS');
 select ok((select relrowsecurity from pg_class where oid = 'public.subscriptions'::regclass), 'subscriptions has RLS');
 
-select is((select count(*)::integer from public.content_packs where state = 'published'), 12, '12 launch packs');
-select is((select count(*)::integer from public.prompts where state = 'published' and source = 'built_in'), 120, '120 launch prompts');
-select is((select count(*)::integer from public.energy_modifiers where state = 'published'), 48, '48 launch modifiers');
-select is((select count(*)::integer from public.pack_prompts), 120, 'every launch prompt has pack membership');
+select is((select count(*)::integer from public.content_packs where state = 'published' and draw_enabled), 6, '6 active Classic packs');
+select is((select count(*)::integer from public.prompts where state = 'published' and draw_enabled and source = 'built_in'), 86, '86 active Classic prompts');
+select is((select count(*)::integer from public.energy_modifiers where state = 'published' and draw_enabled), 36, '36 active Classic modifiers');
+select is((select count(*)::integer from public.pack_prompts), 233, '86 active plus 147 historical prompt identities retain memberships');
 select is((select count(*)::integer from public.prompts p left join public.pack_prompts pp on pp.prompt_id = p.id where p.source = 'built_in' and pp.prompt_id is null), 0, 'no orphan launch prompts');
 select is((select count(*)::integer from public.daily_challenges where market = 'global'), 31, '31 seeded global daily challenges');
 select is(

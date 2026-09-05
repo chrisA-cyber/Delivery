@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; connect-src 'none'; form-action 'none'; base-uri 'none'"
+    />
+    <title>Delivery · Classic playtest feedback</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: system-ui, sans-serif;
+        color: #171715;
+        background: #f4f0e7;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 24px 18px 60px;
+      }
+      h1 {
+        font-size: clamp(32px, 7vw, 52px);
+        letter-spacing: -0.05em;
+        line-height: 1;
+      }
+      p {
+        line-height: 1.6;
+      }
+      fieldset {
+        background: #fffdf8;
+        border: 1px solid #b5b0a4;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 24px 0;
+      }
+      legend {
+        font-weight: 800;
+        padding: 0 8px;
+      }
+      label {
+        display: block;
+        margin: 16px 0 6px;
+        font-weight: 650;
+      }
+      input,
+      select,
+      textarea,
+      button {
+        font: inherit;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        min-height: 46px;
+        border: 1px solid #746e62;
+        border-radius: 6px;
+        background: white;
+        color: #171715;
+        padding: 10px;
+      }
+      textarea {
+        min-height: 90px;
+        resize: vertical;
+      }
+      button {
+        cursor: pointer;
+        min-height: 48px;
+        padding: 12px 18px;
+        border: 0;
+        border-radius: 8px;
+        font-weight: 750;
+        background: #ff745c;
+        color: #171715;
+      }
+      button.secondary {
+        background: #c9edbc;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible {
+        outline: 3px solid #573dac;
+        outline-offset: 3px;
+      }
+      .note {
+        background: #c9edbc;
+        padding: 14px;
+        border-radius: 8px;
+      }
+      .help {
+        font-size: 13px;
+        color: #514e46;
+      }
+      .row {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: 1fr 1fr;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      #status {
+        min-height: 24px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      td {
+        padding: 8px;
+        border-bottom: 1px solid #bbb;
+        word-break: break-word;
+      }
+      @media (max-width: 420px) {
+        .row {
+          grid-template-columns: 1fr;
+        }
+        fieldset {
+          padding: 14px;
+        }
+      }
+      @media print {
+        button,
+        .help {
+          display: none;
+        }
+        fieldset {
+          break-inside: avoid;
+        }
+        body {
+          padding: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <p>DELIVERY / CLASSIC / STEP 1B</p>
+    <h1>What landed?<br />What didn’t?</h1>
+    <p class="note">
+      This is a blank research form, not completed playtest evidence. No camera
+      needed. Skip any optional question. Nothing uploads: export a JSON file to
+      keep your answers before closing.
+    </p>
+    <form id="feedback">
+      <fieldset>
+        <legend>Session details</legend>
+        <div class="row">
+          <div>
+            <label for="participant">Participant code</label
+            ><input
+              id="participant"
+              name="participant"
+              placeholder="e.g. P01"
+              required
+              maxlength="30"
+              autocomplete="off"
+            />
+          </div>
+          <div>
+            <label for="sessionDate">Date</label
+            ><input id="sessionDate" name="sessionDate" type="date" required />
+          </div>
+        </div>
+        <label for="mode">Which judge did you see?</label
+        ><select id="mode" name="mode" required>
+          <option value="">Choose one</option>
+          <option value="fixture">
+            Labeled practice fixture (flow/content pilot)
+          </option>
+          <option value="live">Live AI (verified by facilitator)</option>
+        </select>
+        <label for="build">Build / branch</label
+        ><input
+          id="build"
+          name="build"
+          value="codex/classic-rework · Step 1B"
+          maxlength="120"
+        />
+        <label for="device">Device and browser</label
+        ><input
+          id="device"
+          name="device"
+          placeholder="e.g. iPhone / Safari, laptop / Chrome"
+          maxlength="120"
+        />
+        <p class="help">
+          Use a code, not a real name or email. This form does not collect
+          recordings, credentials, or consent receipts.
+        </p>
+      </fieldset>
+      <fieldset>
+        <legend>Your first round</legend>
+        <label for="understanding"
+          >Before playing, what did you think you had to do?</label
+        ><textarea
+          id="understanding"
+          name="understanding"
+          maxlength="2000"
+        ></textarea>
+        <label for="confusion">Where did you get stuck or hesitate?</label
+        ><textarea
+          id="confusion"
+          name="confusion"
+          placeholder="A button, permission, recording, playback, content choice, waiting…"
+          maxlength="2000"
+        ></textarea>
+        <label for="privacy"
+          >When did you think your take left the device? Who could hear
+          it?</label
+        ><textarea id="privacy" name="privacy" maxlength="2000"></textarea>
+        <label for="nextChoice"
+          >What did you choose next, before the facilitator prompted you?</label
+        ><select id="nextChoice" name="nextChoice">
+          <option value="">Not recorded</option>
+          <option>Another line</option>
+          <option>Retry the same direction</option>
+          <option>Replay my take</option>
+          <option>Challenge / share</option>
+          <option>Stop playing</option>
+          <option>Facilitator prompted me first</option>
+        </select>
+      </fieldset>
+      <fieldset>
+        <legend>Lines and directions</legend>
+        <label for="funniest"
+          >Funniest combination — line / direction and why</label
+        ><textarea
+          id="funniest"
+          name="funniest"
+          placeholder="Include prompt and direction IDs if available."
+          maxlength="2000"
+        ></textarea>
+        <label for="weakest">Weakest or skipped line — what didn’t work?</label
+        ><textarea id="weakest" name="weakest" maxlength="2000"></textarea>
+        <label for="recognition"
+          >Any phrase you recognized? Where from, and was there a hint?</label
+        ><textarea
+          id="recognition"
+          name="recognition"
+          maxlength="2000"
+        ></textarea>
+        <label for="direction"
+          >Did a direction add a second joke or get in the way?</label
+        ><textarea id="direction" name="direction" maxlength="2000"></textarea>
+        <label for="intensity">Content levels actually tried</label
+        ><input
+          id="intensity"
+          name="intensity"
+          placeholder="Clean, Spicy, optional Mature (18+)"
+          maxlength="120"
+        />
+      </fieldset>
+      <fieldset>
+        <legend>Comfort and another round</legend>
+        <label for="cameraFree">Did voice-only play feel complete?</label
+        ><select id="cameraFree" name="cameraFree">
+          <option value="">Skip</option>
+          <option value="1">1 — incomplete</option>
+          <option value="2">2</option>
+          <option value="3">3 — mixed</option>
+          <option value="4">4</option>
+          <option value="5">5 — fully complete</option>
+        </select>
+        <label for="pressure"
+          >Any pressure to use a camera, get louder, share, or pick adult
+          content?</label
+        ><textarea id="pressure" name="pressure" maxlength="2000"></textarea>
+        <label for="return">Would you play again alone? Why?</label
+        ><textarea id="return" name="return" maxlength="2000"></textarea>
+        <label for="friend"
+          >Would you challenge a friend or use this on stream? What would stop
+          you?</label
+        ><textarea id="friend" name="friend" maxlength="2000"></textarea>
+      </fieldset>
+      <fieldset id="liveOnly" hidden disabled>
+        <legend>Live feedback only</legend>
+        <p class="help">
+          Keep transcript correctness, direction fit, and whether it was funny
+          separate. There is no objectively correct comedy score.
+        </p>
+        <label for="credible"
+          >Point to one feedback claim and the audible moment that supported or
+          contradicted it.</label
+        ><textarea id="credible" name="credible" maxlength="2000"></textarea>
+        <label for="coach"
+          >Could you use the coaching on your next take without contradicting
+          the direction?</label
+        ><textarea id="coach" name="coach" maxlength="2000"></textarea>
+        <label for="transcript"
+          >Which spoken words did the transcript miss, add, or change?</label
+        ><textarea
+          id="transcript"
+          name="transcript"
+          maxlength="2000"
+        ></textarea>
+      </fieldset>
+      <p id="fixtureNote" class="help">
+        Feedback credibility is intentionally excluded until a live session is
+        selected.
+      </p>
+      <div class="actions">
+        <button type="submit">Export feedback JSON</button
+        ><button type="button" class="secondary" id="print">
+          Print blank or completed form
+        </button>
+      </div>
+      <p id="status" role="status" aria-live="polite"></p>
+    </form>
+    <script>
+      const form = document.getElementById("feedback");
+      const mode = document.getElementById("mode");
+      mode.addEventListener("change", () => {
+        const live = mode.value === "live";
+        document.getElementById("liveOnly").hidden = !live;
+        document.getElementById("liveOnly").disabled = !live;
+        document.getElementById("fixtureNote").hidden = live;
+      });
+      document
+        .getElementById("print")
+        .addEventListener("click", () => window.print());
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+        const answers = Object.fromEntries(new FormData(form).entries());
+        const data = {
+          schemaVersion: "delivery-playtest-feedback-v1",
+          exportedAt: new Date().toISOString(),
+          evidence:
+            "participant-or-facilitator-entered; not independently verified",
+          answers,
+        };
+        const url = URL.createObjectURL(
+          new Blob([JSON.stringify(data, null, 2) + "\n"], {
+            type: "application/json",
+          }),
+        );
+        const link = document.createElement("a");
+        link.href = url;
+        link.download =
+          "delivery-playtest-" +
+          String(answers.participant).replace(/[^a-z0-9-]/gi, "_") +
+          ".json";
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        document.getElementById("status").textContent =
+          "Download requested. Check your downloaded file before closing; answers are not saved automatically.";
+      });
+    </script>
+  </body>
+</html>

@@ -17,6 +17,10 @@ export interface Prompt {
   pack?: string;
   tags?: string[];
   source?: "editorial" | "community" | "trend";
+  rating?: "everyone" | "teen" | "mature";
+  energyId?: string;
+  directionLabel?: string;
+  attribution?: string;
 }
 
 export interface DeliveryScores {
@@ -38,6 +42,17 @@ export interface JudgeResult {
   percentile?: number;
   xp?: number;
   source?: "ai" | "fallback";
+  coachNote?: string;
+  highlights?: string[];
+  rubricVersion?: string;
+  scoringVersion?: string;
+  transcription?: {
+    text: string;
+    provider: "elevenlabs";
+    model: "scribe_v2";
+    usedForAccuracy: false;
+    words: Array<{ text: string; start: number; end: number }>;
+  };
 }
 
 export interface DeliveryReference {

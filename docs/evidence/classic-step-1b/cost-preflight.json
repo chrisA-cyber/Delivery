@@ -1,0 +1,6 @@
+{
+  "smallerCostCapRejectedBeforeNetwork": true,
+  "noRunMarkerCreated": true,
+  "providerCalls": 0,
+  "testedCostLimitUsd": 0.001
+}

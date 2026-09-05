@@ -1,5 +1,6 @@
 import "server-only";
 
+import { isMatureTake } from "@/lib/server/content-publication";
 import { ExternalServiceError } from "@/lib/server/api-error";
 import { isSupabaseAdminConfigured, isSupabaseConfigured } from "@/lib/server/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -14,7 +15,7 @@ interface DeliveryRow {
   recording_path: string | null;
   moderation_labels: string[];
   created_at: string;
-  prompts: { body: string } | { body: string }[] | null;
+  prompts: { body: string; rating: string } | { body: string; rating: string }[] | null;
   energy_modifiers:
     | { instruction: string }
     | { instruction: string }[]
@@ -55,7 +56,7 @@ export async function getShareDelivery(id: string, options: { includeAssets?: bo
   const { data, error } = await viewer
     .from("deliveries")
     .select(
-      "id,user_id,recording_path,moderation_labels,created_at,prompts!inner(body),energy_modifiers(instruction),delivery_scores!inner(overall,commitment,comedy,accuracy,chaos,headline,verdict,evidence),profiles!deliveries_user_id_fkey(handle,display_name,avatar_path)",
+      "id,user_id,recording_path,moderation_labels,created_at,prompts!inner(body,rating),energy_modifiers(instruction),delivery_scores!inner(overall,commitment,comedy,accuracy,chaos,headline,verdict,evidence),profiles!deliveries_user_id_fkey(handle,display_name,avatar_path)",
     )
     .eq("id", id)
     .eq("visibility", "public")
@@ -91,7 +92,7 @@ export async function getShareDelivery(id: string, options: { includeAssets?: bo
   const score = Array.isArray(row.delivery_scores)
     ? row.delivery_scores[0]
     : row.delivery_scores;
-  if (!prompt || !score) return null;
+  if (!prompt || !score || isMatureTake(prompt.rating, row.moderation_labels) || !["everyone", "teen"].includes(prompt.rating)) return null;
   let audioUrl: string | null = null;
   let avatarUrl: string | null = null;
   const admin = createSupabaseAdminClient();

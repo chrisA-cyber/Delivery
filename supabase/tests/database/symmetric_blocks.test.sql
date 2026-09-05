@@ -5,10 +5,10 @@ set local search_path = public, extensions;
 
 select plan(28);
 
-select has_function('public', 'can_view_profile', array['uuid']);
-select has_function('public', 'can_view_delivery', array['uuid']);
-select has_function('public', 'remove_follows_on_block', array[]::text[]);
-select has_trigger('public', 'blocks', 'blocks_remove_follows');
+select has_function('public'::name, 'can_view_profile'::name, array['uuid']);
+select has_function('public'::name, 'can_view_delivery'::name, array['uuid']);
+select has_function('public'::name, 'remove_follows_on_block'::name, array[]::text[]);
+select has_trigger('public'::name, 'blocks'::name, 'blocks_remove_follows'::name);
 select ok(
   not has_function_privilege('authenticated', 'public.remove_follows_on_block()', 'EXECUTE'),
   'clients cannot invoke the follow cleanup trigger directly'

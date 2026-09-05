@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export default function DailyPage() {
   return (
-    <main className="min-h-screen px-3 pb-10 pt-24 sm:px-6 sm:pt-28 lg:pt-20">
+    <main className="game-main">
       <DailyDrop />
     </main>
   );

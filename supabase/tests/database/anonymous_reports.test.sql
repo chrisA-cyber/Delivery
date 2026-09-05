@@ -15,12 +15,12 @@ select ok(
   ),
   'signed reporter identity is nullable for the anonymous safety path'
 );
-select has_column('public', 'reports', 'anonymous_reporter_hash');
-select has_column('public', 'reports', 'anonymous_network_hash');
-select col_type_is('public', 'reports', 'anonymous_reporter_hash', 'text');
-select col_type_is('public', 'reports', 'anonymous_network_hash', 'text');
-select has_index('public', 'reports', 'reports_anonymous_reporter_rate_idx');
-select has_index('public', 'reports', 'reports_anonymous_network_rate_idx');
+select has_column('public'::name, 'reports'::name, 'anonymous_reporter_hash'::name, 'reports.anonymous_reporter_hash exists');
+select has_column('public'::name, 'reports'::name, 'anonymous_network_hash'::name, 'reports.anonymous_network_hash exists');
+select col_type_is('public'::name, 'reports'::name, 'anonymous_reporter_hash'::name, 'text');
+select col_type_is('public'::name, 'reports'::name, 'anonymous_network_hash'::name, 'text');
+select has_index('public'::name, 'reports'::name, 'reports_anonymous_reporter_rate_idx'::name);
+select has_index('public'::name, 'reports'::name, 'reports_anonymous_network_rate_idx'::name);
 
 insert into auth.users (id, email, raw_user_meta_data, created_at, updated_at)
 values (

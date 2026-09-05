@@ -5,10 +5,13 @@ import { z } from "zod";
 import {
   ENERGY_MODIFIERS,
   getRandomPrompt,
+  isEnergyCompatible,
+  isRatingAllowed,
   PACKS,
 } from "@/data/content";
 import { createSeededRandom } from "@/lib/content/hash";
 import type {
+  ContentRating,
   DeliveryPrompt,
   EnergyModifier,
   PromptCategory,
@@ -34,6 +37,7 @@ const packRowSchema = z.object({
   name: z.string().min(1),
   access: z.enum(["free", "pro", "rotating"]),
   state: z.literal("published"),
+  draw_enabled: z.boolean().optional(),
   available_from: z.string().nullable(),
   available_until: z.string().nullable(),
 });
@@ -57,8 +61,9 @@ const promptRowSchema = z.object({
     "wildcard",
   ]),
   difficulty: z.number().int().min(1).max(4),
-  rating: z.enum(["everyone", "teen"]),
+  rating: z.enum(["everyone", "teen", "mature"]),
   state: z.literal("published"),
+  draw_enabled: z.boolean().optional(),
   tags: z.array(z.string()),
   scoring_focus: z.array(z.enum(["commitment", "comedy", "accuracy", "chaos"])),
   locale: z.literal("en"),
@@ -82,6 +87,7 @@ const energyRowSchema = z.object({
   tags: z.array(z.string()),
   compatible_difficulties: z.array(z.number().int().min(1).max(4)).nullable(),
   state: z.literal("published"),
+  draw_enabled: z.boolean().optional(),
 });
 
 const campaignRowSchema = z.object({
@@ -93,6 +99,7 @@ const campaignRowSchema = z.object({
   starts_at: z.string(),
   ends_at: z.string(),
   state: z.literal("published"),
+  draw_enabled: z.boolean().optional(),
 });
 
 const trendRowSchema = z.object({
@@ -115,6 +122,8 @@ export interface RandomContentQuery {
   category?: PromptCategory;
   difficulty?: PromptDifficulty;
   excludeIds?: readonly string[];
+  excludeEnergyIds?: readonly string[];
+  maxRating?: ContentRating;
   seed?: string;
   market: string;
   includePro: boolean;
@@ -216,8 +225,8 @@ function toEnergy(row: RuntimeEnergyRow): EnergyModifier {
   };
 }
 
-function compatibleEnergy(row: RuntimeEnergyRow, difficulty: number): boolean {
-  return !row.compatible_difficulties || row.compatible_difficulties.includes(difficulty);
+function compatibleEnergy(row: RuntimeEnergyRow, prompt: RuntimePromptRow): boolean {
+  return isEnergyCompatible({ line: prompt.body, difficulty: difficultyName[prompt.difficulty] ?? "medium" }, toEnergy(row));
 }
 
 /** Pure selection core exported for contract tests. Database loading stays server-only. */
@@ -230,7 +239,7 @@ export function selectRuntimeContent(
   const excluded = new Set(query.excludeIds ?? []);
   const activePacks = snapshot.packs.filter(
     (pack) =>
-      pack.state === "published" &&
+      pack.state === "published" && pack.draw_enabled !== false &&
       isAvailable(pack, now) &&
       (query.includePro || pack.access !== "pro"),
   );
@@ -240,17 +249,18 @@ export function selectRuntimeContent(
   const eligiblePacks = requestedPack ? [requestedPack] : query.pack ? [] : activePacks;
   const eligiblePackIds = new Set(eligiblePacks.map((pack) => pack.id));
   const packById = new Map(eligiblePacks.map((pack) => [pack.id, pack]));
-  const compatibleEnergies = snapshot.energies.filter((energy) => energy.state === "published");
+  const compatibleEnergies = snapshot.energies.filter((energy) => energy.state === "published" && energy.draw_enabled !== false);
 
   const candidateById = new Map<string, Candidate>();
   for (const membership of snapshot.memberships) {
     if (!eligiblePackIds.has(membership.pack_id)) continue;
     const row = relationOne(membership.prompts);
-    if (!row || row.state !== "published" || !isAvailable(row, now)) continue;
+    if (!row || row.state !== "published" || row.draw_enabled === false || !isAvailable(row, now)) continue;
+    if (!isRatingAllowed(row.rating, query.maxRating)) continue;
     if (excluded.has(row.id) || excluded.has(row.slug)) continue;
     if (query.category && row.category !== query.category) continue;
     if (query.difficulty && row.difficulty !== difficultyNumber[query.difficulty]) continue;
-    if (!compatibleEnergies.some((energy) => compatibleEnergy(energy, row.difficulty))) continue;
+    if (!compatibleEnergies.some((energy) => compatibleEnergy(energy, row))) continue;
 
     const pack = packById.get(membership.pack_id);
     if (!pack) continue;
@@ -291,15 +301,17 @@ export function selectRuntimeContent(
     ? createSeededRandom(`delivery:runtime:trend:${query.seed}:${selected.row.slug}:${query.market}`)
     : options.random ?? Math.random;
   const selectedTrend = weightedPick(selected.trends, (trend) => trend.weight, trendRandom);
-  const energies = compatibleEnergies.filter((energy) => compatibleEnergy(energy, selected.row.difficulty));
+  const energies = compatibleEnergies.filter((energy) => compatibleEnergy(energy, selected.row));
+  const freshEnergies = energies.filter((energy) => !query.excludeEnergyIds?.includes(energy.id) && !query.excludeEnergyIds?.includes(energy.slug));
+  const energyPool = freshEnergies.length ? freshEnergies : energies;
   const requestedEnergy = selectedTrend?.energyId
-    ? energies.find((energy) => energy.id === selectedTrend.energyId)
+    ? energyPool.find((energy) => energy.id === selectedTrend.energyId)
     : undefined;
   const energyRandom = query.seed
     ? createSeededRandom(`delivery:runtime:energy:${query.seed}:${selected.row.slug}`)
     : options.random ?? Math.random;
   const selectedEnergy =
-    requestedEnergy ?? energies[Math.floor(boundedRandom(energyRandom) * energies.length)];
+    requestedEnergy ?? energyPool[Math.floor(boundedRandom(energyRandom) * energyPool.length)];
   if (!selectedEnergy) {
     throw new AppError("NO_ENERGY", "No energy matches that line right now. Try another vibe.", 404);
   }
@@ -345,13 +357,13 @@ async function loadDatabaseSnapshot(query: RandomContentQuery): Promise<RuntimeC
   const supabase = await createServerSupabaseClient();
   const { data: rawPacks, error: packError } = await supabase
     .from("content_packs")
-    .select("id,slug,name,access,state,available_from,available_until")
+    .select("id,slug,name,access,state,draw_enabled,available_from,available_until")
     .eq("state", "published")
     .limit(1_000);
   if (packError) throw new ExternalServiceError("Supabase content", { cause: packError });
 
   const allActivePacks = parseRows(packRowSchema, rawPacks).filter((pack) =>
-    isAvailable(pack, new Date()),
+    pack.draw_enabled !== false && isAvailable(pack, new Date()),
   );
   const explicitlyRequestedPack = query.pack
     ? allActivePacks.find((pack) => pack.id === query.pack || pack.slug === query.pack)
@@ -379,10 +391,11 @@ async function loadDatabaseSnapshot(query: RandomContentQuery): Promise<RuntimeC
   let membershipQuery = supabase
     .from("pack_prompts")
     .select(
-      "pack_id,prompt_id,prompts!inner(id,slug,body,category,difficulty,rating,state,tags,scoring_focus,locale,is_mimic,available_from,available_until)",
+      "pack_id,prompt_id,prompts!inner(id,slug,body,category,difficulty,rating,state,draw_enabled,tags,scoring_focus,locale,is_mimic,available_from,available_until)",
     )
     .in("pack_id", eligiblePackIds)
     .eq("prompts.state", "published")
+    .eq("prompts.draw_enabled", true)
     .eq("prompts.locale", "en")
     .limit(5_000);
   if (query.category) membershipQuery = membershipQuery.eq("prompts.category", query.category);
@@ -390,12 +403,14 @@ async function loadDatabaseSnapshot(query: RandomContentQuery): Promise<RuntimeC
     membershipQuery = membershipQuery.eq("prompts.difficulty", difficultyNumber[query.difficulty]);
   }
 
+  membershipQuery = membershipQuery.in("prompts.rating", query.maxRating === "mature" ? ["everyone", "teen", "mature"] : query.maxRating === "teen" ? ["everyone", "teen"] : ["everyone"]);
+
   const [membershipResult, energyResult, trendResult] = await Promise.all([
     membershipQuery,
     supabase
       .from("energy_modifiers")
       .select(
-        "id,slug,instruction,short_label,intensity,tags,compatible_difficulties,state",
+        "id,slug,instruction,short_label,intensity,tags,compatible_difficulties,state,draw_enabled",
       )
       .eq("state", "published")
       .limit(1_000),
@@ -440,16 +455,20 @@ function bundledFallback(query: RandomContentQuery): RandomContentResult {
     categories: query.category ? [query.category] : undefined,
     difficulties: query.difficulty ? [query.difficulty] : undefined,
     excludeIds: query.excludeIds,
+    maxRating: query.maxRating,
     seed: query.seed,
   });
   const energies = ENERGY_MODIFIERS.filter(
     (energy) =>
-      !energy.compatibleDifficulties || energy.compatibleDifficulties.includes(prompt.difficulty),
+      isEnergyCompatible(prompt, energy),
   );
   const random = query.seed
     ? createSeededRandom(`delivery:random:energy:${query.seed}:${prompt.id}`)
     : Math.random;
-  const energy = energies[Math.floor(boundedRandom(random) * energies.length)] ?? ENERGY_MODIFIERS[0]!;
+  const fresh = energies.filter((energy) => !query.excludeEnergyIds?.includes(energy.id));
+  const pool = fresh.length ? fresh : energies;
+  const energy = pool[Math.floor(boundedRandom(random) * pool.length)];
+  if (!energy) throw new AppError("NO_ENERGY", "No direction matches this line.", 404);
   return { prompt, energy, source: "curated" };
 }
 

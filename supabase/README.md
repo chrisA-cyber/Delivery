@@ -2,8 +2,10 @@
 
 This directory is the deployable Supabase contract for Delivery. The catalog in
 `src/data/content.ts` is the instant-play fallback bundled with the web app;
-`seed.sql` publishes the same 12 packs, 120 prompt slugs, and 48 energy modifiers
-to Postgres so persisted deliveries can resolve those slugs.
+`seed.sql` publishes the same 6 active packs, 86 playable lines (72 originals and
+14 recognizable short phrases), and 36 active directions to Postgres. It also
+preserves 147 retired line identities and 60 retired direction identities for
+existing receipts. Active draws require `draw_enabled` as well as publication.
 
 ## Files
 
@@ -35,6 +37,14 @@ to Postgres so persisted deliveries can resolve those slugs.
   the participant-only private-profile matchup projection.
 - `migrations/202608250013_daily_leaderboard.sql` — canonical current-UTC global
   Daily boards and authenticated current-viewer rank lookup.
+- `migrations/202609050014_classic_content_rating.sql` — additive Mature rating
+  and draw eligibility; commit before using the enum in 015.
+- `migrations/202609050015_classic_content_v2.sql` — original Classic rework;
+  immutable new IDs and explicit legacy retirement.
+- `migrations/202609050016_mature_private_boundary.sql` — private-only Mature
+  recordings, raw-write enforcement and existing-share-pointer preflight.
+- `migrations/202609050017_classic_content_v3.sql` — Step 1B refinements and
+  sourced short phrases, with immutable replaced IDs and compatible short Daily draws.
 - `seed.sql` — idempotent launch catalog, badges, pack membership, and a rolling
   31-day global daily-challenge horizon.
 - `tests/database/*.test.sql` — schema, RLS, progression, challenge, Daily,
@@ -42,7 +52,20 @@ to Postgres so persisted deliveries can resolve those slugs.
 
 ## Local setup
 
-Install the Supabase CLI and Docker, then from the repository root run:
+For SQL validation without external services, run the isolated PostgreSQL WASM
+harness:
+
+```bash
+npm ci --prefix scripts/local-db --ignore-scripts
+node scripts/local-db/run.mjs
+```
+
+This executes actual migrations and pgTAP, but its explicit Auth/Storage schema
+shims do not validate Supabase HTTP authentication, Storage signing or concurrent
+races. See [the boundary contract](../scripts/local-db/README.md).
+
+For the full disposable local stack, install the Supabase CLI and Docker, run
+`supabase init` once if `supabase/config.toml` is absent, then run:
 
 ```bash
 supabase start
@@ -51,8 +74,10 @@ supabase test db
 ```
 
 `db reset` applies every numbered migration and then `supabase/seed.sql`. It is safe to run
-the seed repeatedly: mutable launch catalog rows upsert by slug, pack membership
-upserts by IDs, badges upsert by ID, and existing daily assignments are preserved.
+the seed repeatedly: active v2/v3 line and direction rows use immutable inserts,
+pack memberships upsert by IDs, badges upsert by ID, and existing daily assignments
+are preserved. Replaced IDs leave new draws through explicit `draw_enabled=false`,
+not deletion. Do not rewrite existing line/direction text behind old IDs.
 
 After changing the schema, replace the temporary permissive TypeScript database
 shape with generated types:
@@ -212,11 +237,14 @@ resolve those in Stripe, then confirm convergence through a signed webhook.
 
 Built-in content changes follow this sequence:
 
-1. Add/edit the original line in `src/data/content.ts` with stable lowercase slug,
-   tags, rating, difficulty, scoring focus, and pack.
-2. Mirror it in the idempotent `prompt_seed` CTE in `seed.sql`.
-3. Run `validateContentCatalog()` and the database tests; verify slug/count parity.
-4. Ship the app fallback and seed database in the same release.
+1. Add a new immutable line ID (or direction ID) with tags, rating, difficulty,
+   scoring focus, pack, and source/publication evidence when applicable. Freeze
+   replaced wording for historical lookup.
+2. Add a numbered migration for existing databases and mirror it in `seed.sql`.
+   Retire only the explicit replaced IDs from new draws; retain history joins.
+3. Run `validateContentCatalog()` and the database tests; verify parity, intensity,
+   compatible short-line pairings, and historical UUID/text preservation.
+4. Ship the app fallback, additive migration, and seed in the same release.
 
 Fast-moving culture should not require an application release:
 
@@ -291,8 +319,9 @@ row shape as `daily_leaderboard_live`: `period`, `metric`, `rank`,
 
 - Confirm `supabase db reset` and `supabase test db` succeed from an empty disposable
   local database, then retain hosted migration/RLS evidence separately.
-- Confirm exactly 12 published packs, 120 built-in prompts, and 48 published energy
-  modifiers, with no orphaned `pack_prompts` rows.
+- Confirm 6 active packs, 86 active prompts, and 36 active directions, each both
+  published and draw-enabled, with no orphaned `pack_prompts` rows. Retired
+  published rows remain available for historical references.
 - Test anonymous, owner, follower, challenge participant, moderator, and service-role
   reads/writes separately.
 - Verify a private delivery and every `delivery-audio` object are inaccessible by an

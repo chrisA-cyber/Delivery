@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { mapAccountHistoryItem } from "@/lib/server/account-history";
 import { assertAccountNotDeleting } from "@/lib/server/account-deletion";
 import { AppError, ExternalServiceError, jsonError, jsonOk, requestIdFrom } from "@/lib/server/api-error";
 import { enforceRateLimit, rateLimitHeaders } from "@/lib/server/rate-limit";
@@ -32,7 +33,7 @@ async function loadAccount() {
     supabase.from("profiles").select("handle,display_name,avatar_path,bio,is_private").eq("id", user.id).maybeSingle(),
     supabase.from("user_stats_live").select("judged_deliveries,average_score,best_score,average_commitment,average_comedy,average_accuracy,average_chaos,current_daily_streak,longest_daily_streak,reactions_received,followers_count,following_count").eq("user_id", user.id).maybeSingle(),
     supabase.from("subscriptions").select("tier,state,current_period_end,cancel_at_period_end").eq("user_id", user.id).maybeSingle(),
-    supabase.from("deliveries").select("id,prompt_id,energy_modifier_id,state,visibility,transcript,created_at,daily_challenge_date,daily_ranked").eq("user_id", user.id).eq("state", "judged").order("created_at", { ascending: false }).limit(30),
+    supabase.from("deliveries").select("id,prompt_id,energy_modifier_id,state,visibility,transcript,moderation_labels,created_at,daily_challenge_date,daily_ranked").eq("user_id", user.id).eq("state", "judged").order("created_at", { ascending: false }).limit(30),
     supabase.from("user_badges").select("badge_id,awarded_at,badges(id,name,description,icon,color,rarity)").eq("user_id", user.id).order("awarded_at", { ascending: false }),
   ]);
 
@@ -46,9 +47,9 @@ async function loadAccount() {
   const energyIds = [...new Set(deliveries.map((row) => row.energy_modifier_id ? String(row.energy_modifier_id) : "").filter(Boolean))];
 
   const [scoresResult, promptsResult, energiesResult] = await Promise.all([
-    deliveryIds.length ? supabase.from("delivery_scores").select("delivery_id,overall,commitment,comedy,accuracy,chaos,headline,verdict,evidence").in("delivery_id", deliveryIds) : Promise.resolve({ data: [] }),
-    promptIds.length ? supabase.from("prompts").select("id,slug,body,category,difficulty").in("id", promptIds) : Promise.resolve({ data: [] }),
-    energyIds.length ? supabase.from("energy_modifiers").select("id,instruction").in("id", energyIds) : Promise.resolve({ data: [] }),
+    deliveryIds.length ? supabase.from("delivery_scores").select("delivery_id,overall,commitment,comedy,accuracy,chaos,headline,verdict,rubric_version,provider,model,evidence").in("delivery_id", deliveryIds) : Promise.resolve({ data: [] }),
+    promptIds.length ? supabase.from("prompts").select("id,slug,body,category,difficulty,rating").in("id", promptIds) : Promise.resolve({ data: [] }),
+    energyIds.length ? supabase.from("energy_modifiers").select("id,slug,instruction").in("id", energyIds) : Promise.resolve({ data: [] }),
   ]);
   for (const result of [scoresResult, promptsResult, energiesResult]) {
     if ("error" in result && result.error) throw new ExternalServiceError("Supabase", { cause: result.error });
@@ -62,28 +63,8 @@ async function loadAccount() {
     const score = scores.get(String(delivery.id));
     const prompt = prompts.get(String(delivery.prompt_id));
     if (!score || !prompt) return [];
-    const evidence = score.evidence && typeof score.evidence === "object" ? score.evidence as Record<string, unknown> : {};
-    const highlights = Array.isArray(evidence.highlights) ? evidence.highlights : [];
     const energy = delivery.energy_modifier_id ? energies.get(String(delivery.energy_modifier_id)) : undefined;
-    return [{
-      id: String(delivery.id),
-      scores: {
-        overall: Number(score.overall), commitment: Number(score.commitment), comedy: Number(score.comedy),
-        accuracy: Number(score.accuracy ?? 0), chaos: Number(score.chaos),
-      },
-      title: String(score.headline), verdict: String(score.verdict),
-      moment: String(highlights[0] ?? evidence.coach_note ?? "A documented microphone event."),
-      transcript: String(delivery.transcript ?? ""),
-      createdAt: String(delivery.created_at),
-      visibility: delivery.visibility === "public" ? "public" : "private",
-      dailyRanked: delivery.daily_challenge_date ? Boolean(delivery.daily_ranked) : undefined,
-      prompt: {
-        id: String(prompt.slug ?? prompt.id), line: String(prompt.body),
-        energy: String(energy?.instruction ?? evidence.requested_energy ?? "Deliver it like you mean it."),
-        category: String(prompt.category).replaceAll("-", " "),
-        difficulty: Math.max(1, Math.min(5, Number(prompt.difficulty ?? 2))),
-      },
-    }];
+    return [mapAccountHistoryItem(delivery, score, prompt, energy)];
   });
 
   const profile = profileResult.data as Record<string, unknown> | null;

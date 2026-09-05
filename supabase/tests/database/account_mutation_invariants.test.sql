@@ -5,15 +5,15 @@ set local search_path = public, extensions;
 
 select plan(31);
 
-select has_function('public', 'lock_users_for_account_mutation', array['uuid[]']);
-select has_function('public', 'lock_interaction_pair', array['uuid', 'uuid']);
-select has_trigger('public', 'profiles', 'profiles_enforce_moderation_containment');
-select has_trigger('public', 'follows', 'follows_guard_interaction_insert');
-select has_trigger('public', 'blocks', 'blocks_guard_interaction_insert');
-select has_trigger('public', 'reactions', 'reactions_guard_interaction_insert');
-select has_trigger('public', 'challenges', 'challenges_guard_account_insert');
-select has_trigger('public', 'stream_sessions', 'stream_sessions_guard_account_insert');
-select has_trigger('public', 'line_submissions', 'line_submissions_guard_account_insert');
+select has_function('public'::name, 'lock_users_for_account_mutation'::name, array['uuid[]']);
+select has_function('public'::name, 'lock_interaction_pair'::name, array['uuid', 'uuid']);
+select has_trigger('public'::name, 'profiles'::name, 'profiles_enforce_moderation_containment'::name);
+select has_trigger('public'::name, 'follows'::name, 'follows_guard_interaction_insert'::name);
+select has_trigger('public'::name, 'blocks'::name, 'blocks_guard_interaction_insert'::name);
+select has_trigger('public'::name, 'reactions'::name, 'reactions_guard_interaction_insert'::name);
+select has_trigger('public'::name, 'challenges'::name, 'challenges_guard_account_insert'::name);
+select has_trigger('public'::name, 'stream_sessions'::name, 'stream_sessions_guard_account_insert'::name);
+select has_trigger('public'::name, 'line_submissions'::name, 'line_submissions_guard_account_insert'::name);
 select ok(
   not has_function_privilege(
     'authenticated',

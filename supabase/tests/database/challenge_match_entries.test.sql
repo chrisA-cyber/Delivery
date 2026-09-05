@@ -5,7 +5,7 @@ set local search_path = public, extensions;
 
 select plan(19);
 
-select has_function('public', 'get_challenge_match_entries', array['uuid']);
+select has_function('public'::name, 'get_challenge_match_entries'::name, array['uuid']);
 select ok(
   (select p.prosecdef from pg_proc p
    where p.oid = 'public.get_challenge_match_entries(uuid)'::regprocedure),

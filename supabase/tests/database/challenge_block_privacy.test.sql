@@ -5,10 +5,10 @@ set local search_path = public, extensions;
 
 select plan(33);
 
-select has_function('public', 'can_view_challenge', array['uuid']);
-select has_function('public', 'get_challenge_by_invite', array['text', 'text']);
-select has_function('public', 'validate_challenge_entry', array[]::text[]);
-select has_trigger('public', 'blocks', 'blocks_remove_follows');
+select has_function('public'::name, 'can_view_challenge'::name, array['uuid']);
+select has_function('public'::name, 'get_challenge_by_invite'::name, array['text', 'text']);
+select has_function('public'::name, 'validate_challenge_entry'::name, array[]::text[]);
+select has_trigger('public'::name, 'blocks'::name, 'blocks_remove_follows'::name);
 select ok(
   (select p.prosecdef from pg_proc p where p.oid = 'public.can_view_challenge(uuid)'::regprocedure),
   'challenge RLS visibility uses a security-definer gate'
@@ -39,7 +39,7 @@ select ok(
 );
 select ok(
   position(
-    'public.blocks' in lower(pg_get_functiondef(
+    'public.interaction_is_blocked' in lower(pg_get_functiondef(
       'public.validate_challenge_entry()'::regprocedure
     ))
   ) > 0,

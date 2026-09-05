@@ -4,7 +4,7 @@ const routes = ["/", "/play", "/daily", "/discover", "/feed", "/leaderboard", "/
 const activeGameRoutes = ["/play", "/daily", "/endless", "/impossible"] as const;
 
 test.describe("mobile layout smoke", () => {
-  for (const width of [320, 390]) {
+  for (const width of [320, 390, 768, 1440]) {
     test(`${width}px pages do not create document-level horizontal overflow`, async ({ page }) => {
       await page.setViewportSize({ width, height: 844 });
 

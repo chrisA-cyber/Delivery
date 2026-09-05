@@ -9,8 +9,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { MotionConfig } from "framer-motion";
+import type { ContentRating } from "@/lib/content/types";
 import { createClient } from "@/lib/supabase/client";
-import type { DeliveryHistoryItem, DeliveryProfile, EarnedBadge } from "@/types/game";
+import type {
+  DeliveryHistoryItem,
+  DeliveryProfile,
+  EarnedBadge,
+} from "@/types/game";
 
 interface AppState {
   profile: DeliveryProfile;
@@ -21,6 +27,7 @@ interface AppState {
   muted: boolean;
   reducedMotion: boolean;
   publicDefault: boolean;
+  contentRating: ContentRating;
   notifications: boolean;
 }
 
@@ -34,7 +41,18 @@ interface AppContextValue extends AppState {
   signOut: () => Promise<void>;
   saveDelivery: (delivery: DeliveryHistoryItem) => void;
   toggleFavorite: (promptId: string) => void;
-  updatePreferences: (preferences: Partial<Pick<AppState, "muted" | "reducedMotion" | "publicDefault" | "notifications">>) => void;
+  updatePreferences: (
+    preferences: Partial<
+      Pick<
+        AppState,
+        | "muted"
+        | "reducedMotion"
+        | "publicDefault"
+        | "notifications"
+        | "contentRating"
+      >
+    >,
+  ) => void;
   clearLocalData: () => void;
 }
 
@@ -59,6 +77,7 @@ const defaultState: AppState = {
   muted: false,
   reducedMotion: false,
   publicDefault: false,
+  contentRating: "everyone",
   notifications: false,
 };
 
@@ -69,9 +88,21 @@ function readStoredState(key: string): AppState {
     const stored = localStorage.getItem(key);
     if (!stored) return defaultState;
     const parsed = JSON.parse(stored) as Partial<AppState>;
-    return { ...defaultState, ...parsed, profile: { ...defaultState.profile, ...parsed.profile } };
+    return {
+      ...defaultState,
+      ...parsed,
+      contentRating:
+        parsed.contentRating === "teen" || parsed.contentRating === "mature"
+          ? parsed.contentRating
+          : "everyone",
+      profile: { ...defaultState.profile, ...parsed.profile },
+    };
   } catch {
-    localStorage.removeItem(key);
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      /* Private browsing may disable storage. */
+    }
     return defaultState;
   }
 }
@@ -92,14 +123,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return;
-    localStorage.setItem(storageScope, JSON.stringify(state));
+    try {
+      localStorage.setItem(storageScope, JSON.stringify(state));
+    } catch {
+      /* The game remains playable without persistent storage. */
+    }
   }, [hydrated, state, storageScope]);
 
   const refreshAccount = useCallback(async () => {
     try {
       const response = await fetch("/api/account", { cache: "no-store" });
       if (!response.ok) throw new Error("Account sync failed");
-      const account = await response.json() as {
+      const account = (await response.json()) as {
         authenticated?: boolean;
         user?: { id?: string; email?: string | null };
         profile?: DeliveryProfile;
@@ -110,12 +145,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       };
       setAuthenticated(Boolean(account.authenticated));
       setAccountEmail(account.user?.email ?? null);
-      setTier(account.authenticated ? account.subscription?.tier ?? "free" : "guest");
+      setTier(
+        account.authenticated
+          ? (account.subscription?.tier ?? "free")
+          : "guest",
+      );
       if (account.authenticated && account.profile && account.user?.id) {
         const accountScope = `${ACCOUNT_STORAGE_PREFIX}${account.user.id}`;
         const cached = readStoredState(accountScope);
         setStorageScope(accountScope);
-        setState({ ...cached, profile: account.profile, stats: account.stats ?? null, history: account.history ?? [], badges: account.badges ?? [] });
+        setState({
+          ...cached,
+          profile: account.profile,
+          stats: account.stats ?? null,
+          history: account.history ?? [],
+          badges: account.badges ?? [],
+        });
       } else {
         setStorageScope(GUEST_STORAGE_KEY);
         setState(readStoredState(GUEST_STORAGE_KEY));
@@ -133,23 +178,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refreshAccount();
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return;
+    if (
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    )
+      return;
     const client = createClient();
-    const { data } = client.auth.onAuthStateChange(() => { void refreshAccount(); });
+    const { data } = client.auth.onAuthStateChange(() => {
+      void refreshAccount();
+    });
     return () => data.subscription.unsubscribe();
   }, [refreshAccount]);
 
   useEffect(() => {
-    document.documentElement.dataset.reducedMotion = String(state.reducedMotion);
+    document.documentElement.dataset.reducedMotion = String(
+      state.reducedMotion,
+    );
     document.documentElement.dataset.muted = String(state.muted);
   }, [state.muted, state.reducedMotion]);
 
   const saveDelivery = useCallback((delivery: DeliveryHistoryItem) => {
     setState((current) => {
-      const xp = current.profile.xp + (delivery.xp ?? 35);
+      const earnsXp =
+        delivery.source === "ai" &&
+        !current.history.some((item) => item.id === delivery.id);
+      const xp = current.profile.xp + (earnsXp ? (delivery.xp ?? 35) : 0);
       return {
         ...current,
-        history: [delivery, ...current.history].slice(0, 60),
+        history: [
+          { ...delivery, audioUrl: undefined },
+          ...current.history.filter((item) => item.id !== delivery.id),
+        ].slice(0, 60),
         profile: {
           ...current.profile,
           xp,
@@ -169,19 +228,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updatePreferences = useCallback(
-    (preferences: Partial<Pick<AppState, "muted" | "reducedMotion" | "publicDefault" | "notifications">>) => {
+    (
+      preferences: Partial<
+        Pick<
+          AppState,
+          | "muted"
+          | "reducedMotion"
+          | "publicDefault"
+          | "notifications"
+          | "contentRating"
+        >
+      >,
+    ) => {
       setState((current) => ({ ...current, ...preferences }));
     },
     [],
   );
 
   const clearLocalData = useCallback(() => {
-    setState((current) => authenticated ? { ...defaultState, profile: current.profile } : defaultState);
-    localStorage.removeItem(storageScope);
+    setState((current) =>
+      authenticated
+        ? { ...defaultState, profile: current.profile }
+        : defaultState,
+    );
+    try {
+      localStorage.removeItem(storageScope);
+    } catch {
+      /* Storage may be unavailable. */
+    }
   }, [authenticated, storageScope]);
 
   const signOut = useCallback(async () => {
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    ) {
       await createClient().auth.signOut();
     }
     setAuthenticated(false);
@@ -206,10 +287,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updatePreferences,
       clearLocalData,
     }),
-    [accountEmail, authReady, authenticated, clearLocalData, hydrated, refreshAccount, saveDelivery, signOut, state, tier, toggleFavorite, updatePreferences],
+    [
+      accountEmail,
+      authReady,
+      authenticated,
+      clearLocalData,
+      hydrated,
+      refreshAccount,
+      saveDelivery,
+      signOut,
+      state,
+      tier,
+      toggleFavorite,
+      updatePreferences,
+    ],
   );
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      <MotionConfig reducedMotion={state.reducedMotion ? "always" : "user"}>
+        {children}
+      </MotionConfig>
+    </AppContext.Provider>
+  );
 }
 
 export function useApp() {

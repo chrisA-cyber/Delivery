@@ -1,75 +1,134 @@
 import type { JudgeResult, Prompt } from "@/types/game";
 
-function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
-  ctx.beginPath();
-  ctx.roundRect(x, y, width, height, radius);
-  ctx.fill();
-}
-
-function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number, maxLines: number) {
-  const words = text.split(" ");
+export function wrapCardText(
+  measure: (value: string) => number,
+  text: string,
+  maxWidth: number,
+): string[] {
   const lines: string[] = [];
   let line = "";
-  for (const word of words) {
+  for (const word of text.trim().split(/\s+/)) {
     const next = line ? `${line} ${word}` : word;
-    if (ctx.measureText(next).width > maxWidth && line) {
+    if (measure(next) > maxWidth && line) {
       lines.push(line);
       line = word;
     } else line = next;
   }
   if (line) lines.push(line);
-  lines.slice(0, maxLines).forEach((value, index) => ctx.fillText(value, x, y + index * lineHeight));
+  return lines;
+}
+
+/** Fits the entire text. Nothing is silently dropped from a shared receipt. */
+function fitText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  startSize: number,
+  family = "DM Sans",
+) {
+  let size = startSize;
+  let lines: string[] = [];
+  for (; size >= 10; size -= 1) {
+    ctx.font = `700 ${size}px "${family}", Arial, sans-serif`;
+    lines = wrapCardText((value) => ctx.measureText(value).width, text, width);
+    if (
+      lines.length * size * 1.2 <= height &&
+      lines.every((line) => ctx.measureText(line).width <= width)
+    )
+      break;
+  }
+  if (size < 10)
+    throw new Error(
+      "This receipt is too long for a readable card. Save the audio or copy the playable line.",
+    );
+  lines.forEach((line, index) =>
+    ctx.fillText(line, x, y + size + index * size * 1.2),
+  );
 }
 
 export async function createResultCard(prompt: Prompt, result: JudgeResult) {
+  await Promise.all([
+    document.fonts.load('700 48px "DM Sans"'),
+    document.fonts.load('700 120px "Barlow Condensed"'),
+  ]);
   const canvas = document.createElement("canvas");
   canvas.width = 1200;
-  canvas.height = 630;
+  canvas.height = 800;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas is not available");
-
-  ctx.fillStyle = "#070707";
-  ctx.fillRect(0, 0, 1200, 630);
-  const gradient = ctx.createRadialGradient(1080, 40, 0, 1080, 40, 540);
-  gradient.addColorStop(0, "rgba(255,76,200,.45)");
-  gradient.addColorStop(1, "rgba(255,76,200,0)");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 1200, 630);
-
-  ctx.fillStyle = "#caff33";
-  roundedRect(ctx, 58, 52, 58, 58, 15);
-  ctx.fillStyle = "#070707";
-  ctx.font = "900 35px Arial";
-  ctx.fillText("D", 75, 93);
-  ctx.fillStyle = "#f5f2e8";
-  ctx.font = "900 30px Arial";
-  ctx.fillText("DELIVERY", 132, 92);
-
-  ctx.fillStyle = "#ff4cc8";
-  ctx.font = "800 18px Arial";
-  ctx.fillText(result.title.toUpperCase(), 62, 180);
-  ctx.fillStyle = "#f5f2e8";
-  ctx.font = "900 52px Arial";
-  wrapText(ctx, `“${prompt.line}”`, 62, 250, 720, 61, 4);
-
-  ctx.fillStyle = "rgba(255,255,255,.55)";
-  ctx.font = "700 20px Arial";
-  ctx.fillText(prompt.energy, 62, 530);
-  ctx.fillStyle = "rgba(255,255,255,.3)";
-  ctx.font = "700 16px Arial";
-  ctx.fillText("delivery.game · SAY THE LINE. GET JUDGED.", 62, 580);
-
-  ctx.fillStyle = "#caff33";
-  roundedRect(ctx, 900, 175, 235, 235, 46);
-  ctx.fillStyle = "#070707";
-  ctx.font = "900 126px Arial";
-  ctx.textAlign = "center";
-  ctx.fillText(String(result.scores.overall), 1017, 330);
-  ctx.font = "900 19px Arial";
-  ctx.fillText("DELIVERY SCORE", 1017, 374);
+  const fixture = result.source === "fallback";
+  ctx.fillStyle = "#171715";
+  ctx.fillRect(0, 0, 1200, 800);
+  ctx.fillStyle = "#f4f0e7";
+  ctx.font = '700 40px "Barlow Condensed", Arial';
+  ctx.fillText("DELIVERY", 48, 67);
+  ctx.font = '700 15px "DM Sans", Arial';
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#c9edbc";
+  ctx.fillText(
+    fixture ? "LOCAL FIXTURE · NOT A LIVE SCORE" : "THE VOICE PERFORMANCE GAME",
+    1152,
+    59,
+  );
   ctx.textAlign = "left";
-
-  return new Promise<Blob>((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Could not create card")), "image/png"));
+  ctx.fillStyle = "#f4f0e7";
+  ctx.beginPath();
+  ctx.roundRect(40, 104, 1120, 400, 20);
+  ctx.fill();
+  ctx.fillStyle = "#171715";
+  ctx.font = '700 14px "DM Sans", Arial';
+  ctx.fillText("THE LINE", 72, 142);
+  fitText(ctx, `“${prompt.line}”`, 72, 160, 750, 290, 48);
+  ctx.fillStyle = "#ff745c";
+  ctx.beginPath();
+  ctx.roundRect(872, 136, 256, 330, 14);
+  ctx.fill();
+  ctx.fillStyle = "#171715";
+  ctx.font = '700 15px "DM Sans", Arial';
+  ctx.textAlign = "center";
+  ctx.fillText(fixture ? "FIXTURE SCORE" : "DELIVERY SCORE", 1000, 181);
+  ctx.font = '700 160px "Barlow Condensed", Arial';
+  ctx.fillText(String(result.scores.overall), 1000, 338);
+  ctx.font = '700 20px "DM Sans", Arial';
+  ctx.fillText("/ 100", 1000, 376);
+  ctx.textAlign = "left";
+  fitText(ctx, result.title, 894, 405, 212, 35, 20);
+  ctx.fillStyle = "#c9edbc";
+  ctx.beginPath();
+  ctx.roundRect(40, 522, 1120, 158, 16);
+  ctx.fill();
+  ctx.fillStyle = "#171715";
+  ctx.font = '700 14px "DM Sans", Arial';
+  ctx.fillText("THE DIRECTION", 72, 559);
+  fitText(ctx, prompt.energy, 72, 572, 1056, 80, 27);
+  ctx.fillStyle = "#b5b3aa";
+  ctx.font = '500 15px "DM Sans", Arial';
+  ctx.fillText(
+    `Commitment ${result.scores.commitment}  /  Comedy ${result.scores.comedy}  /  Accuracy ${result.scores.accuracy}  /  Chaos ${result.scores.chaos}`,
+    48,
+    719,
+  );
+  ctx.fillStyle = "#f4f0e7";
+  ctx.font = '700 16px "DM Sans", Arial';
+  ctx.fillText("SAME LINE. YOUR INTERPRETATION?", 48, 763);
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#b5b3aa";
+  ctx.font = '500 14px "DM Sans", Arial';
+  ctx.fillText(
+    prompt.rating === "mature" ? "MATURE · 18+" : "AUDIO NOT INCLUDED",
+    1152,
+    763,
+  );
+  return new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob(
+      (blob) =>
+        blob ? resolve(blob) : reject(new Error("Could not create card")),
+      "image/png",
+    ),
+  );
 }
 
 export function downloadBlob(blob: Blob, filename: string) {
@@ -80,5 +139,5 @@ export function downloadBlob(blob: Blob, filename: string) {
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

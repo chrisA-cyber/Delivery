@@ -5,26 +5,24 @@ set local search_path = public, extensions;
 
 select plan(16);
 
-select has_column('public', 'subscriptions', 'stripe_snapshot_retrieved_at');
+select has_column('public'::name, 'subscriptions'::name, 'stripe_snapshot_retrieved_at'::name, 'subscriptions.stripe_snapshot_retrieved_at exists');
 select has_function(
-  'public',
-  'apply_stripe_subscription_event',
+  'public'::name,
+  'apply_stripe_subscription_event'::name,
   array[
     'text', 'uuid', 'plan_tier', 'subscription_state', 'text', 'text', 'text',
     'boolean', 'timestamp with time zone', 'timestamp with time zone',
     'timestamp with time zone', 'timestamp with time zone', 'jsonb'
   ]
 );
-select ok(
-  not has_function(
-    'public',
-    'apply_stripe_subscription_event',
+select hasnt_function(
+    'public'::name,
+    'apply_stripe_subscription_event'::name,
     array[
       'text', 'uuid', 'plan_tier', 'subscription_state', 'text', 'text', 'text',
       'boolean', 'timestamp with time zone', 'timestamp with time zone',
       'timestamp with time zone', 'jsonb'
-    ]
-  ),
+    ],
   'the opaque-event-id ordering RPC signature is removed'
 );
 select ok(

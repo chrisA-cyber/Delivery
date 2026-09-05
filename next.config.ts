@@ -27,6 +27,7 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  devIndicators: false,
   compress: true,
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion"],

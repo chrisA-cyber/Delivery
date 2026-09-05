@@ -610,19 +610,19 @@ revoke all on function public.remove_follows_on_block() from public, anon, authe
 -- Collapse case and whitespace before hashing so concurrent, cosmetically varied
 -- copies cannot occupy multiple moderation slots. Rejected/archived ideas may be
 -- revised and resubmitted; active review and accepted rows remain authoritative.
+-- digest(text, text) is IMMUTABLE; convert_to(text, name) is only STABLE and
+-- cannot appear in a generated column. Supabase uses UTF8, so the text overload
+-- hashes the same UTF8 bytes without the invalid generation expression.
 alter table public.line_submissions
   add column normalized_body_hash bytea generated always as (
     extensions.digest(
-      pg_catalog.convert_to(
-        pg_catalog.lower(
-          pg_catalog.regexp_replace(
-            pg_catalog.btrim(proposed_body),
-            '[[:space:]]+',
-            ' ',
-            'g'
-          )
-        ),
-        'UTF8'
+      pg_catalog.lower(
+        pg_catalog.regexp_replace(
+          pg_catalog.btrim(proposed_body),
+          '[[:space:]]+',
+          ' ',
+          'g'
+        )
       ),
       'sha256'
     )

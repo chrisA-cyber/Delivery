@@ -6,8 +6,8 @@ set local search_path = public, extensions;
 select plan(22);
 
 select has_function(
-  'public',
-  'resolve_moderation_report',
+  'public'::name,
+  'resolve_moderation_report'::name,
   array['uuid', 'uuid', 'moderation_decision', 'text', 'text']
 );
 select ok(
@@ -72,11 +72,11 @@ select is(
   'the direct owner profile-update policy is removed'
 );
 
-select has_function('public', 'enforce_profile_moderation_containment', array[]::text[]);
-select has_function('public', 'contain_prompt_deliveries', array['uuid', 'boolean']);
-select has_function('public', 'enforce_delivery_publication_boundary', array[]::text[]);
-select has_trigger('public', 'profiles', 'profiles_enforce_moderation_containment');
-select has_trigger('public', 'deliveries', 'deliveries_enforce_publication_boundary');
+select has_function('public'::name, 'enforce_profile_moderation_containment'::name, array[]::text[]);
+select has_function('public'::name, 'contain_prompt_deliveries'::name, array['uuid', 'boolean']);
+select has_function('public'::name, 'enforce_delivery_publication_boundary'::name, array[]::text[]);
+select has_trigger('public'::name, 'profiles'::name, 'profiles_enforce_moderation_containment'::name);
+select has_trigger('public'::name, 'deliveries'::name, 'deliveries_enforce_publication_boundary'::name);
 select ok(
   not has_function_privilege(
     'authenticated',

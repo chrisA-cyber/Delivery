@@ -5,9 +5,9 @@ set local search_path = public, extensions;
 
 select plan(44);
 
-select has_function('public', 'award_progression_badges', array['uuid']);
-select has_function('public', 'refresh_user_rollups', array['uuid']);
-select has_view('public', 'user_stats_live');
+select has_function('public'::name, 'award_progression_badges'::name, array['uuid']);
+select has_function('public'::name, 'refresh_user_rollups'::name, array['uuid']);
+select has_view('public'::name, 'user_stats_live'::name);
 select ok(
   not has_function_privilege('anon', 'public.award_progression_badges(uuid)', 'EXECUTE'),
   'anonymous users cannot invoke the internal badge evaluator'

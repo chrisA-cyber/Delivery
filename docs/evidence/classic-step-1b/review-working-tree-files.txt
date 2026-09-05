@@ -1,0 +1,290 @@
+Whole review working tree: includes preserved Step 1 changes and Step 1B additions. No commit/push.
+ M .env.example
+ M README.md
+ M e2e/api-contracts.spec.ts
+ M e2e/gameplay.spec.ts
+ M e2e/mobile-layout.spec.ts
+ M e2e/public-routes.spec.ts
+ M next.config.ts
+ M package-lock.json
+ M package.json
+ M public/apple-touch-icon.png
+ M public/icon-192.png
+ M public/icon-512.png
+ M public/icon-maskable-512.png
+ M public/icon.svg
+ M public/manifest.webmanifest
+ M src/app/api/account/route.ts
+ M src/app/api/challenges/route.ts
+ M src/app/api/deliveries/[deliveryId]/visibility/route.ts
+ M src/app/api/judge/route.ts
+ M src/app/api/prompts/daily/route.ts
+ M src/app/api/prompts/random/route.ts
+ M src/app/challenge/[code]/page.tsx
+ M src/app/challenge/page.tsx
+ M src/app/d/[deliveryId]/opengraph-image.tsx
+ M src/app/daily/page.tsx
+ M src/app/discover/[packId]/page.tsx
+ M src/app/discover/page.tsx
+ M src/app/endless/page.tsx
+ M src/app/feed/page.tsx
+ M src/app/globals.css
+ M src/app/impossible/page.tsx
+ M src/app/layout.tsx
+ M src/app/leaderboard/page.tsx
+ M src/app/login/page.tsx
+ M src/app/opengraph-image.tsx
+ M src/app/page.tsx
+ M src/app/play/page.tsx
+ M src/app/pricing/page.tsx
+ M src/app/privacy/page.tsx
+ M src/app/settings/page.tsx
+ M src/app/stream/page.tsx
+ M src/app/stream/stage/page.tsx
+ M src/components/auth/auth-panel.tsx
+ M src/components/challenge/challenge-builder.tsx
+ M src/components/challenge/challenge-match-view.tsx
+ M src/components/discover/pack-browser.tsx
+ M src/components/discover/submission-form.tsx
+ M src/components/game/daily-drop.tsx
+ M src/components/game/endless-shell.tsx
+ M src/components/game/game-experience.tsx
+ M src/components/game/judging-loader.tsx
+ M src/components/game/result-screen.tsx
+ M src/components/landing/hero-demo.tsx
+ M src/components/landing/landing-feed.tsx
+ M src/components/landing/result-ticker.tsx
+ M src/components/legal/legal-page.tsx
+ M src/components/pricing/pricing-table.tsx
+ M src/components/pricing/pro-gate.tsx
+ M src/components/profile/badge-shelf.tsx
+ M src/components/profile/profile-view.tsx
+ M src/components/profile/public-profile-view.tsx
+ M src/components/providers/app-provider.tsx
+ M src/components/settings/settings-panel.tsx
+ M src/components/shell/logo.tsx
+ M src/components/shell/mobile-dock.tsx
+ M src/components/shell/page-shell.tsx
+ M src/components/shell/site-footer.tsx
+ M src/components/shell/site-header.tsx
+ M src/components/social/delivery-feed.tsx
+ M src/components/social/leaderboard.tsx
+ M src/components/social/public-delivery.tsx
+ M src/components/stream/stream-setup.tsx
+ M src/config/prompts.ts
+ M src/data/content.ts
+ M src/hooks/use-audio-recorder.ts
+ M src/lib/content/catalog.ts
+ M src/lib/content/content.test.ts
+ M src/lib/content/trending.ts
+ M src/lib/content/types.ts
+ M src/lib/game-prompts.ts
+ M src/lib/server/content-resolution.test.ts
+ M src/lib/server/content.ts
+ M src/lib/server/deliveries.ts
+ M src/lib/server/env.test.ts
+ M src/lib/server/env.ts
+ M src/lib/server/openai.ts
+ M src/lib/server/random-content.test.ts
+ M src/lib/server/random-content.ts
+ M src/lib/server/share.ts
+ M src/lib/share-card.ts
+ M src/lib/types.ts
+ M src/types/game.ts
+ M supabase/README.md
+ M supabase/migrations/202608250007_ranked_daily_entries.sql
+ M supabase/seed.sql
+ M supabase/tests/database/account_deletion_saga.test.sql
+ M supabase/tests/database/account_mutation_invariants.test.sql
+ M supabase/tests/database/anonymous_reports.test.sql
+ M supabase/tests/database/challenge_block_privacy.test.sql
+ M supabase/tests/database/challenge_match_entries.test.sql
+ M supabase/tests/database/challenge_matchups.test.sql
+ M supabase/tests/database/daily_leaderboard.test.sql
+ M supabase/tests/database/delivery_schema.test.sql
+ M supabase/tests/database/durable_progression.test.sql
+ M supabase/tests/database/judged_play_quota.test.sql
+ M supabase/tests/database/line_submission_deduplication.test.sql
+ M supabase/tests/database/moderation_cleanup_and_appeals.test.sql
+ M supabase/tests/database/moderation_resolution.test.sql
+ M supabase/tests/database/ranked_daily_entries.test.sql
+ M supabase/tests/database/stripe_snapshot_ordering.test.sql
+ M supabase/tests/database/symmetric_blocks.test.sql
+ M tailwind.config.ts
+?? docs/CLASSIC_CONTENT_V2.md
+?? docs/CLASSIC_RECOGNIZABLE_LEDGER.md
+?? docs/CLASSIC_REWORK_HANDOFF.md
+?? docs/CLASSIC_REWORK_REVIEW.md
+?? docs/CLASSIC_STEP_1B_CONTENT.md
+?? docs/CLASSIC_STEP_1B_DATABASE.md
+?? docs/CLASSIC_STEP_1B_HANDOFF.md
+?? docs/CLASSIC_STEP_1B_REVIEW.md
+?? docs/DELIVERY_2_ROADMAP.md
+?? docs/JUDGING_EVALUATION.md
+?? docs/evaluation/manifest.example.json
+?? docs/evidence/classic-rework/after/home-1440.png
+?? docs/evidence/classic-rework/after/home-320.png
+?? docs/evidence/classic-rework/after/home-390.png
+?? docs/evidence/classic-rework/after/home-768.png
+?? docs/evidence/classic-rework/after/judging-1440.png
+?? docs/evidence/classic-rework/after/judging-320.png
+?? docs/evidence/classic-rework/after/judging-390.png
+?? docs/evidence/classic-rework/after/judging-768.png
+?? docs/evidence/classic-rework/after/prepare-1440.png
+?? docs/evidence/classic-rework/after/prepare-320.png
+?? docs/evidence/classic-rework/after/prepare-390.png
+?? docs/evidence/classic-rework/after/prepare-768.png
+?? docs/evidence/classic-rework/after/public-share-unavailable.png
+?? docs/evidence/classic-rework/after/recording-1440.png
+?? docs/evidence/classic-rework/after/recording-320.png
+?? docs/evidence/classic-rework/after/recording-390.png
+?? docs/evidence/classic-rework/after/recording-768.png
+?? docs/evidence/classic-rework/after/result-1440.png
+?? docs/evidence/classic-rework/after/result-320.png
+?? docs/evidence/classic-rework/after/result-390.png
+?? docs/evidence/classic-rework/after/result-768.png
+?? docs/evidence/classic-rework/after/review-1440.png
+?? docs/evidence/classic-rework/after/review-320.png
+?? docs/evidence/classic-rework/after/review-390.png
+?? docs/evidence/classic-rework/after/review-768.png
+?? docs/evidence/classic-rework/after/share-card-1440.png
+?? docs/evidence/classic-rework/after/share-card-320.png
+?? docs/evidence/classic-rework/after/share-card-390.png
+?? docs/evidence/classic-rework/after/share-card-768.png
+?? docs/evidence/classic-rework/after/supporting/README.md
+?? docs/evidence/classic-rework/after/supporting/challenge-1440.png
+?? docs/evidence/classic-rework/after/supporting/challenge-390.png
+?? docs/evidence/classic-rework/after/supporting/discover-1440.png
+?? docs/evidence/classic-rework/after/supporting/discover-390.png
+?? docs/evidence/classic-rework/after/supporting/feed-1440.png
+?? docs/evidence/classic-rework/after/supporting/feed-390.png
+?? docs/evidence/classic-rework/after/supporting/leaderboard-1440.png
+?? docs/evidence/classic-rework/after/supporting/leaderboard-390.png
+?? docs/evidence/classic-rework/after/supporting/pricing-1440.png
+?? docs/evidence/classic-rework/after/supporting/pricing-390.png
+?? docs/evidence/classic-rework/after/supporting/profile-1440.png
+?? docs/evidence/classic-rework/after/supporting/profile-390.png
+?? docs/evidence/classic-rework/after/supporting/settings-1440.png
+?? docs/evidence/classic-rework/after/supporting/settings-390.png
+?? docs/evidence/classic-rework/after/supporting/stream-1440.png
+?? docs/evidence/classic-rework/after/supporting/stream-390.png
+?? docs/evidence/classic-rework/before/home-1440.png
+?? docs/evidence/classic-rework/before/home-390.png
+?? docs/evidence/classic-rework/before/judging-1440.png
+?? docs/evidence/classic-rework/before/judging-390.png
+?? docs/evidence/classic-rework/before/prepare-1440.png
+?? docs/evidence/classic-rework/before/prepare-390.png
+?? docs/evidence/classic-rework/before/recording-1440.png
+?? docs/evidence/classic-rework/before/recording-390.png
+?? docs/evidence/classic-rework/before/result-1440.png
+?? docs/evidence/classic-rework/before/result-390.png
+?? docs/evidence/classic-rework/before/review-1440.png
+?? docs/evidence/classic-rework/before/review-390.png
+?? docs/evidence/classic-rework/changed-files.txt
+?? docs/evidence/classic-rework/local-api.json
+?? docs/evidence/classic-rework/scribe-live.json
+?? docs/evidence/classic-rework/verification.json
+?? docs/evidence/classic-step-1b/after/home-1440.png
+?? docs/evidence/classic-step-1b/after/home-320.png
+?? docs/evidence/classic-step-1b/after/home-390.png
+?? docs/evidence/classic-step-1b/after/home-768.png
+?? docs/evidence/classic-step-1b/after/judging-1440.png
+?? docs/evidence/classic-step-1b/after/judging-320.png
+?? docs/evidence/classic-step-1b/after/judging-390.png
+?? docs/evidence/classic-step-1b/after/judging-768.png
+?? docs/evidence/classic-step-1b/after/prepare-1440.png
+?? docs/evidence/classic-step-1b/after/prepare-320.png
+?? docs/evidence/classic-step-1b/after/prepare-390.png
+?? docs/evidence/classic-step-1b/after/prepare-768.png
+?? docs/evidence/classic-step-1b/after/recording-1440.png
+?? docs/evidence/classic-step-1b/after/recording-320.png
+?? docs/evidence/classic-step-1b/after/recording-390.png
+?? docs/evidence/classic-step-1b/after/recording-768.png
+?? docs/evidence/classic-step-1b/after/result-1440.png
+?? docs/evidence/classic-step-1b/after/result-320.png
+?? docs/evidence/classic-step-1b/after/result-390.png
+?? docs/evidence/classic-step-1b/after/result-768.png
+?? docs/evidence/classic-step-1b/after/review-1440.png
+?? docs/evidence/classic-step-1b/after/review-320.png
+?? docs/evidence/classic-step-1b/after/review-390.png
+?? docs/evidence/classic-step-1b/after/review-768.png
+?? docs/evidence/classic-step-1b/after/share-card-1440.png
+?? docs/evidence/classic-step-1b/after/share-card-320.png
+?? docs/evidence/classic-step-1b/after/share-card-390.png
+?? docs/evidence/classic-step-1b/after/share-card-768.png
+?? docs/evidence/classic-step-1b/before/home-1440.png
+?? docs/evidence/classic-step-1b/before/home-390.png
+?? docs/evidence/classic-step-1b/before/judging-1440.png
+?? docs/evidence/classic-step-1b/before/judging-390.png
+?? docs/evidence/classic-step-1b/before/prepare-1440.png
+?? docs/evidence/classic-step-1b/before/prepare-390.png
+?? docs/evidence/classic-step-1b/before/recording-1440.png
+?? docs/evidence/classic-step-1b/before/recording-390.png
+?? docs/evidence/classic-step-1b/before/result-1440.png
+?? docs/evidence/classic-step-1b/before/result-390.png
+?? docs/evidence/classic-step-1b/before/review-1440.png
+?? docs/evidence/classic-step-1b/before/review-390.png
+?? docs/evidence/classic-step-1b/cost-preflight.json
+?? docs/evidence/classic-step-1b/credential-hygiene.json
+?? docs/evidence/classic-step-1b/database.json
+?? docs/evidence/classic-step-1b/local-api.json
+?? docs/evidence/classic-step-1b/review-working-tree-files.txt
+?? docs/evidence/classic-step-1b/scribe-live.json
+?? docs/evidence/classic-step-1b/verification.json
+?? docs/playtesting/classic-step-1b/FACILITATOR.md
+?? docs/playtesting/classic-step-1b/feedback.html
+?? docs/playtesting/classic-step-1b/observations.csv
+?? docs/prompts/01_CLASSIC_REWORK.md
+?? e2e/classic-rework.spec.ts
+?? e2e/classic-step-1b.spec.ts
+?? e2e/supporting-ui.spec.ts
+?? scripts/capture-classic-before.mjs
+?? scripts/capture-classic-step-1b.mjs
+?? scripts/local-db/README.md
+?? scripts/local-db/bootstrap.sql
+?? scripts/local-db/legacy-seed.sql
+?? scripts/local-db/package-lock.json
+?? scripts/local-db/package.json
+?? scripts/local-db/run.mjs
+?? scripts/local-db/upgrade-fixture.sql
+?? scripts/local-db/upgrade.mjs
+?? scripts/prepare-scribe-evaluation.py
+?? scripts/render-icons.mjs
+?? scripts/verify-local-judge.mjs
+?? src/components/challenge/challenge-match-view.test.tsx
+?? src/components/content/content-control.tsx
+?? src/components/discover/pack-detail.tsx
+?? src/components/game/endless-shell.test.tsx
+?? src/data/classic-content-v2.ts
+?? src/data/legacy-content.ts
+?? src/data/recognizable-content.ts
+?? src/hooks/use-audio-recorder.test.ts
+?? src/lib/audio-capture.test.ts
+?? src/lib/audio-capture.ts
+?? src/lib/judging/consented-audio.eval.test.ts
+?? src/lib/judging/evaluation.test.ts
+?? src/lib/judging/evaluation.ts
+?? src/lib/judging/rubric.test.ts
+?? src/lib/judging/rubric.ts
+?? src/lib/profile-statistics.test.ts
+?? src/lib/profile-statistics.ts
+?? src/lib/server/account-history.test.ts
+?? src/lib/server/account-history.ts
+?? src/lib/server/challenge-creation.test.ts
+?? src/lib/server/challenge-receipt-access.test.ts
+?? src/lib/server/content-publication.test.ts
+?? src/lib/server/content-publication.ts
+?? src/lib/server/elevenlabs-live.eval.test.ts
+?? src/lib/server/elevenlabs.test.ts
+?? src/lib/server/elevenlabs.ts
+?? src/lib/server/judge-retry.test.ts
+?? src/lib/server/openai-contract.test.ts
+?? src/lib/server/scribe-batch.eval.test.ts
+?? supabase/migrations/202609050014_classic_content_rating.sql
+?? supabase/migrations/202609050015_classic_content_v2.sql
+?? supabase/migrations/202609050016_mature_private_boundary.sql
+?? supabase/migrations/202609050017_classic_content_v3.sql
+?? supabase/tests/database/classic_content_v2.test.sql
+?? supabase/tests/database/classic_content_v3.test.sql
+?? supabase/tests/database/classic_rls_isolation.test.sql
+?? supabase/tests/database/mature_private_boundary.test.sql

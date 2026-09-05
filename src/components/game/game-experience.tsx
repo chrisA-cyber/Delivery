@@ -1,217 +1,491 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
-import { Bookmark, Check, ChevronLeft, CircleAlert, Headphones, Mic, Pause, Play, RotateCcw, Shuffle, Sparkles, Square } from "lucide-react";
+import {
+  Bookmark,
+  Check,
+  ChevronLeft,
+  CircleAlert,
+  Download,
+  Headphones,
+  LoaderCircle,
+  Mic,
+  RotateCcw,
+  Shuffle,
+  Square,
+  VolumeX,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "@/components/providers/app-provider";
+import {
+  ContentControl,
+  CONTENT_LABELS,
+} from "@/components/content/content-control";
 import { JudgingLoader } from "@/components/game/judging-loader";
 import { ResultScreen } from "@/components/game/result-screen";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
-import { dailyGamePrompt, gamePrompt, gamePromptForPack, toGamePrompt } from "@/lib/game-prompts";
+import { dailyGamePrompt, gamePrompt, toGamePrompt } from "@/lib/game-prompts";
 import { createId } from "@/lib/utils";
-import { ENERGY_MODIFIERS, type DeliveryPrompt, type EnergyModifier } from "@/data/content";
-import type { DeliveryHistoryItem, DeliveryReference, GameMode, JudgeResult, Prompt } from "@/types/game";
+import { downloadBlob } from "@/lib/share-card";
+import {
+  ENERGY_MODIFIERS,
+  getPromptById,
+  isEnergyCompatible,
+  isRatingAllowed,
+  type ContentRating,
+  type DeliveryPrompt,
+  type EnergyModifier,
+} from "@/data/content";
+import type {
+  DeliveryHistoryItem,
+  DeliveryReference,
+  GameMode,
+  JudgeResult,
+  Prompt,
+} from "@/types/game";
 
 type GameStage = "prompt" | "recording" | "review" | "judging" | "result";
-
-function formatTime(milliseconds: number) {
-  const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
+export function formatTime(milliseconds: number) {
+  const seconds = Math.max(0, Math.floor(milliseconds / 1000));
   return `0:${String(seconds).padStart(2, "0")}`;
 }
 
 function normalizeResult(value: unknown): JudgeResult {
-  const candidate = (value && typeof value === "object" && "result" in value ? (value as { result: unknown }).result : value) as Partial<JudgeResult> | undefined;
-  if (!candidate?.scores) throw new Error("The judge returned an unreadable score");
+  const candidate = (
+    value && typeof value === "object" && "result" in value
+      ? (value as { result: unknown }).result
+      : value
+  ) as Partial<JudgeResult> | undefined;
+  if (
+    !candidate?.scores ||
+    Object.values(candidate.scores).some(
+      (score) => !Number.isFinite(score) || score < 0 || score > 100,
+    ) ||
+    ["overall", "commitment", "comedy", "accuracy", "chaos"].some(
+      (key) =>
+        typeof candidate.scores?.[key as keyof typeof candidate.scores] !==
+        "number",
+    )
+  )
+    throw new Error(
+      "The judge returned an unreadable score. Your take is still here.",
+    );
+  if (!candidate.verdict || !candidate.title)
+    throw new Error("The result was incomplete. Retry this saved take.");
   return {
     id: candidate.id ?? createId(),
     scores: candidate.scores,
-    verdict: candidate.verdict ?? "You said it like rent was due in seven minutes. Disturbingly effective.",
-    title: candidate.title ?? "MIC ACTIVITIES",
-    moment: candidate.moment ?? "The commitment arrived before the context did.",
+    verdict: candidate.verdict,
+    title: candidate.title,
+    moment: candidate.moment ?? "",
     transcript: candidate.transcript ?? "",
     badge: candidate.badge,
-    percentile: candidate.percentile,
     xp: candidate.xp ?? 35,
     source: candidate.source ?? "ai",
+    coachNote: candidate.coachNote,
+    highlights: candidate.highlights,
+    rubricVersion: candidate.rubricVersion,
+    scoringVersion: candidate.scoringVersion,
+    transcription: candidate.transcription,
   };
 }
 
-export function GameExperience({ mode = "classic", initialPrompt, packId, dailyDate, dailyMarket, challengeId, challengeToken, challengeReturnPath, runtimeInitial = true, onJudged, cleanStage = false, voteEnabled = false, voteDelaySeconds = 5 }: { mode?: GameMode; initialPrompt?: Prompt; packId?: string; dailyDate?: string; dailyMarket?: string; challengeId?: string; challengeToken?: string; challengeReturnPath?: string; runtimeInitial?: boolean; onJudged?: (result: JudgeResult) => void; cleanStage?: boolean; voteEnabled?: boolean; voteDelaySeconds?: number }) {
-  const firstPrompt = useMemo(() => initialPrompt ?? (mode === "daily" ? dailyGamePrompt() : gamePrompt(mode)), [initialPrompt, mode]);
+export function GameExperience({
+  mode = "classic",
+  initialPrompt,
+  packId,
+  dailyDate,
+  dailyMarket,
+  challengeId,
+  challengeToken,
+  challengeReturnPath,
+  runtimeInitial = true,
+  onJudged,
+  cleanStage = false,
+  voteEnabled = false,
+  voteDelaySeconds = 5,
+  initialContentRating,
+}: {
+  mode?: GameMode;
+  initialPrompt?: Prompt;
+  packId?: string;
+  dailyDate?: string;
+  dailyMarket?: string;
+  challengeId?: string;
+  challengeToken?: string;
+  challengeReturnPath?: string;
+  runtimeInitial?: boolean;
+  onJudged?: (result: JudgeResult) => void;
+  cleanStage?: boolean;
+  voteEnabled?: boolean;
+  voteDelaySeconds?: number;
+  initialContentRating?: ContentRating;
+}) {
+  const {
+    favorites,
+    muted,
+    reducedMotion,
+    tier,
+    authenticated,
+    hydrated,
+    contentRating,
+    refreshAccount,
+    toggleFavorite,
+    updatePreferences,
+    saveDelivery,
+  } = useApp();
+  const [hostRating, setHostRating] = useState<ContentRating>(
+    initialContentRating === "teen" ? "teen" : "everyone",
+  );
+  const [hostContentReady, setHostContentReady] = useState(
+    mode !== "stream" || initialContentRating !== "mature",
+  );
+  useEffect(() => {
+    if (mode !== "stream" || initialContentRating !== "mature") return;
+    try {
+      if (
+        sessionStorage.getItem("delivery.stream.contentRating") === "mature"
+      ) {
+        setHostRating("mature");
+        setHostContentReady(true);
+      }
+    } catch {
+      /* A blocked session store requires an explicit stage choice. */
+    }
+  }, [mode, initialContentRating]);
+  const rating = mode === "stream" ? hostRating : contentRating;
+  const firstPrompt = useMemo(
+    () =>
+      initialPrompt ??
+      (mode === "daily" ? dailyGamePrompt() : gamePrompt(mode)),
+    [initialPrompt, mode],
+  );
   const [prompt, setPrompt] = useState(firstPrompt);
   const [stage, setStage] = useState<GameStage>("prompt");
   const [result, setResult] = useState<JudgeResult | null>(null);
   const [take, setTake] = useState(1);
-  const [elapsed, setElapsed] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitWarning, setSubmitWarning] = useState<string | undefined>();
-  const [deliveryReference, setDeliveryReference] = useState<DeliveryReference | null>(null);
+  const [deliveryReference, setDeliveryReference] =
+    useState<DeliveryReference | null>(null);
   const [promptLoading, setPromptLoading] = useState(false);
+  const [drawError, setDrawError] = useState("");
   const [voteOpen, setVoteOpen] = useState(false);
   const [voteSeconds, setVoteSeconds] = useState(voteDelaySeconds);
   const [voteOptions, setVoteOptions] = useState<EnergyModifier[]>([]);
   const [voteNotice, setVoteNotice] = useState("");
-  const [playing, setPlaying] = useState(false);
+  const [rehearsal, setRehearsal] = useState(false);
+  const [playbackError, setPlaybackError] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const submitController = useRef<AbortController | null>(null);
+  const submissionInFlight = useRef(false);
+  const drawInFlight = useRef(false);
   const attemptIdRef = useRef(createId("attempt"));
-  const initialRuntimeLoadedRef = useRef(false);
-  const interactionStartedRef = useRef(false);
+  const recentIds = useRef<string[]>([firstPrompt.id]);
+  const recentEnergyIds = useRef<string[]>(
+    firstPrompt.energyId ? [firstPrompt.energyId] : [],
+  );
+  const interactionStarted = useRef(false);
   const recorder = useAudioRecorder();
-  const stopRecording = recorder.stop;
-  const { favorites, muted, publicDefault, tier, authenticated, refreshAccount, toggleFavorite, saveDelivery } = useApp();
+  const { reset, start, stop } = recorder;
+  const allowed = isRatingAllowed(prompt.rating ?? "everyone", rating);
   const isFavorite = favorites.includes(prompt.id);
+  const fixedRound =
+    mode === "daily" || mode === "challenge" || !runtimeInitial;
 
   useEffect(() => {
-    if (stage !== "recording") return;
-    const started = Date.now();
-    const timer = window.setInterval(() => {
-      const next = Date.now() - started;
-      setElapsed(next);
-      if (next >= 20_000) stopRecording();
-    }, 100);
-    return () => window.clearInterval(timer);
-  }, [stage, stopRecording]);
-
-  useEffect(() => {
-    if (recorder.status === "stopped" && stage === "recording") setStage("review");
+    if (recorder.status === "stopped" && stage === "recording")
+      setStage("review");
+    else if (recorder.status === "error" && stage === "recording")
+      setStage("prompt");
   }, [recorder.status, stage]);
 
+  // Unmount aborts the UI request, never a server-side receipt already being processed.
+  useEffect(
+    () => () => {
+      submitController.current?.abort();
+    },
+    [],
+  );
   useEffect(() => {
-    if (!runtimeInitial || initialRuntimeLoadedRef.current || mode === "daily" || mode === "challenge") return;
-    initialRuntimeLoadedRef.current = true;
+    if (!recorder.audioBlob || stage === "result") return;
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", beforeUnload);
+    return () => window.removeEventListener("beforeunload", beforeUnload);
+  }, [recorder.audioBlob, stage]);
+
+  useEffect(() => {
+    if (
+      !hydrated ||
+      !hostContentReady ||
+      fixedRound ||
+      interactionStarted.current
+    )
+      return;
     const controller = new AbortController();
-    const query = new URLSearchParams();
+    const timeout = window.setTimeout(() => {
+      controller.abort();
+      setPromptLoading(false);
+      setDrawError(
+        "The catalog took too long. Your displayed line is still playable, or try another draw.",
+      );
+    }, 12_000);
+    const query = new URLSearchParams({ maxRating: rating });
     if (packId) query.set("pack", packId);
     else if (mode === "impossible") query.set("pack", "impossible-energy");
     if (tier === "pro") query.set("includePro", "true");
     setPromptLoading(true);
-    void fetch(`/api/prompts/random?${query.toString()}`, { cache: "no-store", signal: controller.signal })
+    setDrawError("");
+    void fetch(`/api/prompts/random?${query}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
       .then(async (response) => {
-        const body = await response.json() as { data?: { prompt?: DeliveryPrompt; energy?: EnergyModifier; source?: "curated" | "database" | "trend" } };
-        if (!response.ok || !body.data?.prompt || !body.data.energy || interactionStartedRef.current) return;
+        const body = (await response.json()) as {
+          data?: {
+            prompt?: DeliveryPrompt;
+            energy?: EnergyModifier;
+            source?: string;
+          };
+          error?: { message?: string };
+        };
+        if (!response.ok || !body.data?.prompt || !body.data.energy)
+          throw new Error(
+            body.error?.message ?? "Fresh lines are unavailable. Try again.",
+          );
+        if (controller.signal.aborted || interactionStarted.current) return;
         const fresh = toGamePrompt(body.data.prompt, body.data.energy);
         fresh.source = body.data.source === "trend" ? "trend" : "editorial";
         setPrompt(fresh);
+        recentIds.current = [fresh.id];
+        recentEnergyIds.current = fresh.energyId ? [fresh.energyId] : [];
       })
-      .catch(() => undefined)
-      .finally(() => { if (!controller.signal.aborted) setPromptLoading(false); });
-    return () => controller.abort();
-  }, [mode, packId, runtimeInitial, tier]);
+      .catch((error) => {
+        if (!controller.signal.aborted)
+          setDrawError(
+            error instanceof Error
+              ? error.message
+              : "Could not refresh the catalog.",
+          );
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        if (!controller.signal.aborted) setPromptLoading(false);
+      });
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [fixedRound, hostContentReady, hydrated, mode, packId, rating, tier]);
 
   const begin = useCallback(async () => {
-    interactionStartedRef.current = true;
+    if (!allowed || promptLoading || submissionInFlight.current) return;
+    interactionStarted.current = true;
     setSubmitError(null);
     setSubmitWarning(undefined);
-    const started = await recorder.start();
-    if (started) {
-      setElapsed(0);
-      setStage("recording");
-    }
-  }, [recorder]);
-
-  const openVote = useCallback(() => {
-    const difficulty = prompt.difficulty === 1 ? "easy" : prompt.difficulty === 2 || prompt.difficulty === 3 ? "medium" : prompt.difficulty === 4 ? "hard" : "impossible";
-    const compatible = ENERGY_MODIFIERS.filter((item) => !item.compatibleDifficulties || item.compatibleDifficulties.includes(difficulty));
-    const start = Math.floor(Math.random() * Math.max(1, compatible.length));
-    const choices = Array.from({ length: Math.min(3, compatible.length) }, (_, index) => compatible[(start + index * 7) % compatible.length]!).filter(Boolean);
-    setVoteOptions(choices);
-    setVoteSeconds(voteDelaySeconds);
-    setVoteNotice("");
-    setVoteOpen(true);
-  }, [prompt.difficulty, voteDelaySeconds]);
-
-  const chooseVote = useCallback((index: number) => {
-    const winner = voteOptions[index];
-    if (!winner) return;
-    setPrompt((current) => ({ ...current, energy: winner.instruction }));
-    setVoteNotice(`Locked #${index + 1}: ${winner.shortLabel}`);
-    setVoteOpen(false);
-  }, [voteOptions]);
-
-  useEffect(() => {
-    if (!voteOpen) return;
-    if (voteSeconds <= 0) {
-      setVoteOpen(false);
-      setVoteNotice("No winner locked — original energy stays.");
-      return;
-    }
-    const timer = window.setTimeout(() => setVoteSeconds((value) => value - 1), 1_000);
-    return () => window.clearTimeout(timer);
-  }, [voteOpen, voteSeconds]);
+    setPlaybackError("");
+    audioRef.current?.pause();
+    if (await start()) setStage("recording");
+  }, [allowed, promptLoading, start]);
 
   const retake = useCallback(() => {
+    if (submissionInFlight.current) return;
     audioRef.current?.pause();
-    setPlaying(false);
+    reset();
     setTake((current) => current + 1);
+    setSubmitError(null);
+    setPlaybackError("");
     attemptIdRef.current = createId("attempt");
-    recorder.reset();
     setStage("prompt");
-  }, [recorder]);
+  }, [reset]);
 
   const nextPrompt = useCallback(async () => {
-    interactionStartedRef.current = true;
-    const fallback = () => mode === "daily" ? gamePrompt("classic", prompt.id) : packId ? gamePromptForPack(packId, prompt.id) : gamePrompt(mode, prompt.id.replace("-impossible", ""));
+    if (drawInFlight.current || submissionInFlight.current) return;
+    drawInFlight.current = true;
+    interactionStarted.current = true;
     setPromptLoading(true);
-    let next: Prompt;
+    setDrawError("");
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12_000);
     try {
-      const query = new URLSearchParams({ exclude: prompt.id.replace("-impossible", "") });
+      const query = new URLSearchParams({
+        maxRating: rating,
+        exclude: recentIds.current.join(","),
+        excludeEnergy: recentEnergyIds.current.join(","),
+      });
       if (packId) query.set("pack", packId);
       else if (mode === "impossible") query.set("pack", "impossible-energy");
       if (tier === "pro") query.set("includePro", "true");
-      const response = await fetch(`/api/prompts/random?${query.toString()}`, { cache: "no-store" });
-      const body = await response.json() as { data?: { prompt?: DeliveryPrompt; energy?: EnergyModifier; source?: "curated" | "database" | "trend" } };
-      if (!response.ok || !body.data?.prompt || !body.data.energy) throw new Error("Fresh prompt unavailable");
-      next = toGamePrompt(body.data.prompt, body.data.energy);
-      next.source = body.data.source === "trend" ? "trend" : "editorial";
-    } catch {
-      next = fallback();
+      let response = await fetch(`/api/prompts/random?${query}`, {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      type DrawResponse = {
+        data?: {
+          prompt?: DeliveryPrompt;
+          energy?: EnergyModifier;
+          source?: string;
+        };
+        error?: { code?: string; message?: string };
+      };
+      let body = (await response.json()) as DrawResponse;
+      let restartedDeck = false;
+      // A small safe pack can exhaust before the recent-history window does.
+      // Start a new deck, still excluding the current line and retaining every audience/pack gate.
+      if (
+        !response.ok &&
+        body.error?.code === "NO_PROMPTS" &&
+        recentIds.current.length > 1
+      ) {
+        query.set("exclude", prompt.id);
+        response = await fetch(`/api/prompts/random?${query}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        body = (await response.json()) as DrawResponse;
+        restartedDeck = true;
+      }
+      if (!response.ok || !body.data?.prompt || !body.data.energy)
+        throw new Error(
+          body.error?.message ??
+            "Could not draw another line. Your result is still here.",
+        );
+      const next = toGamePrompt(body.data.prompt, body.data.energy);
+      audioRef.current?.pause();
+      reset();
+      setPrompt(next);
+      setStage("prompt");
+      setTake(1);
+      setResult(null);
+      setDeliveryReference(null);
+      setSubmitError(null);
+      setVoteNotice("");
+      recentIds.current = [
+        ...(restartedDeck ? [prompt.id] : recentIds.current),
+        next.id,
+      ].slice(-8);
+      recentEnergyIds.current = [...recentEnergyIds.current, next.energyId!]
+        .filter(Boolean)
+        .slice(-4);
+      attemptIdRef.current = createId("attempt");
+      window.scrollTo({
+        top: 0,
+        behavior: reducedMotion ? "instant" : "smooth",
+      });
+    } catch (error) {
+      setDrawError(
+        error instanceof Error && error.name !== "AbortError"
+          ? error.message
+          : "The catalog took too long. Try another draw; your take is still here.",
+      );
     } finally {
+      clearTimeout(timeout);
+      drawInFlight.current = false;
       setPromptLoading(false);
     }
-    recorder.reset();
-    setPrompt(next);
-    setStage("prompt");
-    setTake(1);
-    setResult(null);
-    setDeliveryReference(null);
-    setSubmitError(null);
-    setElapsed(0);
-    attemptIdRef.current = createId("attempt");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [mode, packId, prompt.id, recorder, tier]);
+  }, [mode, packId, prompt.id, rating, reducedMotion, reset, tier]);
 
   const continuePlaying = useCallback(() => {
     if (mode === "challenge" && challengeReturnPath) {
+      reset();
       window.location.assign(challengeReturnPath);
       return;
     }
     if (mode === "daily" || mode === "challenge") {
+      reset();
       window.location.assign("/play");
       return;
     }
     return nextPrompt();
-  }, [challengeReturnPath, mode, nextPrompt]);
+  }, [challengeReturnPath, mode, nextPrompt, reset]);
 
+  const openVote = useCallback(() => {
+    if (!allowed || promptLoading) return;
+    const source = getPromptById(prompt.id);
+    const compatible = ENERGY_MODIFIERS.filter(
+      (item) => !source || isEnergyCompatible(source, item),
+    );
+    const offset = Math.floor(Math.random() * compatible.length);
+    setVoteOptions(
+      Array.from(
+        { length: Math.min(3, compatible.length) },
+        (_, i) => compatible[(offset + i) % compatible.length]!,
+      ),
+    );
+    setVoteSeconds(voteDelaySeconds);
+    setVoteNotice("");
+    setVoteOpen(true);
+  }, [allowed, prompt.id, promptLoading, voteDelaySeconds]);
+  const chooseVote = useCallback(
+    (index: number) => {
+      const winner = voteOptions[index];
+      if (!winner) return;
+      setPrompt((current) => ({
+        ...current,
+        energy: winner.instruction,
+        energyId: winner.id,
+        directionLabel: winner.shortLabel,
+      }));
+      setVoteNotice(`Host locked #${index + 1}: ${winner.shortLabel}`);
+      setVoteOpen(false);
+    },
+    [voteOptions],
+  );
+  useEffect(() => {
+    if (!voteOpen) return;
+    if (voteSeconds <= 0) {
+      setVoteOpen(false);
+      setVoteNotice("No choice locked. The original direction stays.");
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setVoteSeconds((value) => value - 1),
+      1000,
+    );
+    return () => clearTimeout(timer);
+  }, [voteOpen, voteSeconds]);
   useEffect(() => {
     if (mode !== "stream") return;
     const onKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest("input, textarea, select, button, a, [contenteditable='true']")) return;
+      if (
+        (event.target as HTMLElement | null)?.closest(
+          "input,textarea,select,button,a,[contenteditable='true']",
+        )
+      )
+        return;
       if (voteOpen && ["1", "2", "3"].includes(event.key)) {
         event.preventDefault();
         chooseVote(Number(event.key) - 1);
       } else if (event.code === "Space") {
         event.preventDefault();
         if (stage === "prompt") void begin();
-        else if (stage === "recording") recorder.stop();
-      } else if (event.key.toLowerCase() === "r" && stage !== "recording" && stage !== "judging") {
-        event.preventDefault(); void nextPrompt();
+        else if (stage === "recording") stop();
+      } else if (
+        event.key.toLowerCase() === "r" &&
+        stage !== "recording" &&
+        stage !== "judging" &&
+        stage !== "review"
+      ) {
+        event.preventDefault();
+        void nextPrompt();
       } else if (event.key.toLowerCase() === "f") {
         event.preventDefault();
-        if (document.fullscreenElement) void document.exitFullscreen();
-        else void document.documentElement.requestFullscreen();
-      } else if (event.key.toLowerCase() === "v" && voteEnabled && stage === "prompt") {
+        void (
+          document.fullscreenElement
+            ? document.exitFullscreen()
+            : document.documentElement.requestFullscreen()
+        ).catch(() =>
+          setVoteNotice("Fullscreen is unavailable in this browser."),
+        );
+      } else if (
+        event.key.toLowerCase() === "v" &&
+        voteEnabled &&
+        stage === "prompt"
+      ) {
         event.preventDefault();
         if (voteOpen) setVoteOpen(false);
         else openVote();
@@ -219,171 +493,588 @@ export function GameExperience({ mode = "classic", initialPrompt, packId, dailyD
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [begin, chooseVote, mode, nextPrompt, openVote, recorder, stage, voteEnabled, voteOpen]);
+  }, [
+    begin,
+    chooseVote,
+    mode,
+    nextPrompt,
+    openVote,
+    stage,
+    stop,
+    voteEnabled,
+    voteOpen,
+  ]);
 
   async function submit() {
-    if (!recorder.audioBlob) return;
+    if (
+      !recorder.audioBlob ||
+      !recorder.canSubmit ||
+      !allowed ||
+      submissionInFlight.current ||
+      rehearsal
+    )
+      return;
+    submissionInFlight.current = true;
+    audioRef.current?.pause();
     setStage("judging");
     setSubmitError(null);
-    const formData = new FormData();
-    const extension = recorder.audioBlob.type.includes("wav") ? "wav" : recorder.audioBlob.type.includes("mp4") ? "m4a" : recorder.audioBlob.type.includes("ogg") ? "ogg" : "webm";
-    formData.append("audio", recorder.audioBlob, `delivery.${extension}`);
-    formData.append("promptId", prompt.id);
-    formData.append("line", prompt.line);
-    formData.append("energy", prompt.energy);
-    formData.append("category", prompt.category);
-    formData.append("mode", mode);
-    formData.append("durationMs", String(recorder.durationMs));
-    formData.append("attemptId", attemptIdRef.current);
-    formData.append("isPublic", publicDefault ? "true" : "false");
-    if (mode === "daily" && dailyDate) formData.append("dailyDate", dailyDate);
-    if (mode === "daily" && dailyMarket) formData.append("dailyMarket", dailyMarket);
-    if (mode === "challenge" && challengeId) formData.append("challengeId", challengeId);
-    if (mode === "challenge" && challengeToken) formData.append("challengeToken", challengeToken);
-
+    const controller = new AbortController();
+    submitController.current = controller;
+    const timeout = window.setTimeout(() => controller.abort(), 65_000);
+    const form = new FormData();
+    form.append("audio", recorder.audioBlob, "delivery.wav");
+    form.append("promptId", prompt.id);
+    form.append("line", prompt.line);
+    form.append("energy", prompt.energy);
+    form.append("category", prompt.category);
+    form.append("mode", mode);
+    form.append("durationMs", String(recorder.durationMs));
+    form.append("attemptId", attemptIdRef.current);
+    form.append("isPublic", "false");
+    form.append("maxRating", rating);
+    if (mode === "daily" && dailyDate) form.append("dailyDate", dailyDate);
+    if (mode === "daily" && dailyMarket)
+      form.append("dailyMarket", dailyMarket);
+    if (mode === "challenge" && challengeId)
+      form.append("challengeId", challengeId);
+    if (mode === "challenge" && challengeToken)
+      form.append("challengeToken", challengeToken);
     try {
       const response = await fetch("/api/judge", {
         method: "POST",
-        body: formData,
+        body: form,
         headers: { "Idempotency-Key": attemptIdRef.current },
+        signal: controller.signal,
       });
-      const body = (await response.json()) as unknown;
-      if (!response.ok) {
-        const message = body && typeof body === "object" && "error" in body
-          ? typeof (body as { error?: unknown }).error === "object" && (body as { error?: { message?: unknown } }).error?.message
-            ? String((body as { error: { message: unknown } }).error.message)
-            : String((body as { error: unknown }).error)
-          : "The judge left the booth";
-        throw new Error(message);
-      }
+      const body = (await response.json()) as {
+        result?: unknown;
+        warning?: unknown;
+        delivery?: Partial<DeliveryReference>;
+        error?: { message?: string };
+      };
+      if (!response.ok)
+        throw new Error(
+          body.error?.message ??
+            "Judging is unavailable. Your recording is still here.",
+        );
       const judged = normalizeResult(body);
-      const responseMeta = body && typeof body === "object" ? body as { warning?: unknown; delivery?: unknown } : undefined;
-      setSubmitWarning(typeof responseMeta?.warning === "string" ? responseMeta.warning : undefined);
-      const delivery = responseMeta?.delivery && typeof responseMeta.delivery === "object"
-        ? responseMeta.delivery as Partial<DeliveryReference>
-        : undefined;
-      const normalizedDelivery: DeliveryReference | null = delivery && typeof delivery.persisted === "boolean"
-        ? {
-            id: typeof delivery.id === "string" ? delivery.id : null,
-            persisted: delivery.persisted,
-            visibility: delivery.visibility === "public" || delivery.visibility === "private" || delivery.visibility === "unlisted" ? delivery.visibility : undefined,
-            publishedAt: typeof delivery.publishedAt === "string" ? delivery.publishedAt : null,
-            dailyRanked: typeof delivery.dailyRanked === "boolean" ? delivery.dailyRanked : undefined,
-            dailyRank: typeof delivery.dailyRank === "number" && Number.isInteger(delivery.dailyRank) && delivery.dailyRank > 0 ? delivery.dailyRank : undefined,
-            dailyParticipants: typeof delivery.dailyParticipants === "number" && Number.isInteger(delivery.dailyParticipants) && delivery.dailyParticipants > 0 ? delivery.dailyParticipants : undefined,
-          }
-        : null;
-      setDeliveryReference(normalizedDelivery);
+      const delivery = body.delivery;
+      const reference: DeliveryReference | null =
+        delivery && typeof delivery.persisted === "boolean"
+          ? {
+              id: typeof delivery.id === "string" ? delivery.id : null,
+              persisted: delivery.persisted,
+              visibility: delivery.visibility ?? "private",
+              dailyRanked: delivery.dailyRanked,
+              dailyRank: delivery.dailyRank,
+              dailyParticipants: delivery.dailyParticipants,
+            }
+          : null;
+      setSubmitWarning(
+        typeof body.warning === "string" ? body.warning : undefined,
+      );
+      setDeliveryReference(reference);
       setResult(judged);
-      const historyItem: DeliveryHistoryItem = { ...judged, prompt, createdAt: new Date().toISOString(), audioUrl: recorder.audioUrl ?? undefined, visibility: normalizedDelivery?.visibility, dailyRanked: normalizedDelivery?.dailyRanked, dailyRank: normalizedDelivery?.dailyRank, dailyParticipants: normalizedDelivery?.dailyParticipants };
+      const historyItem: DeliveryHistoryItem = {
+        ...judged,
+        prompt,
+        createdAt: new Date().toISOString(),
+        visibility: reference?.visibility,
+        dailyRanked: reference?.dailyRanked,
+        dailyRank: reference?.dailyRank,
+        dailyParticipants: reference?.dailyParticipants,
+      };
       saveDelivery(historyItem);
-      if (normalizedDelivery?.persisted && authenticated) void refreshAccount();
+      if (reference?.persisted && authenticated) void refreshAccount();
       onJudged?.(judged);
       setStage("result");
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Judging failed. Your recording is still here.");
+      setSubmitError(
+        error instanceof Error && error.name !== "AbortError"
+          ? error.message
+          : "The request timed out. Your take is saved here. Retry uses the same receipt key, so a completed request is not scored twice.",
+      );
       setStage("review");
+    } finally {
+      clearTimeout(timeout);
+      submissionInFlight.current = false;
+      submitController.current = null;
     }
   }
 
-  function togglePlayback() {
-    if (!audioRef.current) return;
-    if (audioRef.current.paused) void audioRef.current.play();
-    else audioRef.current.pause();
+  function changeRating(next: ContentRating) {
+    if (stage !== "prompt") return;
+    interactionStarted.current = false;
+    if (mode === "stream") {
+      setHostRating(next);
+      setHostContentReady(true);
+      try {
+        sessionStorage.setItem("delivery.stream.contentRating", next);
+      } catch {
+        /* Local choice still works. */
+      }
+    } else updatePreferences({ contentRating: next });
+    setDrawError("");
   }
-
-  if (stage === "judging") return <JudgingLoader />;
-  if (stage === "result" && result) return <ResultScreen prompt={prompt} result={result} delivery={deliveryReference} audioBlob={recorder.audioBlob} warning={submitWarning} onNext={continuePlaying} onRetry={retake} canRetry={mode !== "daily" && mode !== "challenge"} nextLabel={mode === "challenge" && challengeReturnPath ? "View matchup" : mode === "daily" || mode === "challenge" ? "Play a fresh line" : "One more round"} cleanStage={cleanStage} />;
+  const contentControl = (
+    <ContentControl
+      value={rating}
+      onChange={changeRating}
+      compact
+      disabled={stage !== "prompt" || recorder.status === "requesting"}
+    />
+  );
+  if (!hostContentReady)
+    return (
+      <section className="game-experience panel-solid p-6">
+        <p className="mono-label text-acid">Host content check</p>
+        <h1 className="mt-3 text-3xl font-bold">
+          Choose what goes on your stage.
+        </h1>
+        <p className="my-5 text-sm leading-6 text-white/70">
+          This link requested Mature content. Confirm the adult setting on this
+          device, or choose Clean or Spicy.
+        </p>
+        {contentControl}
+      </section>
+    );
+  if (stage === "judging")
+    return <JudgingLoader audioBlob={recorder.audioBlob} />;
+  if (stage === "result" && result)
+    return (
+      <ResultScreen
+        mode={mode}
+        prompt={prompt}
+        result={result}
+        delivery={deliveryReference}
+        audioBlob={recorder.audioBlob}
+        audioUrl={recorder.audioUrl}
+        warning={submitWarning}
+        onNext={continuePlaying}
+        onRetry={retake}
+        canRetry={mode !== "daily" && mode !== "challenge"}
+        nextLabel={
+          mode === "challenge" && challengeReturnPath
+            ? "View matchup"
+            : mode === "daily" || mode === "challenge"
+              ? "Play a fresh line"
+              : "One more round"
+        }
+        cleanStage={cleanStage}
+        nextLoading={promptLoading}
+        nextError={drawError}
+      />
+    );
 
   return (
-    <section className="mx-auto w-full max-w-4xl pb-10">
-      <p className="sr-only" role="status" aria-live="polite">{stage === "recording" ? "Recording in progress" : stage === "review" ? "Recording stopped. Review your take." : "Ready to record"}</p>
-      {!cleanStage && <div className="mb-5 flex items-center justify-between lg:mb-3 2xl:mb-5">
-        <Link href="/" className="button-ghost min-h-9 px-2.5"><ChevronLeft className="size-4" /> Exit</Link>
-        <div className="flex items-center gap-2">
-          <span className="mono-label rounded-full border border-white/10 px-3 py-2 text-white/40">Take {take}</span>
-          <button onClick={() => toggleFavorite(prompt.id)} className={`grid size-9 place-items-center rounded-full border transition ${isFavorite ? "border-acid/40 bg-acid/10 text-acid" : "border-white/10 text-white/40 hover:text-white"}`} aria-label={isFavorite ? "Remove from favorites" : "Favorite this line"}>
-            <Bookmark className="size-4" fill={isFavorite ? "currentColor" : "none"} />
+    <section className="game-experience pb-5">
+      <p className="sr-only" role="status" aria-live="polite">
+        {stage === "recording"
+          ? "Recording in progress"
+          : stage === "review"
+            ? "Recording stopped. Review your take."
+            : "Ready to record"}
+      </p>
+      <div className="game-toolbar">
+        <div className="flex min-w-0 items-center gap-3">
+          {!cleanStage && (
+            <Link href="/" className="icon-button" aria-label="Exit to home">
+              <ChevronLeft className="size-4" />
+            </Link>
+          )}
+          <div>
+            <p className="mono-label text-white/60">
+              {mode === "stream"
+                ? "Host stage"
+                : mode === "daily"
+                  ? "Daily"
+                  : mode === "challenge"
+                    ? "Friend challenge"
+                    : mode === "impossible"
+                      ? "Impossible"
+                      : "Classic"}
+            </p>
+            <p className="text-sm font-bold">
+              Take {String(take).padStart(2, "0")}
+            </p>
+          </div>
+        </div>
+        <div className="game-progress" aria-label="Round progress">
+          <span data-active={stage === "prompt"}>Prepare</span>
+          <span data-active={stage === "recording"}>Record</span>
+          <span data-active={stage === "review"}>Review</span>
+        </div>
+        {!cleanStage && allowed && (
+          <button
+            onClick={() => toggleFavorite(prompt.id)}
+            className="icon-button hidden sm:inline-grid"
+            aria-label={
+              isFavorite ? "Remove from favorites" : "Favorite this line"
+            }
+            aria-pressed={isFavorite}
+          >
+            <Bookmark
+              className="size-4"
+              fill={isFavorite ? "currentColor" : "none"}
+            />
           </button>
-        </div>
-      </div>}
-
-      <AnimatePresence>
-        {mode === "stream" && voteEnabled && voteOpen && <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="mb-5 overflow-hidden rounded-2xl border border-electric/30 bg-electric/10 p-4"><div className="flex items-center justify-between gap-3"><div><p className="mono-label text-electric">Energy vote · press the winner</p><p className="mt-1 text-xs font-bold text-white/55">Lock chat&apos;s pick with 1, 2, or 3.</p></div><span className="display-type text-3xl text-electric">{voteSeconds}</span></div><div className="mt-4 grid gap-2 sm:grid-cols-3">{voteOptions.map((option, index) => <button key={option.id} onClick={() => chooseVote(index)} className="rounded-xl border border-white/10 bg-black/25 p-3 text-left transition hover:border-electric/50"><span className="mono-label text-electric">{index + 1}</span><p className="mt-2 text-sm font-black leading-5">{option.shortLabel}</p></button>)}</div></motion.div>}
-      </AnimatePresence>
-      {mode === "stream" && voteNotice && <p role="status" className="mono-label mb-4 text-center text-electric">{voteNotice}</p>}
-
-      <div className="panel-solid relative overflow-hidden p-5 sm:p-8 lg:p-5 2xl:p-8">
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-electric via-acid to-hot" />
-        <div className="absolute -left-28 -top-28 size-72 rounded-full bg-electric/10 blur-3xl" />
-        <div className="relative flex items-center justify-between gap-4">
-          <span className="mono-label rounded-full bg-acid px-3 py-1.5 text-black">{prompt.source === "trend" ? "Trending now" : mode === "daily" ? "Daily line" : mode === "impossible" ? "Impossible energy" : "Your line"}</span>
-          {mode !== "daily" && mode !== "challenge" && stage === "prompt" && !cleanStage && (
-            <button onClick={() => void nextPrompt()} disabled={promptLoading} className="button-ghost min-h-9 px-3 disabled:opacity-50"><Shuffle className={`size-3.5 ${promptLoading ? "animate-spin" : ""}`} /> {promptLoading ? "Loading…" : "Reroll"}</button>
-          )}
-        </div>
-
-        <AnimatePresence mode="wait">
-          <motion.div key={prompt.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="relative py-10 text-center sm:py-14 lg:py-5 2xl:py-8">
-            <p className="mx-auto max-w-3xl text-balance text-[clamp(2.2rem,7vw,4.8rem)] font-black leading-[1.02] tracking-[-0.06em] text-white lg:text-[clamp(2.2rem,5vw,4.5rem)]">“{prompt.line}”</p>
-            <div className="mx-auto mt-8 inline-flex max-w-xl items-start gap-3 rounded-2xl border border-hot/25 bg-hot/10 px-4 py-3 text-left lg:mt-4 2xl:mt-8">
-              <Sparkles className="mt-0.5 size-4 shrink-0 text-hot" />
-              <div><p className="mono-label text-hot">Deliver it</p><p className="mt-1 text-sm font-bold text-white/80 sm:text-base">{prompt.energy}</p></div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-
-        <div className="relative border-t border-white/10 pt-7 lg:pt-4 2xl:pt-7">
-          {stage === "prompt" && (
-            <div className="text-center">
-              {recorder.error && <div role="alert" className="mx-auto mb-5 flex max-w-xl items-start gap-3 rounded-2xl border border-orange-400/25 bg-orange-400/10 p-4 text-left text-sm text-orange-100"><CircleAlert className="mt-0.5 size-4 shrink-0" /><span>{recorder.error}</span></div>}
-              <button onClick={begin} disabled={recorder.status === "requesting"} className="group relative mx-auto grid size-24 place-items-center rounded-full bg-acid text-black shadow-acid transition hover:scale-105 active:scale-95 disabled:opacity-50 lg:size-20 2xl:size-24" aria-label="Start recording">
-                <span className="absolute inset-0 animate-pulseRing rounded-full border border-acid" />
-                <Mic className="size-8 transition group-hover:scale-110" />
-              </button>
-              <p className="mono-label mt-5 text-white/55 lg:mt-3 2xl:mt-5">{recorder.status === "requesting" ? "Opening mic…" : "Tap to deliver"}</p>
-              <p className="mt-2 text-xs text-white/55">Your browser will ask for microphone access</p>
-            </div>
-          )}
-
-          {stage === "recording" && (
-            <div className="text-center">
-              <div className="mx-auto flex h-20 max-w-xl items-center justify-center gap-1 overflow-hidden" aria-label="Live microphone level">
-                {Array.from({ length: 31 }).map((_, index) => {
-                  const distance = Math.abs(index - 15) / 15;
-                  const height = Math.max(7, (18 + recorder.level * 62) * (1 - distance * 0.45) * (0.6 + ((index * 17) % 10) / 20));
-                  return <motion.span key={index} animate={{ height }} transition={{ duration: 0.08 }} className="w-1.5 rounded-full bg-gradient-to-t from-electric via-acid to-hot" />;
-                })}
-              </div>
-              <div className="mt-2 flex items-center justify-center gap-3"><span className="size-2 animate-pulse rounded-full bg-red-500" /><span className="font-mono text-2xl font-black tabular-nums">{formatTime(elapsed)}</span><span className="mono-label text-white/25">/ 0:20</span></div>
-              <p role="status" aria-live="polite" className={`mono-label mt-3 ${recorder.level > .82 ? "text-orange-300" : recorder.level > .12 ? "text-acid" : "text-white/55"}`}>{recorder.level > .82 ? "Clipping — back up a little" : recorder.level > .12 ? "Level good" : "A little quiet"}</p>
-              <button onClick={recorder.stop} disabled={elapsed < 350} className="mt-6 inline-grid size-20 place-items-center rounded-full bg-red-500 text-white shadow-[0_0_45px_rgba(239,68,68,.26)] transition hover:scale-105 active:scale-95 disabled:cursor-wait disabled:opacity-50" aria-label="Stop recording"><Square className="size-7" fill="currentColor" /></button>
-              <p className="mono-label mt-4 text-white/60">{elapsed < 350 ? "Give it one beat…" : "Tap when the art is complete"}</p>
-            </div>
-          )}
-
-          {stage === "review" && recorder.audioUrl && (
-            <div>
-              {submitError && <div role="alert" className="mb-5 flex items-start gap-3 rounded-2xl border border-orange-400/25 bg-orange-400/10 p-4 text-sm text-orange-100"><CircleAlert className="mt-0.5 size-4 shrink-0" /><div><p className="font-black">The judge fumbled the clipboard.</p><p className="mt-1 text-orange-100/65">{submitError}</p></div></div>}
-              <div className="flex flex-col items-center gap-5 sm:flex-row">
-                <button onClick={togglePlayback} className="grid size-16 shrink-0 place-items-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/15" aria-label={playing ? "Pause take" : "Play take"}>{playing ? <Pause className="size-6" fill="currentColor" /> : <Play className="ml-1 size-6" fill="currentColor" />}</button>
-                <div className="w-full flex-1">
-                  <div className="flex h-11 items-center gap-1 overflow-hidden rounded-xl bg-white/[0.04] px-3">
-                    {Array.from({ length: 44 }).map((_, index) => <span key={index} className={`w-1 rounded-full ${playing ? "bg-acid" : "bg-white/25"}`} style={{ height: `${8 + ((index * 23) % 27)}px` }} />)}
-                  </div>
-                  <div className="mt-2 flex justify-between"><span className="mono-label text-white/30">Take {take}</span><span className="font-mono text-xs font-bold text-white/35">{formatTime(recorder.durationMs)}</span></div>
-                </div>
-              </div>
-              <audio ref={audioRef} controls preload="metadata" src={recorder.audioUrl} muted={muted} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} className="mt-4 w-full" aria-label={`Playback controls for take ${take}`} />
-              <div className="mt-7 grid gap-3 sm:grid-cols-[1fr_auto]">
-                <button onClick={submit} className="button-primary min-h-14"><Check className="size-5" /> Judge this take</button>
-                <button onClick={retake} className="button-secondary min-h-14"><RotateCcw className="size-4" /> Retake</button>
-              </div>
-              <p className="mt-4 flex items-center justify-center gap-2 text-center text-xs text-white/50"><Headphones className="size-3.5" /> Quick headphone check recommended. Ego check optional.</p>
-            </div>
-          )}
-        </div>
+        )}
       </div>
+
+      {!allowed ? (
+        <div className="panel-solid p-6 sm:p-10">
+          <p className="mono-label text-acid">
+            {prompt.rating === "mature" ? "Mature · 18+" : "Spicy content"}
+          </p>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight">
+            This line is behind your filter.
+          </h1>
+          <p className="my-5 max-w-xl text-sm leading-6 text-white/70">
+            {mode === "daily"
+              ? "Today’s locked Daily uses a higher content setting. Its original line stays the same."
+              : "Choose a content setting before revealing this line, or play a clean round."}
+          </p>
+          {contentControl}
+          <Link href="/play" className="button-secondary mt-5">
+            Back to Classic
+          </Link>
+        </div>
+      ) : (
+        <>
+          {voteOpen && (
+            <div className="mb-4 rounded-xl border border-electric/30 bg-electric/10 p-5">
+              <div className="flex justify-between gap-4">
+                <div>
+                  <p className="mono-label text-electric">
+                    Host-operated direction choice · {voteSeconds}s
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-white/65">
+                    Read your chat and lock the winner here. This screen does
+                    not collect remote votes.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setVoteOpen(false)}
+                  className="icon-button"
+                  aria-label="Close direction choices"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                {voteOptions.map((option, index) => (
+                  <button
+                    key={option.id}
+                    onClick={() => chooseVote(index)}
+                    className="button-secondary justify-start text-left"
+                  >
+                    <span className="text-electric">{index + 1}.</span>
+                    {option.shortLabel}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {voteNotice && (
+            <p role="status" className="mb-3 text-sm text-electric">
+              {voteNotice}
+            </p>
+          )}
+          {stage === "prompt" && !cleanStage && (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              {contentControl}
+              {mode === "stream" && voteEnabled && (
+                <button onClick={openVote} className="button-secondary text-xs">
+                  Choose direction · V
+                </button>
+              )}
+            </div>
+          )}
+          <div className="cue-sheet" aria-busy={promptLoading}>
+            <div className="cue-grid">
+              <div className="line-cue">
+                <div className="mb-5 flex items-center justify-between gap-3">
+                  <span className="mono-label">01 / Say this line</span>
+                  {stage === "prompt" && !fixedRound && !cleanStage && (
+                    <button
+                      onClick={() => void nextPrompt()}
+                      disabled={promptLoading}
+                      className="button-ghost min-h-11 px-2 text-xs text-ink"
+                      aria-label="Reroll"
+                      title="Draw a different line and direction"
+                    >
+                      <Shuffle
+                        className={`size-4 ${promptLoading ? "animate-spin" : ""}`}
+                      />
+                      New line
+                    </button>
+                  )}
+                </div>
+                <h1 className="prompt-line" data-testid="prompt-line">
+                  “{prompt.line}”
+                </h1>
+              </div>
+              <div className="direction-cue">
+                <p className="mono-label mb-4">02 / Deliver it like this</p>
+                <h2>{prompt.directionLabel ?? "Commit to the direction"}</h2>
+                <p className="mt-3" data-testid="prompt-direction">
+                  {prompt.energy}
+                </p>
+              </div>
+            </div>
+            <div className="cue-meta">
+              <span>
+                {prompt.pack ?? "Delivery Originals"} ·{" "}
+                {CONTENT_LABELS[prompt.rating ?? "everyone"]}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Headphones className="size-3.5" /> Voice only · 20s max
+              </span>
+            </div>
+          </div>
+
+          <div className="recording-desk">
+            {recorder.error && stage === "prompt" && (
+              <div className="game-error mb-5" role="alert">
+                <p className="flex items-center gap-2 font-bold">
+                  <CircleAlert className="size-4" />
+                  Let’s get your mic back.
+                </p>
+                <p className="mt-1">{recorder.error}</p>
+              </div>
+            )}
+            {stage === "prompt" && (
+              <>
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="flex items-center gap-2 text-sm font-bold">
+                      <span className="inline-block size-2 rounded-full bg-white/30" />
+                      {recorder.status === "requesting"
+                        ? "Waiting for microphone permission"
+                        : "Your mic is off. The stage is yours."}
+                    </p>
+                    <p className="mt-2 max-w-md text-sm leading-6 text-white/65">
+                      Read it once. Find the bit.{" "}
+                      {rehearsal
+                        ? "Rehearsal stays on this device until you choose to send it."
+                        : "Record, listen back, then decide whether to send it."}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => void begin()}
+                    disabled={recorder.status === "requesting" || promptLoading}
+                    className="button-primary recording-control shrink-0"
+                    aria-label="Start recording"
+                  >
+                    {recorder.status === "requesting" ? (
+                      <LoaderCircle className="animate-spin" />
+                    ) : (
+                      <Mic />
+                    )}
+                    {recorder.status === "requesting"
+                      ? "Opening mic…"
+                      : rehearsal
+                        ? "Record rehearsal"
+                        : "Record your take"}
+                  </button>
+                </div>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setRehearsal((value) => !value)}
+                    className="button-ghost min-h-10 px-0 text-xs"
+                    aria-pressed={rehearsal}
+                  >
+                    <Headphones className="size-4" />
+                    {rehearsal
+                      ? "Private rehearsal on"
+                      : "Try a private rehearsal"}
+                  </button>
+                  {recorder.status === "requesting" ? (
+                    <button
+                      onClick={reset}
+                      className="button-ghost min-h-10 text-xs"
+                    >
+                      Cancel permission request
+                    </button>
+                  ) : (
+                    <p className="text-xs text-white/60">
+                      {rehearsal
+                        ? "No upload. No score. Just practice."
+                        : "Private by default. Retakes encouraged."}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+            {stage === "recording" && (
+              <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="flex items-center gap-2 text-sm font-bold">
+                      <span className="status-dot" />
+                      Recording {rehearsal ? "rehearsal" : "your take"}
+                    </p>
+                    <span className="recording-status text-sm">
+                      {formatTime(recorder.durationMs)}{" "}
+                      <span className="text-white/55">/ 0:20</span>
+                    </span>
+                  </div>
+                  <div
+                    className="mic-meter mt-2"
+                    role="meter"
+                    aria-label="Live microphone level"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(recorder.level * 100)}
+                  >
+                    {Array.from({ length: 35 }, (_, i) => (
+                      <i
+                        key={i}
+                        style={{
+                          height: Math.max(
+                            3,
+                            recorder.level * 52 * (0.45 + (i % 7) / 10),
+                          ),
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <p
+                    className={`text-xs ${recorder.isClipping ? "text-orange-200" : "text-white/65"}`}
+                  >
+                    {recorder.isClipping
+                      ? "Signal is clipping. Move a little farther from the mic."
+                      : recorder.level > 0.015
+                        ? "Mic is receiving audio. Quiet acting counts too."
+                        : "Listening for your voice…"}
+                  </p>
+                </div>
+                <button
+                  onClick={stop}
+                  className="button-primary recording-control"
+                  aria-label="Stop recording"
+                >
+                  <Square fill="currentColor" />
+                  Stop recording
+                </button>
+              </div>
+            )}
+            {stage === "review" && recorder.audioUrl && (
+              <>
+                {submitError && (
+                  <div className="game-error mb-5" role="alert">
+                    <p className="font-bold">Your take is safe on this page.</p>
+                    <p className="mt-1">{submitError}</p>
+                    <p className="mt-2">
+                      Retry sends this same take. Download it before closing the
+                      page.
+                    </p>
+                  </div>
+                )}
+                {(recorder.warning || !recorder.canSubmit) && (
+                  <div role="status" className="game-note mb-4">
+                    {recorder.warning && <p>{recorder.warning}</p>}
+                    {!recorder.canSubmit && <p>{recorder.qualityMessage}</p>}
+                  </div>
+                )}
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-lg font-bold tracking-tight">
+                      {rehearsal
+                        ? "No audience. Just you and the bit."
+                        : "Listen back. Own the delivery."}
+                    </p>
+                    <p className="mt-1 text-xs text-white/65">
+                      Take {take} · {formatTime(recorder.durationMs)} · Stored
+                      on this device
+                    </p>
+                  </div>
+                  <button
+                    onClick={() =>
+                      recorder.audioBlob &&
+                      downloadBlob(
+                        recorder.audioBlob,
+                        `delivery-take-${take}.wav`,
+                      )
+                    }
+                    className="button-ghost px-2 text-xs"
+                  >
+                    <Download className="size-4" />
+                    Save take
+                  </button>
+                </div>
+                <audio
+                  ref={audioRef}
+                  controls
+                  preload="metadata"
+                  src={recorder.audioUrl}
+                  muted={muted}
+                  aria-label={`Playback controls for take ${take}`}
+                  onError={() =>
+                    setPlaybackError(
+                      "Playback failed in this browser. Save your WAV take, or record again.",
+                    )
+                  }
+                />
+                {muted && (
+                  <button
+                    type="button"
+                    onClick={() => updatePreferences({ muted: false })}
+                    className="button-ghost mt-2 px-0 text-xs"
+                  >
+                    <VolumeX className="size-4" />
+                    Playback is muted · Unmute this device
+                  </button>
+                )}
+                {playbackError && (
+                  <p role="alert" className="mt-2 text-sm text-orange-200">
+                    {playbackError}
+                  </p>
+                )}
+                <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
+                  {rehearsal ? (
+                    <button
+                      onClick={() => setRehearsal(false)}
+                      disabled={!recorder.canSubmit}
+                      className="button-primary min-h-12"
+                    >
+                      <Check className="size-4" />
+                      Ready for judgment
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => void submit()}
+                      disabled={!recorder.canSubmit}
+                      className="button-primary min-h-12"
+                    >
+                      <Check className="size-4" />
+                      {submitError ? "Retry judgment" : "Judge this take"}
+                    </button>
+                  )}
+                  <button
+                    onClick={retake}
+                    className="button-secondary min-h-12"
+                  >
+                    <RotateCcw className="size-4" />
+                    Retake
+                  </button>
+                </div>
+                <p className="mt-3 text-center text-xs leading-5 text-white/65">
+                  {rehearsal
+                    ? "Nothing has left your device. You can keep rehearsing."
+                    : "Judge this take sends your audio for AI processing. It does not publish it."}
+                </p>
+              </>
+            )}
+          </div>
+        </>
+      )}
+      {drawError && (
+        <p className="game-error mt-4" role="alert">
+          {drawError}
+        </p>
+      )}
     </section>
   );
 }

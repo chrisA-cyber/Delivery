@@ -1,163 +1,246 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, AudioWaveform, Flame, Gamepad2, Radio, Share2, Sparkles, Trophy, Users } from "lucide-react";
+import {
+  ArrowRight,
+  AudioLines,
+  CalendarDays,
+  Headphones,
+  Radio,
+  Users,
+} from "lucide-react";
 import { HeroDemo } from "@/components/landing/hero-demo";
-import { LandingFeed } from "@/components/landing/landing-feed";
-import { ResultTicker } from "@/components/landing/result-ticker";
 import { SiteFooter } from "@/components/shell/site-footer";
 
 export const metadata: Metadata = {
-  title: "Delivery — Say the line. Get judged.",
+  title: "Delivery — Terrible lines. Incredible commitment.",
 };
-
-const modes = [
-  { href: "/daily", title: "Daily Drop", label: "Same line. Whole internet.", icon: Flame, accent: "text-orange-400", glow: "bg-orange-400/10" },
-  { href: "/challenge", title: "Friend Fight", label: "Pick their poison.", icon: Users, accent: "text-hot", glow: "bg-hot/10" },
-  { href: "/endless", title: "Hot Streak", label: "Stop only when the aura dies.", icon: Trophy, accent: "text-acid", glow: "bg-acid/10" },
-  { href: "/stream", title: "Stream Mode", label: "Big type. Chat chaos. No dead air.", icon: Radio, accent: "text-electric", glow: "bg-electric/10" },
+const ways = [
+  {
+    href: "/daily",
+    icon: CalendarDays,
+    number: "01",
+    title: "The Daily",
+    copy: "One line. One direction. Everyone gets the same assignment. Your first signed-in score counts.",
+  },
+  {
+    href: "/challenge",
+    icon: Users,
+    number: "02",
+    title: "Make it personal",
+    copy: "Choose a line and direction for a friend. Send a challenge. Let the performances settle it.",
+  },
+  {
+    href: "/stream",
+    icon: Radio,
+    number: "03",
+    title: "Take it on stream",
+    copy: "A host-operated stage with big prompts and keyboard controls. Clean content starts on. Available with Pro.",
+  },
 ];
-
 export default function HomePage() {
   return (
     <>
       <main>
-        <section className="relative overflow-hidden px-4 pb-20 pt-28 sm:px-6 sm:pt-36 lg:min-h-[820px] lg:px-8 lg:pb-28 lg:pt-28">
-          <div className="pointer-events-none absolute inset-0 grid-fade opacity-60" />
-          <div className="pointer-events-none absolute left-[8%] top-36 size-48 rounded-full bg-acid/10 blur-3xl" />
-          <div className="relative mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-[1.08fr_.92fr]">
+        <section className="home-wrap home-hero">
+          <div className="home-grid">
             <div>
-              <div className="mb-7 inline-flex rotate-[-1.5deg] items-center gap-2 rounded-full border border-acid/25 bg-acid/10 px-3 py-2 text-acid">
-                <span className="relative flex size-2">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-acid opacity-75" />
-                  <span className="relative inline-flex size-2 rounded-full bg-acid" />
-                </span>
-                <span className="mono-label">Your mic is hot</span>
-              </div>
-              <h1 className="display-type max-w-[780px] text-[clamp(4rem,7vw,7rem)] text-white">
-                SAY THE LINE.<br />
-                <span className="text-gradient">GET JUDGED.</span>
-              </h1>
-              <p className="mt-7 max-w-xl text-lg font-medium leading-7 text-white/58 sm:text-xl sm:leading-8">
-                One line. One energy. One wildly overqualified AI critic. Give it everything or become content for everyone else.
+              <p className="mono-label mb-5 flex items-center gap-2 text-electric">
+                <AudioLines className="size-4" />
+                The voice performance game
               </p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <Link href="/play" className="button-primary min-h-14 px-7 text-sm">
-                  <AudioWaveform className="size-5" /> Play now — no account <ArrowRight className="size-4" />
-                </Link>
-                <Link href="#the-chaos" className="button-secondary min-h-14 px-7 text-sm">
-                  <Gamepad2 className="size-5" /> See the chaos
-                </Link>
-              </div>
-              <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-bold text-white/35">
-                <span>✓ 10-second setup</span>
-                <span>✓ Retakes allowed</span>
-                <span>✓ Dignity optional</span>
-              </div>
+              <h1 className="display-type home-headline">
+                Terrible lines.
+                <br />
+                <span className="text-acid">
+                  Incredible
+                  <br />
+                  commitment.
+                </span>
+              </h1>
+              <p className="mt-6 max-w-md text-base leading-7 text-white/70 sm:text-lg">
+                Get a ridiculous line. Sell the delivery. Face the verdict. Your
+                voice is the whole show.
+              </p>
+              <Link href="/play" className="button-primary mt-7 min-h-14 px-7">
+                <AudioLines className="size-5" />
+                Play Classic
+                <ArrowRight className="size-4" />
+              </Link>
+              <p className="mt-4 text-xs leading-6 text-white/60">
+                No account needed. Retakes encouraged. Private until you share.
+              </p>
             </div>
             <HeroDemo />
           </div>
         </section>
-
-        <ResultTicker />
-
-        <section className="px-4 py-24 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid gap-10 lg:grid-cols-[.78fr_1.22fr] lg:items-end">
-              <div>
-                <p className="mono-label text-acid">Three taps to fame</p>
-                <h2 className="display-type mt-4 text-5xl sm:text-7xl">NO RULEBOOK.<br />JUST COMMIT.</h2>
-              </div>
-              <p className="max-w-xl text-lg leading-8 text-white/50 lg:justify-self-end">
-                Delivery turns the thing your friends already do—making each other say ridiculous things—into a game with receipts.
-              </p>
-            </div>
-            <div className="mt-12 grid gap-4 md:grid-cols-3">
-              {[
-                ["01", "Get the line", "Fresh prompts, cursed modifiers, and exactly enough context to make a bad choice."],
-                ["02", "Perform it", "Record in-browser. Retake until it feels dangerous—or submit the first take like a legend."],
-                ["03", "Face judgment", "Get scored on commitment, comedy, accuracy, and chaos. Share the verdict, not your excuses."],
-              ].map(([number, title, description], index) => (
-                <article key={number} className="panel relative overflow-hidden p-6 sm:p-7">
-                  <span className="display-type absolute -right-2 -top-4 text-8xl text-white/[0.035]">{number}</span>
-                  <span className={`mono-label ${index === 0 ? "text-acid" : index === 1 ? "text-hot" : "text-electric"}`}>{number}</span>
-                  <h3 className="mt-10 text-2xl font-black tracking-[-0.04em]">{title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-white/50">{description}</p>
-                </article>
-              ))}
-            </div>
+        <div className="home-wrap">
+          <div className="hero-strip">
+            <span className="mono-label text-electric">
+              Your voice. Your interpretation.
+            </span>
+            <span className="mono-label">20 seconds per take</span>
+            <span className="mono-label">Zero camera pressure</span>
+            <span className="mono-label">Clean → Spicy → Mature 18+</span>
           </div>
+        </div>
+        <section className="home-wrap home-section" id="how-to-play">
+          <div className="mb-10 grid gap-5 md:grid-cols-2 md:items-end">
+            <h2 className="display-type text-5xl sm:text-7xl">
+              It’s all
+              <br />
+              in the delivery.
+            </h2>
+            <p className="max-w-md text-base leading-7 text-white/70 md:justify-self-end">
+              The line is only half the joke. Whisper the meltdown. Fight tears
+              during the victory speech. Mean every terrible word.
+            </p>
+          </div>
+          {[
+            [
+              "01",
+              "Read the room. Badly.",
+              "Your line comes with a playable direction. Take a breath, rehearse privately, and find your version of the bit.",
+            ],
+            [
+              "02",
+              "Give us the performance.",
+              "Record your voice in the browser. Listen back immediately. Keep it, or take another swing before you submit.",
+            ],
+            [
+              "03",
+              "Collect your consequences.",
+              "Get a verdict and a note for your next take. Try the same direction again, draw another line, or challenge a friend.",
+            ],
+          ].map(([n, title, copy]) => (
+            <article className="feature-row" key={n}>
+              <span className="display-type text-4xl text-acid">{n}</span>
+              <h3 className="text-xl font-bold tracking-tight sm:text-2xl">
+                {title}
+              </h3>
+              <p className="text-sm leading-7 text-white/70">{copy}</p>
+            </article>
+          ))}
         </section>
-
-        <section className="relative overflow-hidden border-y border-white/10 bg-[#0d0d0f] px-4 py-24 sm:px-6 lg:px-8">
-          <div className="absolute inset-0 grid-fade opacity-40" />
-          <div className="relative mx-auto max-w-7xl">
-            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+        <section className="border-y border-white/15 bg-[#20201d]">
+          <div className="home-wrap home-section">
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
               <div>
-                <p className="mono-label text-hot">Choose your chaos</p>
-                <h2 className="display-type mt-4 text-5xl sm:text-7xl">ONE MIC. SIX BAD IDEAS.</h2>
+                <p className="mono-label mb-3 text-hot">
+                  Six new packs. Many questionable choices.
+                </p>
+                <h2 className="display-type text-5xl sm:text-7xl">
+                  The group chat
+                  <br />
+                  has evidence.
+                </h2>
               </div>
-              <Link href="/discover" className="button-ghost self-start sm:self-auto">Browse every pack <ArrowRight className="size-4" /></Link>
+              <Link href="/discover" className="button-secondary">
+                Find your next line
+                <ArrowRight className="size-4" />
+              </Link>
             </div>
-            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {modes.map(({ href, title, label, icon: Icon, accent, glow }) => (
-                <Link key={href} href={href} className="panel group relative min-h-56 overflow-hidden p-5 transition duration-300 hover:-translate-y-1 hover:border-white/25">
-                  <div className={`absolute -right-10 -top-10 size-36 rounded-full ${glow} blur-3xl transition group-hover:scale-150`} />
-                  <Icon className={`size-6 ${accent}`} />
-                  <div className="absolute inset-x-5 bottom-5">
-                    <h3 className="text-2xl font-black tracking-[-0.045em]">{title}</h3>
-                    <p className="mt-2 text-sm leading-5 text-white/45">{label}</p>
-                    <span className="mt-5 inline-flex items-center gap-2 text-xs font-black text-white/75 group-hover:text-white">Enter mode <ArrowRight className="size-3.5 transition group-hover:translate-x-1" /></span>
-                  </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              {[
+                [
+                  "Public Apology",
+                  "Confessions and delusions. Somehow, the apology makes it worse.",
+                  "internet-originals",
+                  "bg-electric",
+                ],
+                [
+                  "Clip That",
+                  "Familiar phrases and streamer meltdowns. The microphone was definitely on.",
+                  "stream-gremlins",
+                  "bg-hot",
+                ],
+                [
+                  "Do Not Forward",
+                  "Voice notes with no plausible deniability. Keep the receipts.",
+                  "group-chat-evidence",
+                  "bg-acid",
+                ],
+              ].map(([name, copy, id, color]) => (
+                <Link
+                  key={id}
+                  href={`/discover/${id}`}
+                  className={`group rounded-2xl p-6 text-ink ${color}`}
+                >
+                  <p className="mono-label mb-12">Classic line pack</p>
+                  <h3 className="display-type text-4xl">{name}</h3>
+                  <p className="mt-3 text-sm leading-6">{copy}</p>
+                  <span className="mt-7 inline-flex min-h-11 items-center gap-2 text-xs font-bold">
+                    Open pack
+                    <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                  </span>
                 </Link>
               ))}
             </div>
+            <p className="mt-6 max-w-2xl text-sm leading-6 text-white/65">
+              Start Clean. Turn up to Spicy for sharper lines, or explicitly opt
+              in to Mature (18+) for profanity and adult jokes. Hosts get a
+              separate Clean default.
+            </p>
           </div>
         </section>
-
-        <section id="the-chaos" className="px-4 py-24 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-11 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-              <div>
-                <p className="mono-label text-acid">Fresh from the feed</p>
-                <h2 className="display-type mt-4 text-5xl sm:text-7xl">WATCH PEOPLE COMMIT.</h2>
-              </div>
-              <Link href="/feed" className="button-secondary">Open the feed <ArrowRight className="size-4" /></Link>
-            </div>
-            <LandingFeed />
+        <section className="home-wrap home-section">
+          <div className="mb-10">
+            <p className="mono-label mb-3 text-electric">
+              Bring someone into the bit
+            </p>
+            <h2 className="display-type text-5xl sm:text-7xl">
+              Your mic. More possibilities.
+            </h2>
           </div>
-        </section>
-
-        <section className="px-4 py-10 sm:px-6 lg:px-8">
-          <div className="relative mx-auto grid max-w-7xl overflow-hidden rounded-[32px] border border-electric/25 bg-electric p-7 text-white shadow-2xl sm:p-12 lg:grid-cols-[1fr_.65fr] lg:items-center">
-            <div className="absolute inset-0 grid-fade opacity-30" />
-            <div className="relative">
-              <div className="inline-flex items-center gap-2 rounded-full bg-black/20 px-3 py-2">
-                <Radio className="size-4" /> <span className="mono-label">Built for streamers</span>
-              </div>
-              <h2 className="display-type mt-6 text-5xl sm:text-7xl">ZERO DEAD AIR.<br />MAXIMUM CLIPS.</h2>
-              <p className="mt-5 max-w-xl text-base font-semibold leading-7 text-white/75">Full-screen prompts, keyboard controls, an on-screen energy vote, and clean browser-source views. Your next bit is already waiting.</p>
-              <Link href="/stream" className="button-primary mt-8">Set up stream mode <ArrowRight className="size-4" /></Link>
-            </div>
-            <div className="relative mt-10 lg:mt-0 lg:justify-self-end">
-              <div className="animate-float rounded-3xl border-4 border-black bg-[#111] p-5 shadow-[14px_14px_0_#caff33]">
-                <p className="mono-label text-hot">Chat chose</p>
-                <p className="mt-4 text-2xl font-black leading-tight">“Say it like your Wi‑Fi just developed free will.”</p>
-                <div className="mt-6 flex items-end gap-1">
-                  {Array.from({ length: 18 }).map((_, index) => <span key={index} className="w-1.5 rounded-full bg-acid" style={{ height: `${10 + ((index * 17) % 42)}px` }} />)}
+          <div className="grid gap-5 md:grid-cols-3">
+            {ways.map(({ href, icon: Icon, number, title, copy }) => (
+              <Link
+                href={href}
+                key={href}
+                className="panel group flex flex-col p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <Icon className="size-6 text-acid" />
+                  <span className="mono-label text-white/55">{number}</span>
                 </div>
-              </div>
-            </div>
+                <h3 className="mt-10 text-2xl font-bold tracking-tight">
+                  {title}
+                </h3>
+                <p className="mb-6 mt-3 flex-1 text-sm leading-6 text-white/70">
+                  {copy}
+                </p>
+                <span className="inline-flex min-h-11 items-center gap-2 text-xs font-bold">
+                  {title === "The Daily"
+                    ? "Play today’s line"
+                    : title === "Make it personal"
+                      ? "Create a challenge"
+                      : "Set up your stage"}
+                  <ArrowRight className="size-4" />
+                </span>
+              </Link>
+            ))}
           </div>
         </section>
-
-        <section className="px-4 py-28 text-center sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-4xl">
-            <Sparkles className="mx-auto size-8 text-hot" />
-            <h2 className="display-type mt-6 text-[clamp(3.4rem,9vw,7.8rem)]">YOUR GROUP CHAT<br />NEEDS THIS.</h2>
-            <p className="mx-auto mt-5 max-w-xl text-lg leading-7 text-white/50">No download. No tutorial. No reason to sound that confident—and yet.</p>
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Link href="/play" className="button-primary min-h-14 px-8"><AudioWaveform className="size-5" /> Take the mic</Link>
-              <Link href="/challenge" className="button-secondary min-h-14 px-8"><Share2 className="size-5" /> Challenge someone</Link>
+        <section className="home-wrap pb-16">
+          <div className="rounded-2xl bg-paper p-7 text-ink sm:p-12">
+            <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+              <div>
+                <Headphones className="mb-5 size-7" />
+                <h2 className="display-type text-5xl sm:text-7xl">
+                  Say it like
+                  <br />
+                  you mean it.
+                </h2>
+                <p className="mt-5 max-w-md text-sm leading-6 text-ink/70">
+                  One ridiculous line is a good place to start.
+                </p>
+              </div>
+              <Link
+                href="/play"
+                className="button-primary min-h-14 self-start px-7 md:self-end"
+              >
+                Take the mic
+                <ArrowRight className="size-4" />
+              </Link>
             </div>
           </div>
         </section>

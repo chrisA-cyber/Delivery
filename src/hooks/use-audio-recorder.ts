@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { encodeMonoWav, inspectTake, MAX_RECORDING_BYTES, MAX_RECORDING_MS, type TakeQuality } from "@/lib/audio-capture";
 
 export type RecorderStatus = "idle" | "requesting" | "ready" | "recording" | "stopped" | "error";
+export type RecordingStopReason = "user" | "limit" | "size-limit" | "interrupted" | "hidden";
 
 type RecorderSession = {
   context: AudioContext;
@@ -11,39 +13,19 @@ type RecorderSession = {
   silentGain: GainNode;
   frames: Float32Array[];
   sampleCount: number;
+  cleanup: () => void;
 };
 
-function encodeMonoWav(frames: Float32Array[], sampleCount: number, sampleRate: number) {
-  const bytesPerSample = 2;
-  const buffer = new ArrayBuffer(44 + sampleCount * bytesPerSample);
-  const view = new DataView(buffer);
-  const writeText = (offset: number, value: string) => {
-    for (let index = 0; index < value.length; index += 1) view.setUint8(offset + index, value.charCodeAt(index));
-  };
+function audioContextClass() {
+  return window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+}
 
-  writeText(0, "RIFF");
-  view.setUint32(4, 36 + sampleCount * bytesPerSample, true);
-  writeText(8, "WAVE");
-  writeText(12, "fmt ");
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, 1, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * bytesPerSample, true);
-  view.setUint16(32, bytesPerSample, true);
-  view.setUint16(34, 16, true);
-  writeText(36, "data");
-  view.setUint32(40, sampleCount * bytesPerSample, true);
-
-  let offset = 44;
-  for (const frame of frames) {
-    for (let index = 0; index < frame.length; index += 1) {
-      const sample = Math.max(-1, Math.min(1, frame[index] ?? 0));
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
-      offset += bytesPerSample;
-    }
-  }
-  return new Blob([buffer], { type: "audio/wav" });
+function microphoneError(cause: unknown) {
+  const name = cause && typeof cause === "object" && "name" in cause ? cause.name : "";
+  if (name === "NotAllowedError" || name === "SecurityError") return "Microphone access is blocked. Allow it in your browser settings, then try again.";
+  if (name === "NotFoundError" || name === "DevicesNotFoundError") return "No microphone was found. Connect a microphone, then try again.";
+  if (name === "NotReadableError" || name === "TrackStartError") return "Your microphone is unavailable. Check your device and close any app that is holding it, then try again.";
+  return "We could not open your microphone. Check your input device and try again.";
 }
 
 export function useAudioRecorder() {
@@ -52,169 +34,296 @@ export function useAudioRecorder() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [durationMs, setDurationMs] = useState(0);
   const [level, setLevel] = useState(0);
+  const [isClipping, setIsClipping] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const [warning, setWarning] = useState<string | null>(null);
+  const [quality, setQuality] = useState<TakeQuality>("empty");
+  const [qualityMessage, setQualityMessage] = useState<string | null>(null);
+  const [stopReason, setStopReason] = useState<RecordingStopReason | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const sessionRef = useRef<RecorderSession | null>(null);
+  const pendingContextRef = useRef<AudioContext | null>(null);
   const audioUrlRef = useRef<string | null>(null);
   const mountedRef = useRef(true);
   const permissionRequestRef = useRef(0);
+  const permissionPromiseRef = useRef<Promise<boolean> | null>(null);
+  const operationRef = useRef(0);
+  const startPendingRef = useRef(false);
+  const stopRef = useRef<(reason?: RecordingStopReason) => void>(() => undefined);
 
   const stopStream = useCallback(() => {
-    streamRef.current?.getTracks().forEach((track) => track.stop());
+    const stream = streamRef.current;
     streamRef.current = null;
+    stream?.getTracks().forEach((track) => track.stop());
   }, []);
 
-  const disposeSession = useCallback(async () => {
+  const closePendingContext = useCallback(() => {
+    const context = pendingContextRef.current;
+    pendingContextRef.current = null;
+    if (context && context.state !== "closed") void context.close().catch(() => undefined);
+  }, []);
+
+  const disposeSession = useCallback(() => {
     const session = sessionRef.current;
     if (!session) return;
-    session.processor.onaudioprocess = null;
-    session.source.disconnect();
-    session.processor.disconnect();
-    session.silentGain.disconnect();
     sessionRef.current = null;
-    if (session.context.state !== "closed") await session.context.close().catch(() => undefined);
-    if (mountedRef.current) setLevel(0);
+    session.cleanup();
+    session.processor.onaudioprocess = null;
+    for (const node of [session.source, session.processor, session.silentGain]) {
+      try { node.disconnect(); } catch { /* Already released by the browser. */ }
+    }
+    if (session.context.state !== "closed") void session.context.close().catch(() => undefined);
+    if (mountedRef.current) {
+      setLevel(0);
+      setIsClipping(false);
+    }
   }, []);
 
-  const requestPermission = useCallback(async () => {
-    const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!navigator.mediaDevices?.getUserMedia || !AudioContextClass) {
-      setError("This browser cannot record audio. Try the latest Chrome, Safari, Edge, or Firefox.");
+  const requestPermission = useCallback((): Promise<boolean> => {
+    if (streamRef.current?.getAudioTracks().some((track) => track.readyState === "live")) return Promise.resolve(true);
+    if (permissionPromiseRef.current) return permissionPromiseRef.current;
+    if (!navigator.mediaDevices?.getUserMedia || !audioContextClass()) {
+      setError("This browser cannot record audio. Try the latest Chrome, Safari, Edge, or Firefox on a secure page.");
       setStatus("error");
-      return false;
+      return Promise.resolve(false);
     }
     setStatus("requesting");
     setError(null);
     const requestToken = ++permissionRequestRef.current;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          sampleRate: 48_000,
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
-        video: false,
-      });
-      if (!mountedRef.current || permissionRequestRef.current !== requestToken) {
-        stream.getTracks().forEach((track) => track.stop());
+    const pending = (async () => {
+      // Keep even synchronous browser exceptions behind the promise reference.
+      await Promise.resolve();
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: { channelCount: 1, sampleRate: 48_000, echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+          video: false,
+        });
+        if (!mountedRef.current || permissionRequestRef.current !== requestToken) {
+          stream.getTracks().forEach((track) => track.stop());
+          return false;
+        }
+        if (!stream.getAudioTracks().some((track) => track.readyState === "live")) {
+          stream.getTracks().forEach((track) => track.stop());
+          throw new DOMException("No live audio track", "NotFoundError");
+        }
+        stopStream();
+        streamRef.current = stream;
+        setStatus("ready");
+        return true;
+      } catch (cause) {
+        if (!mountedRef.current || permissionRequestRef.current !== requestToken) return false;
+        setError(microphoneError(cause));
+        setStatus("error");
         return false;
+      } finally {
+        if (permissionRequestRef.current === requestToken) permissionPromiseRef.current = null;
       }
-      streamRef.current = stream;
-      setStatus("ready");
-      return true;
-    } catch (cause) {
-      if (!mountedRef.current || permissionRequestRef.current !== requestToken) return false;
-      const name = cause instanceof DOMException ? cause.name : "";
-      setError(name === "NotAllowedError" ? "Microphone access is blocked. Allow it in your browser settings, then try again." : "We could not reach your microphone. Check that another app is not using it.");
-      setStatus("error");
-      return false;
+    })();
+    permissionPromiseRef.current = pending;
+    return pending;
+  }, [stopStream]);
+
+  const finish = useCallback((reason: RecordingStopReason = "user") => {
+    operationRef.current += 1;
+    permissionRequestRef.current += 1;
+    permissionPromiseRef.current = null;
+    startPendingRef.current = false;
+    const session = sessionRef.current;
+    // Always release capture, even before the first audio frame.
+    disposeSession();
+    closePendingContext();
+    stopStream();
+    if (!mountedRef.current) return;
+    if (!session) {
+      setStatus(audioUrlRef.current ? "stopped" : "idle");
+      return;
     }
-  }, []);
+    setStopReason(reason);
+    setWarning(reason === "interrupted" ? "Your microphone was interrupted. The captured audio is saved here; replay it before submitting." : reason === "hidden" ? "Recording stopped when you left the page. Your captured audio is saved here." : reason === "limit" ? "The 20-second limit is up. Your take is ready to review." : reason === "size-limit" ? "The recording reached its file-size limit. Your take is saved here." : null);
+    const checked = inspectTake(session.frames, session.sampleCount, session.context.sampleRate);
+    setQuality(checked.quality);
+    setQualityMessage(checked.message);
+    setDurationMs(Math.round(session.sampleCount / session.context.sampleRate * 1_000));
+    if (session.sampleCount === 0) {
+      setWarning(null);
+      setError(checked.message);
+      setStatus("error");
+      return;
+    }
+    try {
+      const blob = encodeMonoWav(session.frames, session.sampleCount, session.context.sampleRate);
+      const nextUrl = URL.createObjectURL(blob);
+      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = nextUrl;
+      setAudioBlob(blob);
+      setAudioUrl(nextUrl);
+      setStatus("stopped");
+    } catch {
+      setError("The browser could not prepare playback. Please record another take.");
+      setStatus("error");
+    }
+  }, [closePendingContext, disposeSession, stopStream]);
+
+  useEffect(() => { stopRef.current = finish; }, [finish]);
 
   const start = useCallback(async () => {
-    let stream = streamRef.current;
-    if (!stream || stream.getTracks().every((track) => track.readyState === "ended")) {
-      const granted = await requestPermission();
-      if (!granted) return false;
-      stream = streamRef.current;
-    }
-    if (!stream) return false;
-
-    if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
-    audioUrlRef.current = null;
-    setAudioBlob(null);
-    setAudioUrl(null);
-    setDurationMs(0);
-
+    // Catch clicks arriving before React rerenders.
+    if (startPendingRef.current || sessionRef.current) return false;
+    startPendingRef.current = true;
+    const operationToken = ++operationRef.current;
+    let context: AudioContext | null = null;
     try {
-      const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      const granted = await requestPermission();
+      if (!granted || !mountedRef.current || operationRef.current !== operationToken) return false;
+      const stream = streamRef.current;
+      if (!stream) return false;
+      const AudioContextClass = audioContextClass();
       if (!AudioContextClass) throw new Error("AudioContext unavailable");
-      const context = new AudioContextClass({ latencyHint: "interactive" });
-      const captureToken = permissionRequestRef.current;
+      context = new AudioContextClass({ latencyHint: "interactive" });
+      pendingContextRef.current = context;
       await context.resume();
-      if (!mountedRef.current || permissionRequestRef.current !== captureToken || streamRef.current !== stream) {
-        await context.close().catch(() => undefined);
+      if (pendingContextRef.current === context) pendingContextRef.current = null;
+      if (!mountedRef.current || operationRef.current !== operationToken || streamRef.current !== stream) {
+        if (context.state !== "closed") void context.close().catch(() => undefined);
         return false;
       }
+      if (context.state !== "running" || stream.getAudioTracks().every((track) => track.readyState !== "live")) throw new Error("Microphone interrupted before recording");
       const source = context.createMediaStreamSource(stream);
       const processor = context.createScriptProcessor(4096, 1, 1);
       const silentGain = context.createGain();
       silentGain.gain.value = 0;
-      const session: RecorderSession = { context, source, processor, silentGain, frames: [], sampleCount: 0 };
+      const session: RecorderSession = { context, source, processor, silentGain, frames: [], sampleCount: 0, cleanup: () => undefined };
       sessionRef.current = session;
-
+      const durationSamples = Math.floor(context.sampleRate * MAX_RECORDING_MS / 1_000);
+      const sizeSamples = Math.floor((MAX_RECORDING_BYTES - 44) / 2);
+      const maxSamples = Math.min(durationSamples, sizeSamples);
       processor.onaudioprocess = (event) => {
         if (sessionRef.current !== session) return;
         const channel = event.inputBuffer.getChannelData(0);
-        const copy = new Float32Array(channel);
+        const copy = new Float32Array(channel.subarray(0, maxSamples - session.sampleCount));
         session.frames.push(copy);
         session.sampleCount += copy.length;
         let squareSum = 0;
         let peak = 0;
         for (const sample of copy) {
-          squareSum += sample * sample;
-          peak = Math.max(peak, Math.abs(sample));
+          const amplitude = Number.isFinite(sample) ? Math.min(1, Math.abs(sample)) : 0;
+          squareSum += amplitude * amplitude;
+          peak = Math.max(peak, amplitude);
         }
         const rms = Math.sqrt(squareSum / Math.max(1, copy.length));
         setLevel(Math.min(1, Math.max(peak, rms * 4.5)));
+        setIsClipping(peak >= 0.99);
+        setDurationMs(Math.round(session.sampleCount / session.context.sampleRate * 1_000));
+        if (session.sampleCount >= maxSamples) stopRef.current(sizeSamples < durationSamples ? "size-limit" : "limit");
       };
-
+      const interrupted = () => stopRef.current("interrupted");
+      let muteTimer: ReturnType<typeof setTimeout> | undefined;
+      const unmuted = () => { clearTimeout(muteTimer); muteTimer = undefined; };
+      // Allow a brief device glitch to recover without capturing a dead input
+      // indefinitely after a persistent OS-level mute.
+      const muted = () => {
+        if (muteTimer === undefined) muteTimer = setTimeout(interrupted, 1_000);
+      };
+      const contextChanged = () => { if (session.context.state !== "running") interrupted(); };
+      const visibilityChanged = () => { if (document.visibilityState === "hidden") stopRef.current("hidden"); };
+      const pageHidden = () => stopRef.current("hidden");
+      const hardStop = setTimeout(() => stopRef.current("limit"), MAX_RECORDING_MS);
+      const tracks = stream.getAudioTracks();
+      for (const track of tracks) {
+        track.addEventListener("ended", interrupted);
+        track.addEventListener("mute", muted);
+        track.addEventListener("unmute", unmuted);
+      }
+      context.addEventListener("statechange", contextChanged);
+      document.addEventListener("visibilitychange", visibilityChanged);
+      window.addEventListener("pagehide", pageHidden);
+      session.cleanup = () => {
+        clearTimeout(hardStop);
+        unmuted();
+        for (const track of tracks) {
+          track.removeEventListener("ended", interrupted);
+          track.removeEventListener("mute", muted);
+          track.removeEventListener("unmute", unmuted);
+        }
+        session.context.removeEventListener("statechange", contextChanged);
+        document.removeEventListener("visibilitychange", visibilityChanged);
+        window.removeEventListener("pagehide", pageHidden);
+      };
       source.connect(processor);
       processor.connect(silentGain);
       silentGain.connect(context.destination);
+      // Preserve the previous take while permission/startup can still fail.
+      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = null;
+      setAudioBlob(null);
+      setAudioUrl(null);
+      setDurationMs(0);
+      setLevel(0);
+      setIsClipping(false);
+      setQuality("empty");
+      setQualityMessage(null);
+      setWarning(null);
+      setStopReason(null);
+      setError(null);
       setStatus("recording");
+      if (tracks.some((track) => track.muted)) muted();
       return true;
     } catch {
-      await disposeSession();
+      if (pendingContextRef.current === context) pendingContextRef.current = null;
+      if (operationRef.current !== operationToken || !mountedRef.current) {
+        if (context && context.state !== "closed") void context.close().catch(() => undefined);
+        return false;
+      }
+      const contextOwnedBySession = sessionRef.current?.context === context;
+      disposeSession();
+      if (!contextOwnedBySession && context && context.state !== "closed") void context.close().catch(() => undefined);
       stopStream();
-      setError("Recording could not start. Refresh the page and try once more.");
+      setError("Recording could not start. Check your microphone and try again.");
       setStatus("error");
       return false;
+    } finally {
+      if (operationRef.current === operationToken) startPendingRef.current = false;
     }
   }, [disposeSession, requestPermission, stopStream]);
 
-  const stop = useCallback(() => {
-    const session = sessionRef.current;
-    if (!session) return;
-    const { frames, sampleCount, context } = session;
-    if (sampleCount < context.sampleRate * 0.25) return;
-    const blob = encodeMonoWav(frames, sampleCount, context.sampleRate);
-    const nextUrl = URL.createObjectURL(blob);
-    audioUrlRef.current = nextUrl;
-    setAudioBlob(blob);
-    setAudioUrl(nextUrl);
-    setDurationMs(Math.round(sampleCount / context.sampleRate * 1000));
-    void disposeSession();
-    stopStream();
-    setStatus("stopped");
-  }, [disposeSession, stopStream]);
-
+  const stop = useCallback(() => finish("user"), [finish]);
   const reset = useCallback(() => {
-    void disposeSession();
+    operationRef.current += 1;
     permissionRequestRef.current += 1;
+    permissionPromiseRef.current = null;
+    startPendingRef.current = false;
+    disposeSession();
+    closePendingContext();
     stopStream();
     if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
     audioUrlRef.current = null;
     setAudioBlob(null);
     setAudioUrl(null);
     setDurationMs(0);
+    setLevel(0);
+    setIsClipping(false);
     setError(null);
+    setWarning(null);
+    setQuality("empty");
+    setQualityMessage(null);
+    setStopReason(null);
     setStatus("idle");
-  }, [disposeSession, stopStream]);
+  }, [closePendingContext, disposeSession, stopStream]);
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      operationRef.current += 1;
       permissionRequestRef.current += 1;
-      void disposeSession();
+      permissionPromiseRef.current = null;
+      disposeSession();
+      closePendingContext();
       stopStream();
       if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
     };
-  }, [disposeSession, stopStream]);
+  }, [closePendingContext, disposeSession, stopStream]);
 
-  return { status, audioBlob, audioUrl, durationMs, level, error, requestPermission, start, stop, reset };
+  const canSubmit = Boolean(audioBlob) && (quality === "ready" || quality === "quiet");
+  return { status, audioBlob, audioUrl, durationMs, level, isClipping, error, warning, quality, qualityMessage, canSubmit, stopReason, requestPermission, start, stop, reset };
 }

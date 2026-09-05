@@ -5,13 +5,13 @@ set local search_path = public, extensions;
 
 select plan(49);
 
-select has_column('public', 'deliveries', 'daily_ranked');
-select has_table('public', 'daily_ranked_claims');
-select col_default_is('public', 'deliveries', 'daily_ranked', 'false');
-select col_not_null('public', 'deliveries', 'daily_ranked');
-select has_trigger('public', 'deliveries', 'deliveries_initialize_daily_rank');
-select has_trigger('public', 'delivery_scores', 'delivery_scores_assign_daily_rank');
-select has_function('public', 'assign_daily_rank_before_score', array[]::text[]);
+select has_column('public'::name, 'deliveries'::name, 'daily_ranked'::name, 'deliveries.daily_ranked exists');
+select has_table('public'::name, 'daily_ranked_claims'::name);
+select col_default_is('public'::name, 'deliveries'::name, 'daily_ranked'::name, 'false', 'column default remains compatible');
+select col_not_null('public'::name, 'deliveries'::name, 'daily_ranked'::name);
+select has_trigger('public'::name, 'deliveries'::name, 'deliveries_initialize_daily_rank'::name);
+select has_trigger('public'::name, 'delivery_scores'::name, 'delivery_scores_assign_daily_rank'::name);
+select has_function('public'::name, 'assign_daily_rank_before_score'::name, array[]::text[]);
 select ok(
   (select p.prosecdef from pg_proc p where p.oid = 'public.assign_daily_rank_before_score()'::regprocedure),
   'Daily rank assignment runs as a trusted trigger function'

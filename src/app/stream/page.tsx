@@ -7,5 +7,5 @@ import { ProGate } from "@/components/pricing/pro-gate";
 export const metadata: Metadata = { title: "Stream mode" };
 
 export default function StreamPage() {
-  return <PageShell eyebrow="Creator controls · zero dead air" title="Turn chat into a co-host." description="Big readable prompts, rapid keyboard controls, an on-screen energy vote, and a clean stage view built to create clips instead of setup time."><div className="mb-8 inline-flex items-center gap-2 rounded-full border border-electric/20 bg-electric/10 px-3 py-2 text-electric"><Keyboard className="size-4" /><span className="mono-label">OBS-friendly · 16:9 safe</span></div><ProGate feature="Stream Mode"><StreamSetup /></ProGate></PageShell>;
+  return <PageShell eyebrow="Stream Mode / Host operated" title="You run the room." description="Put Classic on stream with a readable stage, keyboard controls, and a direction vote you operate from your own chat or poll."><div className="mb-8 inline-flex items-center gap-2 rounded-lg border border-electric/25 bg-electric/5 px-3 py-2 text-electric"><Keyboard className="size-4" /><span className="mono-label">Screen capture + host hotkeys</span></div><ProGate feature="Stream Mode"><StreamSetup /></ProGate></PageShell>;
 }

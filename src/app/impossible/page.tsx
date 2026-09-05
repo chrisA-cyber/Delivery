@@ -8,8 +8,8 @@ export const metadata: Metadata = { title: "Impossible Energy" };
 
 export default function ImpossiblePage() {
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_50%_0%,rgba(255,76,200,.16),transparent_35rem)] px-3 pb-10 pt-24 sm:px-6 sm:pt-28 lg:pt-20">
-      <div className="mx-auto mb-6 flex max-w-4xl items-center gap-3 rounded-2xl border border-hot/25 bg-hot/10 p-3 text-hot sm:px-4"><Skull className="size-4" /><span className="mono-label">No sensible delivery exists. Make one.</span></div>
+    <main className="min-h-screen px-4 pb-16 pt-28 sm:px-6 sm:pt-32">
+      <div className="mx-auto mb-6 flex max-w-6xl items-start gap-3 rounded-xl border border-hot/30 bg-hot/5 p-4 text-hot"><Skull className="mt-0.5 size-4 shrink-0" /><div><p className="mono-label">Impossible Energy</p><p className="mt-2 text-sm leading-6 text-white/70">Harder lines and bigger emotional turns. No sensible delivery exists. Make one.</p></div></div>
       <ProGate feature="Impossible Energy"><GameExperience mode="impossible" initialPrompt={gamePrompt("impossible")} packId="impossible-energy" /></ProGate>
     </main>
   );

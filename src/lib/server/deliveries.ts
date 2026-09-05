@@ -2,7 +2,9 @@ import "server-only";
 
 import type { User } from "@supabase/supabase-js";
 
-import { ExternalServiceError } from "@/lib/server/api-error";
+import { AppError, ExternalServiceError } from "@/lib/server/api-error";
+import { MATURE_CONTENT_LABEL } from "@/lib/server/content-publication";
+import type { ContentRating } from "@/lib/content/types";
 import { isSupabaseAdminConfigured } from "@/lib/server/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -32,6 +34,7 @@ export interface PersistDeliveryInput {
   challengeId?: string;
   dailyDate?: string | null;
   dailyMarket?: string | null;
+  contentRating?: ContentRating;
   promptText: string;
   energy: string;
   mode: DeliveryMode;
@@ -129,7 +132,7 @@ export async function persistDelivery(
     duration_ms: input.durationMs ?? null,
     byte_size: input.audio.size,
     transcript: input.judgment.transcript,
-    moderation_labels: input.moderationLabels ?? [],
+    moderation_labels: [...new Set([...(input.moderationLabels ?? []), ...(input.contentRating === "mature" ? [MATURE_CONTENT_LABEL] : [])])],
   });
 
   if (insertError) {
@@ -148,7 +151,7 @@ export async function persistDelivery(
     confidence: null,
     headline: input.judgment.verdictTag.replaceAll("_", " ").slice(0, 80),
     verdict: input.judgment.verdict,
-    rubric_version: "delivery-voice-v1",
+    rubric_version: input.judgment.rubricVersion ?? "delivery-voice-v1",
     provider: input.judgment.source,
     model: input.judgment.model,
     evidence: {
@@ -156,6 +159,9 @@ export async function persistDelivery(
       mode: input.mode,
       highlights: input.judgment.highlights,
       coach_note: input.judgment.coachNote,
+      scoring_version: input.judgment.scoringVersion ?? "delivery-voice-v1",
+      ...(input.contentRating ? { content_rating: input.contentRating } : {}),
+      ...(input.judgment.transcription ? { transcription: input.judgment.transcription } : {}),
     },
     safety: {},
   });
@@ -214,6 +220,9 @@ export async function setDeliveryVisibility(
       p_user_id: userId,
     },
   );
+  if (error?.code === "42501" && /Mature recordings must stay private/.test(error.message ?? "")) {
+    throw new AppError("MATURE_PUBLICATION_UNAVAILABLE", "Mature takes stay private until Delivery’s public age and audience policy is finalized.", 403);
+  }
   if (error) throw new ExternalServiceError("Supabase publishing", { cause: error });
   const row = (Array.isArray(data) ? data[0] : data) as
     | { visibility?: "public" | "private"; published_at?: string | null }

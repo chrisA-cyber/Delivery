@@ -50,7 +50,7 @@ test("a guest can record, review, and receive a complete judgment", async ({ pag
   });
 
   await page.goto("/play", { waitUntil: "domcontentloaded" });
-  await expect(page.getByText("Tap to deliver", { exact: true })).toBeVisible();
+  await expect(page.getByText("Your mic is off. The stage is yours.", { exact: true })).toBeVisible();
 
   const recordButton = page.getByRole("button", { name: "Start recording" });
   const recordBounds = await recordButton.boundingBox();

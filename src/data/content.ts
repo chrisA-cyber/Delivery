@@ -1,7 +1,16 @@
+import { RECOGNIZABLE_PROMPTS } from "./recognizable-content";
+import { createSeededRandom, toUtcDateKey } from "../lib/content/hash";
 import {
-  createSeededRandom,
-  toUtcDateKey,
-} from "../lib/content/hash";
+  PACKS as LEGACY_PACKS,
+  PROMPTS as LEGACY_PROMPTS,
+  ENERGY_MODIFIERS as LEGACY_ENERGY,
+  getDailyPrompt as legacyDaily,
+} from "./legacy-content";
+import {
+  PROMPTS as V2_PROMPTS,
+  ENERGY_MODIFIERS as V2_ENERGY,
+  getDailyPrompt as v2Daily,
+} from "./classic-content-v2";
 import type {
   ContentPack,
   ContentRating,
@@ -9,13 +18,9 @@ import type {
   DeliveryPrompt,
   EnergyModifier,
   FavoritePromptRef,
-  PromptCategory,
-  PromptDifficulty,
   PromptQuery,
   RandomPromptOptions,
-  ScoringDimension,
 } from "../lib/content/types";
-
 export type {
   ContentPack,
   ContentRating,
@@ -30,474 +35,1236 @@ export type {
   ScoringDimension,
 } from "../lib/content/types";
 
+/** Active Step 1B catalog. Text changes receive fresh IDs; prior releases stay resolvable. */
+export const CATALOG_VERSION = "classic-content-v3";
 export const PACKS: readonly ContentPack[] = [
   {
     id: "internet-originals",
-    name: "Internet Originals",
-    eyebrow: "Free starter pack",
-    description: "Freshly minted posts, replies, and timeline emergencies.",
+    name: "Public Apology",
+    eyebrow: "Main character damage",
+    description:
+      "Confessions, delusions, and apologies that somehow make it worse.",
     access: "free",
-    categories: ["main-character", "brainrot"],
+    categories: ["main-character"],
     color: "#D7FF3F",
-    accent: "#15170E",
+    accent: "#121116",
     icon: "spark",
-    coverTone: "acid-lime",
+    coverTone: "internet-originals",
     sortOrder: 10,
     featured: true,
   },
   {
     id: "stream-gremlins",
-    name: "Stream Gremlins",
-    eyebrow: "Chat made you do it",
-    description: "Technical difficulties, suspicious confidence, and chat betrayal.",
+    name: "Clip That",
+    eyebrow: "Chat has the receipts",
+    description:
+      "Stream meltdowns, familiar phrases, and microphones that were definitely on.",
     access: "free",
     categories: ["streamer-mode"],
     color: "#A87CFF",
-    accent: "#100B1B",
+    accent: "#121116",
     icon: "live",
-    coverTone: "ultraviolet",
+    coverTone: "stream-gremlins",
     sortOrder: 20,
     featured: true,
   },
   {
-    id: "cinematic-overreaction",
-    name: "Cinematic Overreaction",
-    eyebrow: "No small emotions",
-    description: "Original blockbuster-scale drama for deeply ordinary situations.",
-    access: "free",
-    categories: ["cinema-coded", "main-character"],
-    color: "#FF5D73",
-    accent: "#1A090C",
-    icon: "clapper",
-    coverTone: "hot-coral",
-    sortOrder: 30,
-  },
-  {
-    id: "anime-adjacent",
-    name: "Anime Adjacent",
-    eyebrow: "Power level: inconvenient",
-    description: "Tournament arcs and transformations, without borrowing anyone else's script.",
-    access: "rotating",
-    categories: ["anime-energy"],
-    color: "#61E7FF",
-    accent: "#07161A",
-    icon: "burst",
-    coverTone: "electric-cyan",
-    sortOrder: 40,
-  },
-  {
     id: "gaming-comms",
-    name: "Gaming Comms",
-    eyebrow: "Absolutely calculated",
-    description: "Clutches, excuses, patch notes, and one teammate who is definitely muted.",
+    name: "Skill Issue",
+    eyebrow: "Your team heard that",
+    description:
+      "Failed clutches, hostile tutorials, and excuses with zero evidence.",
     access: "free",
     categories: ["gaming"],
     color: "#69F0AE",
-    accent: "#071811",
+    accent: "#121116",
     icon: "controller",
-    coverTone: "respawn-green",
-    sortOrder: 50,
+    coverTone: "gaming-comms",
+    sortOrder: 30,
+    featured: false,
   },
   {
     id: "group-chat-evidence",
-    name: "Group Chat Evidence",
-    eyebrow: "Screenshots are forever",
-    description: "Messages that should have stayed in drafts, now performed aloud.",
+    name: "Do Not Forward",
+    eyebrow: "The voice note stays here",
+    description:
+      "Private confessions and social disasters with no plausible deniability.",
     access: "free",
-    categories: ["group-chat", "brainrot"],
+    categories: ["group-chat"],
     color: "#FFB84D",
-    accent: "#1C1004",
+    accent: "#121116",
     icon: "bubble",
-    coverTone: "notification-orange",
-    sortOrder: 60,
-  },
-  {
-    id: "corporate-delusion",
-    name: "Corporate Delusion",
-    eyebrow: "Circle back dramatically",
-    description: "Meetings, metrics, and workplace theater with executive presence.",
-    access: "pro",
-    categories: ["workplace"],
-    color: "#7C9CFF",
-    accent: "#080E20",
-    icon: "briefcase",
-    coverTone: "synergy-blue",
-    sortOrder: 70,
+    coverTone: "group-chat-evidence",
+    sortOrder: 40,
+    featured: true,
   },
   {
     id: "romance-rejection",
-    name: "Romance & Rejection",
-    eyebrow: "Read at 2:14 AM",
-    description: "Flirting, fumbling, and emotionally literate damage control.",
+    name: "Down Catastrophic",
+    eyebrow: "Read. Regret. Repeat.",
+    description: "Flirting, bad dates, and dignity left on read.",
     access: "rotating",
     categories: ["romance"],
     color: "#FF78C8",
-    accent: "#1C0815",
+    accent: "#121116",
     icon: "heart-crack",
-    coverTone: "crush-pink",
-    sortOrder: 80,
-  },
-  {
-    id: "villain-internship",
-    name: "Villain Internship",
-    eyebrow: "Benefits not included",
-    description: "Menacing monologues for people still waiting on dental coverage.",
-    access: "pro",
-    categories: ["villain-era", "cinema-coded"],
-    color: "#D05CFF",
-    accent: "#140719",
-    icon: "mask",
-    coverTone: "ominous-purple",
-    sortOrder: 90,
-  },
-  {
-    id: "customer-service-boss-fight",
-    name: "Customer Service Boss Fight",
-    eyebrow: "Your call is important",
-    description: "Polite sentences carrying the weight of a thousand hold songs.",
-    access: "free",
-    categories: ["customer-service"],
-    color: "#FFD85A",
-    accent: "#1B1504",
-    icon: "headset",
-    coverTone: "hold-music-yellow",
-    sortOrder: 100,
-  },
-  {
-    id: "npc-malfunction",
-    name: "NPC Malfunction",
-    eyebrow: "Dialogue option missing",
-    description: "Tiny system errors, looping thoughts, and suspicious side quests.",
-    access: "pro",
-    categories: ["brainrot", "wildcard"],
-    color: "#72F1D1",
-    accent: "#061713",
-    icon: "glitch",
-    coverTone: "glitch-mint",
-    sortOrder: 110,
+    coverTone: "romance-rejection",
+    sortOrder: 50,
+    featured: false,
   },
   {
     id: "impossible-energy",
-    name: "Impossible Energy",
-    eyebrow: "Do not attempt calmly",
-    description: "Lines engineered for vocal whiplash and leaderboard chaos.",
+    name: "Final Boss Behavior",
+    eyebrow: "Pro: emotional whiplash",
+    description:
+      "Grand declarations for people who absolutely cannot back them up.",
     access: "pro",
     categories: ["wildcard"],
     color: "#FF7448",
-    accent: "#1D0B05",
+    accent: "#121116",
     icon: "warning",
-    coverTone: "hazard-orange",
-    sortOrder: 120,
-    featured: true,
+    coverTone: "impossible-energy",
+    sortOrder: 60,
+    featured: false,
   },
-] as const;
+];
 
 export const ENERGY_MODIFIERS: readonly EnergyModifier[] = [
-  { id: "defeated-final-boss", instruction: "Say it like a defeated final boss who still thinks the sequel is guaranteed.", shortLabel: "Defeated final boss", intensity: 4, tags: ["dramatic", "villain"] },
-  { id: "lying-to-police", instruction: "Say it like you're calmly explaining something extremely suspicious to the police.", shortLabel: "Totally innocent", intensity: 4, tags: ["nervous", "deadpan"] },
-  { id: "maximum-aura", instruction: "Say it with maximum aura and absolutely no need for approval.", shortLabel: "Maximum aura", intensity: 3, tags: ["confident", "cool"] },
-  { id: "voice-note-fourth-take", instruction: "Say it like this is the fourth take of a voice note you swear is casual.", shortLabel: "Casual voice note", intensity: 2, tags: ["awkward", "romance"] },
-  { id: "parents-asleep", instruction: "Whisper it like your parents are asleep but the plot cannot wait.", shortLabel: "Parents asleep", intensity: 3, tags: ["whisper", "urgent"] },
-  { id: "press-conference", instruction: "Deliver it at a press conference after the worst game of your career.", shortLabel: "Tough loss", intensity: 3, tags: ["sports", "defensive"] },
-  { id: "royal-decree", instruction: "Announce it as a royal decree to subjects who are barely listening.", shortLabel: "Royal decree", intensity: 4, tags: ["grand", "commanding"] },
-  { id: "customer-service-breaking", instruction: "Keep your customer-service voice while your spirit visibly leaves your body.", shortLabel: "Happy to help", intensity: 4, tags: ["polite", "unhinged"] },
-  { id: "documentary-narrator", instruction: "Narrate it like a nature documentary discovering a deeply confusing animal.", shortLabel: "Nature documentary", intensity: 2, tags: ["observational", "deadpan"] },
-  { id: "anime-powerup", instruction: "Begin composed, then power up through three entirely unnecessary levels.", shortLabel: "Three-stage power-up", intensity: 5, tags: ["anime", "escalating"] },
-  { id: "terrible-secret", instruction: "Confess it like a terrible secret that is actually just mildly embarrassing.", shortLabel: "Terrible secret", intensity: 3, tags: ["confessional", "dramatic"] },
-  { id: "airport-goodbye", instruction: "Say it through an airport goodbye scene with forty seconds left to board.", shortLabel: "Airport goodbye", intensity: 4, tags: ["romance", "urgent"] },
-  { id: "tutorial-npc", instruction: "Say it like a tutorial NPC repeating the hint for the seventh time.", shortLabel: "Tutorial NPC", intensity: 2, tags: ["gaming", "robotic"] },
-  { id: "microwave-mission-control", instruction: "Treat a microwave countdown like mission control during re-entry.", shortLabel: "Mission control", intensity: 4, tags: ["cinematic", "urgent"] },
-  { id: "one-percent-battery", instruction: "Say it with one percent battery and one final message to send.", shortLabel: "One percent", intensity: 3, tags: ["urgent", "tragic"] },
-  { id: "villain-performance-review", instruction: "Deliver it as a villain giving a disappointing quarterly performance review.", shortLabel: "Evil performance review", intensity: 3, tags: ["villain", "workplace"] },
-  { id: "group-chat-leak", instruction: "React like this private message was just posted to the main group chat.", shortLabel: "Wrong chat", intensity: 5, tags: ["panic", "social"] },
-  { id: "medieval-town-crier", instruction: "Project it like breaking news from a medieval town square.", shortLabel: "Hear ye", intensity: 4, tags: ["loud", "grand"] },
-  { id: "quietly-furious", instruction: "Say it with the terrifying calm of someone who has already sent the email.", shortLabel: "Quietly furious", intensity: 3, tags: ["controlled", "workplace"] },
-  { id: "award-speech", instruction: "Accept an award nobody knew existed and thank people who tried to stop you.", shortLabel: "Petty award speech", intensity: 4, tags: ["victorious", "petty"] },
-  { id: "conspiracy-whiteboard", instruction: "Explain it while mentally connecting red string across an enormous whiteboard.", shortLabel: "Red-string theory", intensity: 4, tags: ["paranoid", "escalating"] },
-  { id: "sleepover-whisper", instruction: "Whisper it during a sleepover right before everyone loses composure.", shortLabel: "Sleepover whisper", intensity: 2, tags: ["whisper", "comedy"] },
-  { id: "weather-emergency", instruction: "Report it like a weather emergency developing directly behind you.", shortLabel: "Breaking weather", intensity: 4, tags: ["broadcast", "urgent"] },
-  { id: "first-day-manager", instruction: "Say it like a first-day manager testing out their leadership voice.", shortLabel: "New manager voice", intensity: 2, tags: ["workplace", "awkward"] },
-  { id: "haunted-smart-speaker", instruction: "Speak like a haunted smart speaker that has learned one human emotion.", shortLabel: "Haunted assistant", intensity: 4, tags: ["robotic", "eerie"] },
-  { id: "sports-anime-commentator", instruction: "Commentate it like the next three seconds will decide the entire season.", shortLabel: "Season on the line", intensity: 5, tags: ["sports", "anime"] },
-  { id: "exhausted-superhero", instruction: "Say it like a superhero whose shift ended twenty minutes ago.", shortLabel: "Off-the-clock hero", intensity: 3, tags: ["cinematic", "tired"] },
-  { id: "bad-wifi-prophet", instruction: "Deliver it like a prophecy cutting in and out over terrible Wi-Fi.", shortLabel: "Buffering prophecy", intensity: 4, tags: ["glitch", "grand"] },
-  { id: "tiny-microphone", instruction: "Give a serious red-carpet interview into an impossibly tiny microphone.", shortLabel: "Tiny mic interview", intensity: 2, tags: ["interview", "deadpan"] },
-  { id: "cooking-show-disaster", instruction: "Host a cooking show while everything just off-camera is on fire.", shortLabel: "Kitchen is fine", intensity: 4, tags: ["controlled", "chaos"] },
-  { id: "final-voicemail", instruction: "Leave it as a final voicemail before entering an extremely ordinary meeting.", shortLabel: "Final voicemail", intensity: 3, tags: ["tragic", "workplace"] },
-  { id: "unearned-confidence", instruction: "Use the confidence of someone who read half the instructions.", shortLabel: "Read half the brief", intensity: 3, tags: ["confident", "comedy"] },
-  { id: "suspiciously-specific", instruction: "Insist this is purely hypothetical while getting suspiciously specific.", shortLabel: "Purely hypothetical", intensity: 3, tags: ["nervous", "specific"] },
-  { id: "dramatic-zoom", instruction: "Pause twice for dramatic camera zooms that do not exist.", shortLabel: "Invisible zooms", intensity: 3, tags: ["cinematic", "timing"] },
-  { id: "museum-audio-guide", instruction: "Describe it like a museum audio guide for a priceless cultural mistake.", shortLabel: "Historic mistake", intensity: 2, tags: ["formal", "deadpan"] },
-  { id: "rival-in-the-rain", instruction: "Address your lifelong rival in the rain after a wildly low-stakes disagreement.", shortLabel: "Rival in the rain", intensity: 5, tags: ["anime", "dramatic"] },
-  { id: "motivational-speaker", instruction: "Turn it into a motivational breakthrough for an audience of one confused person.", shortLabel: "Breakthrough seminar", intensity: 4, tags: ["inspiring", "grand"] },
-  { id: "office-heist", instruction: "Whisper it like you're coordinating a heist for the last office snack.", shortLabel: "Snack heist", intensity: 3, tags: ["whisper", "workplace"] },
-  { id: "fake-livestream-apology", instruction: "Deliver a livestream apology while carefully avoiding the actual issue.", shortLabel: "Apology adjacent", intensity: 3, tags: ["streamer", "deflecting"] },
-  { id: "overqualified-toddler", instruction: "Say it with the emotional regulation of a toddler and the vocabulary of a lawyer.", shortLabel: "Tiny attorney", intensity: 5, tags: ["chaos", "formal"] },
-  { id: "romcom-misunderstanding", instruction: "Reveal it as the misunderstanding that could have ended the movie an hour ago.", shortLabel: "Third-act misunderstanding", intensity: 4, tags: ["romance", "cinematic"] },
-  { id: "slow-elevator", instruction: "Fill a painfully slow elevator ride with unjustified intensity.", shortLabel: "Elevator tension", intensity: 3, tags: ["awkward", "dramatic"] },
-  { id: "boss-music", instruction: "Wait for imaginary boss music, then speak like the health bar just appeared.", shortLabel: "Health bar appeared", intensity: 5, tags: ["gaming", "villain"] },
-  { id: "low-budget-commercial", instruction: "Sell it in a local commercial with a budget of twelve dollars and a dream.", shortLabel: "Local commercial", intensity: 4, tags: ["sales", "comedy"] },
-  { id: "time-traveler", instruction: "Warn the present like a time traveler who cannot remember the important noun.", shortLabel: "Forgotten prophecy", intensity: 4, tags: ["confused", "urgent"] },
-  { id: "courtroom-objection", instruction: "Build toward an objection in a courtroom where nobody hired you.", shortLabel: "Unlicensed objection", intensity: 5, tags: ["formal", "escalating"] },
-  { id: "zen-chaos", instruction: "Maintain total inner peace while describing complete external catastrophe.", shortLabel: "Zen catastrophe", intensity: 4, tags: ["controlled", "chaos"] },
-  { id: "last-person-on-earth", instruction: "Say it like the last person on Earth who just heard a notification ping.", shortLabel: "Impossible notification", intensity: 4, tags: ["eerie", "cinematic"] },
-] as const;
-
-interface PromptSeed {
-  readonly id: string;
-  readonly line: string;
-  readonly tags: readonly string[];
-  readonly difficulty?: PromptDifficulty;
-  readonly rating?: ContentRating;
-  readonly scoringFocus?: readonly ScoringDimension[];
-  readonly isMimic?: boolean;
-}
-
-interface PromptSet {
-  readonly packId: string;
-  readonly category: PromptCategory;
-  readonly defaults?: {
-    readonly difficulty?: PromptDifficulty;
-    readonly rating?: ContentRating;
-    readonly scoringFocus?: readonly ScoringDimension[];
-  };
-  readonly prompts: readonly PromptSeed[];
-}
-
-const PROMPT_SETS: readonly PromptSet[] = [
   {
-    packId: "internet-originals",
+    id: "v2-confidence-tears",
+    shortLabel: "Winning. Barely.",
+    instruction:
+      "Sound outrageously confident while holding back tears; let one word wobble, then recover.",
+    intensity: 4,
+    tags: ["confident", "strained", "contrast"],
+  },
+  {
+    id: "v2-polite-fury",
+    shortLabel: "Whispered fury",
+    instruction:
+      "Whisper a furious outburst with immaculate politeness. Keep every word audible.",
+    intensity: 3,
+    tags: ["quiet", "whisper", "angry"],
+  },
+  {
+    id: "v2-sincere-confession",
+    shortLabel: "Painfully sincere",
+    instruction:
+      "Confess with total sincerity, as if this is the bravest thing you have ever admitted.",
+    intensity: 2,
+    tags: ["quiet", "sincere", "confessional"],
+  },
+  {
+    id: "v2-deadpan-evidence",
+    shortLabel: "Under oath",
+    instruction:
+      "Give flat, precise testimony. Pause before the most embarrassing detail; do not wink at the joke.",
+    intensity: 1,
+    tags: ["quiet", "deadpan", "timing"],
+  },
+  {
+    id: "v2-apology-smile",
+    shortLabel: "Sorry you noticed",
+    instruction:
+      "Start with a soft apology; become audibly proud halfway through, then pretend you did not.",
+    intensity: 3,
+    tags: ["apology", "contrast"],
+  },
+  {
+    id: "v3-hold-laugh",
+    shortLabel: "Absolutely serious",
+    instruction:
+      "Try not to laugh. Let one breath escape, then force the ending back into rigid seriousness.",
+    intensity: 3,
+    tags: ["restrained", "comedy", "multi-beat"],
+  },
+  {
+    id: "v3-last-voicemail",
+    shortLabel: "Please call back",
+    instruction:
+      "Leave a voicemail pretending everything is fine. Let the final few words give away how badly you need a call back.",
+    intensity: 3,
+    tags: ["confessional", "escalating", "multi-beat"],
+  },
+  {
+    id: "v3-press-conference",
+    shortLabel: "No further questions",
+    instruction:
+      "Answer a question you wish nobody had asked. Start defensive; finish congratulating yourself.",
+    intensity: 4,
+    tags: ["defensive", "confident", "multi-beat"],
+  },
+  {
+    id: "v3-soft-threat",
+    shortLabel: "Sweet little threat",
+    instruction:
+      "Use a warm, gentle voice. Let the final phrase turn cold, as if your patience has just run out.",
+    intensity: 2,
+    tags: ["quiet", "controlled", "villain", "multi-beat"],
+  },
+  {
+    id: "v2-fake-ad",
+    shortLabel: "Buy my disaster",
+    instruction:
+      "Pitch every word like an irresistible deal. Make the worst detail your big selling point.",
+    intensity: 4,
+    tags: ["sales", "confident"],
+  },
+  {
+    id: "v3-bedtime-catastrophe",
+    shortLabel: "Sleep tight",
+    instruction:
+      'Soothe someone back to sleep. Give the worst word the same gentle care as "sweet dreams."',
+    intensity: 1,
+    tags: ["quiet", "gentle"],
+  },
+  {
+    id: "v2-betrayed-teammate",
+    shortLabel: "You promised",
+    instruction:
+      "Speak to your most trusted teammate after a betrayal. Hurt first; outrage at the end.",
+    intensity: 4,
+    tags: ["hurt", "contrast"],
+  },
+  {
+    id: "v2-no-breathless-rush",
+    shortLabel: "Missed the mute",
+    instruction:
+      "Start casually, realize everyone can hear you, and finish in tightly controlled panic.",
+    intensity: 4,
+    tags: ["panic", "contrast"],
+  },
+  {
+    id: "v3-documentary-scandal",
+    shortLabel: "Rare behavior",
+    instruction:
+      "Describe this behavior with hushed scientific wonder. Sound grateful you lived long enough to witness it.",
+    intensity: 2,
+    tags: ["quiet", "wonder"],
+  },
+  {
+    id: "v2-villain-crack",
+    shortLabel: "Evil. Mostly.",
+    instruction:
+      "Begin with smooth villain menace, accidentally sound needy, then claw back your authority.",
+    intensity: 4,
+    tags: ["villain", "contrast"],
+  },
+  {
+    id: "v2-forbidden-whisper",
+    shortLabel: "Do not wake them",
+    instruction:
+      "Whisper an urgent secret to someone beside you. Be intense without raising your volume.",
+    intensity: 2,
+    tags: ["quiet", "whisper", "urgent"],
+  },
+  {
+    id: "v2-one-word-break",
+    shortLabel: "The word that broke you",
+    instruction:
+      "Keep a completely level voice until one important word; crack emotionally there, then go flat again.",
+    intensity: 3,
+    tags: ["quiet", "deadpan", "contrast"],
+  },
+  {
+    id: "v3-fake-casual",
+    shortLabel: "Obviously casual",
+    instruction:
+      "Try painfully hard to sound casual. Add a tiny nervous laugh, then pretend you never made it.",
+    intensity: 2,
+    tags: ["awkward", "restrained", "multi-beat"],
+  },
+  {
+    id: "v3-sports-final",
+    shortLabel: "Last seconds",
+    instruction:
+      "Call the final seconds of a championship. Tighten the pace, pause before the ending, then release the suspense.",
+    intensity: 5,
+    tags: ["broadcast", "escalating", "multi-beat"],
+  },
+  {
+    id: "v2-reverse-meltdown",
+    shortLabel: "Get it together",
+    instruction:
+      "Begin on the edge of a meltdown. Force your voice back into calm by the last few words.",
+    intensity: 4,
+    tags: ["contrast", "controlled"],
+  },
+  {
+    id: "v2-no-context-pride",
+    shortLabel: "Standing ovation",
+    instruction:
+      "Accept an award for this exact behavior. Sound moved, grateful, and completely unashamed.",
+    intensity: 3,
+    tags: ["proud", "sincere"],
+  },
+  {
+    id: "v2-quiet-winner",
+    shortLabel: "Already won",
+    instruction:
+      "Speak softly and slowly, with the certainty of someone who has already won. No raised voice.",
+    intensity: 1,
+    tags: ["quiet", "confident"],
+  },
+  {
+    id: "v3-horror-realization",
+    shortLabel: "Oh. Oh no.",
+    instruction:
+      "Begin with an ordinary observation. Pause as the meaning sinks in; finish in a clear, horrified whisper.",
+    intensity: 3,
+    tags: ["quiet", "eerie", "contrast"],
+  },
+  {
+    id: "v3-news-desk",
+    shortLabel: "Keep broadcasting",
+    instruction:
+      "Read the news with crisp professionalism. Let a laugh threaten one word, swallow it, and keep broadcasting.",
+    intensity: 3,
+    tags: ["broadcast", "restrained", "multi-beat"],
+  },
+  {
+    id: "v2-romantic-disaster",
+    shortLabel: "This is love",
+    instruction:
+      "Make it a tender declaration of love. Commit especially hard to the least romantic word.",
+    intensity: 2,
+    tags: ["gentle", "romance"],
+  },
+  {
+    id: "v2-wrong-room",
+    shortLabel: "Wrong audience",
+    instruction:
+      "Start with bold authority. Realize halfway through you are in the wrong room; finish anyway.",
+    intensity: 4,
+    tags: ["awkward", "contrast"],
+  },
+  {
+    id: "v2-tiny-argument",
+    shortLabel: "Losing the argument",
+    instruction:
+      "Try to sound reasonable while clearly losing an argument. Stress the detail nobody believes.",
+    intensity: 3,
+    tags: ["defensive", "timing"],
+  },
+  {
+    id: "v2-hero-last-stand",
+    shortLabel: "One last request",
+    instruction:
+      "Deliver a wounded hero’s final request. Keep the words clear and make the ending absurdly noble.",
+    intensity: 4,
+    tags: ["dramatic", "strained"],
+  },
+  {
+    id: "v2-smug-explanation",
+    shortLabel: "As I predicted",
+    instruction:
+      "Explain it with unbearable smugness. Treat the final detail as proof of your genius.",
+    intensity: 3,
+    tags: ["confident", "comedy"],
+  },
+  {
+    id: "v2-terrible-good-news",
+    shortLabel: "Great news, somehow",
+    instruction:
+      "Announce it as wonderful news. Let doubt flash through once, then double down on the celebration.",
+    intensity: 4,
+    tags: ["victorious", "contrast"],
+  },
+  {
+    id: "v2-voice-assistant",
+    shortLabel: "Human mode failed",
+    instruction:
+      "Use a smooth automated voice that briefly glitches into real embarrassment, then resets.",
+    intensity: 3,
+    tags: ["robotic", "contrast"],
+  },
+  {
+    id: "v3-bad-interrogation",
+    shortLabel: "You cannot prove it",
+    instruction:
+      "Sound calmly innocent. Rush the detail that could incriminate you, then slow down far too much.",
+    intensity: 3,
+    tags: ["nervous", "timing", "multi-beat"],
+  },
+  {
+    id: "v2-angry-gratitude",
+    shortLabel: "Thank you so much",
+    instruction:
+      "Sound intensely grateful through clenched frustration. Make the courtesy unmistakable.",
+    intensity: 3,
+    tags: ["polite", "angry"],
+  },
+  {
+    id: "v3-manual-serious",
+    shortLabel: "Read the manual",
+    instruction:
+      "Read this as a vital instruction from an appliance manual. Give one absurd word painfully precise emphasis.",
+    intensity: 2,
+    tags: ["quiet", "deadpan", "timing"],
+  },
+  {
+    id: "v2-awe-to-disgust",
+    shortLabel: "What a miracle",
+    instruction:
+      "Start in genuine wonder. Gradually realize this is disgusting; finish with defeated acceptance.",
+    intensity: 4,
+    tags: ["contrast", "disgust"],
+  },
+  {
+    id: "v2-tiny-emergency",
+    shortLabel: "Controlled emergency",
+    instruction:
+      "Brief someone on a crisis in a low, steady voice. Put urgency into the pace, not the volume.",
+    intensity: 2,
+    tags: ["quiet", "controlled", "urgent"],
+  },
+];
+
+export const ORIGINAL_PROMPTS: readonly DeliveryPrompt[] = [
+  {
+    id: "v2-favorite-child",
+    line: "I am my own emergency contact. We are both panicking.",
     category: "main-character",
-    defaults: { difficulty: "easy", rating: "everyone", scoringFocus: ["commitment", "comedy"] },
-    prompts: [
-      { id: "timeline-needs-me", line: "The timeline has been quiet. Unfortunately, I have arrived.", tags: ["timeline", "entrance"] },
-      { id: "aura-nonrefundable", line: "This aura is nonrefundable, store credit only.", tags: ["aura", "confidence"] },
-      { id: "plot-found-me", line: "I did not chase the plot. The plot found my location.", tags: ["main-character", "dramatic"] },
-      { id: "receipts-in-4k", line: "I brought receipts, timestamps, and a completely unnecessary slideshow.", tags: ["receipts", "petty"] },
-      { id: "peace-limited-edition", line: "I chose peace, but apparently it was a limited edition.", tags: ["chaos", "relatable"] },
-      { id: "offline-mysterious", line: "I went offline for six minutes to seem mysterious.", tags: ["online", "awkward"] },
-      { id: "algorithm-personally", line: "The algorithm and I are handling this privately.", tags: ["algorithm", "deadpan"] },
-      { id: "soft-launch-disaster", line: "This was supposed to be a soft launch, not a controlled demolition.", tags: ["launch", "chaos"], difficulty: "medium" },
-      { id: "lore-expensive", line: "Please respect my privacy while I make the lore more expensive.", tags: ["lore", "mysterious"] },
-      { id: "terms-of-serving", line: "By witnessing this, you agree to the terms of my serving.", tags: ["confidence", "legal"] },
-    ],
+    packIds: ["internet-originals"],
+    tags: ["main-character", "confession"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
   },
   {
-    packId: "stream-gremlins",
+    id: "v3-two-phone-calls",
+    line: "I faked a phone call to avoid someone. My phone rang. I answered both.",
+    category: "main-character",
+    packIds: ["internet-originals"],
+    tags: ["main-character", "boast"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-mirror-argument",
+    line: "I won an argument in the shower. I have called a press conference.",
+    category: "main-character",
+    packIds: ["internet-originals"],
+    tags: ["main-character", "confession"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-camera-relationship",
+    line: "I waved at a security camera. The guard waved back. I have to go there every day now.",
+    category: "main-character",
+    packIds: ["internet-originals"],
+    tags: ["main-character", "boast"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-fake-account",
+    line: "I made a fake account to defend myself. It got bullied into agreeing with them.",
+    category: "main-character",
+    packIds: ["internet-originals"],
+    tags: ["main-character", "confession"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-villain-budget",
+    line: "I cannot afford a villain era. I have to be a problem on public transport.",
+    category: "main-character",
+    packIds: ["internet-originals"],
+    tags: ["main-character", "boast"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-crying-hot",
+    line: "I checked the mirror while crying. The sadness can wait. I look incredible.",
+    category: "main-character",
+    packIds: ["internet-originals"],
+    tags: ["main-character", "confession"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-apology-sponsor",
+    line: "This apology is sponsored by the consequences of my own bullshit.",
+    category: "main-character",
+    packIds: ["internet-originals"],
+    tags: ["main-character", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-emotional-support-lie",
+    line: "I faked a British accent on a first date. We have been married six fucking years.",
+    category: "main-character",
+    packIds: ["internet-originals"],
+    tags: ["main-character", "confession"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-blocked-therapist",
+    line: "I blocked my therapist. She kept bringing up things I specifically paid her to hear.",
+    category: "main-character",
+    packIds: ["internet-originals"],
+    tags: ["main-character", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-banned-list",
+    line: "I told the bouncer I was on the list. It was the fucking banned list.",
+    category: "main-character",
+    packIds: ["internet-originals"],
+    tags: ["main-character", "confession"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-character-witness",
+    line: 'I asked for a character witness. My best friend said, "For the prosecution?" Fuck.',
+    category: "main-character",
+    packIds: ["internet-originals"],
+    tags: ["main-character", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-muted-scream",
+    line: "I have been screaming on mute for six minutes. The neighbors got the exclusive.",
     category: "streamer-mode",
-    defaults: { difficulty: "medium", rating: "everyone", scoringFocus: ["comedy", "chaos"] },
-    prompts: [
-      { id: "chat-be-normal", line: "Chat, be normal for ten seconds. This is a team objective.", tags: ["chat", "pleading"] },
-      { id: "lag-legal-team", line: "That was lag, and my legal team will be providing the frames.", tags: ["lag", "excuse"] },
-      { id: "clip-context", line: "Do not clip that without the context I have not invented yet.", tags: ["clip", "panic"] },
-      { id: "sponsor-saw-nothing", line: "If the sponsor asks, this segment ended three minutes ago.", tags: ["sponsor", "panic"] },
-      { id: "mods-close-door", line: "Mods, close the doors. Nobody leaves with this information.", tags: ["mods", "secret"] },
-      { id: "first-try-archive", line: "First try, if we define history as starting right now.", tags: ["gaming", "denial"] },
-      { id: "camera-froze-dignity", line: "My camera froze at the exact moment my dignity did.", tags: ["camera", "fail"] },
-      { id: "sub-goal-consequences", line: "We reached the sub goal, so consequences are now legally binding.", tags: ["sub-goal", "danger"] },
-      { id: "chat-voted-chaos", line: "I offered democracy, and chat voted for structural damage.", tags: ["poll", "chaos"], difficulty: "hard" },
-      { id: "technical-skill-issue", line: "We are experiencing technical difficulties, and the technology is me.", tags: ["technical", "self-own"] },
-    ],
+    packIds: ["stream-gremlins"],
+    tags: ["streamer-mode", "confession"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
   },
   {
-    packId: "cinematic-overreaction",
-    category: "cinema-coded",
-    defaults: { difficulty: "medium", rating: "everyone", scoringFocus: ["commitment", "accuracy"] },
-    prompts: [
-      { id: "parking-spot-destiny", line: "All my life prepared me for this parking spot.", tags: ["epic", "ordinary"] },
-      { id: "sandwich-betrayal", line: "You knew that sandwich was mine, and you chose history's darkest path.", tags: ["betrayal", "food"] },
-      { id: "umbrella-prophecy", line: "The forecast said rain. It said nothing about prophecy.", tags: ["weather", "prophecy"] },
-      { id: "group-project-return", line: "I survived the group project. Now the group project wants revenge.", tags: ["sequel", "school"] },
-      { id: "laundry-last-load", line: "If this is my final load of laundry, let it be remembered as warm.", tags: ["tragic", "ordinary"] },
-      { id: "keys-chosen-one", line: "The keys were in my pocket. I was the chosen one all along.", tags: ["reveal", "ordinary"] },
-      { id: "door-holds-grudge", line: "That door did not simply close. It held a grudge.", tags: ["suspense", "object"] },
-      { id: "train-left-poetry", line: "The train left without me, but with incredible visual symbolism.", tags: ["tragic", "cinematic"] },
-      { id: "snack-before-dawn", line: "We find the snack before dawn, or we do not return.", tags: ["quest", "food"] },
-      { id: "coupon-one-chance", line: "This coupon is expired, but so is my fear.", tags: ["heroic", "retail"], difficulty: "hard" },
-    ],
+    id: "v2-chat-dad",
+    line: "Chat, stop calling him Dad. He is here to fix the internet.",
+    category: "streamer-mode",
+    packIds: ["stream-gremlins"],
+    tags: ["streamer-mode", "boast"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
   },
   {
-    packId: "anime-adjacent",
-    category: "anime-energy",
-    defaults: { difficulty: "hard", rating: "everyone", scoringFocus: ["commitment", "chaos"] },
-    prompts: [
-      { id: "final-form-calendar", line: "You have interrupted my calendar's final form.", tags: ["power-up", "workplace"] },
-      { id: "friendship-password", line: "With friendship, focus, and the correct password, we can still win.", tags: ["friendship", "technology"] },
-      { id: "rival-coffee-order", line: "At last, rival. Our coffee orders shall decide everything.", tags: ["rival", "food"] },
-      { id: "forbidden-tab", line: "I opened the forbidden browser tab, and it opened something in me.", tags: ["transformation", "browser"] },
-      { id: "training-arc-stairs", line: "These stairs are not an obstacle. They are my training arc.", tags: ["training", "ordinary"] },
-      { id: "ancient-technique-nap", line: "Witness the ancient technique my ancestors called taking a nap.", tags: ["technique", "sleep"] },
-      { id: "power-level-email", line: "Your email has raised my power level beyond professional limits.", tags: ["power-up", "workplace"] },
-      { id: "season-finale-bus", line: "If I miss this bus, the season finale begins now.", tags: ["urgent", "transport"] },
-      { id: "mentor-grocery-aisle", line: "My mentor warned me this grocery aisle would test my resolve.", tags: ["mentor", "quest"] },
-      { id: "monologue-delivery", line: "Your mistake was giving me time to finish this monologue.", tags: ["monologue", "villain"], difficulty: "impossible" },
-    ],
+    id: "v3-skip-how-to-move",
+    line: 'I clicked "skip tutorial" and immediately searched "how to move."',
+    category: "streamer-mode",
+    packIds: ["stream-gremlins"],
+    tags: ["streamer-mode", "confession"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
   },
   {
-    packId: "gaming-comms",
+    id: "v2-sponsor-mom",
+    line: 'My mom asked what I do for work. I showed her the clip. She said, "Besides that."',
+    category: "streamer-mode",
+    packIds: ["stream-gremlins"],
+    tags: ["streamer-mode", "boast"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-clip-grandma",
+    line: "Who sent that clip to my grandma? She has started saying it at church.",
+    category: "streamer-mode",
+    packIds: ["stream-gremlins"],
+    tags: ["streamer-mode", "confession"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-stream-snore",
+    line: "I fell asleep on stream and gained viewers. The audience has made its position clear.",
+    category: "streamer-mode",
+    packIds: ["stream-gremlins"],
+    tags: ["streamer-mode", "boast"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-ban-me",
+    line: "Mods, ban me before I finish this sentence.",
+    category: "streamer-mode",
+    packIds: ["stream-gremlins"],
+    tags: ["streamer-mode", "confession"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-dentist-breedable",
+    line: 'Mute me. Mute me. Why is my dentist asking what "breedable" means?',
+    category: "streamer-mode",
+    packIds: ["stream-gremlins"],
+    tags: ["streamer-mode", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-sponsored-breakup",
+    line: "This breakup is sponsored. Use code ABANDONED for ten percent off my fucking mattress.",
+    category: "streamer-mode",
+    packIds: ["stream-gremlins"],
+    tags: ["streamer-mode", "confession"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-donation-confession",
+    line: "Thank you for the five dollars. I am not reading that fucking confession out loud.",
+    category: "streamer-mode",
+    packIds: ["stream-gremlins"],
+    tags: ["streamer-mode", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-clutch-camera",
+    line: "I turned the camera off to lock in. I was naked from the waist down and losing.",
+    category: "streamer-mode",
+    packIds: ["stream-gremlins"],
+    tags: ["streamer-mode", "confession"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-robot-sext",
+    line: "The donation robot just read my sext. It pronounced every fucking emoji.",
+    category: "streamer-mode",
+    packIds: ["stream-gremlins"],
+    tags: ["streamer-mode", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-loot-goblin",
+    line: "I did not abandon the team. I heard a chest.",
     category: "gaming",
-    defaults: { difficulty: "easy", rating: "everyone", scoringFocus: ["comedy", "accuracy"] },
-    prompts: [
-      { id: "strategic-falling", line: "I am not falling behind. I am creating a comeback narrative.", tags: ["comeback", "copium"] },
-      { id: "map-personal", line: "I know the map. The map simply does not know me.", tags: ["map", "excuse"] },
-      { id: "cooldown-three-business", line: "My ability is on cooldown for three to five business days.", tags: ["cooldown", "workplace"] },
-      { id: "loot-emotional", line: "That loot was not rare, but our connection was.", tags: ["loot", "romance"] },
-      { id: "ranked-spiritual", line: "This is no longer ranked. This is a spiritual evaluation.", tags: ["ranked", "dramatic"] },
-      { id: "patch-notes-me", line: "The patch notes did not mention what they did to me personally.", tags: ["patch", "betrayal"] },
-      { id: "inventory-full-heart", line: "My inventory is full, but my heart has one open slot.", tags: ["inventory", "romance"] },
-      { id: "respawn-confidence", line: "I will respawn with the exact same confidence and no new information.", tags: ["respawn", "confidence"] },
-      { id: "side-quest-manager", line: "I accepted one side quest and now I manage a small economy.", tags: ["quest", "escalation"] },
-      { id: "boss-fight-tutorial", line: "I skipped the tutorial because the boss deserved a fair chance.", tags: ["boss", "confidence"], difficulty: "medium" },
-    ],
+    packIds: ["gaming-comms"],
+    tags: ["gaming", "confession"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
   },
   {
-    packId: "group-chat-evidence",
+    id: "v2-friendly-fire",
+    line: "The enemy team invited me back. They said I helped more than their fifth player.",
+    category: "gaming",
+    packIds: ["gaming-comms"],
+    tags: ["gaming", "boast"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-boss-second-phase",
+    line: "The boss has a second phase. I have a bedtime.",
+    category: "gaming",
+    packIds: ["gaming-comms"],
+    tags: ["gaming", "confession"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-bot-custody",
+    line: "The practice bot sent me a friend request. I think it wants custody.",
+    category: "gaming",
+    packIds: ["gaming-comms"],
+    tags: ["gaming", "boast"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-voice-crack",
+    line: 'I said "watch this" and my voice cracked before my character died.',
+    category: "gaming",
+    packIds: ["gaming-comms"],
+    tags: ["gaming", "confession"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-ranked-breathing",
+    line: "Stop breathing into the mic. I cannot hear myself making excuses.",
+    category: "gaming",
+    packIds: ["gaming-comms"],
+    tags: ["gaming", "boast"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-single-player-lag",
+    line: "I blamed lag in a single-player game. Please let me finish lying.",
+    category: "gaming",
+    packIds: ["gaming-comms"],
+    tags: ["gaming", "confession"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-ranked-flirting",
+    line: 'I said "get fucked" to the boss. My date thought I was talking to them.',
+    category: "gaming",
+    packIds: ["gaming-comms"],
+    tags: ["gaming", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-healer-payment",
+    line: "I am the healer. Say please or die with your fucking principles.",
+    category: "gaming",
+    packIds: ["gaming-comms"],
+    tags: ["gaming", "confession"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-skill-funeral",
+    line: "I uninstalled out of respect for the people who made this shit.",
+    category: "gaming",
+    packIds: ["gaming-comms"],
+    tags: ["gaming", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-fall-damage",
+    line: "I survived the apocalypse and died walking down some fucking stairs.",
+    category: "gaming",
+    packIds: ["gaming-comms"],
+    tags: ["gaming", "confession"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-push-to-talk",
+    line: "I used push-to-talk to fart. I need to leave this server and start a new life.",
+    category: "gaming",
+    packIds: ["gaming-comms"],
+    tags: ["gaming", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-voice-note-podcast",
+    line: "That was not a voice note. That was a hostage situation with chapters.",
     category: "group-chat",
-    defaults: { difficulty: "easy", rating: "teen", scoringFocus: ["comedy", "chaos"] },
-    prompts: [
-      { id: "typing-three-hours", line: "I have been typing for three hours and the message is just 'never mind.'", tags: ["texting", "indecision"] },
-      { id: "plans-left-chat", line: "The plans have left the group chat and entered folklore.", tags: ["plans", "flaky"] },
-      { id: "screenshot-good-side", line: "If you screenshot this, please capture my good side.", tags: ["screenshot", "confidence"] },
-      { id: "paragraph-jumpscare", line: "I opened the chat and got hit by a paragraph jumpscare.", tags: ["paragraph", "panic"] },
-      { id: "mute-loving", line: "I muted everyone with love and personalized attention.", tags: ["mute", "boundaries"] },
-      { id: "reaction-emergency", line: "Someone reacted with a thumbs-up. We are in an emotional emergency.", tags: ["reaction", "overthinking"] },
-      { id: "brunch-constitutional", line: "This brunch decision now requires a constitutional convention.", tags: ["brunch", "plans"] },
-      { id: "delete-after-courage", line: "Delete this after reading, or before, if courage finds you.", tags: ["secret", "dramatic"] },
-      { id: "location-still-home", line: "My location says I am on the way because spiritually, I considered it.", tags: ["late", "flaky"] },
-      { id: "voice-note-podcast", line: "That was not a voice note. That was a limited podcast series.", tags: ["voice-note", "long"] },
-    ],
+    packIds: ["group-chat-evidence"],
+    tags: ["group-chat", "confession"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
   },
   {
-    packId: "corporate-delusion",
-    category: "workplace",
-    defaults: { difficulty: "medium", rating: "everyone", scoringFocus: ["accuracy", "comedy"] },
-    prompts: [
-      { id: "circle-back-sunset", line: "Let's circle back until the sun expands and takes us all.", tags: ["meeting", "corporate"] },
-      { id: "bandwidth-emotional", line: "I have bandwidth, but none of it is emotionally available.", tags: ["bandwidth", "boundaries"] },
-      { id: "deck-has-journey", line: "This deck has forty slides and a hero's journey.", tags: ["presentation", "epic"] },
-      { id: "quick-call-myth", line: "A quick call is a myth told to frighten new employees.", tags: ["meeting", "horror"] },
-      { id: "synergy-unlicensed", line: "The synergy is powerful, unlicensed, and moving toward the exits.", tags: ["synergy", "chaos"] },
-      { id: "action-item-sentient", line: "The action item has become sentient and assigned itself back to me.", tags: ["tasks", "sci-fi"] },
-      { id: "calendar-hostile", line: "My calendar is not full. It is actively hostile.", tags: ["calendar", "dramatic"] },
-      { id: "reply-all-event", line: "That reply-all was not an email. It was a live event.", tags: ["email", "disaster"] },
-      { id: "kpi-chose-violence", line: "The KPI woke up and chose violence against the entire quarter.", tags: ["metrics", "chaos"] },
-      { id: "promotion-side-quest", line: "I asked for a promotion and received a development side quest.", tags: ["career", "gaming"] },
-    ],
+    id: "v3-photo-audit",
+    line: "I liked their old photo, panicked, and liked twelve more. It is an audit now.",
+    category: "group-chat",
+    packIds: ["group-chat-evidence"],
+    tags: ["group-chat", "boast"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
   },
   {
-    packId: "romance-rejection",
+    id: "v2-reply-everyone",
+    line: 'I said "you too" when the dentist said "open wide." Neither of us recovered.',
+    category: "group-chat",
+    packIds: ["group-chat-evidence"],
+    tags: ["group-chat", "confession"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-birthday-without-me",
+    line: "I made a group chat for my birthday. They started planning without me.",
+    category: "group-chat",
+    packIds: ["group-chat-evidence"],
+    tags: ["group-chat", "boast"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-screenshot-option-two",
+    line: 'I sent them the screenshot of me asking how to reply to them. They said "option two."',
+    category: "group-chat",
+    packIds: ["group-chat-evidence"],
+    tags: ["group-chat", "confession"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-typing-hostage",
+    line: 'I have been typing for eleven minutes. The message is "okay."',
+    category: "group-chat",
+    packIds: ["group-chat-evidence"],
+    tags: ["group-chat", "boast"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-full-name-sound-effect",
+    line: "Do not play that voice note out loud. I used your full name in the sound effect.",
+    category: "group-chat",
+    packIds: ["group-chat-evidence"],
+    tags: ["group-chat", "confession"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-toilet-unmute",
+    line: "I unmuted to flush so they would know I was done with this conversation.",
+    category: "group-chat",
+    packIds: ["group-chat-evidence"],
+    tags: ["group-chat", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-subpoena-award",
+    line: "If this chat gets subpoenaed, I was hacked. If it wins an award, I wrote the dick joke.",
+    category: "group-chat",
+    packIds: ["group-chat-evidence"],
+    tags: ["group-chat", "confession"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-nude-printer",
+    line: "I tried to send a nude and accidentally selected the printer. Dad is downstairs.",
+    category: "group-chat",
+    packIds: ["group-chat-evidence"],
+    tags: ["group-chat", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-poop-authorship",
+    line: "Someone used my bathroom and left a crime scene. I live alone.",
+    category: "group-chat",
+    packIds: ["group-chat-evidence"],
+    tags: ["group-chat", "confession"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-autocorrect-funeral",
+    line: 'Autocorrect changed "condolences" to "congratulations." I sent a fucking balloon.',
+    category: "group-chat",
+    packIds: ["group-chat-evidence"],
+    tags: ["group-chat", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-date-handshake",
+    line: "They leaned in for a kiss. I panicked and said my full legal name.",
     category: "romance",
-    defaults: { difficulty: "medium", rating: "teen", scoringFocus: ["commitment", "comedy"] },
-    prompts: [
-      { id: "chemistry-wifi", line: "We had chemistry, but apparently the connection was guest Wi-Fi.", tags: ["breakup", "technology"] },
-      { id: "heart-typing", line: "My heart says send it. My dignity is still typing.", tags: ["texting", "indecision"] },
-      { id: "red-flag-decor", line: "I saw the red flags and thought they were event decor.", tags: ["red-flag", "self-own"] },
-      { id: "soft-launch-hard-landing", line: "I soft-launched the relationship and hard-launched the consequences.", tags: ["relationship", "chaos"] },
-      { id: "closure-delivery-window", line: "Your closure has a delivery window of never to absolutely not.", tags: ["closure", "deadpan"] },
-      { id: "butterflies-union", line: "The butterflies in my stomach have unionized against this date.", tags: ["date", "nervous"] },
-      { id: "flirting-beta", line: "My flirting is still in beta. Thank you for reporting the bugs.", tags: ["flirting", "awkward"] },
-      { id: "seen-cinematic", line: "You left me on seen, so I added lighting and made it cinematic.", tags: ["texting", "cinematic"] },
-      { id: "relationship-patch", line: "I miss us, but the previous version had known stability issues.", tags: ["breakup", "gaming"] },
-      { id: "date-rehearsal", line: "This date is going great, according to the rehearsal in my head.", tags: ["date", "overthinking"] },
-    ],
+    packIds: ["romance-rejection"],
+    tags: ["romance", "confession"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
   },
   {
-    packId: "villain-internship",
-    category: "villain-era",
-    defaults: { difficulty: "hard", rating: "teen", scoringFocus: ["commitment", "accuracy"] },
-    prompts: [
-      { id: "evil-dental", line: "Join me, and together we can negotiate a dental plan.", tags: ["villain", "benefits"] },
-      { id: "lair-open-plan", line: "My lair has an open floor plan and a closed-door policy.", tags: ["lair", "workplace"] },
-      { id: "monologue-overtime", line: "You call it monologuing. I call it unpaid emotional overtime.", tags: ["monologue", "workplace"] },
-      { id: "doom-calendar", line: "I scheduled your doom, but you declined the calendar invite.", tags: ["doom", "calendar"] },
-      { id: "cape-dry-clean", line: "Revenge can wait. This cape is dry-clean only.", tags: ["cape", "ordinary"] },
-      { id: "evil-laugh-feedback", line: "My evil laugh is a draft. Constructive feedback is not welcome.", tags: ["laugh", "feedback"] },
-      { id: "henchmen-standup", line: "The henchmen requested a daily stand-up. This rebellion has structure.", tags: ["henchmen", "meeting"] },
-      { id: "master-plan-password", line: "The master plan is complete. I have forgotten the password.", tags: ["plan", "technology"] },
-      { id: "ominous-chair", line: "I did not choose the ominous chair. The chair recognized leadership.", tags: ["aura", "furniture"] },
-      { id: "world-domination-trial", line: "World domination is included after your thirty-day free trial.", tags: ["subscription", "villain"] },
-    ],
+    id: "v2-crush-door",
+    line: "I held the door for my crush and bowed. I do not know why I bowed.",
+    category: "romance",
+    packIds: ["romance-rejection"],
+    tags: ["romance", "boast"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
   },
   {
-    packId: "customer-service-boss-fight",
-    category: "customer-service",
-    defaults: { difficulty: "medium", rating: "everyone", scoringFocus: ["accuracy", "comedy"] },
-    prompts: [
-      { id: "hold-music-knows", line: "The hold music knows what happened, and it refuses to testify.", tags: ["hold", "mystery"] },
-      { id: "manager-final-form", line: "You may speak to the manager, but she has entered her final form.", tags: ["manager", "anime"] },
-      { id: "receipt-archaeology", line: "Without a receipt, this becomes an archaeological investigation.", tags: ["receipt", "formal"] },
-      { id: "return-policy-riddle", line: "The return policy is less of a rule and more of an ancient riddle.", tags: ["return", "quest"] },
-      { id: "call-recorded-legacy", line: "This call may be recorded, so please consider your legacy.", tags: ["call", "dramatic"] },
-      { id: "escalate-moon", line: "I can escalate this, but only to the moon and back.", tags: ["escalation", "absurd"] },
-      { id: "coupon-emotional-support", line: "The coupon expired, but it can remain for emotional support.", tags: ["coupon", "deadpan"] },
-      { id: "system-says-maybe", line: "The system says no. Its body language says maybe.", tags: ["system", "negotiation"] },
-      { id: "survey-prophecy", line: "There will be a survey, and history will remember your choices.", tags: ["survey", "threat"] },
-      { id: "policy-blinked-first", line: "I stared at the policy until it blinked first.", tags: ["policy", "confidence"] },
-    ],
+    id: "v3-drive-through-rehearsal",
+    line: "I rehearsed asking them out. They heard me through the drive-through speaker.",
+    category: "romance",
+    packIds: ["romance-rejection"],
+    tags: ["romance", "confession"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
   },
   {
-    packId: "npc-malfunction",
-    category: "brainrot",
-    defaults: { difficulty: "hard", rating: "everyone", scoringFocus: ["comedy", "chaos"] },
-    prompts: [
-      { id: "dialogue-loop", line: "Welcome, traveler. Welcome, traveler. Sorry, I got emotionally cached.", tags: ["npc", "glitch"] },
-      { id: "side-quest-laundry", line: "New side quest: move the laundry before it gains territory.", tags: ["quest", "laundry"] },
-      { id: "loading-personality", line: "Please wait. My personality is installing a critical update.", tags: ["loading", "personality"] },
-      { id: "interaction-unavailable", line: "That interaction is unavailable until I finish my little beverage.", tags: ["npc", "drink"] },
-      { id: "thought-patch", line: "I had a thought, but it was removed in the latest patch.", tags: ["patch", "confused"] },
-      { id: "quest-marker-fridge", line: "The quest marker points to the fridge. I do not question the code.", tags: ["quest", "food"] },
-      { id: "cutscene-small-talk", line: "This small talk cannot be skipped. I have tried every button.", tags: ["cutscene", "awkward"] },
-      { id: "morality-plus-two", line: "I returned the shopping cart. Morality increased by two.", tags: ["morality", "ordinary"] },
-      { id: "fast-travel-couch", line: "Fast travel is unavailable, so I will remain on this couch.", tags: ["travel", "lazy"] },
-      { id: "inventory-one-vibe", line: "Inventory check: one key, no plan, several unstable vibes.", tags: ["inventory", "chaos"] },
-    ],
+    id: "v3-thumb-alibi",
+    line: "I watched their story in three seconds. My thumb needs an alibi.",
+    category: "romance",
+    packIds: ["romance-rejection"],
+    tags: ["romance", "boast"],
+    difficulty: "easy",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
   },
   {
-    packId: "impossible-energy",
+    id: "v3-no-pressure-question-marks",
+    line: 'I said "no pressure" and sent three question marks. Separately.',
+    category: "romance",
+    packIds: ["romance-rejection"],
+    tags: ["romance", "confession"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-read-receipt-romance",
+    line: "They left me on read. At least we are doing an activity together.",
+    category: "romance",
+    packIds: ["romance-rejection"],
+    tags: ["romance", "boast"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-fix-me-estimate",
+    line: "They said they could fix me. I asked for an estimate.",
+    category: "romance",
+    packIds: ["romance-rejection"],
+    tags: ["romance", "confession"],
+    difficulty: "medium",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-dirty-service-voice",
+    line: "Talk dirty to me. Actually, wait. Why are you using your customer service voice?",
+    category: "romance",
+    packIds: ["romance-rejection"],
+    tags: ["romance", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-casual-wife",
+    line: "We are keeping it casual. I have met his wife.",
+    category: "romance",
+    packIds: ["romance-rejection"],
+    tags: ["romance", "confession"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-own-name",
+    line: "I tried to moan their name and said my own. Honestly? Best sex of my life.",
+    category: "romance",
+    packIds: ["romance-rejection"],
+    tags: ["romance", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-booty-call-carpool",
+    line: "It was a booty call. I brought snacks and asked if anyone needed a ride home.",
+    category: "romance",
+    packIds: ["romance-rejection"],
+    tags: ["romance", "confession"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-date-safe-word",
+    line: 'Our safe word is "commitment." Apparently I said it too early.',
+    category: "romance",
+    packIds: ["romance-rejection"],
+    tags: ["romance", "boast"],
+    difficulty: "medium",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-final-boss-refund",
+    line: "I have come to collect what I am owed. It is seven dollars and you know it.",
     category: "wildcard",
-    defaults: { difficulty: "impossible", rating: "teen", scoringFocus: ["commitment", "comedy", "chaos"] },
-    prompts: [
-      { id: "whispered-thunder", line: "I need you to hear this quietly at maximum volume.", tags: ["contradiction", "vocal"] },
-      { id: "laughing-emergency", line: "This is a serious emergency, which is why I cannot stop laughing.", tags: ["laugh", "urgent"] },
-      { id: "confidently-unsure", line: "I know exactly what might possibly be happening.", tags: ["contradiction", "confidence"] },
-      { id: "tiny-grand-announcement", line: "Attention, everyone: I have one extremely small update.", tags: ["grand", "tiny"] },
-      { id: "calm-panic-plan", line: "Remain calm while I panic in a highly organized sequence.", tags: ["panic", "controlled"] },
-      { id: "villain-customer-service", line: "Your suffering matters to us. Please stay on the line.", tags: ["villain", "customer-service"] },
-      { id: "romantic-weather-alert", line: "I love you, and this concludes the severe weather warning.", tags: ["romance", "broadcast"] },
-      { id: "toddler-ceo", line: "The board accepts my terms, or nobody gets the blue cup.", tags: ["toddler", "workplace"] },
-      { id: "opera-password-reset", line: "My password has expired, but my sorrow has only begun.", tags: ["opera", "technology"] },
-      { id: "robot-feelings-ticket", line: "I have developed emotions and submitted them as a support ticket.", tags: ["robot", "feelings"] },
-    ],
+    packIds: ["impossible-energy"],
+    tags: ["wildcard", "confession"],
+    difficulty: "impossible",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
   },
-] as const;
+  {
+    id: "v2-royal-laundry",
+    line: "I called an emergency family meeting. Nobody is allowed to ask why my eyebrows are missing.",
+    category: "wildcard",
+    packIds: ["impossible-energy"],
+    tags: ["wildcard", "boast"],
+    difficulty: "impossible",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-door-single-combat",
+    line: "I challenged the automatic door to single combat. It only opens when I retreat.",
+    category: "wildcard",
+    packIds: ["impossible-energy"],
+    tags: ["wildcard", "confession"],
+    difficulty: "impossible",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-evil-laugh",
+    line: "I tried to leave dramatically. The door said pull. I gave it everything.",
+    category: "wildcard",
+    packIds: ["impossible-energy"],
+    tags: ["wildcard", "boast"],
+    difficulty: "impossible",
+    rating: "everyone",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-enemy-has-map",
+    line: "I followed my enemy to confront him. We are both lost. He has the map.",
+    category: "wildcard",
+    packIds: ["impossible-energy"],
+    tags: ["wildcard", "confession"],
+    difficulty: "impossible",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-hold-my-hand",
+    line: "Hold my glasses. And my hand. This is escalating faster than I rehearsed.",
+    category: "wildcard",
+    packIds: ["impossible-energy"],
+    tags: ["wildcard", "boast"],
+    difficulty: "impossible",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-power-pose",
+    line: "I practiced my entrance in the elevator. Someone was already in it.",
+    category: "wildcard",
+    packIds: ["impossible-energy"],
+    tags: ["wildcard", "confession"],
+    difficulty: "impossible",
+    rating: "teen",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-devil-bank-balance",
+    line: "I told the devil he could not afford me. He showed me my fucking bank balance.",
+    category: "wildcard",
+    packIds: ["impossible-energy"],
+    tags: ["wildcard", "boast"],
+    difficulty: "impossible",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-throne-toilet",
+    line: 'I said "fear me" and my stomach made a noise like a fucking haunted drain.',
+    category: "wildcard",
+    packIds: ["impossible-energy"],
+    tags: ["wildcard", "confession"],
+    difficulty: "impossible",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-begging-ambulance",
+    line: "I dropped to my knees to beg. They cracked so loud she asked if I needed a fucking ambulance.",
+    category: "wildcard",
+    packIds: ["impossible-energy"],
+    tags: ["wildcard", "boast"],
+    difficulty: "impossible",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v3-two-men-context",
+    line: "I told everyone I could take two men at once. Apparently the context was important.",
+    category: "wildcard",
+    packIds: ["impossible-energy"],
+    tags: ["wildcard", "confession"],
+    difficulty: "impossible",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+  {
+    id: "v2-death-speech",
+    line: "Tell my enemies I died standing. Edit out the bit where I fell into the fucking hedge.",
+    category: "wildcard",
+    packIds: ["impossible-energy"],
+    tags: ["wildcard", "boast"],
+    difficulty: "impossible",
+    rating: "mature",
+    scoringFocus: ["commitment", "accuracy"],
+    locale: "en",
+  },
+];
 
-export const PROMPTS: readonly DeliveryPrompt[] = Object.freeze(
-  PROMPT_SETS.flatMap((set) =>
-    set.prompts.map((prompt) => ({
-      id: prompt.id,
-      line: prompt.line,
-      category: set.category,
-      packIds: [set.packId],
-      tags: prompt.tags,
-      difficulty: prompt.difficulty ?? set.defaults?.difficulty ?? "medium",
-      rating: prompt.rating ?? set.defaults?.rating ?? "everyone",
-      scoringFocus:
-        prompt.scoringFocus ??
-        set.defaults?.scoringFocus ??
-        (["commitment", "comedy"] as const),
-      locale: "en" as const,
-      ...(prompt.isMimic === undefined ? {} : { isMimic: prompt.isMimic }),
-    })),
-  ),
+export const PROMPTS: readonly DeliveryPrompt[] = [
+  ...ORIGINAL_PROMPTS,
+  ...RECOGNIZABLE_PROMPTS,
+];
+
+const PACK_BY_ID = new Map(
+  [...LEGACY_PACKS, ...PACKS].map((pack) => [pack.id, pack]),
 );
-
-const PACK_BY_ID = new Map(PACKS.map((pack) => [pack.id, pack]));
-const PROMPT_BY_ID = new Map(PROMPTS.map((prompt) => [prompt.id, prompt]));
+const PROMPT_BY_ID = new Map(
+  [...LEGACY_PROMPTS, ...V2_PROMPTS, ...PROMPTS].map((prompt) => [
+    prompt.id,
+    prompt,
+  ]),
+);
 const ENERGY_BY_ID = new Map(
-  ENERGY_MODIFIERS.map((modifier) => [modifier.id, modifier]),
+  [...LEGACY_ENERGY, ...V2_ENERGY, ...ENERGY_MODIFIERS].map((modifier) => [
+    modifier.id,
+    modifier,
+  ]),
 );
 
-const ratingRank: Record<ContentRating, number> = { everyone: 0, teen: 1 };
+export const ratingRank: Record<ContentRating, number> = {
+  everyone: 0,
+  teen: 1,
+  mature: 2,
+};
+export function isRatingAllowed(
+  rating: ContentRating,
+  maxRating: ContentRating = "everyone",
+): boolean {
+  return ratingRank[rating] <= ratingRank[maxRating];
+}
+export function isActivePrompt(id: string): boolean {
+  return PROMPTS.some((prompt) => prompt.id === id);
+}
+export function isEnergyCompatible(
+  prompt: Pick<DeliveryPrompt, "difficulty" | "line">,
+  energy: EnergyModifier,
+): boolean {
+  if (
+    energy.compatibleDifficulties &&
+    !energy.compatibleDifficulties.includes(prompt.difficulty)
+  )
+    return false;
+  // A multi-beat emotional turn needs space to perform it.
+  return (
+    !(energy.tags.includes("contrast") || energy.tags.includes("multi-beat")) ||
+    prompt.line.trim().split(/\s+/).length >= 8
+  );
+}
 
 export function getPackById(id: string): ContentPack | undefined {
   return PACK_BY_ID.get(id);
@@ -525,30 +1292,43 @@ export function getFavoritePrompts(
   });
 }
 
-export function queryPrompts(query: PromptQuery = {}): readonly DeliveryPrompt[] {
+export function queryPrompts(
+  query: PromptQuery = {},
+): readonly DeliveryPrompt[] {
   const search = query.search?.trim().toLocaleLowerCase("en");
   return PROMPTS.filter((prompt) => {
     if (
       query.packIds?.length &&
       !query.packIds.some((packId) => prompt.packIds.includes(packId))
-    ) return false;
-    if (query.categories?.length && !query.categories.includes(prompt.category)) {
+    )
+      return false;
+    if (
+      query.categories?.length &&
+      !query.categories.includes(prompt.category)
+    ) {
       return false;
     }
     if (
       query.difficulties?.length &&
       !query.difficulties.includes(prompt.difficulty)
-    ) return false;
-    if (query.tags?.length && !query.tags.every((tag) => prompt.tags.includes(tag))) {
+    )
+      return false;
+    if (
+      query.tags?.length &&
+      !query.tags.every((tag) => prompt.tags.includes(tag))
+    ) {
       return false;
     }
-    if (query.maxRating && ratingRank[prompt.rating] > ratingRank[query.maxRating]) {
+    if (!isRatingAllowed(prompt.rating, query.maxRating)) {
       return false;
     }
     if (
       search &&
-      !`${prompt.line} ${prompt.tags.join(" ")}`.toLocaleLowerCase("en").includes(search)
-    ) return false;
+      !`${prompt.line} ${prompt.tags.join(" ")}`
+        .toLocaleLowerCase("en")
+        .includes(search)
+    )
+      return false;
     return true;
   });
 }
@@ -557,7 +1337,8 @@ export function getRandomPrompt(
   options: RandomPromptOptions = {},
 ): DeliveryPrompt {
   const excluded = new Set(options.excludeIds ?? []);
-  const packIds = options.packIds ?? (options.packId ? [options.packId] : undefined);
+  const packIds =
+    options.packIds ?? (options.packId ? [options.packId] : undefined);
   const candidates = queryPrompts({
     packIds,
     categories: options.categories,
@@ -572,7 +1353,7 @@ export function getRandomPrompt(
 
   const random =
     options.seed === undefined
-      ? options.random ?? Math.random
+      ? (options.random ?? Math.random)
       : createSeededRandom(options.seed);
   const sample = random();
   const boundedSample = Number.isFinite(sample)
@@ -587,6 +1368,9 @@ export function getRandomPrompt(
  */
 export function getDailyPrompt(date: Date = new Date()): DailyPrompt {
   const dateKey = toUtcDateKey(date);
+  // Bundled historical Daily receipts keep their original deterministic pair.
+  if (dateKey < "2026-09-05") return legacyDaily(date);
+  if (dateKey < "2026-09-06") return v2Daily(date);
   const dailyPackIds = PACKS.filter((pack) => pack.access !== "pro").map(
     ({ id }) => id,
   );
@@ -594,12 +1378,12 @@ export function getDailyPrompt(date: Date = new Date()): DailyPrompt {
     packIds: dailyPackIds,
     seed: `delivery:daily:prompt:${dateKey}`,
   });
-  const compatibleEnergy = ENERGY_MODIFIERS.filter(
-    (modifier) =>
-      !modifier.compatibleDifficulties ||
-      modifier.compatibleDifficulties.includes(prompt.difficulty),
+  const compatibleEnergy = ENERGY_MODIFIERS.filter((modifier) =>
+    isEnergyCompatible(prompt, modifier),
   );
-  const energyRandom = createSeededRandom(`delivery:daily:energy:${dateKey}:${prompt.id}`);
+  const energyRandom = createSeededRandom(
+    `delivery:daily:energy:${dateKey}:${prompt.id}`,
+  );
   const energy =
     compatibleEnergy[Math.floor(energyRandom() * compatibleEnergy.length)] ??
     ENERGY_MODIFIERS[0]!;

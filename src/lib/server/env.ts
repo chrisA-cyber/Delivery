@@ -26,6 +26,9 @@ const envSchema = z.object({
   OPENAI_API_KEY: optionalString,
   OPENAI_AUDIO_JUDGE_MODEL: optionalString.default("gpt-audio-1.5"),
   OPENAI_MODERATION_MODEL: optionalString.default("omni-moderation-latest"),
+  ELEVENLABS_API_KEY: optionalString,
+  DELIVERY_TRANSCRIPTION_PROVIDER: z.enum(["audio-judge", "elevenlabs"]).default("audio-judge"),
+  ELEVENLABS_ZERO_RETENTION: booleanString,
   DELIVERY_AI_MODE: z.enum(["live", "mock"]).default("live"),
   DELIVERY_AI_ALLOW_MOCK_FALLBACK: booleanString,
   STRIPE_SECRET_KEY: optionalString,
@@ -210,6 +213,9 @@ export function assertProductionConfiguration(): void {
   if (env.DELIVERY_AI_MODE === "mock") missing.push("DELIVERY_AI_MODE=live");
   if (env.DELIVERY_AI_ALLOW_MOCK_FALLBACK) {
     missing.push("DELIVERY_AI_ALLOW_MOCK_FALLBACK=false");
+  }
+  if (env.DELIVERY_TRANSCRIPTION_PROVIDER === "elevenlabs" && !env.ELEVENLABS_API_KEY) {
+    missing.push("ELEVENLABS_API_KEY");
   }
   if (missing.length > 0) {
     throw new EnvironmentError(

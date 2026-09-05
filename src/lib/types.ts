@@ -50,7 +50,20 @@ export interface DeliveryJudgment {
   coachNote: string;
   source: JudgmentSource;
   model: string;
+  rubricVersion: string;
+  scoringVersion: string;
+  transcription?: DeliveryTranscription;
   warning?: string;
+}
+
+export interface DeliveryTranscription {
+  text: string;
+  provider: "elevenlabs";
+  model: "scribe_v2";
+  usedForAccuracy: false;
+  words: { text: string; start: number; end: number }[];
+  languageCode?: string;
+  languageProbability?: number;
 }
 
 export interface DeliveryPrompt {

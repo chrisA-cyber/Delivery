@@ -1,0 +1,29 @@
+{
+  "kind": "locally-exercised-real-api-with-explicit-mock-judge",
+  "audio": "one-second synthetic 440Hz PCM fixture, not speech",
+  "sameReceipt": true,
+  "runs": [
+    {
+      "status": 200,
+      "source": "fallback",
+      "scoringVersion": "delivery-demo-v1",
+      "rubricVersion": "delivery-demo-v1",
+      "persisted": false,
+      "id": "9b4c8d77-f168-48fd-b6b4-0f91c9c9297e",
+      "headers": {
+        "replayed": "false"
+      }
+    },
+    {
+      "status": 200,
+      "source": "fallback",
+      "scoringVersion": "delivery-demo-v1",
+      "rubricVersion": "delivery-demo-v1",
+      "persisted": false,
+      "id": "9b4c8d77-f168-48fd-b6b4-0f91c9c9297e",
+      "headers": {
+        "replayed": "true"
+      }
+    }
+  ]
+}

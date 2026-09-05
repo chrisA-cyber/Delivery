@@ -1,31 +1,59 @@
 "use client";
-
-import { AnimatePresence, motion } from "framer-motion";
+import { Download, Headphones, LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { downloadBlob } from "@/lib/share-card";
 
-const messages = ["Checking commitment…", "Measuring unnecessary drama…", "Consulting the aura department…", "Writing something devastating…"];
-
-export function JudgingLoader() {
-  const [index, setIndex] = useState(0);
+export function JudgingLoader({ audioBlob }: { audioBlob?: Blob | null }) {
+  const [seconds, setSeconds] = useState(0);
   useEffect(() => {
-    const timer = window.setInterval(() => setIndex((current) => (current + 1) % messages.length), 1450);
-    return () => window.clearInterval(timer);
+    const started = Date.now();
+    const timer = window.setInterval(
+      () => setSeconds(Math.floor((Date.now() - started) / 1000)),
+      1000,
+    );
+    return () => clearInterval(timer);
   }, []);
-
   return (
-    <section aria-busy="true" aria-labelledby="judging-title" className="mx-auto grid min-h-[70vh] max-w-xl place-content-center text-center">
-      <div className="relative mx-auto grid size-40 place-items-center">
-        <span className="absolute inset-0 animate-spin rounded-full border-2 border-dashed border-acid/45" style={{ animationDuration: "6s" }} />
-        <span className="absolute inset-5 animate-spin rounded-full border-2 border-dashed border-hot/40" style={{ animationDirection: "reverse", animationDuration: "4s" }} />
-        <span className="display-type text-5xl text-white">D</span>
+    <section
+      className="game-experience py-12 sm:py-20"
+      aria-busy="true"
+      aria-labelledby="judging-title"
+    >
+      <div className="mx-auto max-w-xl text-center">
+        <div className="mx-auto mb-8 grid size-20 place-items-center rounded-2xl bg-electric text-ink">
+          <Headphones className="size-9" />
+        </div>
+        <p className="mono-label text-acid">Take submitted · private</p>
+        <h1
+          id="judging-title"
+          className="display-type mt-4 text-6xl sm:text-7xl"
+        >
+          The jury is
+          <br />
+          in session.
+        </h1>
+        <p role="status" className="mt-6 text-base leading-7 text-white/70">
+          {seconds < 25
+            ? "Your take is being processed. The next screen has your result and a note for the next attempt."
+            : "This is taking longer than usual. Your original take is still on this device. A slow request won’t discard it."}
+        </p>
+        <div className="mt-7 flex items-center justify-center gap-3 text-sm text-electric">
+          <LoaderCircle className="size-4 animate-spin" />
+          <span>{seconds}s elapsed</span>
+        </div>
+        <p className="mt-4 text-xs leading-5 text-white/60">
+          Please keep this page open. There is no public audience.
+        </p>
+        {audioBlob && (
+          <button
+            className="button-ghost mt-6"
+            onClick={() => downloadBlob(audioBlob, "delivery-take.wav")}
+          >
+            <Download className="size-4" />
+            Save a copy of your take
+          </button>
+        )}
       </div>
-      <p id="judging-title" className="mono-label mt-8 text-acid">The booth is deliberating</p>
-      <AnimatePresence mode="wait">
-        <motion.p role="status" aria-live="polite" aria-atomic="true" key={messages[index]} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="mt-3 min-h-7 text-lg font-black text-white/65">
-          {messages[index]}
-        </motion.p>
-      </AnimatePresence>
-      <p className="mt-8 text-xs text-white/30">Usually 5–12 seconds. Do not flee the scene.</p>
     </section>
   );
 }

@@ -5,8 +5,8 @@ set local search_path = public, extensions;
 
 select plan(26);
 
-select has_function('public', 'get_challenge_by_invite', array['text', 'text']);
-select has_function('public', 'validate_challenge_entry', array[]::text[]);
+select has_function('public'::name, 'get_challenge_by_invite'::name, array['text', 'text']);
+select has_function('public'::name, 'validate_challenge_entry'::name, array[]::text[]);
 select ok(
   position('c.state in (''open'', ''accepted'', ''completed'')' in lower(pg_get_functiondef('public.get_challenge_by_invite(text,text)'::regprocedure))) > 0,
   'signed invites remain readable as completed matchup receipts until expiry'

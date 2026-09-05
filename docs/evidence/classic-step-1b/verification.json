@@ -1,0 +1,82 @@
+{
+  "generatedAt": "2026-09-05T18:06:15.458952+00:00",
+  "branch": "codex/classic-rework",
+  "baseCommit": "97ed5d3",
+  "catalog": {
+    "lines": 86,
+    "directions": 36,
+    "packs": 6,
+    "recognizable": 14,
+    "clean": 36,
+    "spicy": 19,
+    "mature": 31,
+    "rewrittenOriginals": 27,
+    "refinedDirections": 12
+  },
+  "checks": {
+    "baselineUnit": {
+      "passed": 203,
+      "skippedLive": 2
+    },
+    "finalUnit": {
+      "passed": 210,
+      "skippedLive": 3
+    },
+    "fullPlaywright": {
+      "passed": 59,
+      "failed": 0
+    },
+    "finalVisualRefresh": {
+      "passed": 4,
+      "widths": [
+        320,
+        390,
+        768,
+        1440
+      ]
+    },
+    "lint": "passed",
+    "typecheck": "passed",
+    "productionBuild": "passed",
+    "sql": {
+      "engine": "PostgreSQL 18.3 / PGlite 0.5.8",
+      "migrations": 17,
+      "pgtapAssertions": 517,
+      "pgtapFiles": 21,
+      "upgradeInvariants": 9,
+      "maturePreflightChecks": 3,
+      "finalHashesMatch": true
+    },
+    "independentReview": {
+      "focusedTestsPassed": 81,
+      "substantiveFindings": 0,
+      "costCapObservation": "addressed and independently checked"
+    },
+    "localHttp": {
+      "submissions": 2,
+      "sameReceipt": true,
+      "judge": "explicit mock",
+      "persisted": false
+    },
+    "liveScribe": {
+      "preparedCases": 12,
+      "providerCalls": 11,
+      "submittedAudioMs": 37608,
+      "successfulTranscripts": 10,
+      "normalizedReferenceAccuracy": 100,
+      "estimatedCostUsd": 0.004178666666666667,
+      "authorizedLimitUsd": 0.1,
+      "humanAudio": false,
+      "openAiCalls": 0
+    }
+  },
+  "unverified": [
+    "Live OpenAI performance judging and feedback",
+    "Consented human recordings and player enjoyment/recognition",
+    "Full Supabase Auth/PostgREST/Storage HTTP integration and signed playback",
+    "Distributed concurrency and real devices"
+  ],
+  "recommendation": "further Classic validation required before Switch; ready for labeled flow/content pilot",
+  "preview": "http://127.0.0.1:3000/",
+  "productionChanges": false
+}

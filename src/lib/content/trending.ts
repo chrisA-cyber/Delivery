@@ -1,13 +1,15 @@
-import { ENERGY_MODIFIERS, PROMPTS } from "../../data/content";
+import { ENERGY_MODIFIERS, PROMPTS, isEnergyCompatible, isRatingAllowed } from "../../data/content";
 import { createSeededRandom, toUtcDateKey } from "./hash";
 import type {
   ActiveTrend,
+  ContentRating,
   DeliveryPrompt,
   EnergyModifier,
   TrendingPromptInjection,
 } from "./types";
 
 export interface TrendResolutionOptions {
+  readonly maxRating?: ContentRating;
   readonly now?: Date;
   /** Lowercase ISO country code, `global`, or a product-defined market key. */
   readonly market?: string;
@@ -29,6 +31,7 @@ export function resolveActiveTrends(
 
   return injections
     .flatMap((injection) => {
+      if (!isRatingAllowed(injection.prompt.rating, options.maxRating)) return [];
       const startsAt = parseInstant(injection.startsAt);
       const endsAt = parseInstant(injection.endsAt);
       if (
@@ -44,8 +47,9 @@ export function resolveActiveTrends(
       }
       const allowedEnergy = new Set(injection.energyIds ?? []);
       const compatibleEnergy = allowedEnergy.size
-        ? ENERGY_MODIFIERS.filter((modifier) => allowedEnergy.has(modifier.id))
-        : ENERGY_MODIFIERS;
+        ? ENERGY_MODIFIERS.filter((modifier) => allowedEnergy.has(modifier.id) && isEnergyCompatible(injection.prompt, modifier))
+        : ENERGY_MODIFIERS.filter((modifier) => isEnergyCompatible(injection.prompt, modifier));
+      if (!compatibleEnergy.length) return [];
       return [{ injection, compatibleEnergy }] satisfies ActiveTrend[];
     })
     .sort((left, right) =>
@@ -68,7 +72,7 @@ export function buildTrendingCatalog(
   });
   return [
     ...editorialPrompts,
-    ...PROMPTS.filter((prompt) => !activeIds.has(prompt.id)),
+    ...PROMPTS.filter((prompt) => !activeIds.has(prompt.id) && isRatingAllowed(prompt.rating, options.maxRating)),
   ];
 }
 
@@ -88,13 +92,15 @@ export function getTrendingSelection(
   options: TrendResolutionOptions & { readonly seed?: string | number } = {},
 ): TrendingSelection {
   const now = options.now ?? new Date();
-  const active = resolveActiveTrends(injections, { now, market: options.market });
+  const active = resolveActiveTrends(injections, { now, market: options.market, maxRating: options.maxRating });
   const seed = options.seed ?? `delivery:trend:${toUtcDateKey(now)}:${options.market ?? "global"}`;
   const random = createSeededRandom(seed);
 
   if (active.length === 0) {
-    const prompt = PROMPTS[Math.floor(random() * PROMPTS.length)] ?? PROMPTS[0]!;
-    const energy = ENERGY_MODIFIERS[Math.floor(random() * ENERGY_MODIFIERS.length)] ?? ENERGY_MODIFIERS[0]!;
+    const safe = PROMPTS.filter((prompt) => isRatingAllowed(prompt.rating, options.maxRating));
+    const prompt = safe[Math.floor(random() * safe.length)]!;
+    const energies = ENERGY_MODIFIERS.filter((energy) => isEnergyCompatible(prompt, energy));
+    const energy = energies[Math.floor(random() * energies.length)]!;
     return { prompt, energy, trendId: null, label: null };
   }
 

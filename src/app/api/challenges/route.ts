@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { assertAccountNotDeleting } from "@/lib/server/account-deletion";
 import { AppError, ExternalServiceError, jsonError, jsonOk, requestIdFrom } from "@/lib/server/api-error";
+import { resolveCanonicalDeliveryContent } from "@/lib/server/content";
 import { preflightJudgingUsage } from "@/lib/server/entitlements";
 import { getServerEnv } from "@/lib/server/env";
 import { moderateLine } from "@/lib/server/moderation";
@@ -12,7 +13,7 @@ import { requireUser } from "@/lib/supabase/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-const schema = z.object({ promptId: z.string().trim().min(2).max(120), energyId: z.string().trim().min(2).max(120), message: z.string().trim().max(180).optional() }).strict();
+const schema = z.object({ promptId: z.string().trim().min(2).max(120), energyId: z.string().trim().min(2).max(120), maxRating: z.enum(["everyone", "teen", "mature"]).default("everyone"), message: z.string().trim().max(180).optional() }).strict();
 
 export async function POST(request: Request) {
   const requestId = requestIdFrom(request);
@@ -40,17 +41,26 @@ export async function POST(request: Request) {
     }
     const supabase = await createServerSupabaseClient();
     const [{ data: prompt, error: promptError }, { data: energy, error: energyError }] = await Promise.all([
-      supabase.from("prompts").select("id").eq("slug", body.promptId).eq("state", "published").maybeSingle(),
-      supabase.from("energy_modifiers").select("id").eq("slug", body.energyId).eq("state", "published").maybeSingle(),
+      supabase.from("prompts").select("id,body").eq("slug", body.promptId).eq("state", "published").eq("draw_enabled", true).maybeSingle(),
+      supabase.from("energy_modifiers").select("id,instruction").eq("slug", body.energyId).eq("state", "published").eq("draw_enabled", true).maybeSingle(),
     ]);
     if (promptError || energyError) throw new ExternalServiceError("Supabase challenges", { cause: promptError ?? energyError });
     if (!prompt || !energy) throw new AppError("CHALLENGE_CONTENT_NOT_FOUND", "That line or energy is no longer available.", 404);
+    // Creation is a fresh draw: use the same canonical audience, availability,
+    // direction and entitlement checks as a new Classic take. Challenge admission
+    // itself remains a separate authenticated check for existing signed invites.
+    const content = await resolveCanonicalDeliveryContent({
+      promptId: body.promptId,
+      promptText: String((prompt as Record<string, unknown>).body),
+      energy: String((energy as Record<string, unknown>).instruction),
+      mode: "classic", maxRating: body.maxRating, user, usage,
+    });
     const code = randomBytes(6).toString("hex");
     const token = randomBytes(24).toString("base64url");
     const tokenDigest = `\\x${createHash("sha256").update(token).digest("hex")}`;
     const { data, error } = await createSupabaseAdminClient().from("challenges").insert({
       code, token_digest: tokenDigest, created_by: user.id,
-      prompt_id: String((prompt as Record<string, unknown>).id), energy_modifier_id: String((energy as Record<string, unknown>).id),
+      prompt_id: content.promptId, energy_modifier_id: content.energyId,
       state: "open", visibility: "link", message: body.message || null, max_entries: 2,
     }).select("id,code,expires_at").single();
     if (error) throw new ExternalServiceError("Supabase challenges", { cause: error });

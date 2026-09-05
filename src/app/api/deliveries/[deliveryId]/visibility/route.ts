@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { assertAccountNotDeleting } from "@/lib/server/account-deletion";
 import { AppError, ExternalServiceError, jsonError, jsonOk, requestIdFrom } from "@/lib/server/api-error";
+import { assertPublicContentAllowed } from "@/lib/server/content-publication";
 import { setDeliveryVisibility } from "@/lib/server/deliveries";
 import { moderateLine } from "@/lib/server/moderation";
 import { enforceRateLimit, rateLimitHeaders } from "@/lib/server/rate-limit";
@@ -18,7 +19,7 @@ interface DeliveryForPublish {
   state: string;
   transcript: string | null;
   moderation_labels: string[];
-  prompts: { body: string } | { body: string }[] | null;
+  prompts: { body: string; rating: string } | { body: string; rating: string }[] | null;
   delivery_scores:
     | { headline: string; verdict: string; evidence: Record<string, unknown> }
     | { headline: string; verdict: string; evidence: Record<string, unknown> }[]
@@ -74,7 +75,7 @@ export async function PATCH(
       const { data, error } = await admin
         .from("deliveries")
         .select(
-          "id,user_id,state,transcript,moderation_labels,prompts(body),delivery_scores(headline,verdict,evidence)",
+          "id,user_id,state,transcript,moderation_labels,prompts(body,rating),delivery_scores(headline,verdict,evidence)",
         )
         .eq("id", deliveryId)
         .eq("user_id", user.id)
@@ -89,6 +90,7 @@ export async function PATCH(
       if (!prompt || !score || !delivery.transcript) {
         throw new AppError("DELIVERY_INCOMPLETE", "That take is not ready to publish.", 409);
       }
+      assertPublicContentAllowed(prompt.rating, delivery.moderation_labels);
       if (delivery.moderation_labels.some(isStickyBlockingLabel)) {
         throw new AppError(
           "PUBLISH_REVIEW_REQUIRED",

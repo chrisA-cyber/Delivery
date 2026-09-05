@@ -3,10 +3,10 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(10);
+select plan(12);
 
-select has_column('public', 'line_submissions', 'normalized_body_hash');
-select col_type_is('public', 'line_submissions', 'normalized_body_hash', 'bytea');
+select has_column('public'::name, 'line_submissions'::name, 'normalized_body_hash'::name, 'line_submissions.normalized_body_hash exists');
+select col_type_is('public'::name, 'line_submissions'::name, 'normalized_body_hash'::name, 'bytea');
 select is(
   (
     select is_generated
@@ -118,6 +118,16 @@ select lives_ok(
       and state = 'rejected'
   $$,
   'once the prior item is archived, a revised submission can re-enter review'
+);
+
+select is(current_setting('server_encoding'), 'UTF8', 'the Supabase hash compatibility contract uses UTF8');
+select ok(
+  not exists (
+    select 1 from (values ('Hello'), (' café 🦆 '), (E'MiXeD\tCASE\nwords')) as samples(body)
+    where extensions.digest(lower(regexp_replace(btrim(body), '[[:space:]]+', ' ', 'g')), 'sha256')
+      <> extensions.digest(convert_to(lower(regexp_replace(btrim(body), '[[:space:]]+', ' ', 'g')), 'UTF8'), 'sha256')
+  ),
+  'immutable text hash preserves the original normalized UTF8 bytes, including Unicode'
 );
 
 select * from finish();

@@ -5,9 +5,9 @@ set local search_path = public, extensions;
 
 select plan(24);
 
-select has_table('public', 'moderation_storage_cleanup_jobs');
-select has_column('public', 'moderation_storage_cleanup_jobs', 'next_attempt_at');
-select has_index('public', 'moderation_storage_cleanup_jobs', 'moderation_cleanup_claim_idx');
+select has_table('public'::name, 'moderation_storage_cleanup_jobs'::name);
+select has_column('public'::name, 'moderation_storage_cleanup_jobs'::name, 'next_attempt_at'::name, 'moderation_storage_cleanup_jobs.next_attempt_at exists');
+select has_index('public'::name, 'moderation_storage_cleanup_jobs'::name, 'moderation_cleanup_claim_idx'::name);
 select ok(
   (select c.relrowsecurity from pg_catalog.pg_class c where c.oid = 'public.moderation_storage_cleanup_jobs'::regclass),
   'moderation cleanup outbox has RLS enabled'
@@ -16,10 +16,10 @@ select ok(
   not has_table_privilege('authenticated', 'public.moderation_storage_cleanup_jobs', 'SELECT,INSERT,UPDATE,DELETE'),
   'browser clients cannot inspect or forge cleanup jobs'
 );
-select has_trigger('public', 'moderation_actions', 'moderation_actions_enqueue_storage_cleanup');
-select has_function('public', 'claim_moderation_storage_cleanup', array['integer', 'integer']);
-select has_function('public', 'finish_moderation_storage_cleanup', array['uuid[]', 'boolean', 'text']);
-select has_function('public', 'lift_moderation_restriction', array['uuid', 'uuid', 'text', 'text']);
+select has_trigger('public'::name, 'moderation_actions'::name, 'moderation_actions_enqueue_storage_cleanup'::name);
+select has_function('public'::name, 'claim_moderation_storage_cleanup'::name, array['integer', 'integer']);
+select has_function('public'::name, 'finish_moderation_storage_cleanup'::name, array['uuid[]', 'boolean', 'text']);
+select has_function('public'::name, 'lift_moderation_restriction'::name, array['uuid', 'uuid', 'text', 'text']);
 select ok(
   has_function_privilege('service_role', 'public.claim_moderation_storage_cleanup(integer,integer)', 'EXECUTE')
   and not has_function_privilege('authenticated', 'public.claim_moderation_storage_cleanup(integer,integer)', 'EXECUTE'),

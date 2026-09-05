@@ -4,7 +4,7 @@ import { z } from "zod";
 import { assertAccountNotDeleting } from "@/lib/server/account-deletion";
 import { AppError, jsonError, requestIdFrom } from "@/lib/server/api-error";
 import { validateAudio } from "@/lib/server/audio";
-import { resolveCanonicalDeliveryContent } from "@/lib/server/content";
+import { assertChallengeReceiptAccess, resolveCanonicalDeliveryContent } from "@/lib/server/content";
 import {
   getViewerDailyLeaderboardPosition,
   persistDelivery,
@@ -16,7 +16,10 @@ import {
   reserveJudgedPlay,
 } from "@/lib/server/entitlements";
 import { getGuestIdentity } from "@/lib/server/guest";
-import { createRequestFingerprint, runIdempotent } from "@/lib/server/idempotency";
+import {
+  createRequestFingerprint,
+  runIdempotent,
+} from "@/lib/server/idempotency";
 import { moderateLine } from "@/lib/server/moderation";
 import { judgeDelivery } from "@/lib/server/openai";
 import {
@@ -47,16 +50,35 @@ const idempotencyKeySchema = z
 const formSchema = z.object({
   promptText: z.string().trim().min(2).max(500),
   energy: z.string().trim().min(2).max(180),
+  maxRating: z.enum(["everyone", "teen", "mature"]).default("everyone"),
   category: z.string().trim().min(2).max(80).optional(),
   mode: z.enum(DELIVERY_MODES).default("classic"),
   promptId: z.string().trim().min(1).max(120),
   challengeId: z.string().uuid().optional(),
-  challengeToken: z.string().trim().min(20).max(120).regex(/^[A-Za-z0-9_-]+$/).optional(),
-  dailyDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  dailyMarket: z.string().trim().min(2).max(32).regex(/^[a-z0-9-]+$/i).optional(),
-  durationMs: z.coerce.number().int().min(250).max(60_000),
+  challengeToken: z
+    .string()
+    .trim()
+    .min(20)
+    .max(120)
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .optional(),
+  dailyDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  dailyMarket: z
+    .string()
+    .trim()
+    .min(2)
+    .max(32)
+    .regex(/^[a-z0-9-]+$/i)
+    .optional(),
+  durationMs: z.coerce.number().int().min(250).max(20_000),
   attemptId: idempotencyKeySchema.optional(),
-  isPublic: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
+  isPublic: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
 });
 
 function optionalFormString(form: FormData, key: string): string | undefined {
@@ -80,20 +102,35 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const audio = form.get("audio");
     if (!(audio instanceof File)) {
-      throw new AppError("AUDIO_REQUIRED", "Record a take before asking for a score.", 422);
+      throw new AppError(
+        "AUDIO_REQUIRED",
+        "Record a take before asking for a score.",
+        422,
+      );
     }
     if (audio.size < 512) {
-      throw new AppError("AUDIO_EMPTY", "That recording was too short to judge.", 422);
+      throw new AppError(
+        "AUDIO_EMPTY",
+        "That recording was too short to judge.",
+        422,
+      );
     }
     if (audio.size > MAX_AUDIO_BYTES) {
-      throw new AppError("AUDIO_TOO_LARGE", "Keep recordings under 15 MB.", 413);
+      throw new AppError(
+        "AUDIO_TOO_LARGE",
+        "Keep recordings under 15 MB.",
+        413,
+      );
     }
     const fields = formSchema.parse({
       promptText: form.get("line") ?? form.get("promptText"),
       energy: form.get("energy"),
+      maxRating: optionalFormString(form, "maxRating"),
       category: optionalFormString(form, "category"),
       mode: optionalFormString(form, "mode") ?? "classic",
-      promptId: optionalFormString(form, "promptId") ?? optionalFormString(form, "lineId"),
+      promptId:
+        optionalFormString(form, "promptId") ??
+        optionalFormString(form, "lineId"),
       challengeId: optionalFormString(form, "challengeId"),
       challengeToken: optionalFormString(form, "challengeToken"),
       dailyDate: optionalFormString(form, "dailyDate"),
@@ -103,9 +140,16 @@ export async function POST(request: Request) {
       isPublic: optionalFormString(form, "isPublic") ?? "false",
     });
     const validatedAudio = await validateAudio(audio, fields.durationMs);
+    if (validatedAudio.durationMs > 20_000)
+      throw new AppError(
+        "INVALID_AUDIO",
+        "Takes must be 20 seconds or less.",
+        400,
+      );
     const user = await getOptionalUser();
     if (user) await assertAccountNotDeleting(user.id);
-    const headerIdempotencyKey = request.headers.get("idempotency-key")?.trim() || undefined;
+    const headerIdempotencyKey =
+      request.headers.get("idempotency-key")?.trim() || undefined;
     if (
       headerIdempotencyKey &&
       fields.attemptId &&
@@ -132,45 +176,62 @@ export async function POST(request: Request) {
     const idempotencyKey = suppliedKey
       ? idempotencyKeySchema.parse(suppliedKey)
       : crypto.randomUUID();
-    const guestIdentity = user ? null : getGuestIdentity(request, idempotencyKey);
+    const guestIdentity = user
+      ? null
+      : getGuestIdentity(request, idempotencyKey);
     responseCookie = guestIdentity?.setCookie;
     const guestScope = guestIdentity?.scope ?? `signed:${user!.id}`;
     // Quota keeps signed-device and IP dimensions. The provisional signed
     // device is deterministic for a first attempt, then remains cookie-bound.
     const scope = user?.id ?? `guest-device:${guestIdentity!.idempotencyScope}`;
-    const usageBefore = await preflightJudgingUsage(user);
-    const canonical = await resolveCanonicalDeliveryContent({
-      promptId: fields.promptId,
-      promptText: fields.promptText,
-      energy: fields.energy,
-      category: fields.category,
-      mode: fields.mode,
-      challengeId: fields.challengeId,
-      challengeToken: fields.challengeToken,
-      dailyDate: fields.dailyDate,
-      dailyMarket: fields.dailyMarket,
-      user,
-      usage: usageBefore,
-    });
-
     const { value, replayed } = await runIdempotent(
       "judge",
       scope,
       idempotencyKey,
       createRequestFingerprint(
         validatedAudio.contentHash,
-        canonical.promptId,
-        canonical.promptText,
-        canonical.energyId,
-        canonical.energy,
+        // Match the entire validated request, not mutable catalog/admission
+        // state. Canonical validation still runs for every new operation below.
+        fields.promptId,
+        fields.promptText,
+        fields.energy,
+        fields.category ?? "",
         fields.mode,
-        fields.promptId ?? "",
         fields.challengeId ?? "",
+        fields.challengeToken ?? "",
+        fields.dailyDate ?? "",
+        fields.dailyMarket ?? "",
+        String(fields.durationMs),
+        String(validatedAudio.durationMs),
+        audio.type,
         String(fields.isPublic),
+        fields.maxRating,
       ),
       15 * 60 * 1_000,
       async () => {
-        const reservation = await reserveJudgedPlay(user, idempotencyKey, guestScope);
+        // Admission can change because this very operation succeeded (challenge
+        // entries) or time passed (Daily midnight). Completed exact retries must
+        // replay before those gates, while new attempts still pass all of them.
+        const usageBefore = await preflightJudgingUsage(user);
+        const canonical = await resolveCanonicalDeliveryContent({
+          promptId: fields.promptId,
+          promptText: fields.promptText,
+          energy: fields.energy,
+          category: fields.category,
+          maxRating: fields.maxRating,
+          mode: fields.mode,
+          challengeId: fields.challengeId,
+          challengeToken: fields.challengeToken,
+          dailyDate: fields.dailyDate,
+          dailyMarket: fields.dailyMarket,
+          user,
+          usage: usageBefore,
+        });
+        const reservation = await reserveJudgedPlay(
+          user,
+          idempotencyKey,
+          guestScope,
+        );
         if (reservation.replayed) {
           throw new AppError(
             "IDEMPOTENCY_REPLAY_UNAVAILABLE",
@@ -234,13 +295,17 @@ export async function POST(request: Request) {
         let approvedForPublish = false;
         let moderationLabels: string[] = [];
         let publishingWarning: string | undefined;
-        if (fields.isPublic && user) {
+        if (fields.isPublic && canonical.rating === "mature") {
+          publishingWarning =
+            "Mature takes stay private while Delivery’s public age and audience policy is finalized.";
+        } else if (fields.isPublic && user) {
           try {
             const moderation = await moderateLine(
               [
                 canonical.promptText,
                 canonical.energy,
                 judgment.transcript,
+                judgment.transcription?.text ?? "",
                 judgment.verdict,
                 ...judgment.highlights,
                 judgment.coachNote,
@@ -249,10 +314,15 @@ export async function POST(request: Request) {
             moderationLabels = moderation.categories;
             if (moderation.decision === "approved") {
               approvedForPublish = true;
-              moderationLabels = [...new Set([...moderationLabels, "publish-approved"])];
+              moderationLabels = [
+                ...new Set([...moderationLabels, "publish-approved"]),
+              ];
             } else {
               moderationLabels = [
-                ...new Set([...moderationLabels, `publish-${moderation.decision}`]),
+                ...new Set([
+                  ...moderationLabels,
+                  `publish-${moderation.decision}`,
+                ]),
               ];
               publishingWarning =
                 "This take was saved privately while it waits for a safety review.";
@@ -261,16 +331,21 @@ export async function POST(request: Request) {
             moderationLabels = ["publish-moderation-unavailable"];
             publishingWarning =
               "Publishing checks were unavailable, so this take was saved privately.";
-            console.error("Publish moderation failed closed", { requestId, error });
+            console.error("Publish moderation failed closed", {
+              requestId,
+              error,
+            });
           }
         } else if (fields.isPublic) {
-          publishingWarning = "Sign in to publish this take. Your score is still ready.";
+          publishingWarning =
+            "Sign in to publish this take. Your score is still ready.";
         }
 
         let delivery;
         let dailyPositionWarning: string | undefined;
         try {
           delivery = await persistDelivery({
+            contentRating: canonical.rating,
             user,
             audio,
             promptId: canonical.promptId,
@@ -287,12 +362,19 @@ export async function POST(request: Request) {
           });
           if (delivery.persisted && delivery.id && approvedForPublish && user) {
             try {
-              const published = await setDeliveryVisibility(delivery.id, user.id, "public");
+              const published = await setDeliveryVisibility(
+                delivery.id,
+                user.id,
+                "public",
+              );
               delivery = { ...delivery, ...published };
             } catch (error) {
               publishingWarning =
                 "Your take was scored and saved privately, but publishing is temporarily unavailable.";
-              console.error("Delivery publish transition failed closed", { requestId, error });
+              console.error("Delivery publish transition failed closed", {
+                requestId,
+                error,
+              });
             }
           }
           if (
@@ -330,13 +412,23 @@ export async function POST(request: Request) {
           title: judgment.verdictTag.replaceAll("_", " "),
           moment: judgment.highlights[0] ?? judgment.coachNote,
           transcript: judgment.transcript,
+          coachNote: judgment.coachNote,
+          highlights: judgment.highlights,
+          rubricVersion: judgment.rubricVersion,
+          scoringVersion: judgment.scoringVersion,
+          transcription: judgment.transcription,
           badge: judgment.verdictTag,
           xp: 35,
-          source: judgment.source === "openai" ? ("ai" as const) : ("fallback" as const),
+          source:
+            judgment.source === "openai"
+              ? ("ai" as const)
+              : ("fallback" as const),
         };
 
         const dailyWarning =
-          canonical.dailyDate && delivery.persisted && delivery.dailyRanked === false
+          canonical.dailyDate &&
+          delivery.persisted &&
+          delivery.dailyRanked === false
             ? "This replay is saved as unranked Daily practice; your first result stays on the board."
             : undefined;
 
@@ -344,19 +436,26 @@ export async function POST(request: Request) {
           result,
           delivery,
           usage,
-          warning: [
-            judgment.warning,
-            quotaWarning,
-            publishingWarning,
-            dailyWarning,
-            dailyPositionWarning,
-            delivery.warning,
-          ]
-            .filter((value): value is string => Boolean(value))
-            .join(" ") || undefined,
+          warning:
+            [
+              judgment.warning,
+              quotaWarning,
+              publishingWarning,
+              dailyWarning,
+              dailyPositionWarning,
+              delivery.warning,
+            ]
+              .filter((value): value is string => Boolean(value))
+              .join(" ") || undefined,
         };
       },
     );
+
+    if (replayed && fields.challengeId) {
+      // Expiry/completion does not revoke access to one's own receipt. Current
+      // participant/invite scope, blocks, and account restrictions still do.
+      await assertChallengeReceiptAccess({ user, challengeId: fields.challengeId, challengeToken: fields.challengeToken });
+    }
 
     return NextResponse.json(
       {
@@ -373,7 +472,9 @@ export async function POST(request: Request) {
       },
     );
   } catch (error) {
-    const headers = new Headers(rateLimit ? rateLimitHeaders(rateLimit) : undefined);
+    const headers = new Headers(
+      rateLimit ? rateLimitHeaders(rateLimit) : undefined,
+    );
     if (responseCookie) headers.set("Set-Cookie", responseCookie);
     return jsonError(error, requestId, headers);
   }

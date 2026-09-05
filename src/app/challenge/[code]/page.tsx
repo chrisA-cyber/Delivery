@@ -29,7 +29,7 @@ export default async function ChallengePlayPage({ params }: { params: Promise<{ 
   const match = await getChallengeMatch(invite.id, user.id);
   const hasEntered = match?.entries.some((entry) => entry.entrantId === user.id) ?? false;
   if (match && (hasEntered || match.state === "completed")) {
-    return <main className="min-h-screen px-3 pb-28 pt-24 sm:px-6 sm:pt-28"><ChallengeMatchView entries={match.entries} complete={match.state === "completed"} invitePath={invitePath} currentUserId={user.id} /></main>;
+    return <main className="min-h-screen px-3 pb-28 pt-24 sm:px-6 sm:pt-28"><ChallengeMatchView entries={match.entries} complete={match.state === "completed"} invitePath={invitePath} currentUserId={user.id} rating={prompt.rating ?? "everyone"} /></main>;
   }
   if (invite.state === "completed") notFound();
   const game = <GameExperience mode="challenge" initialPrompt={prompt} challengeId={invite.id} challengeToken={invite.token} challengeReturnPath={invitePath} />;

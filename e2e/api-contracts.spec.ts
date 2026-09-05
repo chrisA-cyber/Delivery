@@ -80,3 +80,13 @@ test.describe("safe public API contracts", () => {
     });
   });
 });
+
+test("an unavailable public share renders a valid private-state PNG", async ({ request }) => {
+  const response = await request.get("/d/11111111-1111-4111-8111-111111111111/opengraph-image");
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toContain("image/png");
+  const png = await response.body();
+  expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+  expect(png.readUInt32BE(16)).toBe(1200);
+  expect(png.readUInt32BE(20)).toBe(630);
+});

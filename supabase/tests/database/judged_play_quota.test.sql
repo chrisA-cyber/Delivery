@@ -37,7 +37,11 @@ values
   (
     '55555555-5555-4555-8555-555555555553',
     'pro', 'active', now() - interval '2 days', now() - interval '1 second'
-  );
+  )
+on conflict (user_id) do update set
+  tier = excluded.tier, state = excluded.state,
+  current_period_start = excluded.current_period_start,
+  current_period_end = excluded.current_period_end;
 
 set local "request.jwt.claim.role" = 'service_role';
 

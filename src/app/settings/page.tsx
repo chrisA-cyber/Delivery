@@ -7,4 +7,4 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function SettingsPage() { return <PageShell eyebrow="Control room" title="Your settings." description="Audio, motion, privacy, and the things that stop an app from being annoying."><SettingsPanel /></PageShell>; }
+export default function SettingsPage() { return <PageShell eyebrow="Control room" title="Your settings." description="Set your content intensity, playback, motion, and privacy. Manage your profile and account in one place."><SettingsPanel /></PageShell>; }

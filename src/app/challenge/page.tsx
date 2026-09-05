@@ -5,6 +5,7 @@ import { ProGate } from "@/components/pricing/pro-gate";
 
 export const metadata: Metadata = { title: "Challenge a friend" };
 
-export default function ChallengePage() {
-  return <PageShell eyebrow="Weaponize friendship" title="Pick their line." description="Choose exactly what they have to say and how they have to say it. They record; you both get the receipts."><ProGate feature="custom challenges"><ChallengeBuilder /></ProGate></PageShell>;
+export default async function ChallengePage({ searchParams }: { searchParams: Promise<{ prompt?: string; energy?: string }> }) {
+  const query = await searchParams;
+  return <PageShell eyebrow="Friend challenges" title="Pick their line." description="Set a line and direction, send a private invite, and see what your friend does with it. Same prompt. Two interpretations."><ProGate feature="custom challenges"><ChallengeBuilder initialPromptId={query.prompt} initialEnergyId={query.energy} /></ProGate></PageShell>;
 }

@@ -22,7 +22,7 @@ interface DailyRow {
         body: string;
         category: string;
         difficulty: number;
-        rating: "everyone" | "teen";
+        rating: "everyone" | "teen" | "mature";
         tags: string[];
         scoring_focus: string[];
         locale: string;
@@ -33,7 +33,7 @@ interface DailyRow {
         body: string;
         category: string;
         difficulty: number;
-        rating: "everyone" | "teen";
+        rating: "everyone" | "teen" | "mature";
         tags: string[];
         scoring_focus: string[];
         locale: string;

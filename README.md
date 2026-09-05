@@ -16,6 +16,8 @@ Delivery is a fast, high-energy browser game: draw a line and an energy, record 
 
 The operational contract, not just the UI, is documented. Start with:
 
+- [Classic Step 1B review handoff and current verification](docs/CLASSIC_STEP_1B_HANDOFF.md)
+- [Ready-to-run human playtest kit](docs/playtesting/classic-step-1b/FACILITATOR.md)
 - [Product, information architecture, and user flows](docs/PRODUCT_AND_FLOWS.md)
 - [System architecture and data model](docs/ARCHITECTURE.md)
 - [Environment reference](docs/ENVIRONMENT.md)

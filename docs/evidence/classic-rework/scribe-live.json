@@ -1,0 +1,17 @@
+{
+  "kind": "live-provider-synthetic-speech-smoke",
+  "provider": "ElevenLabs",
+  "model": "scribe_v2",
+  "date": "2026-09-05",
+  "authorizedDevelopmentKey": true,
+  "audio": "Locally synthesized neutral speech, no user recording",
+  "durationMs": 2525,
+  "words": 4,
+  "exactPhraseMatch": true,
+  "wordTimestampsReturned": true,
+  "usedForAccuracy": false,
+  "providerTestMs": 983,
+  "test": "src/lib/server/elevenlabs-live.eval.test.ts",
+  "outcome": "1 passed",
+  "limitations": "Does not validate human acting, accents, quiet delivery, OpenAI scoring, or Supabase persistence."
+}

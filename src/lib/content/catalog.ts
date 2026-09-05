@@ -8,6 +8,7 @@ import {
   getPromptById,
   getPromptsForPack,
   queryPrompts,
+  isEnergyCompatible,
 } from "../../data/content";
 import { hashString, shuffleDeterministic } from "./hash";
 import type {
@@ -57,10 +58,10 @@ export function getSuggestedEnergy(
   const compatible = ENERGY_MODIFIERS.filter(
     (modifier) =>
       !recent.has(modifier.id) &&
-      (!modifier.compatibleDifficulties ||
-        modifier.compatibleDifficulties.includes(prompt.difficulty)),
+      isEnergyCompatible(prompt, modifier),
   );
-  const pool = compatible.length > 0 ? compatible : ENERGY_MODIFIERS;
+  const pool = compatible.length > 0 ? compatible : ENERGY_MODIFIERS.filter((energy) => isEnergyCompatible(prompt, energy));
+  if (!pool.length) throw new RangeError("No compatible direction for this line");
   const index = hashString(`${seed}:${prompt.id}:${prompt.tags.join(":")}`) % pool.length;
   return pool[index]!;
 }
