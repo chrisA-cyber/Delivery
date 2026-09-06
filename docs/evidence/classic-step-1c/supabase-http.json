@@ -1,0 +1,19 @@
+{
+  "kind": "supabase-http-integration-run",
+  "status": "blocked-preflight",
+  "failureCode": "LOCAL_SUPABASE_PREFLIGHT_UNAVAILABLE",
+  "executedAt": "2026-09-06T00:11:56.929Z",
+  "passed": false,
+  "cleanupPassed": true,
+  "checks": [],
+  "sample": null,
+  "providerCalls": 0,
+  "boundary": "Real loopback HTTP/Auth/PostgREST/Storage only when passed; judge is mock and durable receipts are direct test setup fixtures",
+  "unresolved": [
+    "Live audio judgment→save→ranked Daily/challenge completion",
+    "Multi-instance distributed cache",
+    "Human/device playback and recording",
+    "Mature invite/recipient consent on real sessions",
+    "Existing deployed rows before migration rollout"
+  ]
+}

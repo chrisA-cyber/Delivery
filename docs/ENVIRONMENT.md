@@ -77,7 +77,7 @@ Placeholder values are documentation only. Never use them as real credentials.
 | Landing, pricing, policy, component states | Works | Works | Works |
 | Built-in prompt browsing | Works from the bundled catalog | Works from Supabase, with local fallback only when unconfigured | Supabase; database failures surface visibly |
 | Microphone recording and in-memory playback | Works on localhost | Works | Requires HTTPS/secure context |
-| AI result | Deterministic mock, clearly flagged outside end-user UI | Live | Live only |
+| AI result | Deterministic demo, clearly labeled in the player UI | Live when explicitly configured | Live only |
 | Authentication and durable profile | Unavailable/preview | Supabase | Supabase |
 | Storage and public sharing | Unavailable/ephemeral | Supabase | Supabase |
 | Checkout and Portal | Disabled | Stripe sandbox | Stripe live mode |
@@ -110,7 +110,7 @@ Validation:
 - A user cannot read another user's private delivery or subscription using the public API.
 - The service-role key does not appear in built assets, HTML, source maps, or browser network requests.
 - Auth callback rejects external redirect destinations.
-- Signed storage URLs expire and fail after a delivery is made private.
+- Signed storage URLs expire after their stated lifetime. Making a delivery private prevents new non-owner access immediately; an already issued signed URL remains a bearer capability until expiry or object deletion.
 
 ## OpenAI values
 

@@ -1,8 +1,10 @@
 # Delivery 2.0 — product goal, roadmap, and implementation workflow
 
-Working draft, updated September 5, 2026. Revised to prioritize Classic and site validation, then Say It Back, group invitations and streamer use, followed by Switch. Camera-free participation remains central. This document records proposals for planning; it does not authorize implementation or deployment by itself. Update it as product decisions and implementation evidence arrive.
+Working draft, updated September 6, 2026. The sequence is Classic validation → Say It Back → groups and streamer participation → Switch. Camera-free participation remains central. This document records proposals for planning; it does not authorize implementation or deployment by itself. Update it as product decisions and implementation evidence arrive.
 
-Source baseline: `chrisA-cyber/Delivery`, `main`, commit `97ed5d3ec2e0fa3ed6cdc53346906e08bac47313`. The planning task inspected source and documentation but has not run the app, installed dependencies, or verified external services. Later implementation work must inspect the current branch and commit rather than assume this snapshot remains current.
+Current implementation baseline: `chrisA-cyber/Delivery`, `main`, commit `c74baddcc93783490ec636291cc5b03397bdaa7b`, fetched September 6, 2026. Step 1B is committed and its [handoff](CLASSIC_STEP_1B_HANDOFF.md), [independent review](CLASSIC_STEP_1B_REVIEW.md), and recorded evidence have been read. Step 1C changes and validation boundaries are recorded in [CLASSIC_STEP_1C_HANDOFF.md](CLASSIC_STEP_1C_HANDOFF.md). Later tasks must fetch the current branch rather than assume this snapshot remains current.
+
+Step 1B completed the content/UI implementation: 86 active lines, 36 directions, six packs, historical identity preservation, a separate Scribe companion transcript, and a ready human-playtest kit. Its recorded evidence includes 517 database assertions in PostgreSQL WASM and 11 live synthetic Scribe requests; neither establishes full Supabase HTTP integration or live OpenAI judging. Human enjoyment, judging calibration, and real-device behavior remain unvalidated. Do not repeat the catalog redesign or treat those external gates as passed.
 
 Product context: [shared Delivery conversation](https://chatgpt.com/share/6a9ac69e-3ad4-83ea-93b3-c584a64e1d66). Earlier feature lists, completion percentages, infrastructure estimates, and model comparisons are discussion context, not verified engineering results or commitments.
 
@@ -117,7 +119,8 @@ Existing documents sometimes describe intended behavior beyond these implementat
 | --- | --- | --- | --- |
 | 0 — Baseline and experience brief | A reproducible baseline and clear redesign direction | Exercise current Classic; inspect the actual UI; map weaknesses; define core journeys for solo, groups, streamers, and camera-free participants; specify Classic and Switch rules | Exact commit, actual checks, current-flow evidence, a concrete design proposal, and bounded implementation steps |
 | 1 — Rework Classic and the site | The original game becomes a polished, satisfying first experience | Rebuild home-to-play-to-result flow; overhaul the catalog around unhinged humor, familiar internet phrases, and verified creator quotes; improve delivery pairings, recording, feedback, retry, and sharing; establish the visual/motion system; preserve voice-only play and start scoring evaluation | Reviewed content slate with strong performance pairings and publication status, full playable Classic flow, inspected mobile/desktop states, honest judging, usability observations, and relevant regression checks |
-| 1B — Validate Classic | Content, judging, and integrations have credible evidence | Review the incoming Step 1B report; resolve demonstrated defects and identify outstanding human validation | Verified content/publication decisions, live judging and isolated integration evidence where available, honest human-playtest status |
+| 1B — Classic content and flow | Implemented and reviewed; external validation outstanding | Preserve the completed catalog/UI, historical content, companion transcript, and test kit | Step 1B handoff, independent review, synthetic Scribe and isolated SQL evidence |
+| 1C — Classic live validation and completion | Close demonstrated engineering defects and collect remaining evidence | Live judging, isolated Supabase HTTP flows, observed play, and device checks; keep missing dependencies explicit | Step 1C handoff distinguishes measured behavior from mocks, unrun service checks, and owner actions |
 | 2 — Say It Back | Match a reference performance and watch the scene dubbed with your voice | Curated publishable clips; reference playback; timed recording; dialogue replacement; original/yours comparison; separate matching rubric; quick retries | Synchronized replacement playback, correctly handled source audio, real match-score evaluation, camera-free desktop/mobile flow, latency/cost and recovery evidence |
 | 3 — Groups, streamers, and inclusive beta | Solo players, invited groups, and stream audiences can participate in Classic and Say It Back | Shared-clip challenges; links/playlists/results/rematches; host display and audience voting; device-free roles; observed playtests | Complete invite/join/play/reveal loops, actual multi-client voting, no device prompts for audience, observed solo/group/streamer sessions, reliability data |
 | 3B — Switch and expanded replay formats | Changing-direction performances extend the established games | Continuous recording; synchronized cues; segment-aware scoring; optional camera and finished exports | Calibrated feedback, capture recovery, synchronized exports, voice-only parity |
@@ -238,8 +241,8 @@ Review outcomes are: accepted with evidence; a specific correction is needed; or
 
 **Current prompt queue — supersedes the original sequence**
 
-1. Await and review the Step 1B report against the requested content, live-scoring, isolated-integration, and human-playtest evidence. The report has not yet been received. Resolve material Classic issues before advancing; do not claim pending human tests passed.
-2. Write the next bounded implementation prompt for Say It Back after that review. Do not interrupt Step 1B or begin this mode now.
+1. Review the Step 1C handoff and complete its named external validation: bounded consented OpenAI judging, actual isolated Supabase HTTP integration, observed human play, and real devices. Step 1B has been received and reviewed. Resolve material Classic failures before advancing; do not repeat completed content work or claim pending tests passed.
+2. Write the next bounded implementation prompt for Say It Back after the Classic gate review. No later mode is implemented in Step 1C.
 3. Expand friend challenges and streamer participation around Classic and Say It Back.
 4. Add Switch afterward, then revisit the later phases using actual play evidence.
 
@@ -258,7 +261,7 @@ Write each full prompt only after preceding evidence resolves important decision
 - First audience is decided: solo players, invited friend groups, and streamer-led communities. Refine recruiting within those audiences.
 - Initial age range and markets; corresponding room/publication policies.
 - Camera-free play is decided. Finalize friendly role labels and the small guessing activity; validate the proposed common audio score with separate visual feedback.
-- Choose a concrete visual direction through the actual Classic/home/result experience; define how humorous or competitive the game should feel.
+- The bold Classic/home/result visual direction is implemented. Validate comprehension, humor, replay motivation, and feedback credibility with players before making another broad redesign.
 - Exact first Switch rules: line length, number of cues, cue length, look-ahead, preparation time, and retry limits.
 - Supported launch devices and language.
 - Target date, development constraints, provider access, and monthly operating budget.

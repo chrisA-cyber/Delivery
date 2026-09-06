@@ -1,0 +1,112 @@
+{
+  "kind": "locally-exercised-real-api-with-explicit-mock-judge",
+  "executedAt": "2026-09-06T00:11:47.966Z",
+  "audio": "one-second synthetic 440Hz PCM fixture plus zero PCM silence; neither is human speech",
+  "sameReceipt": true,
+  "providerCalls": 0,
+  "sameProcessConcurrencyOnly": true,
+  "checks": [
+    {
+      "name": "labeled mock score remains ephemeral",
+      "passed": true
+    },
+    {
+      "name": "lost-response retry replays the same receipt without extra quota",
+      "passed": true
+    },
+    {
+      "name": "concurrent requests either replay or report in-progress",
+      "passed": true
+    },
+    {
+      "name": "concurrent operation recovers one result and one quota charge",
+      "passed": true
+    },
+    {
+      "name": "changed-body retry rejected",
+      "passed": true
+    },
+    {
+      "name": "silence rejected before invented scoring",
+      "passed": true
+    },
+    {
+      "name": "missing account service is explicit",
+      "passed": true
+    },
+    {
+      "name": "unconfigured private audio route fails closed",
+      "passed": true
+    },
+    {
+      "name": "default draw is audience-safe",
+      "passed": true
+    },
+    {
+      "name": "local Daily assignment remains stable across requests",
+      "passed": true
+    }
+  ],
+  "runs": [
+    {
+      "status": 200,
+      "source": "fallback",
+      "scoringVersion": "delivery-demo-v1",
+      "rubricVersion": "delivery-demo-v1",
+      "persisted": false,
+      "id": "576bb0c7-0f4b-48cf-9d63-3c498d55b752",
+      "replayed": "false",
+      "used": 1
+    },
+    {
+      "status": 200,
+      "source": "fallback",
+      "scoringVersion": "delivery-demo-v1",
+      "rubricVersion": "delivery-demo-v1",
+      "persisted": false,
+      "id": "576bb0c7-0f4b-48cf-9d63-3c498d55b752",
+      "replayed": "true",
+      "used": 1
+    },
+    {
+      "status": 200,
+      "source": "fallback",
+      "scoringVersion": "delivery-demo-v1",
+      "rubricVersion": "delivery-demo-v1",
+      "persisted": false,
+      "id": "96f6de7b-c5af-4529-b30c-4bbcad2faf6d",
+      "replayed": "false",
+      "used": 2
+    },
+    {
+      "status": 200,
+      "source": "fallback",
+      "scoringVersion": "delivery-demo-v1",
+      "rubricVersion": "delivery-demo-v1",
+      "persisted": false,
+      "id": "96f6de7b-c5af-4529-b30c-4bbcad2faf6d",
+      "replayed": "true",
+      "used": 2
+    },
+    {
+      "status": 200,
+      "source": "fallback",
+      "scoringVersion": "delivery-demo-v1",
+      "rubricVersion": "delivery-demo-v1",
+      "persisted": false,
+      "id": "96f6de7b-c5af-4529-b30c-4bbcad2faf6d",
+      "replayed": "true",
+      "used": 2
+    },
+    {
+      "status": 409,
+      "error": "IDEMPOTENCY_CONFLICT",
+      "replayed": null
+    },
+    {
+      "status": 422,
+      "error": "NO_SPEECH_DETECTED",
+      "replayed": null
+    }
+  ]
+}

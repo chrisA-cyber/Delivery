@@ -1,0 +1,18 @@
+{
+  "kind": "real-local-http-live-configuration-failure",
+  "executedAt": "2026-09-06T00:13:30.460Z",
+  "providerCalls": 0,
+  "checks": [
+    {
+      "name": "live judging with a missing key fails visibly without a demo receipt",
+      "passed": true
+    }
+  ],
+  "runs": [
+    {
+      "status": 503,
+      "error": "SERVER_NOT_CONFIGURED",
+      "replayed": null
+    }
+  ]
+}
