@@ -6,6 +6,8 @@
 
 Work branch: `codex/classic-railway`, based on local `8f3e378` and Step 1C `a3350346af7681b838bcb3267ded0d98d471c307`. The local ancestry retains unpushed Step 1D `7c60b932955d66f39e7e7589cc38a8a4b61b5053` and all setup notes; their contents are included in this branch. Main and draft PR #1 were rechecked and remain `c74badd` and `a335034` respectively.
 
+Published code revision: `84ee4d49487be5370d20004e14aedc4374a670fb` on GitHub branch `codex/classic-railway`. Its tree `ec2850c103c7c7e2fe5f0053fc111180fcbe6e2b` exactly matches tested local commit `923583e5485312031d28d44b1154efb7c5ac7c24`, preserved on `codex/classic-railway-local`. The GitHub connector published the combined working tree on top of Step 1C; no local work was lost. Railway's existing web service is now staged against this exact repo/branch/code revision. This subsequent handoff update changes documentation only.
+
 Added the official `@redis/client` transport for Railway private Redis. Rate limiting, idempotency and guest quotas use the same existing Lua scripts. Native connections have 2.5-second deadlines, no automatic reconnect/offline replay, sanitized errors and fail-closed behavior. Upstash remains supported as an alternative; configuring both backends is rejected. No scoring weights, transcripts, catalog identities, database schema or privacy rules changed.
 
 Passed: `npx vitest run src/lib/server/redis.test.ts src/lib/server/env.test.ts src/lib/server/rate-limit.test.ts src/lib/server/idempotency.test.ts src/lib/server/entitlements.test.ts` (36 tests), `npm run typecheck`, `npm run lint`, `npm run build`, and `git diff --check`. These transport tests use a mocked Redis client. Actual app-to-Railway Redis connectivity is still pending deployment.
@@ -16,10 +18,12 @@ Passed: `npx vitest run src/lib/server/redis.test.ts src/lib/server/env.test.ts 
 - Environment `8470f7d3-49f4-41bc-b39e-65fc1e5a1e22` retains Railway's default label `production`; it belongs exclusively to this test project and is not Delivery's existing production deployment.
 - Web service `Delivery`: `34d3b855-25f3-4eea-9438-c43974cef738`.
 - Allocated URL: `https://delivery-production-0577.up.railway.app/play`. **Not yet a working gameplay preview.**
-- Standard Redis template replacement staged: service `b79ed0ee-00d3-484b-b706-c2f84e4e9588`, volume `bfaadfa4-820f-4594-af5f-2bdec31edaa0`, private networking, one replica. An initial manually created Redis (`aea0c5bc-19bb-4c33-9293-74eb1dc409a2`) used an unverified secret-generation expression; its removal is staged. It was never connected to gameplay and contains no test fixtures. Do not use that initial service.
+- Standard Redis template replacement staged: service `Redis-u2D6` (`b79ed0ee-00d3-484b-b706-c2f84e4e9588`), volume `bfaadfa4-820f-4594-af5f-2bdec31edaa0`, private networking, one replica. An initial manually created Redis (`aea0c5bc-19bb-4c33-9293-74eb1dc409a2`) used an unverified secret-generation expression; its removal is staged. It was never connected to gameplay and contains no test fixtures. Do not use that initial service.
 - Existing test Supabase stays `rcsopyxrotbbfaqikire`: 17 exact migrations and seed already verified, private audio/share buckets, no production fixtures.
 
 Web build/runtime variables present: `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NODE_ENV`, `PORT`, `RAILPACK_NODE_VERSION`, `DELIVERY_AI_MODE`, `DELIVERY_AI_ALLOW_MOCK_FALLBACK`, `DELIVERY_TRANSCRIPTION_PROVIDER`. Public settings target only the test Supabase and Railway origin. Live mode remains enabled with mock fallback false. Build is `npm run build`; start is `npm run start -- --hostname 0.0.0.0 --port 3000`; platform liveness uses `/play`. The unchanged `/api/health` still enforces full launch configuration; liveness is not proof of gameplay readiness.
+
+Staged `REDIS_URL` reference was corrected to `${{Redis-u2D6.REDIS_URL}}` using Railway's reference tool and verified against the exact replacement service; no rendered credential was exposed. Supabase, build/start and domain configuration were reverified intact. The application has **no deployment yet**; the owner must apply the staged changes through the required dashboard verification. This is a Railway access requirement, not an automatic approval-review rejection.
 
 ## Actual access blockers
 
