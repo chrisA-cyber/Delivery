@@ -13,12 +13,15 @@ export function useRound(token: string, poll = true) {
   const [busy, setBusy] = useState("");
   const sequence = useRef(0);
   const mutation = useRef(false);
+  const readsInFlight = useRef(0);
   const claimAttempted = useRef("");
   const path = `/api/rounds/${encodeURIComponent(token)}`;
   const roundState = round?.state;
   const hasRound = Boolean(round);
   const communityPhase = round?.community?.phase;
   const refresh = useCallback(async (quiet = false) => {
+    if (quiet && (readsInFlight.current > 0 || mutation.current)) return;
+    readsInFlight.current += 1;
     const run = ++sequence.current;
     if (!quiet) setLoading(true);
     try {
@@ -26,7 +29,7 @@ export function useRound(token: string, poll = true) {
       if (run === sequence.current) { setRound(data.round); setError(null); }
     } catch (cause) {
       if (run === sequence.current) setError(cause instanceof RoundApiError ? cause : new RoundApiError("Your round could not reconnect. Please retry.", 0));
-    } finally { if (run === sequence.current) setLoading(false); }
+    } finally { readsInFlight.current -= 1; if (run === sequence.current) setLoading(false); }
   }, [path, contentRating]);
 
   useEffect(() => {

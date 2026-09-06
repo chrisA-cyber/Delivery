@@ -22,6 +22,7 @@ export const groupHeaders = (cookie?: string) => ({ "Cache-Control": "private, n
 
 type GroupRouteAction = "create" | "read" | "join" | "submit" | "close" | "revoke" | "vote" | "claim" | "rematch" | "select" | "hide" | "showcase" | "start-voting" | "end-voting" | "display" | "revoke-display";
 export async function handleGroupRoute(request: Request, action: GroupRouteAction, rawToken?: string) {
+  const started = performance.now();
   const requestId = requestIdFrom(request);
   let cookie: string | undefined;
   try {
@@ -49,6 +50,6 @@ export async function handleGroupRoute(request: Request, action: GroupRouteActio
         round = await mutateGroupRound(token!, viewer, origin, action as Parameters<typeof mutateGroupRound>[3], payload, payload.maxRating);
       }
     }
-    return jsonOk({ round }, requestId, { status: action === "create" || action === "rematch" ? 201 : 200, headers: groupHeaders(cookie) });
+    return jsonOk({ round }, requestId, { status: action === "create" || action === "rematch" ? 201 : 200, headers: { ...groupHeaders(cookie), "Server-Timing": `round;dur=${Math.round(performance.now() - started)}` } });
   } catch (error) { return jsonError(error, requestId, groupHeaders(cookie)); }
 }
