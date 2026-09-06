@@ -1,0 +1,13 @@
+# Performance video exports — September 6, 2026
+
+Release candidate for private, downloadable Classic, Switch, and Say It Back videos. Live publication and file evidence are recorded below after verification.
+
+The owner opens Create video on a local result or saved performance, chooses score/name visibility, generates, previews the actual finished MP4, downloads, or opens supported native file sharing. Unscored/guest Classic now has upload-only private saved takes; no export invokes judging. Switch preserves the five-cue repeated-phrase format and continuous recording. Say It Back uses its saved assembled take, measured offset, and existing backing strategy, with scene aspect ratio preserved and phrase-level captions.
+
+FFmpeg produces 1080×1920 H.264/AAC with measured waveform/cue timing, restrained Delivery cards and an immutable assignment-only /a/code invitation. Compatible AAC passes through where possible; no music, normalization, voice effects, or speech time stretching is applied. Existing backing gain/mutes and assembled boundary fades follow in-app replay. Existing CC BY/public-domain source records permit film exports; unverified Twitch reuse and existing Mature-publication restrictions have clear explanations. No new rights metadata is invented.
+
+The existing Railway app supervises Next and one serial FFmpeg worker. Existing Supabase hosts private export jobs/files. Leases, fencing, bounded retries/time/duration/size, immutable inputs and cleanup tombstones cover interruption/deletion races. Export expiry is seven days or the shorter guest-source lifetime; signed sources remain replayable after derived-file expiry. Every status/media request rechecks ownership and content. Group viewing permission does not grant export permission. Downloaded/external copies cannot be recalled.
+
+Migration: 20260906233910_private_performance_videos.sql applied to existing Delivery project. Runtime adds FFmpeg, system fonts, sharp and tsx; no new service or recurring subscription. Netlify redirect and Clipping unchanged. Budget remains **$2.675 / $5 conservative cumulative bound**, no new AI calls.
+
+Validation to date: application suite 435 passed/3 provider opt-ins skipped; lint/typecheck/build passed; 713 SQL assertions and 12 upgrade checks passed. Local sample renders succeed for Classic, emotion and speed Switch, and 14.7-second five-line scene with a retake assembled by the same composeLineTakes function. Cloud browser/device/native sharing evidence and final revision are updated after deployment. Physical phone sharing and audible OBS output remain separate owner checks.

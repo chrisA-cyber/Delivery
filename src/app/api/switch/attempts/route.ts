@@ -9,6 +9,7 @@ const fieldsSchema = z.object({
   challengeId: z.string().regex(/^[a-z0-9-]{1,80}$/), challengeVersion: z.string().regex(/^[a-z0-9.-]{1,80}$/),
   durationMs: z.coerce.number().int().min(250).max(30000), recordingOffsetMs: z.coerce.number().int().min(0).max(0).default(0),
   attemptId: z.string().uuid(), maxRating: z.enum(["everyone", "teen", "mature"]).default("everyone"),
+  assignmentCode: z.string().regex(/^[a-f0-9]{12}$/).optional(),
   roundToken: z.string().regex(/^[A-Za-z0-9_-]{40,80}$/).optional(),
   challengeToken: z.string().regex(/^[A-Za-z0-9_-]{40,80}$/).optional(), shareAudio: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
 });

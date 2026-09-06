@@ -6,7 +6,8 @@ import { SWITCH_SCORING_VERSION, type SwitchScore } from "@/lib/switch/types";
 
 type Row = Record<string, unknown>;
 const state = vi.hoisted(() => ({ rows: [] as Row[], challenges: [] as Row[], failScoreWrite: false, failInsert: false, cache: new Map<string, unknown>() }));
-const mocks = vi.hoisted(() => ({ reserve: vi.fn(), release: vi.fn(), judge: vi.fn(), sign: vi.fn(), download: vi.fn(), deleteCheck: vi.fn(), upload: vi.fn(), remove: vi.fn(), move: vi.fn(), moderate: vi.fn(), validate: vi.fn() }));
+const mocks = vi.hoisted(() => ({ reserve: vi.fn(), release: vi.fn(), judge: vi.fn(), sign: vi.fn(), download: vi.fn(), deleteCheck: vi.fn(), upload: vi.fn(), remove: vi.fn(), move: vi.fn(), moderate: vi.fn(), validate: vi.fn(), publicAssignment: vi.fn() }));
+vi.mock("@/lib/server/public-assignments", () => ({ getPublicAssignment: mocks.publicAssignment }));
 vi.mock("@/lib/server/moderation", () => ({ moderateLine: mocks.moderate }));
 vi.mock("@/lib/server/account-deletion", () => ({ assertAccountNotDeleting: mocks.deleteCheck, isOwnerStoragePath: (path: string, owner: string) => path.startsWith(`${owner}/`) }));
 vi.mock("@/lib/server/entitlements", () => ({ reserveJudgedPlay: mocks.reserve, releaseJudgedPlay: mocks.release }));
@@ -74,6 +75,20 @@ beforeEach(() => {
 });
 
 describe("Switch private immutable take boundary", () => {
+  it("uploads the public assignment's exact historical snapshot without a judging call", async () => {
+    const historical = structuredClone(challenge);
+    historical.version = "old-immutable-v1";
+    historical.scoringVersion = "old-beta";
+    historical.cues.forEach((cue) => { cue.text = "The same original phrase."; });
+    mocks.publicAssignment.mockResolvedValue({ mode: "switch", challenge: historical, rating: historical.rating, scoringVersion: historical.scoringVersion, rubricVersion: historical.rubricVersion });
+    const input = { audio: audio(), challengeId: historical.id, challengeVersion: historical.version, assignmentCode: "abcdef123456", durationMs: historical.duration * 1000, attemptId: "public-attempt", maxRating: "everyone" as const, shareAudio: false };
+    const result = await createSwitchAttempt(input, owner);
+    expect(result.attempt.challenge).toEqual(historical);
+    expect(result.attempt.scoringVersion).toBe("old-beta");
+    expect(mocks.judge).not.toHaveBeenCalled();
+    expect(state.rows.at(-1)?.shared_with_challenge).toBe(false);
+    await expect(createSwitchAttempt({ ...input, attemptId: "different", roundToken: "a".repeat(43) }, owner)).rejects.toMatchObject({ code: "SWITCH_INVITATION_INVALID" });
+  });
   it("denies strangers before issuing audio capabilities", async () => {
     await expect(getSwitchAttemptRow("attempt-one", stranger)).rejects.toMatchObject({ status: 404 });
     await expect(getSwitchAttemptRow("attempt-one", anonymous)).rejects.toMatchObject({ status: 404 });

@@ -92,6 +92,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ d
     if (error) throw new ExternalServiceError("Supabase delivery deletion", { cause: error });
     if (!data) throw new AppError("DELIVERY_NOT_FOUND", "That take is unavailable.", 404);
     const row = data as Record<string, unknown>;
+    const cancelled = await admin.rpc("cancel_video_exports", { p_source_kind: "delivery", p_attempt_id: deliveryId });
+    if (cancelled.error) throw new ExternalServiceError("Video deletion containment", { cause: cancelled.error });
     if (
       typeof row.recording_path === "string" &&
       isOwnerStoragePath(row.recording_path, user.id)

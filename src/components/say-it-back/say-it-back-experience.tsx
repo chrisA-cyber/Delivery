@@ -6,10 +6,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, AudioLines, Check, CheckCircle2, Clapperboard, Clock3, Copy, ExternalLink, Film, Headphones, Link2, LoaderCircle, LockKeyhole, Mic, RotateCcw, ShieldCheck, Sparkles, Square, Trophy, Users, X } from "lucide-react";
 import { ContentControl, CONTENT_LABELS } from "@/components/content/content-control";
 import { useApp } from "@/components/providers/app-provider";
+import { VideoExport } from "@/components/exports/video-export";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import { lineRecordingWindows, useLineTakes, type LineWindow } from "@/hooks/use-line-takes";
 import { isRatingAllowed } from "@/data/content";
 import { cn } from "@/lib/utils";
+import type { GroupAssignment } from "@/lib/groups/types";
 import { SAY_SCORING_VERSION, type SayAttempt, type SayChallenge, type SayClip, type SayScore } from "@/lib/say-it-back/types";
 import { DubPlayer, type DubPlayerHandle } from "./dub-player";
 import { TakeWaveform } from "./take-waveform";
@@ -69,7 +71,7 @@ function ClipCard({ clip, index, onSelect }: { clip: SayClip; index: number; onS
 
 export type SayRoundContext = { token: string; clip: SayClip; roleId: string; returnPath: string };
 
-export function SayItBackExperience({ initialClipId, initialRoleId, initialAttemptId, challengeToken, initialClaimId, roundContext }: { initialClipId?: string; initialRoleId?: string; initialAttemptId?: string; challengeToken?: string; initialClaimId?: string; roundContext?: SayRoundContext }) {
+export function SayItBackExperience({ initialClipId, initialRoleId, initialAttemptId, challengeToken, initialClaimId, roundContext, publicAssignment }: { initialClipId?: string; initialRoleId?: string; initialAttemptId?: string; challengeToken?: string; initialClaimId?: string; roundContext?: SayRoundContext; publicAssignment?: { code: string; assignment: Extract<GroupAssignment, { mode: "say-it-back" }> } }) {
   const router = useRouter();
   const { authenticated, authReady, contentRating, tier, updatePreferences, refreshAccount } = useApp();
   const [clips, setClips] = useState<SayClip[]>([]);
@@ -178,7 +180,10 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
           if (roundContext && (restored.clip.id !== roundContext.clip.id || restored.clip.version !== roundContext.clip.version || restored.roleId !== roundContext.roleId)) throw new Error("That take belongs to another assignment. Return to your round to record this scene.");
           selectClip(restored.clip, restored.roleId); setAttempt(restored); setOffsetMs(restored.recordingOffsetMs); setEditing(false);
         }
-        if (roundContext) {
+        if (publicAssignment && restored && (restored.clip.id !== publicAssignment.assignment.clip.id || restored.clip.version !== publicAssignment.assignment.clip.version || restored.roleId !== publicAssignment.assignment.roleId || restored.scoringVersion !== publicAssignment.assignment.scoringVersion)) throw new Error("That take belongs to another assignment.");
+        if (publicAssignment) {
+          if (!restored) selectClip(publicAssignment.assignment.clip, publicAssignment.assignment.roleId);
+        } else if (roundContext) {
           if (!restored) selectClip(roundContext.clip, roundContext.roleId);
         } else if (challengeToken) {
           const loaded = await api<{ challenge: SayChallenge }>(`/api/say-it-back/challenges/${encodeURIComponent(challengeToken)}?maxRating=${contentRating}`);
@@ -199,7 +204,7 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
       }
     } catch (cause) { if (mounted.current) { initialLoadDone.current = false; setLoadError(cause instanceof Error ? cause.message : "The scenes could not load."); } }
     finally { if (mounted.current) setCatalogLoading(false); }
-  }, [contentRating, initialAttemptId, initialClaimId, challengeToken, initialClipId, initialRoleId, selectClip, authenticated, refreshAccount, roundContext]);
+  }, [contentRating, initialAttemptId, initialClaimId, challengeToken, initialClipId, initialRoleId, selectClip, authenticated, refreshAccount, roundContext, publicAssignment]);
 
   useEffect(() => { if (authReady) void loadCatalog(); }, [authReady, loadCatalog]);
 
@@ -211,8 +216,8 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
     if (challenge) destination.set("challenge", challenge.token);
     // An uploaded take can survive a refresh without keeping raw audio in
     // browser storage. Its private endpoint still checks the account/device.
-    window.history.replaceState(window.history.state, "", `${roundContext ? `/rounds/${encodeURIComponent(roundContext.token)}/record` : "/say-it-back"}${destination.size ? `?${destination}` : ""}`);
-  }, [authReady, catalogLoading, loadError, attempt, clip, role, challenge, roundContext]);
+    window.history.replaceState(window.history.state, "", `${roundContext ? `/rounds/${encodeURIComponent(roundContext.token)}/record` : publicAssignment ? `/a/${publicAssignment.code}` : "/say-it-back"}${destination.size ? `?${destination}` : ""}`);
+  }, [authReady, catalogLoading, loadError, attempt, clip, role, challenge, roundContext, publicAssignment]);
 
   const finishRecording = useCallback(() => {
     if (!recordingRef.current) return;
@@ -366,11 +371,19 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
     form.set("clipId", clip.id); form.set("clipVersion", clip.version); form.set("roleId", role.id);
     form.set("durationMs", String(localDurationMs)); form.set("recordingOffsetMs", String(offsetMs));
     form.set("attemptId", submissionId.current || (submissionId.current = crypto.randomUUID())); form.set("maxRating", contentRating);
+    if (publicAssignment) form.set("assignmentCode", publicAssignment.code);
     if (challenge) { form.set("challengeToken", challenge.token); form.set("shareAudio", "true"); }
     const uploaded = (await api<{ attempt: SayAttempt }>("/api/say-it-back/attempts", { method: "POST", body: form })).attempt;
     if (mounted.current) setAttempt(uploaded);
     return uploaded;
-  }, [attempt, clip, role, audioBlob, localCanSubmit, localDurationMs, offsetMs, contentRating, challenge, challengeConsent]);
+  }, [attempt, clip, role, audioBlob, localCanSubmit, localDurationMs, offsetMs, contentRating, challenge, challengeConsent, publicAssignment]);
+
+  const prepareVideoExport = async () => {
+    if (actionInFlight.current || captureBusy) throw new Error("Finish the current recording or save, then create your video.");
+    actionInFlight.current = true; setBusy("upload");
+    try { return (await uploadTake()).id; }
+    finally { actionInFlight.current = false; if (mounted.current) setBusy(null); }
+  };
 
   const signInAndKeepTake = useCallback(async () => {
     if (actionInFlight.current || captureBusy) return;
@@ -381,11 +394,11 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
       if (retained) destination.set(retained.saved ? "attempt" : "claim", retained.id);
       else if (clip && role && !roundContext) { destination.set("clip", clip.id); destination.set("role", role.id); }
       if (challenge) destination.set("challenge", challenge.token);
-      const path = roundContext ? `/rounds/${encodeURIComponent(roundContext.token)}/record` : "/say-it-back";
+      const path = roundContext ? `/rounds/${encodeURIComponent(roundContext.token)}/record` : publicAssignment ? `/a/${publicAssignment.code}` : "/say-it-back";
       router.push(`/login?next=${encodeURIComponent(`${path}${destination.size ? `?${destination}` : ""}`)}`);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Your take could not be kept yet. Please try again before signing in."); }
     finally { actionInFlight.current = false; if (mounted.current) setBusy(null); }
-  }, [attempt, audioBlob, uploadTake, captureBusy, clip, role, challenge, router, roundContext]);
+  }, [attempt, audioBlob, uploadTake, captureBusy, clip, role, challenge, router, roundContext, publicAssignment]);
 
   const chooseRoundTake = async () => {
     if (!roundContext || actionInFlight.current || captureBusy) return;
@@ -541,7 +554,7 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
   const canTryAgain = (!busy || busy === "judge") && !captureBusy;
 
   return <main className="min-h-screen px-4 pb-16 pt-[96px] sm:px-8 sm:pt-28"><div className="mx-auto max-w-[1184px]">
-    <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><button type="button" className="button-ghost -ml-3 px-3" disabled={!canTryAgain} onClick={roundContext ? () => router.push(roundContext.returnPath) : backToScenes}><ArrowLeft className="size-4" />{roundContext ? "Back to round" : "All scenes"}</button><div className="flex items-center gap-3"><Link href="/play" className="text-xs text-white/55 hover:text-white">Classic</Link><span className="h-4 w-px bg-white/20" /><span className="mono-label text-hot">Say It Back</span></div></div>
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><button type="button" className="button-ghost -ml-3 px-3" disabled={!canTryAgain} onClick={roundContext ? () => router.push(roundContext.returnPath) : publicAssignment ? () => router.push("/say-it-back") : backToScenes}><ArrowLeft className="size-4" />{roundContext ? "Back to round" : "All scenes"}</button><div className="flex items-center gap-3"><Link href="/play" className="text-xs text-white/55 hover:text-white">Classic</Link><span className="h-4 w-px bg-white/20" /><span className="mono-label text-hot">Say It Back</span></div></div>
     {loadError && <div className="game-error mb-5" role="alert">{loadError}<button type="button" disabled={Boolean(busy) || captureBusy} onClick={() => void loadCatalog()} className="ml-3 underline">Try again</button></div>}
     {challenge && selectedAllowed && <section className="mb-5 rounded-xl border border-hot/35 bg-hot/10 p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -594,18 +607,19 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
               {!currentScore && <>{challenge && !attempt && <label className="mb-4 flex cursor-pointer gap-2.5 text-xs leading-5 text-white/75"><input type="checkbox" checked={challengeConsent} onChange={(event) => setChallengeConsent(event.target.checked)} className="mt-1 size-4 shrink-0 accent-acid" />Share this take with the friend who created this challenge so we can compare our dubs.</label>}<button type="button" className="button-primary min-h-12 w-full" disabled={Boolean(busy) || (!attempt && !localCanSubmit) || Boolean(challenge && !attempt && !challengeConsent)} onClick={() => void submit()}>{busy ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{busy === "upload" ? "Saving your take…" : busy === "judge" ? `Checking your match… ${matchSeconds}s` : !fullLineTake ? `Match these ${lineTakes.lines.length} of ${ownCues.length} lines` : attempt?.status === "failed" || error ? "Retry this take" : challenge ? "Score & share my take" : "Get my match"}</button><p className="mt-2 text-xs leading-5 text-white/55">{busy === "judge" ? "Your dub is ready to play now. You can also start another take while this result finishes." : attempt ? "This take is already uploaded. Retrying uses the same submission." : !fullLineTake ? "Unrecorded lines stay silent and count as missing words in your match. Record the other lines whenever you’re ready." : "Your voice plays from this device without an upload wait. Getting a match uses one scored play."}</p></>}
               {roundContext && <><button type="button" className="button-primary mt-3 min-h-12 w-full" disabled={Boolean(busy) || (!attempt && !localCanSubmit)} onClick={() => void chooseRoundTake()}><Users className="size-4" />Use this take in round</button><p className="mt-2 text-xs leading-5 text-white/55">Choose this performance, then confirm sharing on your round page. A score is optional.</p></>}
               <button type="button" className="button-secondary mt-3 w-full" onClick={retake} disabled={!canTryAgain}><RotateCcw className="size-4" />Record another take</button>
-              {currentScore && !roundContext && <><button type="button" className="button-primary mt-3 w-full" disabled={!canTryAgain || currentScore.timing == null || currentScore.rhythm == null} onClick={() => { setSharing(!sharing); setShareConsent(false); }}><Users className="size-4" />Challenge a friend</button>{(currentScore.timing == null || currentScore.rhythm == null) && <p className="mt-2 text-xs leading-5 text-white/60">A words-only result cannot enter a matching challenge. Record again for a complete match.</p>}<button type="button" className="button-ghost mt-2 w-full" disabled={!canTryAgain} onClick={() => { const next = clips.findIndex((item) => item.id === clip.id); const nextClip = clips[(next + 1) % clips.length]; if (nextClip) { setChallenge(null); selectClip(nextClip); } else backToScenes(); }}>Next scene<ArrowRight className="size-3.5" /></button></>}
+              {currentScore && !roundContext && <><button type="button" className="button-primary mt-3 w-full" disabled={!canTryAgain || currentScore.timing == null || currentScore.rhythm == null} onClick={() => { setSharing(!sharing); setShareConsent(false); }}><Users className="size-4" />Challenge a friend</button>{(currentScore.timing == null || currentScore.rhythm == null) && <p className="mt-2 text-xs leading-5 text-white/60">A words-only result cannot enter a matching challenge. Record again for a complete match.</p>}<button type="button" className="button-ghost mt-2 w-full" disabled={!canTryAgain} onClick={() => { if (publicAssignment) { router.push("/say-it-back"); return; } const next = clips.findIndex((item) => item.id === clip.id); const nextClip = clips[(next + 1) % clips.length]; if (nextClip) { setChallenge(null); selectClip(nextClip); } else backToScenes(); }}>Next scene<ArrowRight className="size-3.5" /></button></>}
             </div>}
             {recorder.status === "requesting" && <p role="status" className="mt-3 flex items-center gap-2 text-xs"><LoaderCircle className="size-4 animate-spin" />Opening microphone… Allow access in your browser.</p>}
             {recorder.error && <p className="mt-3 text-xs leading-5 text-[#ffbcaa]" role="alert">{recorder.error}</p>}{recorder.warning && <p className="mt-3 text-xs leading-5 text-[#ffd4a3]" role="status">{recorder.warning}</p>}{audioBlob && !localCanSubmit && <p className="mt-3 text-xs leading-5 text-[#ffbcaa]" role="alert">{localTake?.qualityMessage ?? recorder.qualityMessage} Record another take to get a match.</p>}
           </section>
           {takeUrl && <section className="rounded-xl border border-electric/25 bg-electric/[0.07] px-5 py-4"><div className="flex items-start gap-3"><Headphones className="mt-0.5 size-5 shrink-0 text-electric" /><div><h2 className="font-bold">{fullLineTake ? "Your dub is ready." : `Preview your dub · ${lineTakes.lines.length}/${ownCues.length} lines`}</h2><p className="mt-1 text-sm leading-6 text-white/65">Tap play above. Switch between Original and Your take to hear the difference. Your recorded lines keep their original timing.{busy === "judge" ? " Keep watching while we check your match." : ""}</p></div></div></section>}
+          {takeUrl && !captureBusy && (!attempt || attempt.owned) && <VideoExport key={takeUrl} mode="say-it-back" attemptId={attempt?.id} prepareAttempt={prepareVideoExport} hasScore={Boolean(currentScore)} disabled={Boolean(busy) || (!attempt && !localCanSubmit)} />}
           {currentScore && <ScorePanel score={currentScore} previousBest={attempt?.previousBest} />}
           {comparableChallenge && <section className="rounded-2xl border border-hot/40 bg-hot/10 p-6"><p className="mono-label text-hot">Head to head</p><h2 className="mt-2 text-2xl font-bold">{currentScore.overall > friendScore.overall ? "You took the scene." : currentScore.overall === friendScore.overall ? "A scene-stealing tie." : "They’ve got you. For now."}</h2><div className="mt-5 grid grid-cols-2 gap-4"><div className="rounded-xl bg-paper p-4 text-ink"><p className="text-xs font-bold">You</p><p className="mt-1 text-4xl font-bold">{Math.round(currentScore.overall)}</p></div><div className="rounded-xl border border-white/20 p-4"><p className="text-xs font-bold">{challenge?.challengerName}</p><p className="mt-1 text-4xl font-bold">{Math.round(friendScore.overall)}</p></div></div><button type="button" className="button-secondary mt-5" disabled={!canTryAgain} onClick={retake}><RotateCcw className="size-4" />Rematch this scene</button></section>}
           <details className="rounded-xl border border-white/15 px-5 py-4 text-xs leading-6 text-white/60"><summary className="cursor-pointer font-bold text-white/70">Scene credits & playback notes</summary><p className="mt-3">{clip.source.attribution}</p><p className="mt-2">{clip.source.reuseNote}</p><p className="mt-2">{role.dubAudioUrl ? "This role has a prepared scene track with its original dialogue removed. Other dialogue and scene sound remain where available." : "The original soundtrack is muted over this role’s dialogue, then returns between lines. Background sound drops during those intervals."}</p><p className="mt-2">The recording starts just before the scene. We preserve your spoken timing and only account for that measured startup offset. Your device’s microphone latency is not separately calibrated.</p><div className="mt-3 flex flex-wrap gap-4"><a href={clip.source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline">Original source <ExternalLink className="size-3" /></a><a href={clip.source.licenseUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline">{clip.source.license} <ExternalLink className="size-3" /></a></div><p className="mt-3 break-all text-[10px] text-white/45">Scene {clip.id} · {clip.version} · {attempt?.scoringVersion ?? challenge?.scoringVersion ?? SAY_SCORING_VERSION}</p></details>
         </div>
         <aside className="min-w-0 space-y-4">
-          <section className="overflow-hidden rounded-2xl bg-paper text-ink"><div className="border-b border-ink/15 bg-hot px-5 py-4"><p className="mono-label text-ink/60">Your role</p>{clip.roles.length > 1 && !roundContext && !challenge && !attempt && !audioBlob ? <label className="mt-1 block"><span className="sr-only">Choose your role</span><select value={role.id} disabled={captureBusy || Boolean(busy)} onChange={(event) => { reset(); setRoleId(event.target.value); setTime(0); }} className="w-full rounded-lg border border-ink/20 bg-transparent py-2 pr-8 text-xl font-bold text-ink [color-scheme:light]">{clip.roles.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : <h2 className="mt-1 text-xl font-bold">{role.name}</h2>}<p className="mt-1 text-xs leading-5 text-ink/65">{role.description}</p></div>
+          <section className="overflow-hidden rounded-2xl bg-paper text-ink"><div className="border-b border-ink/15 bg-hot px-5 py-4"><p className="mono-label text-ink/60">Your role</p>{clip.roles.length > 1 && !roundContext && !publicAssignment && !challenge && !attempt && !audioBlob ? <label className="mt-1 block"><span className="sr-only">Choose your role</span><select value={role.id} disabled={captureBusy || Boolean(busy)} onChange={(event) => { reset(); setRoleId(event.target.value); setTime(0); }} className="w-full rounded-lg border border-ink/20 bg-transparent py-2 pr-8 text-xl font-bold text-ink [color-scheme:light]">{clip.roles.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : <h2 className="mt-1 text-xl font-bold">{role.name}</h2>}<p className="mt-1 text-xs leading-5 text-ink/65">{role.description}</p></div>
             <div className="px-5 py-4"><p className="mono-label mb-3 text-ink/50">Your dialogue</p><div className="space-y-3">{ownCues.map((cue) => <div key={cue.id} className={cn("rounded-lg border-l-[3px] py-1 pl-3 transition-colors", time >= cue.start - 0.3 && time <= cue.end + 0.12 ? "border-acid bg-acid/10" : "border-ink/15")}><p className="text-[10px] font-bold tabular-nums text-ink/45">{cue.start.toFixed(1)}s</p><p className="mt-1 text-base font-bold leading-snug">{cue.text}</p></div>)}</div></div>
           </section>
           <p className="px-1 text-xs leading-5 text-white/55">{tier === "pro" ? "Scored plays use your Pro allowance." : remainingMatches == null ? "5 scored plays per day, shared with Classic. Resets at midnight UTC." : `${remainingMatches} scored ${remainingMatches === 1 ? "play" : "plays"} left today, shared with Classic. Resets at midnight UTC.`} Recording, replay, and saving do not use a scored play.</p>

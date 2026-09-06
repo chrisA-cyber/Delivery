@@ -1,3 +1,4 @@
+import { cleanupVideoExports, cleanupExpiredClassicVideoAttempts } from "@/lib/server/video-export-cleanup";
 import { timingSafeEqual } from "node:crypto";
 
 import { reconcileCompletedAccountDeletions } from "@/lib/server/account-deletion";
@@ -41,14 +42,16 @@ export async function POST(request: Request) {
     if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 100) {
       throw new AppError("INVALID_CLEANUP_LIMIT", "Cleanup limit must be between 1 and 100.", 422);
     }
-    const [moderation, accountReceiptsReconciled, expiredGuestDubs, expiredGroupTakes, expiredGuestSwitchTakes] = await Promise.all([
+    const [moderation, accountReceiptsReconciled, expiredGuestDubs, expiredGroupTakes, expiredGuestSwitchTakes, videoExports, expiredClassicTakes] = await Promise.all([
       processModerationStorageCleanup(requestedLimit),
       reconcileCompletedAccountDeletions(requestedLimit),
       cleanupExpiredSayGuests(requestedLimit),
       cleanupExpiredGroupTakes(requestedLimit),
       cleanupExpiredSwitchGuests(requestedLimit),
+      cleanupVideoExports(requestedLimit),
+      cleanupExpiredClassicVideoAttempts(requestedLimit),
     ]);
-    return jsonOk({ moderation, accountReceiptsReconciled, expiredGuestDubs, expiredGroupTakes, expiredGuestSwitchTakes }, requestId, {
+    return jsonOk({ moderation, accountReceiptsReconciled, expiredGuestDubs, expiredGroupTakes, expiredGuestSwitchTakes, videoExports, expiredClassicTakes }, requestId, {
       headers: {
         ...rateLimitHeaders(rateLimit),
         "Cache-Control": "private, no-store, max-age=0",

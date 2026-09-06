@@ -286,3 +286,8 @@ Write each full prompt only after preceding evidence resolves important decision
 - When monetization should begin, with competitive fairness protected.
 
 Only ask for a decision when it changes the next assignment. The wider vision can remain flexible while the first experience is made concrete.
+
+
+**Performance videos — implementation milestone, September 6, 2026**
+
+Classic, five-cue Switch, and eligible Say It Back film scenes now have private queued MP4 exports, actual-file preview, download, and native file-share fallback. Immutable public assignment invitations contain no recording or private round capability. Guest/unscored Classic can save for export without judging. Existing source reuse restrictions and Mature-publication boundaries remain. See [VIDEO_EXPORTS_HANDOFF.md](VIDEO_EXPORTS_HANDOFF.md) for release evidence and limits. Next acceptance is one real phone download/share and a small friend session; no camera, Stage, auto-posting, editor, or new paid infrastructure is part of this milestone.

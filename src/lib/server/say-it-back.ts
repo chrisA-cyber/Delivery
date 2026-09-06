@@ -15,6 +15,7 @@ import { getGuestIdentity, type GuestIdentity } from "@/lib/server/guest";
 import { createRequestFingerprint, runIdempotent } from "@/lib/server/idempotency";
 import { moderateLine } from "@/lib/server/moderation";
 import { getOptionalUser } from "@/lib/supabase/auth";
+import { getPublicAssignment } from "@/lib/server/public-assignments";
 import { transcribeSayAudio } from "@/lib/server/say-it-back-transcription";
 
 type Row = Record<string, unknown>;
@@ -150,14 +151,14 @@ export async function getSayHistory(userId: string, maxRating: SayRating = "matu
 
 export interface CreateSayAttempt {
   audio: File; clipId: string; clipVersion: string; roleId: string; durationMs: number;
-  recordingOffsetMs: number; attemptId: string; maxRating: SayRating; challengeToken?: string; shareAudio: boolean;
+  recordingOffsetMs: number; attemptId: string; maxRating: SayRating; challengeToken?: string; assignmentCode?: string; shareAudio: boolean;
 }
 
 export async function createSayAttempt(input: CreateSayAttempt, viewer: SayViewer): Promise<{ attempt: SayAttempt; replayed: boolean }> {
   const admin = createSupabaseAdminClient();
   const audio = await validateAudio(input.audio, input.durationMs);
   if (audio.durationMs > 30_000) throw new AppError("AUDIO_TOO_LONG", "Keep your take under 30 seconds.", 422);
-  const fingerprint = createRequestFingerprint(audio.contentHash, input.clipId, input.clipVersion, input.roleId, String(input.recordingOffsetMs), input.challengeToken ?? "", String(input.shareAudio), input.maxRating);
+  const fingerprint = createRequestFingerprint(audio.contentHash, input.clipId, input.clipVersion, input.roleId, String(input.recordingOffsetMs), input.challengeToken ?? "", input.assignmentCode ?? "", String(input.shareAudio), input.maxRating);
   const existing = await admin.from("say_attempts").select("*").eq("owner_key", viewer.ownerKey).eq("attempt_key", input.attemptId).maybeSingle();
   checked(existing.error);
   if (existing.data) {
@@ -165,8 +166,12 @@ export async function createSayAttempt(input: CreateSayAttempt, viewer: SayViewe
     if (expired(existing.data)) throw notFound();
     return { attempt: presentAttempt(existing.data, viewer), replayed: true };
   }
+  if (input.assignmentCode && input.challengeToken) throw new AppError("ASSIGNMENT_MISMATCH", "Use one assignment for this take.", 422);
   const result = await runIdempotent("say-upload", viewer.ownerKey, input.attemptId, fingerprint, 15 * 60_000, async () => {
-    const clip = await clipVersion(input.clipId, input.clipVersion, input.maxRating);
+    const assignment = input.assignmentCode ? await getPublicAssignment(input.assignmentCode, input.maxRating) : null;
+    if (assignment && (assignment.mode !== "say-it-back" || assignment.clip.id !== input.clipId || assignment.clip.version !== input.clipVersion || assignment.roleId !== input.roleId)) throw new AppError("ASSIGNMENT_MISMATCH", "Record the exact scene and role from this assignment.", 409);
+    const clip = assignment?.mode === "say-it-back" ? assignment.clip : await clipVersion(input.clipId, input.clipVersion, input.maxRating);
+    const scoringVersion = assignment?.scoringVersion ?? SAY_SCORING_VERSION;
     if (!clip.roles.some((role) => role.id === input.roleId)) throw new AppError("SAY_ROLE_INVALID", "Choose a role from this scene.", 422);
     if (audio.durationMs > clip.duration * 1000 + 2000) throw new AppError("AUDIO_TOO_LONG", "This recording runs beyond the scene. Record another take with the scene cues.", 422);
     let challenge: Row | null = null;
@@ -181,7 +186,7 @@ export async function createSayAttempt(input: CreateSayAttempt, viewer: SayViewe
     const insert = await admin.from("say_attempts").insert({
       id, user_id: viewer.user?.id ?? null, guest_owner_hash: viewer.guest?.idempotencyScope ?? null,
       owner_key: viewer.ownerKey, attempt_key: input.attemptId, request_fingerprint: fingerprint,
-      clip_version_id: `${clip.id}:${clip.version}`, clip_snapshot: clip, role_id: input.roleId, scoring_version: SAY_SCORING_VERSION,
+      clip_version_id: `${clip.id}:${clip.version}`, clip_snapshot: clip, role_id: input.roleId, scoring_version: scoringVersion,
       recording_path: path, audio_mime: input.audio.type, audio_hash: audio.contentHash, duration_ms: audio.durationMs, recording_offset_ms: input.recordingOffsetMs,
       challenge_id: challenge?.id ?? null, shared_with_challenge: Boolean(challenge && input.shareAudio),
       expires_at: viewer.user ? null : new Date(Date.now() + 24 * 60 * 60_000).toISOString(),
@@ -337,6 +342,8 @@ export async function deleteSayAttempt(id: string, viewer: SayViewer): Promise<v
   const row = await getSayAttemptRow(id, viewer);
   if (!owns(row, viewer)) throw notFound();
   const admin = createSupabaseAdminClient();
+  const cancelled = await admin.rpc("cancel_video_exports", { p_source_kind: "say_attempt", p_attempt_id: id });
+  checked(cancelled.error);
   const removed = await admin.storage.from("delivery-audio").remove([assertRecordingPath(row)]);
   checked(removed.error);
   const deleted = await admin.from("say_attempts").delete().eq("id", id).eq("owner_key", viewer.ownerKey);
