@@ -1,0 +1,54 @@
+{
+  "at": "2026-09-06",
+  "origin": "https://delivery-production-0577.up.railway.app",
+  "applicationCommit": "23177da18a46293961a0b83bf855da20250d0a6b",
+  "browser": "Cloud Chrome, one cookie context",
+  "editor": {
+    "firstListenClick": {
+      "playing": true,
+      "timeSeconds": 0.180003,
+      "readyState": 4
+    },
+    "lineBoundaryObservations": [
+      {
+        "scene": "hgf-such-a-stinker",
+        "line": 1,
+        "displayedEnd": 2.48,
+        "observedEnd": 2.477999,
+        "paused": true
+      },
+      {
+        "scene": "hgf-such-a-stinker",
+        "line": 2,
+        "displayedEnd": 5.29,
+        "observedEnd": 5.29,
+        "paused": true
+      },
+      {
+        "scene": "hgf-married-again",
+        "line": 2,
+        "displayedEnd": 5.97,
+        "observedEnd": 5.97,
+        "paused": true
+      }
+    ],
+    "longScene": {
+      "duration": 16.55,
+      "selectedLines": 4,
+      "measuredWaveformLoaded": true,
+      "fullSceneModeAvailable": true,
+      "documentScrollWidth": 1348,
+      "viewportWidth": 1363
+    },
+    "microphoneAttempt": "No microphone was found. Connect a microphone, then try again.",
+    "boundaryConclusion": "Reported overrun was not reproduced; no arbitrary timing offset added."
+  },
+  "renderedInspection": [
+    "Say editor and17-scene catalog (Clean filter shows8 scenes)",
+    "Round builder screenshot, Say andClassic modes; readable controls and no horizontal overflow observed"
+  ],
+  "limits": [
+    "No physical capture, microphone startup timing, phone viewport, or subjective listening evidence.",
+    "One cloud context; independent guest cookie jars exercise server isolation separately."
+  ]
+}

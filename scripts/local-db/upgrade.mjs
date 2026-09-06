@@ -101,8 +101,11 @@ async function snapshots(db) {
         "select * from public.delivery_scores order by delivery_id",
       )
     ).rows,
-    challenges: (await db.query("select * from public.challenges order by id"))
-      .rows,
+    // Compare every original field, while permitting additive group columns.
+    challenges: (await db.query(`select id,code,token_digest,created_by,
+      recipient_user_id,prompt_id,energy_modifier_id,state,visibility,message,
+      max_entries,expires_at,completed_at,created_at,updated_at
+      from public.challenges order by id`)).rows,
     entries: (
       await db.query(
         "select * from public.challenge_entries order by challenge_id,entrant_id",

@@ -227,7 +227,10 @@ export function useAudioRecorder() {
       }
       if (context.state !== "running" || stream.getAudioTracks().every((track) => track.readyState !== "live")) throw new Error("Microphone interrupted before recording");
       const source = context.createMediaStreamSource(stream);
-      const processor = context.createScriptProcessor(4096, 1, 1);
+      // A 1024-sample block reduces capture startup and the unflushed tail at
+      // an explicit line boundary (about 21 ms at 48 kHz, previously 85 ms).
+      // This changes capture granularity, never an offset applied to speech.
+      const processor = context.createScriptProcessor(1024, 1, 1);
       const silentGain = context.createGain();
       silentGain.gain.value = 0;
       const session: RecorderSession = { context, source, processor, silentGain, frames: [], sampleCount: 0, lastFrameAt: null, waveform: [], waveformBinSamples: 0, waveformBinPeak: 0, cleanup: () => undefined };

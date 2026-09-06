@@ -1,5 +1,7 @@
 # Say It Back — September 6, 2026
 
+**Newer milestone:** see [FRIEND_ROUNDS_HANDOFF.md](FRIEND_ROUNDS_HANDOFF.md) for the editor follow-up, seven longer scenes, asynchronous groups, and the final publication/evidence record. The historical sections below preserve earlier observations; their short-catalog status and “never merge / main remains unmerged” guidance are superseded. The owner has authorized merging completed work and deployment. Do not treat the newer milestone as deployed until its publication record confirms it.
+
 ## Pilot follow-up
 
 ### Owner recording feedback follow-up

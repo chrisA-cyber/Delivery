@@ -261,6 +261,39 @@ describe("synchronized scene playback", () => {
     expect(video.paused).toBe(true);
   });
 
+  it("enforces a recording range from media events without waiting for a rendered frame", async () => {
+    const ref = React.createRef<DubPlayerHandle>();
+    const ended = vi.fn();
+    const time = vi.fn();
+    const { container } = render(<DubPlayer ref={ref} clip={clip} role={clip.roles[0]!} onEnded={ended} onTime={time} />);
+    const video = container.querySelector("video")!;
+    await act(async () => { ref.current!.prepare(1, 2.375); await ref.current!.startScene(); });
+    video.currentTime = 2.39;
+    fireEvent.timeUpdate(video);
+    expect(video.paused).toBe(true);
+    expect(video.currentTime).toBe(2.375);
+    expect(ended).toHaveBeenCalledOnce();
+    expect(time).toHaveBeenLastCalledWith(2.375);
+    fireEvent.timeUpdate(video);
+    act(() => frame(100));
+    expect(ended).toHaveBeenCalledOnce();
+  });
+
+  it("rechecks media time at a listen boundary when animation frames are unavailable", async () => {
+    vi.useFakeTimers();
+    const ref = React.createRef<DubPlayerHandle>();
+    const { container } = render(<DubPlayer ref={ref} clip={clip} role={clip.roles[0]!} />);
+    const video = container.querySelector("video")!;
+    await act(async () => ref.current!.previewRange(1, 2.375));
+    video.currentTime = 1.5;
+    await act(async () => vi.advanceTimersByTimeAsync(1375));
+    expect(video.paused).toBe(false); // A stalled media clock is not elapsed scene time.
+    video.currentTime = 2.4;
+    await act(async () => vi.advanceTimersByTimeAsync(875));
+    expect(video.paused).toBe(true);
+    expect(video.currentTime).toBe(2.375);
+  });
+
   it("queues the first Listen before metadata and keeps its range through initial buffering", async () => {
     const ref = React.createRef<DubPlayerHandle>();
     const { container } = render(<DubPlayer ref={ref} clip={clip} role={clip.roles[0]!} />);

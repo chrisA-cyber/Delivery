@@ -15,6 +15,7 @@ import {
   releaseJudgedPlay,
   reserveJudgedPlay,
 } from "@/lib/server/entitlements";
+import { authorizeClassicRoundJudge, attachClassicRoundJudge, getRoundViewer } from "@/lib/server/group-rounds";
 import { getGuestIdentity } from "@/lib/server/guest";
 import {
   createRequestFingerprint,
@@ -73,6 +74,8 @@ const formSchema = z.object({
     .max(32)
     .regex(/^[a-z0-9-]+$/i)
     .optional(),
+  roundToken: z.string().regex(/^[A-Za-z0-9_-]{40,80}$/).optional(),
+  roundTakeId: z.string().uuid().optional(),
   durationMs: z.coerce.number().int().min(250).max(20_000),
   attemptId: idempotencyKeySchema.optional(),
   isPublic: z
@@ -135,10 +138,15 @@ export async function POST(request: Request) {
       challengeToken: optionalFormString(form, "challengeToken"),
       dailyDate: optionalFormString(form, "dailyDate"),
       dailyMarket: optionalFormString(form, "dailyMarket"),
+      roundToken: optionalFormString(form, "roundToken"),
+      roundTakeId: optionalFormString(form, "roundTakeId"),
       durationMs: optionalFormString(form, "durationMs"),
       attemptId: optionalFormString(form, "attemptId"),
       isPublic: optionalFormString(form, "isPublic") ?? "false",
     });
+    if (Boolean(fields.roundToken) !== Boolean(fields.roundTakeId) || (fields.roundToken && (fields.mode !== "classic" || fields.challengeId || fields.isPublic))) {
+      throw new AppError("ROUND_JUDGE_INVALID", "Use the private Classic recorder for this round.", 422);
+    }
     const validatedAudio = await validateAudio(audio, fields.durationMs);
     if (validatedAudio.durationMs > 20_000)
       throw new AppError(
@@ -180,6 +188,8 @@ export async function POST(request: Request) {
       ? null
       : getGuestIdentity(request, idempotencyKey);
     responseCookie = guestIdentity?.setCookie;
+    const roundViewer = fields.roundToken ? await getRoundViewer(request, idempotencyKey) : null;
+    if (roundViewer?.setCookie) responseCookie = roundViewer.setCookie;
     const guestScope = guestIdentity?.scope ?? `signed:${user!.id}`;
     // Quota keeps signed-device and IP dimensions. The provisional signed
     // device is deterministic for a first attempt, then remains cookie-bound.
@@ -206,6 +216,8 @@ export async function POST(request: Request) {
         audio.type,
         String(fields.isPublic),
         fields.maxRating,
+        fields.roundToken ?? "",
+        fields.roundTakeId ?? "",
       ),
       15 * 60 * 1_000,
       async () => {
@@ -213,7 +225,9 @@ export async function POST(request: Request) {
         // entries) or time passed (Daily midnight). Completed exact retries must
         // replay before those gates, while new attempts still pass all of them.
         const usageBefore = await preflightJudgingUsage(user);
-        const canonical = await resolveCanonicalDeliveryContent({
+        const canonical = fields.roundToken && fields.roundTakeId && roundViewer
+          ? await authorizeClassicRoundJudge({ token: fields.roundToken, takeId: fields.roundTakeId, audioHash: validatedAudio.contentHash, maxRating: fields.maxRating }, roundViewer)
+          : await resolveCanonicalDeliveryContent({
           promptId: fields.promptId,
           promptText: fields.promptText,
           energy: fields.energy,
@@ -346,7 +360,9 @@ export async function POST(request: Request) {
         let delivery;
         let dailyPositionWarning: string | undefined;
         try {
-          delivery = await persistDelivery({
+          if (fields.roundToken && fields.roundTakeId && roundViewer) {
+            delivery = { id: fields.roundTakeId, persisted: true };
+          } else delivery = await persistDelivery({
             contentRating: canonical.rating,
             user,
             audio,
@@ -438,6 +454,7 @@ export async function POST(request: Request) {
           result,
           delivery,
           usage,
+          roundJudgment: fields.roundToken ? judgment : undefined,
           warning:
             [
               judgment.warning,
@@ -459,9 +476,18 @@ export async function POST(request: Request) {
       await assertChallengeReceiptAccess({ user, challengeId: fields.challengeId, challengeToken: fields.challengeToken });
     }
 
+    const { roundJudgment, ...publicValue } = value;
+    if (fields.roundToken && fields.roundTakeId && roundViewer && roundJudgment) {
+      try {
+        await attachClassicRoundJudge({ token: fields.roundToken, takeId: fields.roundTakeId, score: roundJudgment }, roundViewer);
+      } catch (error) {
+        console.error("Round score attachment failed", { requestId, errorName: error instanceof Error ? error.name : "unknown" });
+        publicValue.warning = [publicValue.warning, "Your audio is saved, but the round score could not finish saving. Retry this judgment to reuse its receipt."].filter(Boolean).join(" ");
+      }
+    }
     return NextResponse.json(
       {
-        ...value,
+        ...publicValue,
         requestId,
       },
       {

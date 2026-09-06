@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { loadReferenceWaveform, type WaveformPoint } from "@/lib/say-it-back/audio-timeline";
+import { loadReferenceWaveform, measureTakeWaveform, type WaveformPoint } from "@/lib/say-it-back/audio-timeline";
 
 interface TakeWaveformProps {
   referenceUrl?: string;
@@ -11,6 +11,8 @@ interface TakeWaveformProps {
   playhead: number;
   /** Saved points already placed in scene time. */
   takeWaveform?: WaveformPoint[];
+  takeUrl?: string | null;
+  takeOffsetMs?: number;
   /** Live points in capture time; liveStart places capture zero on the scene. */
   liveWaveform?: WaveformPoint[];
   liveStart?: number;
@@ -28,8 +30,21 @@ function envelopePath(points: WaveformPoint[], start: number, end: number, offse
   }).join("");
 }
 
-export function TakeWaveform({ referenceUrl, duration, rangeStart = 0, rangeEnd = duration, playhead, takeWaveform = [], liveWaveform = [], liveStart = 0, recording = false }: TakeWaveformProps) {
+export function TakeWaveform({ referenceUrl, duration, rangeStart = 0, rangeEnd = duration, playhead, takeWaveform = [], takeUrl, takeOffsetMs = 0, liveWaveform = [], liveStart = 0, recording = false }: TakeWaveformProps) {
   const [reference, setReference] = useState<{ url?: string; points: WaveformPoint[]; status: "loading" | "ready" | "unavailable" }>({ points: [], status: "loading" });
+  const [savedTake, setSavedTake] = useState<{ url: string; offsetMs: number; points: WaveformPoint[] } | null>(null);
+  const hasLocalWaveform = takeWaveform.length > 0;
+  useEffect(() => {
+    if (!takeUrl || hasLocalWaveform) return;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12_000);
+    void fetch(takeUrl, { cache: "no-store", signal: controller.signal }).then(async (response) => {
+      if (!response.ok) return;
+      const points = await measureTakeWaveform(await response.arrayBuffer(), takeOffsetMs);
+      if (!controller.signal.aborted) setSavedTake({ url: takeUrl, offsetMs: takeOffsetMs, points });
+    }).catch(() => undefined).finally(() => clearTimeout(timeout));
+    return () => { controller.abort(); clearTimeout(timeout); };
+  }, [takeUrl, takeOffsetMs, hasLocalWaveform]);
   useEffect(() => {
     let active = true;
     if (!referenceUrl) return;
@@ -44,13 +59,16 @@ export function TakeWaveform({ referenceUrl, duration, rangeStart = 0, rangeEnd 
   const start = Math.max(0, rangeStart);
   const end = Math.max(start + 0.001, Math.min(duration, rangeEnd));
   const originalPath = useMemo(() => envelopePath(current?.points ?? [], start, end), [current?.points, start, end]);
-  const takePath = useMemo(() => envelopePath(recording ? liveWaveform : takeWaveform, start, end, recording ? liveStart : 0), [recording, liveWaveform, takeWaveform, start, end, liveStart]);
+  const takePath = useMemo(() => {
+    const measuredTake = hasLocalWaveform ? takeWaveform : savedTake && savedTake.url === takeUrl && savedTake.offsetMs === takeOffsetMs ? savedTake.points : [];
+    return envelopePath(recording ? liveWaveform : measuredTake, start, end, recording ? liveStart : 0);
+  }, [recording, liveWaveform, hasLocalWaveform, takeWaveform, savedTake, takeUrl, takeOffsetMs, start, end, liveStart]);
   const position = Math.max(0, Math.min(1, (playhead - start) / (end - start))) * 1_000;
   const status = !referenceUrl ? "unavailable" : current?.status ?? "loading";
   return <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-3 sm:px-4" aria-label="Original and your voice waveforms">
     <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wide">
       <div className="flex items-center gap-4"><span className="flex items-center gap-1.5 text-white/65"><span className="h-0.5 w-3 bg-white/60" />Original audio</span><span className="flex items-center gap-1.5 text-acid"><span className="h-0.5 w-3 bg-acid" />{recording ? "Your voice · live" : "Your voice"}</span></div>
-      <span className="font-mono text-white/45">{start.toFixed(1)}–{end.toFixed(1)}s</span>
+      <span className="font-mono text-white/45">{start.toFixed(2)}–{end.toFixed(2)}s</span>
     </div>
     <svg viewBox="0 0 1000 96" preserveAspectRatio="none" className="mt-2 h-24 w-full overflow-hidden" role="img" aria-label={recording ? "Your microphone waveform overlaid on the original audio" : "Original audio and recorded voice on the same timeline"}>
       <path d="M0,48H1000" stroke="currentColor" className="text-white/10" strokeWidth="1" />

@@ -93,7 +93,7 @@ export function AuthPanel({ enabledProviders = [], emailReady = false, passwordS
     </form>}
     {message && <p role={status === "error" ? "alert" : "status"} className={`mt-4 rounded-xl border p-3 text-xs font-bold leading-5 ${status === "sent" ? "border-acid/20 bg-acid/10 text-acid" : "border-orange-400/20 bg-orange-400/10 text-orange-200"}`}>{message}</p>}
     {passwordSignIn && <button type="button" disabled={loading} onClick={() => { setPasswordMode(!passwordMode); setStatus("idle"); setMessage(""); setPassword(""); }} className="button-ghost mt-3 w-full text-xs">{passwordMode ? emailReady ? "Use an email link instead" : "Back to sign-in options" : "Already have a password? Sign in"}</button>}
-    <Link href={next.startsWith("/say-it-back") || next.startsWith("/play") || next.startsWith("/challenge/") ? next : "/play"} className="button-ghost mt-1 w-full">Keep playing as guest</Link>
+    <Link href={next.startsWith("/say-it-back") || next.startsWith("/play") || next.startsWith("/challenge/") || next.startsWith("/rounds") ? next : "/play"} className="button-ghost mt-1 w-full">Keep playing as guest</Link>
     <p className="mt-5 text-center text-[10px] leading-4 text-white/55">By continuing, you agree to the <Link className="font-bold text-white/80 underline hover:text-white" href="/terms">terms</Link> and <Link className="font-bold text-white/80 underline hover:text-white" href="/privacy">privacy policy</Link>.</p>
   </div>;
 }

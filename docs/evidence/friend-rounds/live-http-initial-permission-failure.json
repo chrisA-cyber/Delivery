@@ -1,0 +1,19 @@
+{
+  "at": "2026-09-06T16:00:10.981Z",
+  "origin": "https://delivery-production-0577.up.railway.app",
+  "passed": false,
+  "limitation": "Three isolated HTTP cookie jars; uploaded real reference WAV as explicitly unscored engineering fixture. Not physical microphone/browser capture or live judging evidence.",
+  "paidRequests": 0,
+  "error": "create: 503 Group rounds is temporarily unavailable. Please try that take again.",
+  "roundIds": [],
+  "events": [
+    {
+      "actor": "host",
+      "action": "/api/rounds",
+      "status": 503,
+      "ms": 10644,
+      "bytes": 188,
+      "error": "GROUP ROUNDS_UNAVAILABLE"
+    }
+  ]
+}

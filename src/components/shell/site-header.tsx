@@ -11,7 +11,7 @@ const links = [
   { href: "/say-it-back", label: "Say It Back" },
   { href: "/daily", label: "Daily" },
   { href: "/discover", label: "Packs" },
-  { href: "/challenge", label: "Friends" },
+  { href: "/rounds", label: "Friends" },
   { href: "/stream", label: "For hosts" },
 ];
 export function SiteHeader() {

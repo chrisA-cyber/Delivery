@@ -9,7 +9,7 @@ import {
   LoaderCircle,
   RotateCcw,
   Share2,
-  Swords,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -361,13 +361,13 @@ export function ResultScreen({
               Retry same direction
             </button>
           )}
-          {!retired && (
+          {!retired && prompt.rating !== "mature" && (
             <Link
-              href={`/challenge?${inviteParams}`}
+              href={`/rounds?mode=classic&${inviteParams}`}
               className="button-secondary min-h-14"
             >
-              <Swords className="size-4" />
-              Challenge a friend
+              <Users className="size-4" />
+              Start a group round
             </Link>
           )}
         </div>

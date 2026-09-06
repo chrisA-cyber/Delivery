@@ -1,0 +1,254 @@
+{
+  "at": "2026-09-06T16:09:09.511Z",
+  "origin": "https://delivery-production-0577.up.railway.app",
+  "passed": false,
+  "limitation": "Three isolated HTTP cookie jars; uploaded real reference WAV as explicitly unscored engineering fixture. Not physical microphone/browser capture or live judging evidence.",
+  "paidRequests": 0,
+  "error": "Rematch lost authorized previous-results link",
+  "roundIds": [
+    "4aad7793-3123-413b-882d-d98c1e63720e",
+    "2ffb69e4-d18f-444d-a483-7fad82fa6e17"
+  ],
+  "events": [
+    {
+      "actor": "host",
+      "action": "/api/rounds",
+      "status": 201,
+      "ms": 11001,
+      "bytes": 4272,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds",
+      "status": 201,
+      "ms": 956,
+      "bytes": 4272,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/join",
+      "status": 200,
+      "ms": 794,
+      "bytes": 4472,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]",
+      "status": 200,
+      "ms": 7688,
+      "bytes": 4670,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/join",
+      "status": 200,
+      "ms": 1010,
+      "bytes": 4671,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/close",
+      "status": 403,
+      "ms": 550,
+      "bytes": 137,
+      "error": "ROUND_FORBIDDEN"
+    },
+    {
+      "actor": "host",
+      "action": "/api/say-it-back/attempts",
+      "status": 201,
+      "ms": 1089,
+      "bytes": 3836,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]/submit",
+      "status": 200,
+      "ms": 1476,
+      "bytes": 12830,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/say-it-back/attempts",
+      "status": 201,
+      "ms": 1080,
+      "bytes": 3836,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/submit",
+      "status": 200,
+      "ms": 1487,
+      "bytes": 12829,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/say-it-back/attempts",
+      "status": 201,
+      "ms": 1074,
+      "bytes": 3836,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/submit",
+      "status": 200,
+      "ms": 1354,
+      "bytes": 16891,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/submit",
+      "status": 409,
+      "ms": 657,
+      "bytes": 199,
+      "error": "ROUND_TAKE_SUPERSEDED"
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]/submit",
+      "status": 404,
+      "ms": 511,
+      "bytes": 200,
+      "error": "ROUND_NOT_FOUND"
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]",
+      "status": 200,
+      "ms": 724,
+      "bytes": 16891,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]",
+      "status": 200,
+      "ms": 799,
+      "bytes": 12829,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]/performances/8216bf44-9831-43cf-b117-bf6d41c510eb/audio",
+      "status": 404,
+      "ms": 694,
+      "bytes": 200,
+      "error": "ROUND_NOT_FOUND"
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/vote",
+      "status": 409,
+      "ms": 1000,
+      "bytes": 175,
+      "error": "ROUND_VOTE_INVALID"
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]/close",
+      "status": 200,
+      "ms": 1369,
+      "bytes": 16965,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]/close",
+      "status": 200,
+      "ms": 1168,
+      "bytes": 16965,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]",
+      "status": 200,
+      "ms": 1056,
+      "bytes": 21027,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/performances/37ea18d0-0fcf-474c-a2b9-98eebe382488/audio",
+      "status": 206,
+      "ms": 1214,
+      "bytes": 512,
+      "error": null
+    },
+    {
+      "actor": "outsider",
+      "action": "/api/rounds/[invitation]/performances/37ea18d0-0fcf-474c-a2b9-98eebe382488/audio",
+      "status": 404,
+      "ms": 570,
+      "bytes": 200,
+      "error": "ROUND_NOT_FOUND"
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/submit",
+      "status": 409,
+      "ms": 798,
+      "bytes": 185,
+      "error": "ROUND_CLOSED"
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/submit",
+      "status": 200,
+      "ms": 1589,
+      "bytes": 21027,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/vote",
+      "status": 409,
+      "ms": 1269,
+      "bytes": 175,
+      "error": "ROUND_VOTE_INVALID"
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/vote",
+      "status": 200,
+      "ms": 1917,
+      "bytes": 21061,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/vote",
+      "status": 200,
+      "ms": 1925,
+      "bytes": 21061,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/prompts/random",
+      "status": 200,
+      "ms": 514,
+      "bytes": 569,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]/rematch",
+      "status": 201,
+      "ms": 1297,
+      "bytes": 1540,
+      "error": null
+    }
+  ]
+}
