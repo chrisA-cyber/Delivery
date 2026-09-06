@@ -6,7 +6,7 @@ import type { SayClip, SayRole } from "@/lib/say-it-back/types";
 import { cn } from "@/lib/utils";
 
 export interface DubPlayerHandle {
-  prepare: (startSeconds?: number) => void;
+  prepare: (startSeconds?: number, endSeconds?: number) => void;
   startScene: () => Promise<number>;
   previewRange: (startSeconds: number, endSeconds: number) => Promise<void>;
   pause: () => void;
@@ -66,6 +66,8 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   const wantsPlayback = useRef(false);
   const capturePrepared = useRef(false);
   const previewEnd = useRef<number | null>(null);
+  const captureEnd = useRef<number | null>(null);
+  const rangeTimer = useRef<number | undefined>(undefined);
   const previewStart = useRef<{ time: number; requestId: number } | null>(null);
   const previewStarting = useRef(false);
   const waitingFor = useRef(new Set<HTMLMediaElement>());
@@ -78,6 +80,8 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
     wantsPlayback.current = false;
     capturePrepared.current = false;
     previewEnd.current = null;
+    captureEnd.current = null;
+    window.clearTimeout(rangeTimer.current);
     previewStart.current = null;
     previewStarting.current = false;
     waitingFor.current.clear();
@@ -88,6 +92,31 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
     setPlaying(false);
     setBuffering(false);
   }, []);
+
+  const stopAtRangeEnd = useCallback(() => {
+    const video = videoRef.current;
+    const end = captureEnd.current ?? previewEnd.current;
+    if (!video || end == null || previewStart.current || video.seeking || video.currentTime < end) return false;
+    const captured = captureEnd.current != null;
+    pause();
+    // Stop at the actual selected interval, not a rounded caption boundary.
+    // The recording is assembled into this same interval without moving speech.
+    video.currentTime = end;
+    setCurrentTime(end);
+    onTime?.(end);
+    if (captured) onEnded?.();
+    return true;
+  }, [onEnded, onTime, pause]);
+
+  const armRangeStop = useCallback(function arm() {
+    window.clearTimeout(rangeTimer.current);
+    const video = videoRef.current;
+    const end = captureEnd.current ?? previewEnd.current;
+    if (!video || end == null || video.paused || previewStart.current || video.seeking || stopAtRangeEnd()) return;
+    // Media time is authoritative. A timer supplements animation/timeupdate
+    // callbacks when rendering is throttled; stalls never consume scene time.
+    rangeTimer.current = window.setTimeout(arm, Math.max(1, (end - video.currentTime) / Math.max(0.1, video.playbackRate) * 1000));
+  }, [stopAtRangeEnd]);
 
   const waitForMedia = useCallback((media: HTMLMediaElement) => {
     // Do not let the scene run ahead of a voice/background download. Pausing
@@ -191,7 +220,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
     const tick = (now: number) => {
       sync();
       const video = videoRef.current;
-      if (video && previewEnd.current != null && video.currentTime >= previewEnd.current) pause();
+      stopAtRangeEnd();
       if (video && now - lastUpdate > 70) {
         setCurrentTime(video.currentTime);
         onTime?.(video.currentTime);
@@ -201,7 +230,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [sync, onTime, pause]);
+  }, [sync, onTime, stopAtRangeEnd]);
 
   useEffect(() => {
     if (busy || capturePrepared.current) return;
@@ -221,14 +250,15 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   useEffect(() => {
     const stopWhenHidden = () => { if (document.visibilityState === "hidden") pause(); };
     document.addEventListener("visibilitychange", stopWhenHidden);
-    return () => { document.removeEventListener("visibilitychange", stopWhenHidden); window.clearTimeout(bufferTimeout.current); playbackRequest.current += 1; };
+    return () => { document.removeEventListener("visibilitychange", stopWhenHidden); window.clearTimeout(bufferTimeout.current); window.clearTimeout(rangeTimer.current); playbackRequest.current += 1; };
   }, [pause]);
 
   useImperativeHandle(forwardedRef, () => ({
-    prepare(startSeconds = 0) {
+    prepare(startSeconds = 0, endSeconds = clip.duration) {
       pause();
       capturePrepared.current = true;
       const start = Math.min(clip.duration, Math.max(0, startSeconds));
+      captureEnd.current = Math.min(clip.duration, Math.max(start, endSeconds));
       if (videoRef.current) {
         videoRef.current.currentTime = start;
         videoRef.current.muted = true;
@@ -245,6 +275,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
       try { await boundedPlayback(video.play()); }
       catch (cause) { if (requestId === playbackRequest.current) pause(); throw cause; }
       if (requestId !== playbackRequest.current) throw new DOMException("Recording start was cancelled", "AbortError");
+      armRangeStop();
       return video.currentTime;
     },
     async previewRange(startSeconds, endSeconds) {
@@ -270,10 +301,10 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
         if (requestId !== playbackRequest.current && isPlaybackAbort(cause)) return;
         if (requestId === playbackRequest.current) pause();
         throw cause;
-      } finally { if (requestId === playbackRequest.current) previewStarting.current = false; }
+      } finally { if (requestId === playbackRequest.current) { previewStarting.current = false; armRangeStop(); } }
     },
     pause,
-  }), [pause, clip.duration, sound]);
+  }), [pause, clip.duration, sound, armRangeStop]);
 
   const togglePlay = async () => {
     const video = videoRef.current;
@@ -346,10 +377,11 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
         <video ref={videoRef} src={clip.videoUrl} poster={clip.posterUrl} preload="auto" playsInline aria-label={`${clip.title} scene`} className="h-full w-full object-contain" disablePictureInPicture
           onLoadedMetadata={(event) => { const pending = previewStart.current; if (pending && pending.requestId === playbackRequest.current) { event.currentTarget.currentTime = pending.time; previewStart.current = null; setCurrentTime(pending.time); } }}
           onLoadedData={() => setLoaded(true)} onCanPlay={(event) => { setLoaded(true); resumeBuffered(event.currentTarget); }}
-          onPlay={() => { setPlaying(true); onPlaybackStart?.(); }} onPlaying={(event) => { waitingFor.current.delete(event.currentTarget); if (!waitingFor.current.size) setBuffering(false); playCompanions(); }}
-          onPause={() => { setPlaying(false); voiceRef.current?.pause(); bedRef.current?.pause(); }}
+          onPlay={() => { setPlaying(true); onPlaybackStart?.(); }} onPlaying={(event) => { waitingFor.current.delete(event.currentTarget); if (!waitingFor.current.size) setBuffering(false); playCompanions(); armRangeStop(); }}
+          onPause={() => { window.clearTimeout(rangeTimer.current); setPlaying(false); voiceRef.current?.pause(); bedRef.current?.pause(); }}
+          onTimeUpdate={stopAtRangeEnd}
           onWaiting={(event) => { if (previewStarting.current) setBuffering(true); else if (recording) { voiceRef.current?.pause(); bedRef.current?.pause(); onInterruption?.(); } else if (!capturePrepared.current && wantsPlayback.current) waitForMedia(event.currentTarget); }}
-          onSeeking={() => { voiceRef.current?.pause(); bedRef.current?.pause(); sync(true); }} onSeeked={() => { sync(true); playCompanions(); }}
+          onSeeking={() => { window.clearTimeout(rangeTimer.current); voiceRef.current?.pause(); bedRef.current?.pause(); sync(true); }} onSeeked={() => { sync(true); playCompanions(); armRangeStop(); }}
           onEnded={() => { pause(); onEnded?.(); }} onError={() => { setError("This scene could not load. Check your connection, then try another scene or reload."); pause(); }} />
         {takeUrl && <audio ref={voiceRef} src={takeUrl} preload="auto" onError={() => { if (!busy && !capturePrepared.current) void recoverAudio(); }} onLoadedMetadata={() => sync(true)} onWaiting={(event) => companionWaiting(event.currentTarget)} onCanPlay={(event) => resumeBuffered(event.currentTarget)} onEnded={(event) => resumeBuffered(event.currentTarget)} />}
         {role.dubAudioUrl && <audio ref={bedRef} src={role.dubAudioUrl} preload="auto" onLoadedMetadata={() => sync(true)} onWaiting={(event) => companionWaiting(event.currentTarget)} onCanPlay={(event) => resumeBuffered(event.currentTarget)} onEnded={(event) => resumeBuffered(event.currentTarget)} onError={() => { if (!busy && !capturePrepared.current && isDub) { pause(); setError("The scene background could not load. Reload before playing the dub."); } }} />}

@@ -12,6 +12,7 @@ const ALLOWED_APP_PATHS = [
   "/play",
   "/pricing",
   "/profile",
+  "/rounds",
   "/say-it-back",
   "/settings",
   "/stream",

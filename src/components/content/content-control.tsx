@@ -15,11 +15,13 @@ export function ContentControl({
   onChange,
   disabled = false,
   compact = false,
+  allowMature = true,
 }: {
   value: ContentRating;
   onChange: (value: ContentRating) => void;
   disabled?: boolean;
   compact?: boolean;
+  allowMature?: boolean;
 }) {
   const [confirmMature, setConfirmMature] = useState(false);
   const id = useId();
@@ -32,7 +34,7 @@ export function ContentControl({
           Content
         </span>
         <div className="segmented-control" role="group" aria-labelledby={id}>
-          {(["everyone", "teen", "mature"] as const).map((rating) => (
+          {(["everyone", "teen", "mature"] as const).filter((rating) => allowMature || rating !== "mature").map((rating) => (
             <button
               type="button"
               key={rating}

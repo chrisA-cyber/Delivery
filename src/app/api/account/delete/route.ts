@@ -11,6 +11,7 @@ import {
 import { AppError, ExternalServiceError, jsonError, jsonOk, requestIdFrom } from "@/lib/server/api-error";
 import { enforceRateLimit, rateLimitHeaders, type RateLimitResult } from "@/lib/server/rate-limit";
 import { assertContentLength, assertJsonRequest, assertSameOrigin } from "@/lib/server/request";
+import { deleteGroupAccountMedia } from "@/lib/server/group-rounds";
 import { getStripe } from "@/lib/server/stripe";
 import { requireUser } from "@/lib/supabase/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -175,6 +176,8 @@ export async function DELETE(request: Request) {
             return { error: result.error ?? undefined };
           },
         });
+
+        await deleteGroupAccountMedia(user.id);
 
         const profile = await admin
           .from("profiles")

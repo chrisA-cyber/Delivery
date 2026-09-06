@@ -96,6 +96,12 @@ async function decodeAudio(buffer: ArrayBuffer): Promise<MonoAudio> {
   } finally { void context.close().catch(() => undefined); }
 }
 
+/** Personal waveforms are measured locally and never put in the reference cache. */
+export async function measureTakeWaveform(buffer: ArrayBuffer, offsetMs = 0): Promise<WaveformPoint[]> {
+  const audio = await decodeAudio(buffer);
+  return waveformFromPcm(audio.samples, audio.sampleRate).map((point) => ({ ...point, time: point.time - offsetMs / 1000 }));
+}
+
 // Cache only small measured envelopes, never personal audio. Failed downloads can retry.
 const referenceWaveforms = new Map<string, Promise<WaveformPoint[]>>();
 export function loadReferenceWaveform(url: string): Promise<WaveformPoint[]> {

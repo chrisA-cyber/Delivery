@@ -31,7 +31,7 @@ vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: () => ({
       select: (columns: string) => { state.selections.push({ table, columns }); return query; }, eq: (key: string, value: unknown) => { filters.push([key, value]); return query; },
       update: (value: Record<string, unknown>) => { update = value; return query; },
       insert: () => { inserting = true; return query; },
-      in: () => query, or: () => query, order: () => query, limit: () => query, lt: () => query,
+      in: () => query, or: () => query, not: () => query, order: () => query, limit: () => query, lt: () => query,
       maybeSingle: async () => { const result = execute(); return { ...result, data: result.data?.[0] ?? null }; },
       single: async () => { const result = execute(); return { ...result, data: result.data?.[0] ?? null }; },
       then: (resolve: (value: unknown) => unknown, reject?: (reason: unknown) => unknown) => Promise.resolve(execute()).then(resolve, reject),

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import catalog from "@/lib/say-it-back/catalog.json";
 import { encodeMonoWav } from "@/lib/audio-capture";
 import { SayItBackExperience } from "./say-it-back-experience";
+import type { SayClip } from "@/lib/say-it-back/types";
 
 const mocks = vi.hoisted(() => ({ reset: vi.fn(), refreshAccount: vi.fn(), push: vi.fn(), sceneStart: vi.fn(), prepare: vi.fn(), preview: vi.fn(), playerProps: {} as Record<string, unknown>, cancelCapture: vi.fn(), commitCapture: vi.fn(), authenticated: false, recorder: {} as Record<string, unknown> }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
@@ -203,12 +204,14 @@ describe("line recording and responsive retakes", () => {
       await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
       expect(mocks.playerProps.recording).toBe(true);
       vi.useRealTimers();
-      await act(async () => { (mocks.playerProps.onTime as (time: number) => void)(end); });
+      expect(mocks.prepare.mock.lastCall?.[1]).toBe(end);
+      await act(async () => { (mocks.playerProps.onEnded as () => void)(); });
       await waitFor(() => expect(screen.queryByText("Preparing your local preview…")).not.toBeInTheDocument());
     };
     await record("Record line 1", 2);
     expect(await screen.findByRole("button", { name: "Redo line 1" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Record the remaining lines to match" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Match these 1 of 2 lines" })).toBeEnabled();
+    expect(screen.getByText(/Unrecorded lines stay silent and count as missing words/)).toBeInTheDocument();
     expect(mocks.playerProps.takeUrl).toBe("blob:line-one");
     await record("Record line 2", 4);
     expect(await screen.findByRole("button", { name: "Redo line 2" })).toBeInTheDocument();
@@ -234,5 +237,37 @@ describe("line recording and responsive retakes", () => {
     await act(async () => { finishJudge(ok({ attempt: makeAttempt({ status: "scored", score: { overall: 99 } }) })); });
     expect(screen.queryByRole("region", { name: "Your matching result" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Record line 1" })).toBeEnabled();
+  });
+});
+
+describe("round recording handoff", () => {
+  const roundContext = { token: "group-token", clip: cleanClip as unknown as SayClip, roleId: cleanClip.roles[0]!.id, returnPath: "/rounds/group-token" };
+
+  it("keeps the immutable assignment and hands off an unscored private take for consent", async () => {
+    mocks.recorder = { audioBlob: new Blob(["test audio"]), audioUrl: "blob:local-take", canSubmit: true, durationMs: 1800 };
+    const fetch = vi.fn(async (url: string) => url.includes("/clips") ? ok({ clips: [] }) : ok({ attempt: makeAttempt() }));
+    vi.stubGlobal("fetch", fetch);
+    render(<SayItBackExperience roundContext={roundContext} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Use this take in round" }));
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/rounds/group-token?attempt=retained-guest-take"));
+    expect(window.location.pathname).toBe("/rounds/group-token/record");
+    expect(screen.queryByRole("combobox", { name: "Choose your role" })).not.toBeInTheDocument();
+    expect(fetch.mock.calls.some(([url]) => url.endsWith("/judge"))).toBe(false);
+    expect(fetch.mock.calls.some(([url]) => url.endsWith("/submit"))).toBe(false);
+  });
+
+  it("retains the guest claim and round route through sign-in", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("/clips") ? ok({ clips: [] }) : ok({ attempt: makeAttempt() })));
+    render(<SayItBackExperience roundContext={roundContext} initialAttemptId="retained-guest-take" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Sign in & keep this take" }));
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledOnce());
+    expect(new URL(mocks.push.mock.calls[0]![0], "https://delivery.test").searchParams.get("next")).toBe("/rounds/group-token/record?claim=retained-guest-take");
+  });
+
+  it("does not load another assignment's take into a group editor", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("/clips") ? ok({ clips: [] }) : ok({ attempt: makeAttempt({ roleId: "different-role" }) })));
+    render(<SayItBackExperience roundContext={roundContext} initialAttemptId="different-assignment" />);
+    expect(await screen.findByRole("alert")).toHaveTextContent("another assignment");
+    expect(screen.queryByTestId("scene-player")).not.toBeInTheDocument();
   });
 });

@@ -1,5 +1,620 @@
 [
   {
+    "source": {
+      "title": "xQc’s opinion on professional streaming setups (2019)",
+      "creator": "xQc · Félix Lengyel",
+      "url": "https://clips.twitch.tv/PlumpHelplessSnakeWholeWheat",
+      "license": "Owner-directed inclusion; third-party reuse rights not independently verified",
+      "licenseUrl": "https://clips.twitch.tv/PlumpHelplessSnakeWholeWheat",
+      "attribution": "Original Twitch performance by xQc (Félix Lengyel), 2019. Short excerpt and voice-replacement backing prepared by Delivery.",
+      "reuseNote": "Included at the Delivery owner’s express direction. No independent third-party permission or reusable license is claimed. Public original-footage mirror: https://streamable.com/owlqs ; contemporaneous source record: https://www.reddit.com/r/LivestreamFail/comments/bhg9f1/xqcs_opinion_on_professional_streaming_setups/ . No Choicer Voicer game assets used. Excerpt boundaries refer to this mirror; original speed preserved. The mixed soundtrack is muted completely during your dub because isolated dialogue/background stems are unavailable. This is a new longer excerpt from the same original-footage mirror, with a separate immutable identity. It ends before the next profane phrase.",
+      "excerptStart": 3.65,
+      "excerptEnd": 14.3
+    },
+    "id": "xqc-entire-gaming-setup",
+    "title": "The entire gaming setup",
+    "description": "The list keeps growing. Build from the sound filter to the two enormous console-and-computer payoffs.",
+    "difficulty": "medium",
+    "rating": "teen",
+    "category": "Twitch",
+    "tags": [
+      "Long scene",
+      "Multi-line",
+      "Internet classic"
+    ],
+    "duration": 10.65,
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "xqc",
+        "text": "Sound filter, six monitors!",
+        "start": 0.15,
+        "end": 2.51
+      },
+      {
+        "id": "cue-2",
+        "roleId": "xqc",
+        "text": "Pedals, drums!",
+        "start": 2.95,
+        "end": 4.63
+      },
+      {
+        "id": "cue-3",
+        "roleId": "xqc",
+        "text": "A gaming guitar, controllers!",
+        "start": 5.13,
+        "end": 7.15
+      },
+      {
+        "id": "cue-4",
+        "roleId": "xqc",
+        "text": "Six consoles!",
+        "start": 7.38,
+        "end": 8.77
+      },
+      {
+        "id": "cue-5",
+        "roleId": "xqc",
+        "text": "Ten computers!",
+        "start": 9.21,
+        "end": 10.5
+      }
+    ],
+    "roles": [
+      {
+        "id": "xqc",
+        "name": "xQc",
+        "description": "Five escalating list lines. Keep the little pauses and stretch the final two numbers.",
+        "muteIntervals": [
+          {
+            "start": 0,
+            "end": 10.65
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/xqc-entire-gaming-setup/v1-bbddca59db96/backing-xqc.m4a"
+      }
+    ],
+    "version": "v1-bbddca59db96",
+    "videoUrl": "/media/say-it-back/xqc-entire-gaming-setup/v1-bbddca59db96/scene.mp4",
+    "posterUrl": "/media/say-it-back/xqc-entire-gaming-setup/v1-bbddca59db96/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/xqc-entire-gaming-setup/v1-bbddca59db96/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/xqc-entire-gaming-setup/v1-bbddca59db96/scene.mp4": "a5ebcadf68a57261e7127151446a623c54a99bebdb5f450a7c5d922ef17790f3",
+      "/media/say-it-back/xqc-entire-gaming-setup/v1-bbddca59db96/poster.jpg": "5e59f53098f3036825d1aacc56c53d50f4463328b2b3cf6888beceb9cd46589a",
+      "/media/say-it-back/xqc-entire-gaming-setup/v1-bbddca59db96/reference.wav": "bd4f84ab0c1ff7d7db63de575a578a018f690b87530d1ac2dd2a81c09df2e2c3",
+      "/media/say-it-back/xqc-entire-gaming-setup/v1-bbddca59db96/backing-xqc.m4a": "2d9c72b5845a4882ab206335a0919156cdecb2a169593f60cb72d125eafb7679"
+    }
+  },
+  {
+    "source": {
+      "title": "His Girl Friday (1940)",
+      "creator": "Columbia Pictures · directed by Howard Hawks",
+      "url": "https://archive.org/details/his_girl_friday",
+      "license": "Public domain in the United States",
+      "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "attribution": "His Girl Friday (1940), Columbia Pictures; directed by Howard Hawks. Cary Grant and Rosalind Russell. Original monochrome film: US public domain. Excerpt and backing tracks prepared by Delivery.",
+      "reuseNote": "Public-domain source declaration corroborated by Internet Archive: https://blog.archive.org/event/his-girl-friday-public-domain-movie-screening-at-the-internet-archive/ . Original 640x480 monochrome transfer: https://archive.org/download/his_girl_friday/his_girl_friday.mp4 . No later colorization or added material. Territorial copyright may differ outside the US. Dialogue boundaries checked against free local ASR and source captions where available; backing uses 25 ms transitions outside the removed dialogue. Background sound also drops during replaced dialogue; other speakers remain where intervals do not overlap. A constant 3× gain improves the quiet original transfer; no compression, speed change, or speech editing.",
+      "excerptStart": 750.4,
+      "excerptEnd": 765.1
+    },
+    "id": "hgf-perfect-fiance",
+    "title": "The perfect fiancé",
+    "description": "Walter politely asks to meet Hildy’s perfect fiancé, then finds the one obvious flaw. Her replies stay in your scene.",
+    "difficulty": "medium",
+    "rating": "everyone",
+    "category": "Comedy",
+    "tags": [
+      "Long scene",
+      "Multi-line",
+      "Exchange"
+    ],
+    "duration": 14.7,
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "walter",
+        "text": "Oh, do you mind if I meet him?",
+        "start": 0.18,
+        "end": 1.75
+      },
+      {
+        "id": "cue-2",
+        "roleId": "walter",
+        "text": "Oh, now, you're not afraid, are you?",
+        "start": 4.8,
+        "end": 6.28
+      },
+      {
+        "id": "cue-3",
+        "roleId": "walter",
+        "text": "Well then, come on. Let's see this paragon.",
+        "start": 7.48,
+        "end": 9.78
+      },
+      {
+        "id": "cue-4",
+        "roleId": "walter",
+        "text": "Is he as good as you say?",
+        "start": 10.22,
+        "end": 11.33
+      },
+      {
+        "id": "cue-5",
+        "roleId": "walter",
+        "text": "Well then, what does he want with you?",
+        "start": 12.32,
+        "end": 13.23
+      }
+    ],
+    "roles": [
+      {
+        "id": "walter",
+        "name": "Walter",
+        "description": "Sound curious and charming until the final, very personal question.",
+        "muteIntervals": [
+          {
+            "start": 0.12,
+            "end": 1.81
+          },
+          {
+            "start": 4.74,
+            "end": 6.34
+          },
+          {
+            "start": 7.42,
+            "end": 9.84
+          },
+          {
+            "start": 10.16,
+            "end": 11.39
+          },
+          {
+            "start": 12.26,
+            "end": 13.29
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/hgf-perfect-fiance/v1-7aa4d174ffb3/backing-walter.m4a"
+      }
+    ],
+    "version": "v1-7aa4d174ffb3",
+    "videoUrl": "/media/say-it-back/hgf-perfect-fiance/v1-7aa4d174ffb3/scene.mp4",
+    "posterUrl": "/media/say-it-back/hgf-perfect-fiance/v1-7aa4d174ffb3/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/hgf-perfect-fiance/v1-7aa4d174ffb3/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/hgf-perfect-fiance/v1-7aa4d174ffb3/scene.mp4": "1e49c771ad7bc6fad4b6d5bf5093c9037f746e85a00c098f1dd69622a77378e5",
+      "/media/say-it-back/hgf-perfect-fiance/v1-7aa4d174ffb3/poster.jpg": "9147ee790646d41feee6ccec426fa168ba0b5ed0baae3fb273059e36a5c42e65",
+      "/media/say-it-back/hgf-perfect-fiance/v1-7aa4d174ffb3/reference.wav": "d65fdaa5f753eaf8c2a82d0f040de8573dd92b780dba40f5df2a3f272758f696",
+      "/media/say-it-back/hgf-perfect-fiance/v1-7aa4d174ffb3/backing-walter.m4a": "9e6e8371cdb7ae9da84ef5e8b7648262e986d6783cbd8308a309e148679e0257"
+    }
+  },
+  {
+    "source": {
+      "title": "His Girl Friday (1940)",
+      "creator": "Columbia Pictures · directed by Howard Hawks",
+      "url": "https://archive.org/details/his_girl_friday",
+      "license": "Public domain in the United States",
+      "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "attribution": "His Girl Friday (1940), Columbia Pictures; directed by Howard Hawks. Cary Grant and Rosalind Russell. Original monochrome film: US public domain. Excerpt and backing tracks prepared by Delivery.",
+      "reuseNote": "Public-domain source declaration corroborated by Internet Archive: https://blog.archive.org/event/his-girl-friday-public-domain-movie-screening-at-the-internet-archive/ . Original 640x480 monochrome transfer: https://archive.org/download/his_girl_friday/his_girl_friday.mp4 . No later colorization or added material. Territorial copyright may differ outside the US. Dialogue boundaries checked against free local ASR and source captions where available; backing uses 25 ms transitions outside the removed dialogue. Background sound also drops during replaced dialogue; other speakers remain where intervals do not overlap. A constant 3× gain improves the quiet original transfer; no compression, speed change, or speech editing.",
+      "excerptStart": 396.3,
+      "excerptEnd": 412.85
+    },
+    "id": "hgf-married-again",
+    "title": "We’ll get married again",
+    "description": "A perfectly reasonable workplace proposal turns into a terrible relationship proposal. Leave room for Hildy’s final verdict.",
+    "difficulty": "hard",
+    "rating": "everyone",
+    "category": "Comedy",
+    "tags": [
+      "Long scene",
+      "Multi-line",
+      "Exchange"
+    ],
+    "duration": 16.55,
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "walter",
+        "text": "Look, look, what's the use of fighting, Hildy? I'll tell you what you do.",
+        "start": 1.82,
+        "end": 4.68
+      },
+      {
+        "id": "cue-2",
+        "roleId": "walter",
+        "text": "You come back to work on the paper.",
+        "start": 4.72,
+        "end": 5.92
+      },
+      {
+        "id": "cue-3",
+        "roleId": "walter",
+        "text": "If we find we can't get along in a friendly fashion, we'll get married again.",
+        "start": 6.02,
+        "end": 9.18
+      },
+      {
+        "id": "cue-4",
+        "roleId": "walter",
+        "text": "Certainly! I haven't any hard feelings.",
+        "start": 10.64,
+        "end": 12.23
+      }
+    ],
+    "roles": [
+      {
+        "id": "walter",
+        "name": "Walter",
+        "description": "Sell this bad idea with absolute confidence. Hildy keeps the last word.",
+        "muteIntervals": [
+          {
+            "start": 1.76,
+            "end": 9.24
+          },
+          {
+            "start": 10.58,
+            "end": 12.29
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/hgf-married-again/v1-f6f6176be627/backing-walter.m4a"
+      }
+    ],
+    "version": "v1-f6f6176be627",
+    "videoUrl": "/media/say-it-back/hgf-married-again/v1-f6f6176be627/scene.mp4",
+    "posterUrl": "/media/say-it-back/hgf-married-again/v1-f6f6176be627/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/hgf-married-again/v1-f6f6176be627/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/hgf-married-again/v1-f6f6176be627/scene.mp4": "41326364f93e69d7e82d31e92acba09244f03b99007c0439440e04e4104bb797",
+      "/media/say-it-back/hgf-married-again/v1-f6f6176be627/poster.jpg": "5ba37a10b27735d6d4ed5f6b47fe765e54f022d374dbb3d58f09b8be0c4f99ce",
+      "/media/say-it-back/hgf-married-again/v1-f6f6176be627/reference.wav": "ad7bf4bc3ae21f6a98f1d2128d516f7c89275c18e07e3445375bc1294af70bae",
+      "/media/say-it-back/hgf-married-again/v1-f6f6176be627/backing-walter.m4a": "b8d1c564413e96f5ba84d9a98fed2e765d95c89cdc4f8d687af4f0f7ffbbfe70"
+    }
+  },
+  {
+    "source": {
+      "title": "xQc on a 15 minute delay to prevent stream sniping (2019)",
+      "creator": "xQc · Félix Lengyel",
+      "url": "https://clips.twitch.tv/SlipperyOnerousDoveNotATK",
+      "license": "Owner-directed inclusion; third-party reuse rights not independently verified",
+      "licenseUrl": "https://clips.twitch.tv/SlipperyOnerousDoveNotATK",
+      "attribution": "Original Twitch performance by xQc (Félix Lengyel), 2019. Short excerpt and voice-replacement backing prepared by Delivery.",
+      "reuseNote": "Included at the Delivery owner’s express direction. No independent third-party permission or reusable license is claimed. Public original-footage mirror: https://streamable.com/aje2y ; contemporaneous source record: https://livestreamfails.com/clip/L1ezEdegF6-W/xqc-on-a-15-minute-delay-to-prevent-stream-sniping . No Choicer Voicer game assets used. Excerpt boundaries refer to this mirror; original speed preserved. The mixed soundtrack is muted completely during your dub because isolated dialogue/background stems are unavailable. This is a new longer excerpt from the same original-footage mirror, with a separate immutable identity. It ends before the next profane phrase.",
+      "excerptStart": 1.8,
+      "excerptEnd": 12.4
+    },
+    "id": "xqc-delay-monologue",
+    "title": "And then what? The whole objection",
+    "description": "A fifteen-minute delay sounds sensible until xQc imagines the conversation. Perform the disbelief, the long pause, and the punchline.",
+    "difficulty": "medium",
+    "rating": "teen",
+    "category": "Twitch",
+    "tags": [
+      "Long scene",
+      "Multi-line",
+      "Internet classic"
+    ],
+    "duration": 10.6,
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "xqc",
+        "text": "Fifteen minute delay.",
+        "start": 0.3,
+        "end": 1.45
+      },
+      {
+        "id": "cue-2",
+        "roleId": "xqc",
+        "text": "And then what?",
+        "start": 1.8,
+        "end": 3.35
+      },
+      {
+        "id": "cue-3",
+        "roleId": "xqc",
+        "text": "Then what?",
+        "start": 4.78,
+        "end": 5.72
+      },
+      {
+        "id": "cue-4",
+        "roleId": "xqc",
+        "text": "I talk to myself like some crazy...",
+        "start": 5.84,
+        "end": 8.38
+      },
+      {
+        "id": "cue-5",
+        "roleId": "xqc",
+        "text": "Complete idiot.",
+        "start": 9.05,
+        "end": 10.43
+      }
+    ],
+    "roles": [
+      {
+        "id": "xqc",
+        "name": "xQc",
+        "description": "Five short lines with one gloriously awkward silence. Let the frustration build.",
+        "muteIntervals": [
+          {
+            "start": 0,
+            "end": 10.6
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/xqc-delay-monologue/v1-93d937016161/backing-xqc.m4a"
+      }
+    ],
+    "version": "v1-93d937016161",
+    "videoUrl": "/media/say-it-back/xqc-delay-monologue/v1-93d937016161/scene.mp4",
+    "posterUrl": "/media/say-it-back/xqc-delay-monologue/v1-93d937016161/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/xqc-delay-monologue/v1-93d937016161/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/xqc-delay-monologue/v1-93d937016161/scene.mp4": "647761198deec888edb4f100cbe33639fb4c218b8c1f0153ad4efc03a8dff519",
+      "/media/say-it-back/xqc-delay-monologue/v1-93d937016161/poster.jpg": "8d5f74fa5ba6cb0dab08086f412e419f3c0da1906c5684c96205f4e25ade1a18",
+      "/media/say-it-back/xqc-delay-monologue/v1-93d937016161/reference.wav": "6da1c44318bfa23a01b95bc8bddf07e8e51fd0a4fc230bb1098f6845a2da309f",
+      "/media/say-it-back/xqc-delay-monologue/v1-93d937016161/backing-xqc.m4a": "c0efef38b2ef41063c38623f3fd86fc9187474ef9577677b95002d476b56f884"
+    }
+  },
+  {
+    "source": {
+      "title": "Tears of Steel (2012)",
+      "creator": "Blender Foundation · directed by Ian Hubert",
+      "url": "https://www.youtube.com/watch?v=R6MlUcmOul8",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "attribution": "Tears of Steel © Blender Foundation | mango.blender.org. CC BY 3.0. Shortened and adapted for voice replacement by Delivery.",
+      "reuseNote": "Producer license: https://mango.blender.org/sharing/ . Original live-action release downloaded from https://archive.org/download/Tears-of-Steel/tears_of_steel_1080p.webm . Excerpted without speed changes; selected dialogue interval-muted in separate backing tracks. Dialogue boundaries checked against free local ASR and source captions where available; backing uses 25 ms transitions outside the removed dialogue. Background sound also drops during replaced dialogue; other speakers remain where intervals do not overlap.",
+      "excerptStart": 22.08,
+      "excerptEnd": 34.45
+    },
+    "id": "tos-follow-your-passions",
+    "title": "We have to follow our passions",
+    "description": "Celia calls Thom out. He gives an inspiring speech about space. She has a much more specific explanation.",
+    "difficulty": "easy",
+    "rating": "everyone",
+    "category": "Sci-fi",
+    "tags": [
+      "Long scene",
+      "Multi-line",
+      "Exchange"
+    ],
+    "duration": 12.37,
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "thom",
+        "text": "Look, Celia, we have to follow our passions.",
+        "start": 2.32,
+        "end": 4.74
+      },
+      {
+        "id": "cue-2",
+        "roleId": "thom",
+        "text": "You have your robotics, and I just want to be awesome in space.",
+        "start": 5.26,
+        "end": 7.82
+      }
+    ],
+    "roles": [
+      {
+        "id": "thom",
+        "name": "Thom",
+        "description": "Two sincere lines in the middle of an increasingly awkward exchange. Celia’s opening and comeback remain.",
+        "muteIntervals": [
+          {
+            "start": 2.26,
+            "end": 4.8
+          },
+          {
+            "start": 5.2,
+            "end": 7.88
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/tos-follow-your-passions/v1-fc5f814eb3bd/backing-thom.m4a"
+      }
+    ],
+    "version": "v1-fc5f814eb3bd",
+    "videoUrl": "/media/say-it-back/tos-follow-your-passions/v1-fc5f814eb3bd/scene.mp4",
+    "posterUrl": "/media/say-it-back/tos-follow-your-passions/v1-fc5f814eb3bd/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/tos-follow-your-passions/v1-fc5f814eb3bd/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/tos-follow-your-passions/v1-fc5f814eb3bd/scene.mp4": "1cba5f2b8032d055d8bfe3c2f3b4afa471bf5f4d5081d136e508322fd9f9eb63",
+      "/media/say-it-back/tos-follow-your-passions/v1-fc5f814eb3bd/poster.jpg": "57d1344ee2bd716cea36f5d0cb5db02c331ebb7c61578319364bb23af5279a49",
+      "/media/say-it-back/tos-follow-your-passions/v1-fc5f814eb3bd/reference.wav": "0214a3a563d1ccd2d50b53e08b5f25e10c9f2ad5570f2027f577decaabda8ce0",
+      "/media/say-it-back/tos-follow-your-passions/v1-fc5f814eb3bd/backing-thom.m4a": "59bba76ba88db2689d7061a242ce5583ebc9ade1dbcc1da53e96293dc7b09728"
+    }
+  },
+  {
+    "source": {
+      "title": "His Girl Friday (1940)",
+      "creator": "Columbia Pictures · directed by Howard Hawks",
+      "url": "https://archive.org/details/his_girl_friday",
+      "license": "Public domain in the United States",
+      "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "attribution": "His Girl Friday (1940), Columbia Pictures; directed by Howard Hawks. Cary Grant and Rosalind Russell. Original monochrome film: US public domain. Excerpt and backing tracks prepared by Delivery.",
+      "reuseNote": "Public-domain source declaration corroborated by Internet Archive: https://blog.archive.org/event/his-girl-friday-public-domain-movie-screening-at-the-internet-archive/ . Original 640x480 monochrome transfer: https://archive.org/download/his_girl_friday/his_girl_friday.mp4 . No later colorization or added material. Territorial copyright may differ outside the US. Dialogue boundaries checked against free local ASR and source captions where available; backing uses 25 ms transitions outside the removed dialogue. Background sound also drops during replaced dialogue; other speakers remain where intervals do not overlap. A constant 3× gain improves the quiet original transfer; no compression, speed change, or speech editing.",
+      "excerptStart": 302.77,
+      "excerptEnd": 315.2
+    },
+    "id": "hgf-divorce-speech",
+    "title": "Divorce doesn’t mean anything",
+    "description": "Walter argues that divorce is just a minor technicality. Deliver the whole increasingly unconvincing explanation.",
+    "difficulty": "hard",
+    "rating": "everyone",
+    "category": "Comedy",
+    "tags": [
+      "Long scene",
+      "Multi-line",
+      "Exchange"
+    ],
+    "duration": 12.43,
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "walter",
+        "text": "Nonsense! You've got an old-fashioned idea.",
+        "start": 0.29,
+        "end": 2.17
+      },
+      {
+        "id": "cue-2",
+        "roleId": "walter",
+        "text": "Divorce is something that lasts forever, till death do us part.",
+        "start": 2.27,
+        "end": 4.72
+      },
+      {
+        "id": "cue-3",
+        "roleId": "walter",
+        "text": "Why, divorce doesn't mean anything nowadays, Hildy.",
+        "start": 5.01,
+        "end": 7.11
+      },
+      {
+        "id": "cue-4",
+        "roleId": "walter",
+        "text": "Just a few words mumbled over you by a judge.",
+        "start": 7.39,
+        "end": 9.14
+      },
+      {
+        "id": "cue-5",
+        "roleId": "walter",
+        "text": "We've got something between us nothing can change.",
+        "start": 10.07,
+        "end": 12.19
+      }
+    ],
+    "roles": [
+      {
+        "id": "walter",
+        "name": "Walter",
+        "description": "Five fast phrases. Make the absurd argument sound completely reasonable.",
+        "muteIntervals": [
+          {
+            "start": 0.23,
+            "end": 4.78
+          },
+          {
+            "start": 4.95,
+            "end": 7.17
+          },
+          {
+            "start": 7.33,
+            "end": 9.2
+          },
+          {
+            "start": 10.01,
+            "end": 12.25
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/hgf-divorce-speech/v1-2ee5c2513c68/backing-walter.m4a"
+      }
+    ],
+    "version": "v1-2ee5c2513c68",
+    "videoUrl": "/media/say-it-back/hgf-divorce-speech/v1-2ee5c2513c68/scene.mp4",
+    "posterUrl": "/media/say-it-back/hgf-divorce-speech/v1-2ee5c2513c68/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/hgf-divorce-speech/v1-2ee5c2513c68/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/hgf-divorce-speech/v1-2ee5c2513c68/scene.mp4": "cac742b09e73b518462a564bbac837c0804e32c39f624bc9ca1e1456dca20538",
+      "/media/say-it-back/hgf-divorce-speech/v1-2ee5c2513c68/poster.jpg": "8952452a0835a034252f3b2906b0e3c0e88a0e16604a963d30a7417cb16e5562",
+      "/media/say-it-back/hgf-divorce-speech/v1-2ee5c2513c68/reference.wav": "317c16645c9a51bf4edd01c3b0c0bd804b46be1726cfeadae4d50be85f9df3c2",
+      "/media/say-it-back/hgf-divorce-speech/v1-2ee5c2513c68/backing-walter.m4a": "94731fd979547c04ca638bffbb1164f659663338833241b25186344322e0e2f6"
+    }
+  },
+  {
+    "source": {
+      "title": "Night of the Living Dead (1968)",
+      "creator": "Image Ten · directed by George A. Romero",
+      "url": "https://archive.org/details/NightOfTheLivingDead-MPEG",
+      "license": "Public domain in the United States",
+      "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "attribution": "Night of the Living Dead (1968), Image Ten; directed by George A. Romero. Russell Streiner and Judith O’Dea. Original monochrome film: US public domain. Excerpt and backing tracks prepared by Delivery.",
+      "reuseNote": "Original release omitted the required copyright notice; cancelled registration PA0000046101 documented at https://publicdomainmovie.net/movie/night-of-the-living-dead . Original monochrome transfer: https://archive.org/download/NightOfTheLivingDead-MPEG/NightOfTheLivingDead.mp4 . No later colorization, new score, or added footage. Territorial copyright may differ outside the US. Dialogue boundaries checked against free local ASR and source captions where available; backing uses 25 ms transitions outside the removed dialogue. Background sound also drops during replaced dialogue; other speakers remain where intervals do not overlap. A constant 3× gain improves the quiet original transfer; no compression, speed change, or speech editing.",
+      "excerptStart": 365.6,
+      "excerptEnd": 383.15
+    },
+    "id": "notld-here-comes-one",
+    "title": "Look, here comes one now",
+    "description": "Johnny’s cemetery joke gets less funny when someone actually appears. Keep Barbra’s objections and the approaching stranger in the scene.",
+    "difficulty": "easy",
+    "rating": "teen",
+    "category": "Horror",
+    "tags": [
+      "Long scene",
+      "Multi-line",
+      "Exchange"
+    ],
+    "duration": 17.55,
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "johnny",
+        "text": "They're coming to get you, Barbara.",
+        "start": 0.718,
+        "end": 3.338
+      },
+      {
+        "id": "cue-2",
+        "roleId": "johnny",
+        "text": "They're coming for you, Barbara.",
+        "start": 7.198,
+        "end": 8.778
+      },
+      {
+        "id": "cue-3",
+        "roleId": "johnny",
+        "text": "They're coming for you.",
+        "start": 12.62,
+        "end": 14.05
+      },
+      {
+        "id": "cue-4",
+        "roleId": "johnny",
+        "text": "Look, there comes one of them now.",
+        "start": 14.62,
+        "end": 16.83
+      }
+    ],
+    "roles": [
+      {
+        "id": "johnny",
+        "name": "Johnny",
+        "description": "Four teasing turns. Start with a drawn-out warning, then point out the real stranger.",
+        "muteIntervals": [
+          {
+            "start": 0.658,
+            "end": 3.398
+          },
+          {
+            "start": 7.138,
+            "end": 8.838
+          },
+          {
+            "start": 12.56,
+            "end": 14.11
+          },
+          {
+            "start": 14.56,
+            "end": 16.89
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/notld-here-comes-one/v1-a5b1b47f72ee/backing-johnny.m4a"
+      }
+    ],
+    "version": "v1-a5b1b47f72ee",
+    "videoUrl": "/media/say-it-back/notld-here-comes-one/v1-a5b1b47f72ee/scene.mp4",
+    "posterUrl": "/media/say-it-back/notld-here-comes-one/v1-a5b1b47f72ee/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/notld-here-comes-one/v1-a5b1b47f72ee/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/notld-here-comes-one/v1-a5b1b47f72ee/scene.mp4": "c70dfe3e11d1663e2d2884e4c5787ba9cc54ae34b00e1c47d34c1f5c21a8af20",
+      "/media/say-it-back/notld-here-comes-one/v1-a5b1b47f72ee/poster.jpg": "b767f6956f54d40d4d512bf3ab8d73211c715673a10362dc273b0d514b0a5b89",
+      "/media/say-it-back/notld-here-comes-one/v1-a5b1b47f72ee/reference.wav": "4568a4467a4da873211ae43d7574cbdea74a9e2c63adc15f39b77986fcc091f4",
+      "/media/say-it-back/notld-here-comes-one/v1-a5b1b47f72ee/backing-johnny.m4a": "f39ab1e39d1a0f55d4ed365ff3c8d8bfa07d13134d63bfaab71daf1a941410a2"
+    }
+  },
+  {
     "id": "xqc-six-consoles",
     "title": "Six consoles!",
     "description": "Turn a shopping list into a full-body performance. Give those consoles the outrage they deserve.",

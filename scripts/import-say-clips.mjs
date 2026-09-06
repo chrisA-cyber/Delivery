@@ -6,10 +6,12 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { spawnSync } from "node:child_process";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const apply = args.includes("--apply");
+const probe = args.includes("--probe");
 const projectIndex = args.indexOf("--project");
 const project = projectIndex >= 0 ? args[projectIndex + 1] : null;
 const filename = args.find((arg, i) => !arg.startsWith("--") && !(projectIndex >= 0 && i === projectIndex + 1))
@@ -79,10 +81,24 @@ try {
       if (!info.isFile() || !info.size || info.size > 8 * 1024 * 1024) throw new Error(`${key}: invalid or oversized asset ${asset}`);
       const hash = createHash("sha256").update(await readFile(assetPath)).digest("hex");
       if (clip.assetIntegrity[asset] !== hash) throw new Error(`${key}: asset hash mismatch ${asset}; publish a new clip version after edits`);
+      if (probe && /\.(mp4|m4a|wav)$/.test(asset)) {
+        const decoded = spawnSync("ffprobe", ["-v", "error", "-show_entries", "format=duration:stream=codec_name,codec_type,sample_rate,channels", "-of", "json", assetPath], { encoding: "utf8" });
+        if (decoded.error || decoded.status !== 0) throw new Error(`${key}: ffprobe could not inspect ${asset}; --probe requires ffprobe on PATH`);
+        const metadata = JSON.parse(decoded.stdout);
+        const duration = Number(metadata.format?.duration);
+        if (!Number.isFinite(duration) || Math.abs(duration - clip.duration) > 0.06)
+          throw new Error(`${key}: ${asset} duration ${duration} differs from the ${clip.duration}s timeline`);
+        if (!metadata.streams?.some((stream) => stream.codec_type === "audio"))
+          throw new Error(`${key}: ${asset} has no audio stream`);
+        if (asset === clip.videoUrl && !metadata.streams.some((stream) => stream.codec_type === "video" && stream.codec_name === "h264"))
+          throw new Error(`${key}: scene video must include browser-compatible H.264`);
+        if (asset === clip.referenceAudioUrl && !metadata.streams.some((stream) => stream.codec_type === "audio" && stream.codec_name === "pcm_s16le" && Number(stream.sample_rate) >= 16000))
+          throw new Error(`${key}: reference waveform requires at least 16 kHz PCM16 WAV`);
+      }
       totalBytes += info.size;
     }
   }
-  console.log(`Validated ${clips.length} immutable clip versions and ${(totalBytes / 1048576).toFixed(1)} MB of media.`);
+  console.log(`Validated ${clips.length} immutable clip versions and ${(totalBytes / 1048576).toFixed(1)} MB of media.${probe ? " Stream formats and timeline durations also match." : ""}`);
   if (apply) {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

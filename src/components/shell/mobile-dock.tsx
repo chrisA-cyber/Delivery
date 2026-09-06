@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AudioLines, Clapperboard, Compass, Home, UserRound } from "lucide-react";
+import { AudioLines, Clapperboard, Home, UserRound, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/discover", label: "Packs", icon: Compass },
+  { href: "/rounds", label: "Friends", icon: Users },
   { href: "/play", label: "Classic", icon: AudioLines, primary: true },
   { href: "/say-it-back", label: "Say It Back", icon: Clapperboard },
   { href: "/profile", label: "You", icon: UserRound },
@@ -22,7 +22,8 @@ export function MobileDock() {
     pathname.startsWith("/endless") ||
     pathname.startsWith("/impossible") ||
     pathname.startsWith("/stream/stage") ||
-    pathname.startsWith("/challenge/");
+    pathname.startsWith("/challenge/") ||
+    (pathname.startsWith("/rounds/") && pathname.endsWith("/record"));
   if (activeGame) return null;
 
   return (

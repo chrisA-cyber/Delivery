@@ -252,7 +252,11 @@ export async function judgeSayAttempt(id: string, viewer: SayViewer): Promise<{ 
   const { score, transcription, usage } = operation.value;
   const completed = await createSupabaseAdminClient().from("say_attempts").update({ status: "scored", score, transcription, judging_usage: usage, failure_code: null }).eq("id", id).eq("owner_key", viewer.ownerKey);
   checked(completed.error);
-  if (initial.shared_with_challenge) {
+  // Scoring an already submitted private group take also checks its words.
+  // The old challenge consent flag is kept separate: entering a group must not
+  // silently authorize a previous one-to-one challenge host to hear this take.
+  const groupSubmissions = await createSupabaseAdminClient().from("challenge_group_takes").select("id").eq("say_attempt_id", id).not("submitted_at", "is", null).limit(1);
+  if (initial.shared_with_challenge || (!groupSubmissions.error && groupSubmissions.data?.length)) {
     try { await approveSaySharing({ ...initial, status: "scored", score }); } catch { /* A sharing failure never removes the private result. */ }
   }
   return { attempt: await getSayAttempt(id, viewer), usage, replayed: operation.replayed };

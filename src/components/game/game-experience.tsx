@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "@/components/providers/app-provider";
 import {
@@ -106,6 +107,7 @@ export function GameExperience({
   voteEnabled = false,
   voteDelaySeconds = 5,
   initialContentRating,
+  roundContext,
 }: {
   mode?: GameMode;
   initialPrompt?: Prompt;
@@ -121,7 +123,9 @@ export function GameExperience({
   voteEnabled?: boolean;
   voteDelaySeconds?: number;
   initialContentRating?: ContentRating;
+  roundContext?: { token: string; returnPath: string };
 }) {
+  const router = useRouter();
   const {
     favorites,
     muted,
@@ -161,6 +165,8 @@ export function GameExperience({
       (mode === "daily" ? dailyGamePrompt() : gamePrompt(mode)),
     [initialPrompt, mode],
   );
+  const [roundSaving, setRoundSaving] = useState(false);
+  const roundTakeRef = useRef<{ blob: Blob; id: string } | null>(null);
   const [prompt, setPrompt] = useState(firstPrompt);
   const [stage, setStage] = useState<GameStage>("prompt");
   const [result, setResult] = useState<JudgeResult | null>(null);
@@ -192,7 +198,7 @@ export function GameExperience({
   const allowed = isRatingAllowed(prompt.rating ?? "everyone", rating);
   const isFavorite = favorites.includes(prompt.id);
   const fixedRound =
-    mode === "daily" || mode === "challenge" || !runtimeInitial;
+    mode === "daily" || mode === "challenge" || !runtimeInitial || Boolean(roundContext);
 
   useEffect(() => {
     if (recorder.status === "stopped" && stage === "recording")
@@ -390,6 +396,7 @@ export function GameExperience({
   }, [mode, packId, prompt.id, rating, reducedMotion, reset, tier]);
 
   const continuePlaying = useCallback(() => {
+    if (roundContext) { router.push(roundContext.returnPath); return; }
     if (mode === "challenge" && challengeReturnPath) {
       reset();
       window.location.assign(challengeReturnPath);
@@ -401,7 +408,7 @@ export function GameExperience({
       return;
     }
     return nextPrompt();
-  }, [challengeReturnPath, mode, nextPrompt, reset]);
+  }, [challengeReturnPath, mode, nextPrompt, reset, roundContext, router]);
 
   const openVote = useCallback(() => {
     if (!allowed || promptLoading) return;
@@ -505,6 +512,33 @@ export function GameExperience({
     voteOpen,
   ]);
 
+  async function saveRoundTake(): Promise<string> {
+    if (!roundContext || !recorder.audioBlob) throw new Error("Record a take first.");
+    if (roundTakeRef.current?.blob === recorder.audioBlob) return roundTakeRef.current.id;
+    const form = new FormData();
+    form.set("audio", recorder.audioBlob, "delivery.wav");
+    form.set("durationMs", String(recorder.durationMs));
+    form.set("attemptId", attemptIdRef.current);
+    form.set("maxRating", rating);
+    const response = await fetch(`/api/rounds/${roundContext.token}/takes`, {
+      method: "POST", body: form, headers: { "Idempotency-Key": attemptIdRef.current },
+    });
+    const body = await response.json();
+    if (!response.ok || !body.data?.take?.id) throw new Error(body.error?.message ?? "Could not save this take. Your recording is still here.");
+    roundTakeRef.current = { blob: recorder.audioBlob, id: body.data.take.id };
+    return body.data.take.id;
+  }
+
+  async function chooseRoundTake() {
+    if (roundSaving || submissionInFlight.current || !roundContext) return;
+    setRoundSaving(true); setSubmitError(null);
+    try {
+      const id = await saveRoundTake();
+      router.push(`${roundContext.returnPath}?take=${encodeURIComponent(id)}`);
+    } catch (error) { setSubmitError(error instanceof Error ? error.message : "Could not save your take."); }
+    finally { setRoundSaving(false); }
+  }
+
   async function submit() {
     if (
       !recorder.audioBlob ||
@@ -540,6 +574,10 @@ export function GameExperience({
     if (mode === "challenge" && challengeToken)
       form.append("challengeToken", challengeToken);
     try {
+      if (roundContext) {
+        form.set("roundToken", roundContext.token);
+        form.set("roundTakeId", await saveRoundTake());
+      }
       const response = await fetch("/api/judge", {
         method: "POST",
         body: form,
@@ -584,7 +622,7 @@ export function GameExperience({
         dailyRank: reference?.dailyRank,
         dailyParticipants: reference?.dailyParticipants,
       };
-      saveDelivery(historyItem);
+      if (!roundContext) saveDelivery(historyItem);
       if (reference?.persisted && authenticated) void refreshAccount();
       onJudged?.(judged);
       setStage("result");
@@ -642,11 +680,17 @@ export function GameExperience({
     return <JudgingLoader audioBlob={recorder.audioBlob} />;
   if (stage === "result" && result)
     return (
+      <div>
+      {roundContext && <div className="panel-solid mb-5 p-5">
+        <p className="text-sm text-white/65">Your take is private. Choose it, then confirm sharing on the round page.</p>
+        <button className="button-primary mt-3" disabled={roundSaving} onClick={() => void chooseRoundTake()}>{roundSaving ? "Saving…" : "Use this take in round"}</button>
+        {submitError && <p role="alert" className="mt-3 text-orange-200">{submitError}</p>}
+      </div>}
       <ResultScreen
         mode={mode}
         prompt={prompt}
         result={result}
-        delivery={deliveryReference}
+        delivery={roundContext ? null : deliveryReference}
         audioBlob={recorder.audioBlob}
         audioUrl={recorder.audioUrl}
         warning={submitWarning}
@@ -654,7 +698,7 @@ export function GameExperience({
         onRetry={retake}
         canRetry={mode !== "daily" && mode !== "challenge"}
         nextLabel={
-          mode === "challenge" && challengeReturnPath
+          roundContext ? "Back to round" : mode === "challenge" && challengeReturnPath
             ? "View matchup"
             : mode === "daily" || mode === "challenge"
               ? "Play a fresh line"
@@ -664,6 +708,7 @@ export function GameExperience({
         nextLoading={promptLoading}
         nextError={drawError}
       />
+      </div>
     );
 
   return (
@@ -678,7 +723,7 @@ export function GameExperience({
       <div className="game-toolbar">
         <div className="flex min-w-0 items-center gap-3">
           {!cleanStage && (
-            <Link href="/" className="icon-button" aria-label="Exit to home">
+            <Link href={roundContext?.returnPath ?? "/"} className="icon-button" aria-label={roundContext ? "Back to round" : "Exit to home"}>
               <ChevronLeft className="size-4" />
             </Link>
           )}
@@ -833,6 +878,7 @@ export function GameExperience({
             </div>
           </div>
 
+          {!roundContext && prompt.rating !== "mature" && stage === "prompt" && <div className="mt-4 flex justify-end"><Link className="button-ghost text-xs" href={`/rounds?mode=classic&prompt=${encodeURIComponent(prompt.id)}&energy=${encodeURIComponent(prompt.energyId ?? "")}`}>Start a group round with this line</Link></div>}
           <div className="recording-desk">
             {recorder.error && stage === "prompt" && (
               <div className="game-error mb-5" role="alert">
@@ -1032,11 +1078,15 @@ export function GameExperience({
                     {playbackError}
                   </p>
                 )}
+                {roundContext && <div className="mt-5 rounded-xl border border-acid/30 bg-acid/5 p-4">
+                  <p className="text-sm leading-6 text-white/70">Choose your performance when you’re happy with it. Sharing is confirmed on the round page; a score is optional.</p>
+                  <button onClick={() => void chooseRoundTake()} disabled={!recorder.canSubmit || roundSaving} className="button-primary mt-3 w-full">{roundSaving ? "Saving your take…" : "Use this take in round"}</button>
+                </div>}
                 <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
                   {rehearsal ? (
                     <button
                       onClick={() => setRehearsal(false)}
-                      disabled={!recorder.canSubmit}
+                      disabled={!recorder.canSubmit || roundSaving}
                       className="button-primary min-h-12"
                     >
                       <Check className="size-4" />
@@ -1045,7 +1095,7 @@ export function GameExperience({
                   ) : (
                     <button
                       onClick={() => void submit()}
-                      disabled={!recorder.canSubmit}
+                      disabled={!recorder.canSubmit || roundSaving}
                       className="button-primary min-h-12"
                     >
                       <Check className="size-4" />
@@ -1054,6 +1104,7 @@ export function GameExperience({
                   )}
                   <button
                     onClick={retake}
+                    disabled={roundSaving}
                     className="button-secondary min-h-12"
                   >
                     <RotateCcw className="size-4" />
