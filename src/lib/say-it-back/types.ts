@@ -1,4 +1,4 @@
-export const SAY_SCORING_VERSION = "say-match-v1.1" as const;
+export const SAY_SCORING_VERSION = "say-match-v1.2" as const;
 
 export interface SayCue { id: string; roleId: string; text: string; start: number; end: number }
 export interface SayRole {

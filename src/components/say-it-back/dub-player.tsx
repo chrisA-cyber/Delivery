@@ -15,6 +15,10 @@ function timeLabel(seconds: number) {
   return `${Math.floor(Math.max(0, seconds) / 60)}:${String(Math.floor(Math.max(0, seconds) % 60)).padStart(2, "0")}`;
 }
 
+function isPlaybackAbort(cause: unknown) {
+  return Boolean(cause && typeof cause === "object" && "name" in cause && cause.name === "AbortError");
+}
+
 /** The video is the only playback clock. The take keeps its recorded timing. */
 export const DubPlayer = forwardRef<DubPlayerHandle, {
   clip: SayClip;
@@ -29,7 +33,8 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   onInterruption?: () => void;
   onPlaybackStart?: () => void;
   onCancelCountdown?: () => void;
-}> (function DubPlayer({ clip, role, takeUrl, recordingOffsetMs = 0, recording = false, countdown, onEnded, onTime, onAudioError, onInterruption, onPlaybackStart, onCancelCountdown }, forwardedRef) {
+  takeLabel?: string;
+}> (function DubPlayer({ clip, role, takeUrl, recordingOffsetMs = 0, recording = false, countdown, onEnded, onTime, onAudioError, onInterruption, onPlaybackStart, onCancelCountdown, takeLabel = "Your take" }, forwardedRef) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const voiceRef = useRef<HTMLAudioElement>(null);
   const bedRef = useRef<HTMLAudioElement>(null);
@@ -77,7 +82,11 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
       if (video.paused || busy || !active || video.seeking || video.readyState < 3) audio.pause();
       else if (audio.paused && audio.readyState >= 2 && !pendingPlay.current.has(audio)) {
         pendingPlay.current.add(audio);
-        void audio.play().catch(() => {
+        void audio.play().catch((cause: unknown) => {
+          // Our seek/buffering/pause synchronization intentionally interrupts
+          // pending audio play promises. The next frame resumes from the video
+          // clock; an expected AbortError must not stop the entire scene.
+          if (isPlaybackAbort(cause)) return;
           pause();
           setError("Your browser paused the dub audio. Tap play to start the scene and your voice together.");
         }).finally(() => pendingPlay.current.delete(audio));
@@ -91,7 +100,8 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
     sync(true);
     for (const audio of [voiceRef.current, bedRef.current]) {
       if (audio && !audio.ended && audio.currentTime < audio.duration && (audio !== voiceRef.current || video.currentTime + recordingOffsetMs / 1000 >= 0)) {
-        void audio.play().catch(() => {
+        void audio.play().catch((cause: unknown) => {
+          if (isPlaybackAbort(cause)) return;
           pause();
           setError("Your browser paused the dub audio. Tap play to start the scene and your voice together.");
         });
@@ -162,7 +172,9 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
       // Start all elements in the same user gesture for Safari's audio policy.
       const requests: Promise<void>[] = [video.play()];
       if (isDub) for (const audio of [voiceRef.current, bedRef.current]) if (audio && (audio !== voiceRef.current || video.currentTime + recordingOffsetMs / 1000 >= 0)) requests.push(audio.play());
-      await Promise.all(requests);
+      await Promise.all(requests.map((request) => request.catch((cause: unknown) => {
+        if (!isPlaybackAbort(cause)) throw cause;
+      })));
     } catch {
       pause();
       setError("Playback could not start. Check your connection and tap play again.");
@@ -195,10 +207,10 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 bg-[#242421] px-3 py-2 sm:px-4">
         <div className="flex items-center gap-2 text-xs font-bold">
           <span className={cn("size-2 rounded-full", recording ? "animate-pulse bg-acid" : isDub ? "bg-electric" : "bg-hot")} />
-          {recording ? "Recording your scene" : isDub ? "Your voice. Their scene." : "The original scene"}
+          {recording ? "Recording your scene" : isDub ? (takeLabel === "Your take" ? "Your voice. Their scene." : "Your friend’s voice. Their scene.") : "The original scene"}
         </div>
         {takeUrl && !busy && <div className="flex rounded-lg border border-white/15 p-0.5" aria-label="Compare playback" role="group">
-          {(["original", "dub"] as const).map((value) => <button key={value} type="button" aria-pressed={kind === value} className={cn("min-h-9 rounded-md px-3 text-xs font-bold", kind === value ? "bg-paper text-ink" : "text-white/70")} onClick={() => { pause(); setKind(value); setError(""); }}>{value === "original" ? "Original" : "Your take"}</button>)}
+          {(["original", "dub"] as const).map((value) => <button key={value} type="button" aria-pressed={kind === value} className={cn("min-h-9 rounded-md px-3 text-xs font-bold", kind === value ? "bg-paper text-ink" : "text-white/70")} onClick={() => { pause(); setKind(value); setError(""); }}>{value === "original" ? "Original" : takeLabel}</button>)}
         </div>}
       </div>
       <div className="relative aspect-video w-full bg-black">
@@ -212,10 +224,10 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
         {takeUrl && <audio ref={voiceRef} src={takeUrl} preload="auto" onError={() => void recoverAudio()} onLoadedMetadata={() => sync(true)} />}
         {role.dubAudioUrl && <audio ref={bedRef} src={role.dubAudioUrl} preload="auto" onLoadedMetadata={() => sync(true)} onError={() => { pause(); setError("The scene background could not load. Reload before playing the dub."); }} />}
         {(!loaded || buffering) && countdown == null && <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/30"><LoaderCircle aria-label="Loading scene" className="size-8 animate-spin text-paper" /></div>}
-        {!playing && !busy && loaded && <button type="button" onClick={() => void togglePlay()} aria-label={isDub ? "Play your dubbed scene" : "Watch the original scene"} className="absolute inset-0 grid place-items-center bg-black/10"><span className="grid size-16 place-items-center rounded-full border border-white/50 bg-paper/95 text-ink shadow-xl sm:size-20"><Play className="ml-1 size-7 fill-current" /></span></button>}
+        {!playing && !busy && loaded && <button type="button" onClick={() => void togglePlay()} aria-label={isDub ? (takeLabel === "Your take" ? "Play your dubbed scene" : "Play friend’s dubbed scene") : "Watch the original scene"} className="absolute inset-0 grid place-items-center bg-black/10"><span className="grid size-16 place-items-center rounded-full border border-white/50 bg-paper/95 text-ink shadow-xl sm:size-20"><Play className="ml-1 size-7 fill-current" /></span></button>}
         {countdown != null && <div className="absolute inset-0 flex flex-col items-center justify-center bg-ink/70"><span className="mono-label text-paper">Your scene starts in</span><span className="display-type mt-1 text-[5rem] text-acid sm:mt-3 sm:text-[7rem]" aria-live="assertive">{countdown || "Go"}</span>{onCancelCountdown && <button type="button" className="mt-2 min-h-9 px-4 text-xs font-bold underline" onClick={onCancelCountdown}>Cancel</button>}</div>}
         {captions && activeCues.length > 0 && countdown == null && <div className="pointer-events-none absolute inset-x-3 bottom-3 flex flex-col items-center gap-1 sm:inset-x-8 sm:bottom-5" aria-hidden="true">
-          {activeCues.map((cue) => <p key={cue.id} className={cn("max-w-full rounded-md px-3 py-1.5 text-center text-sm font-bold leading-snug shadow-lg sm:text-xl", cue.roleId === role.id ? "bg-paper/95 text-ink" : "bg-black/85 text-white")}><span className="mr-1.5 text-[10px] uppercase tracking-wide opacity-60 sm:text-xs">{cue.roleId === role.id ? "You" : clip.roles.find((item) => item.id === cue.roleId)?.name ?? "Scene"}</span>{cue.text}</p>)}
+          {activeCues.map((cue) => <p key={cue.id} className={cn("max-w-full rounded-md px-3 py-1.5 text-center text-sm font-bold leading-snug shadow-lg sm:text-xl", cue.roleId === role.id ? "bg-paper/95 text-ink" : "bg-black/85 text-white")}><span className="mr-1.5 text-[10px] uppercase tracking-wide opacity-60 sm:text-xs">{cue.roleId === role.id ? (takeLabel === "Your take" ? "You" : "Friend") : clip.roles.find((item) => item.id === cue.roleId)?.name ?? "Scene"}</span>{cue.text}</p>)}
         </div>}
       </div>
       <div className="bg-[#242421] px-3 pb-3 pt-2 sm:px-4">

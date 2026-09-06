@@ -603,6 +603,3078 @@
       "contentType": "audio/wav",
       "contentRange": null,
       "sha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0"
+    },
+    {
+      "action": "upload",
+      "label": "jerk-v11",
+      "account": "guest",
+      "at": "2026-09-06T05:37:36.173Z",
+      "status": 201,
+      "latencyMs": 12758,
+      "replayed": "false",
+      "requestId": "d3b8331c-a386-4295-92fa-7e541e3b66b0",
+      "error": null,
+      "attempt": {
+        "id": "e3eea1f4-e88b-40d6-9a9d-c91d135b7903",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "ready",
+        "saved": false,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true,
+        "warning": "Guest takes stay on this browser for 24 hours. Sign in to keep this take in your history."
+      }
+    },
+    {
+      "action": "judge",
+      "label": "jerk-v11",
+      "account": "guest",
+      "at": "2026-09-06T05:38:16.497Z",
+      "status": 200,
+      "latencyMs": 10073,
+      "replayed": null,
+      "requestId": "cfdaeef7-c909-4804-81a7-38d143a10807",
+      "error": null,
+      "attempt": {
+        "id": "e3eea1f4-e88b-40d6-9a9d-c91d135b7903",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "ready",
+        "saved": false,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true,
+        "warning": "Guest takes stay on this browser for 24 hours. Sign in to keep this take in your history."
+      }
+    },
+    {
+      "action": "judge",
+      "label": "jerk-v11",
+      "account": "guest",
+      "at": "2026-09-06T05:38:29.368Z",
+      "status": 200,
+      "latencyMs": 12832,
+      "replayed": "false",
+      "requestId": "67430435-b16e-45a6-a727-edcb16b444f8",
+      "error": null,
+      "attempt": {
+        "id": "e3eea1f4-e88b-40d6-9a9d-c91d135b7903",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "scored",
+        "saved": false,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 100,
+          "rhythm": 91,
+          "timing": 100,
+          "overall": 98,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 1.98,
+                "actualStart": 0.87,
+                "expectedEnd": 2.108,
+                "expectedStart": 0.808
+              }
+            ],
+            "additions": 0,
+            "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+            "omissions": 0,
+            "matchedWords": 4,
+            "expectedWords": 4,
+            "substitutions": 0,
+            "meanStartErrorMs": 62,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 0,
+                  "measuredSeconds": 0.87
+                },
+                {
+                  "edge": "end",
+                  "wordIndex": 3,
+                  "rawSeconds": 1.8600000143051147,
+                  "measuredSeconds": 1.98
+                }
+              ],
+              "thresholdRms": 0.004029522740718016,
+              "noiseFloorRms": 0
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+          "transcript": "You're a jerk, Tom.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Your matched phrase entries landed close to the scene cues."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true,
+        "warning": "Guest takes stay on this browser for 24 hours. Sign in to keep this take in your history."
+      },
+      "usage": {
+        "tier": "guest",
+        "used": 2,
+        "limit": 5,
+        "remaining": 3,
+        "resetAt": "2026-09-07T00:00:00.000Z",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "claim",
+      "label": "jerk-v11",
+      "account": "0",
+      "at": "2026-09-06T05:39:11.533Z",
+      "status": 200,
+      "latencyMs": 11129,
+      "replayed": null,
+      "requestId": "d9883826-fe20-4624-8440-86ff4b506f6b",
+      "error": null,
+      "attempt": {
+        "id": "e3eea1f4-e88b-40d6-9a9d-c91d135b7903",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 100,
+          "rhythm": 91,
+          "timing": 100,
+          "overall": 98,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 1.98,
+                "actualStart": 0.87,
+                "expectedEnd": 2.108,
+                "expectedStart": 0.808
+              }
+            ],
+            "additions": 0,
+            "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+            "omissions": 0,
+            "matchedWords": 4,
+            "expectedWords": 4,
+            "substitutions": 0,
+            "meanStartErrorMs": 62,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 0,
+                  "measuredSeconds": 0.87
+                },
+                {
+                  "edge": "end",
+                  "wordIndex": 3,
+                  "rawSeconds": 1.8600000143051147,
+                  "measuredSeconds": 1.98
+                }
+              ],
+              "thresholdRms": 0.004029522740718016,
+              "noiseFloorRms": 0
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+          "transcript": "You're a jerk, Tom.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Your matched phrase entries landed close to the scene cues."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "challenge",
+      "label": "jerk-v11",
+      "account": "0",
+      "at": "2026-09-06T05:39:22.074Z",
+      "status": 201,
+      "latencyMs": 10387,
+      "replayed": null,
+      "requestId": "93d9fccd-d0ed-47ba-afcc-7e53129330a2",
+      "error": null,
+      "challenge": {
+        "id": "42318132-08f0-4103-891c-3200c58e4a2a",
+        "clipId": "tos-youre-a-jerk",
+        "roleId": "celia",
+        "scoringVersion": "say-match-v1.1",
+        "challengerAttempt": {
+          "id": "e3eea1f4-e88b-40d6-9a9d-c91d135b7903",
+          "clipId": "tos-youre-a-jerk",
+          "clipVersion": "v1-a1664e1509a2",
+          "roleId": "celia",
+          "status": "scored",
+          "saved": true,
+          "owned": true,
+          "durationMs": 2290,
+          "recordingOffsetMs": 0,
+          "scoringVersion": "say-match-v1.1",
+          "score": {
+            "words": 100,
+            "rhythm": 91,
+            "timing": 100,
+            "overall": 98,
+            "version": "say-match-v1.1",
+            "weights": {
+              "words": 50,
+              "rhythm": 20,
+              "timing": 30,
+              "delivery": 0
+            },
+            "delivery": null,
+            "evidence": {
+              "phrases": [
+                {
+                  "cueId": "cue-1",
+                  "actualEnd": 1.98,
+                  "actualStart": 0.87,
+                  "expectedEnd": 2.108,
+                  "expectedStart": 0.808
+                }
+              ],
+              "additions": 0,
+              "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+              "omissions": 0,
+              "matchedWords": 4,
+              "expectedWords": 4,
+              "substitutions": 0,
+              "meanStartErrorMs": 62,
+              "timingRefinement": {
+                "method": "pcm-energy-v1",
+                "status": "refined",
+                "frameMs": 10,
+                "adjustments": [
+                  {
+                    "edge": "start",
+                    "wordIndex": 0,
+                    "rawSeconds": 0,
+                    "measuredSeconds": 0.87
+                  },
+                  {
+                    "edge": "end",
+                    "wordIndex": 3,
+                    "rawSeconds": 1.8600000143051147,
+                    "measuredSeconds": 1.98
+                  }
+                ],
+                "thresholdRms": 0.004029522740718016,
+                "noiseFloorRms": 0
+              },
+              "transcriptionModel": "whisper-1"
+            },
+            "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+            "transcript": "You're a jerk, Tom.",
+            "limitations": [
+              "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+              "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+              "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+            ],
+            "observations": [
+              "Every scripted word matched the transcript.",
+              "Your matched phrase entries landed close to the scene cues."
+            ]
+          },
+          "hasProtectedAudio": true
+        },
+        "recipientAttempts": []
+      }
+    },
+    {
+      "action": "upload",
+      "label": "shift-v11",
+      "account": "0",
+      "at": "2026-09-06T05:41:18.610Z",
+      "status": 201,
+      "latencyMs": 12312,
+      "replayed": "false",
+      "requestId": "51a9e74a-a517-4b33-aa53-b28105c15ed5",
+      "error": null,
+      "attempt": {
+        "id": "6b8a90bc-ca78-476f-86fc-b565a7668e72",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 3290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "audio",
+      "label": "shift-v11",
+      "account": "0",
+      "at": "2026-09-06T05:41:30.378Z",
+      "status": 200,
+      "latencyMs": 11558,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 157964,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "e4055995a04ac95faf74729a5f7846c5214be180c9d41068dbc0734b47e12802"
+    },
+    {
+      "action": "judge",
+      "label": "shift-v11",
+      "account": "0",
+      "at": "2026-09-06T05:41:38.420Z",
+      "status": 200,
+      "latencyMs": 7604,
+      "replayed": null,
+      "requestId": "7f9138ac-8b62-4619-bf67-c4c4bb73cc7a",
+      "error": null,
+      "attempt": {
+        "id": "6b8a90bc-ca78-476f-86fc-b565a7668e72",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 3290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "judge",
+      "label": "shift-v11",
+      "account": "0",
+      "at": "2026-09-06T05:41:49.152Z",
+      "status": 200,
+      "latencyMs": 10719,
+      "replayed": "false",
+      "requestId": "665f697a-96af-4bbb-9036-035c93c131db",
+      "error": null,
+      "attempt": {
+        "id": "6b8a90bc-ca78-476f-86fc-b565a7668e72",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 3290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 100,
+          "rhythm": 91,
+          "timing": 0,
+          "overall": 68,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 2.98,
+                "actualStart": 1.87,
+                "expectedEnd": 2.108,
+                "expectedStart": 0.808
+              }
+            ],
+            "additions": 0,
+            "audioHash": "e4055995a04ac95faf74729a5f7846c5214be180c9d41068dbc0734b47e12802",
+            "omissions": 0,
+            "matchedWords": 4,
+            "expectedWords": 4,
+            "substitutions": 0,
+            "meanStartErrorMs": 1062,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 1.440000057220459,
+                  "measuredSeconds": 1.87
+                },
+                {
+                  "edge": "end",
+                  "wordIndex": 3,
+                  "rawSeconds": 2.859999895095825,
+                  "measuredSeconds": 2.98
+                }
+              ],
+              "thresholdRms": 0.004029522740718016,
+              "noiseFloorRms": 0
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Try entering on the caption cue instead of waiting for the line to begin.",
+          "transcript": "You're a jerk, Tom.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Matched phrase entries averaged about 1.1 seconds late."
+          ]
+        },
+        "previousBest": 98,
+        "hasProtectedAudio": true
+      },
+      "usage": {
+        "tier": "free",
+        "used": 2,
+        "limit": 5,
+        "remaining": 3,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "upload",
+      "label": "changed-v11",
+      "account": "0",
+      "at": "2026-09-06T05:42:28.768Z",
+      "status": 201,
+      "latencyMs": 39484,
+      "replayed": "false",
+      "requestId": "a7d646a4-d59e-4396-9a5c-0ac00b223257",
+      "error": null,
+      "attempt": {
+        "id": "ea49f433-ba5a-42a8-bf2b-5440e0637df4",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "audio",
+      "label": "changed-v11",
+      "account": "0",
+      "at": "2026-09-06T05:42:38.325Z",
+      "status": 200,
+      "latencyMs": 9335,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 109964,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "1e3d50c41bda8c138ad26fbc0cd7475b70b3ee8e44bc70e5769bd39652a7cefa"
+    },
+    {
+      "action": "judge",
+      "label": "changed-v11",
+      "account": "0",
+      "at": "2026-09-06T05:42:46.123Z",
+      "status": 200,
+      "latencyMs": 7596,
+      "replayed": null,
+      "requestId": "44e45970-a332-4c6d-9be4-2345438744d1",
+      "error": null,
+      "attempt": {
+        "id": "ea49f433-ba5a-42a8-bf2b-5440e0637df4",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "judge",
+      "label": "changed-v11",
+      "account": "0",
+      "at": "2026-09-06T05:42:58.398Z",
+      "status": 200,
+      "latencyMs": 12253,
+      "replayed": "false",
+      "requestId": "cb79dcb8-d38d-4ba9-9d5b-e86c64ea1c1b",
+      "error": null,
+      "attempt": {
+        "id": "ea49f433-ba5a-42a8-bf2b-5440e0637df4",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 75,
+          "rhythm": 63,
+          "timing": 74,
+          "overall": 72,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 1.94,
+                "actualStart": 0.88,
+                "expectedEnd": 2.108,
+                "expectedStart": 0.808
+              }
+            ],
+            "additions": 0,
+            "audioHash": "1e3d50c41bda8c138ad26fbc0cd7475b70b3ee8e44bc70e5769bd39652a7cefa",
+            "omissions": 0,
+            "matchedWords": 3,
+            "expectedWords": 4,
+            "substitutions": 1,
+            "meanStartErrorMs": 72,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 0,
+                  "measuredSeconds": 0.88
+                },
+                {
+                  "edge": "end",
+                  "wordIndex": 3,
+                  "rawSeconds": 1.8600000143051147,
+                  "measuredSeconds": 1.94
+                }
+              ],
+              "thresholdRms": 0.0031210319080636987,
+              "noiseFloorRms": 0
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Replay the original with captions, then keep every scripted word and leave out extra commentary.",
+          "transcript": "You're a gem, Tom.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "1 changed, 0 missing and 0 extra word in the transcript.",
+            "Your matched phrase entries landed close to the scene cues."
+          ]
+        },
+        "previousBest": 98,
+        "hasProtectedAudio": true
+      },
+      "usage": {
+        "tier": "free",
+        "used": 3,
+        "limit": 5,
+        "remaining": 2,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "upload",
+      "label": "reply-v11",
+      "account": "1",
+      "at": "2026-09-06T05:43:08.799Z",
+      "status": 201,
+      "latencyMs": 10203,
+      "replayed": "false",
+      "requestId": "6be1964e-f6c8-4ce3-89f6-a0c031571bc9",
+      "error": null,
+      "attempt": {
+        "id": "2d6c50ad-ce5a-471d-83ee-bfb79a16080f",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "audio",
+      "label": "reply-v11",
+      "account": "1",
+      "at": "2026-09-06T05:43:17.483Z",
+      "status": 200,
+      "latencyMs": 8524,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 109964,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0"
+    },
+    {
+      "action": "judge",
+      "label": "reply-v11",
+      "account": "1",
+      "at": "2026-09-06T05:43:25.248Z",
+      "status": 200,
+      "latencyMs": 7540,
+      "replayed": null,
+      "requestId": "3fd7d8f0-f76a-437d-80d1-761d75feb802",
+      "error": null,
+      "attempt": {
+        "id": "2d6c50ad-ce5a-471d-83ee-bfb79a16080f",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "judge",
+      "label": "reply-v11",
+      "account": "1",
+      "at": "2026-09-06T05:43:37.586Z",
+      "status": 200,
+      "latencyMs": 12290,
+      "replayed": "false",
+      "requestId": "d35ab3f6-ea7b-4f67-80c3-e8d6c907e6ad",
+      "error": null,
+      "attempt": {
+        "id": "2d6c50ad-ce5a-471d-83ee-bfb79a16080f",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 100,
+          "rhythm": 91,
+          "timing": 100,
+          "overall": 98,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 1.98,
+                "actualStart": 0.87,
+                "expectedEnd": 2.108,
+                "expectedStart": 0.808
+              }
+            ],
+            "additions": 0,
+            "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+            "omissions": 0,
+            "matchedWords": 4,
+            "expectedWords": 4,
+            "substitutions": 0,
+            "meanStartErrorMs": 62,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 0,
+                  "measuredSeconds": 0.87
+                },
+                {
+                  "edge": "end",
+                  "wordIndex": 3,
+                  "rawSeconds": 1.8600000143051147,
+                  "measuredSeconds": 1.98
+                }
+              ],
+              "thresholdRms": 0.004029522740718016,
+              "noiseFloorRms": 0
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+          "transcript": "You're a jerk, Tom.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Your matched phrase entries landed close to the scene cues."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      },
+      "usage": {
+        "tier": "free",
+        "used": 1,
+        "limit": 5,
+        "remaining": 4,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "upload",
+      "label": "xqc-six",
+      "account": "1",
+      "at": "2026-09-06T05:43:46.523Z",
+      "status": 201,
+      "latencyMs": 8684,
+      "replayed": "false",
+      "requestId": "34c5e93d-e4ca-4af5-aa3a-28604986022d",
+      "error": null,
+      "attempt": {
+        "id": "0a04d70b-bb49-4c43-b0d4-525fd7a6aa4d",
+        "clipId": "xqc-six-consoles",
+        "clipVersion": "v1-d5502ac3ac95",
+        "roleId": "xqc",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 5650,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "audio",
+      "label": "xqc-six",
+      "account": "1",
+      "at": "2026-09-06T05:43:55.419Z",
+      "status": 200,
+      "latencyMs": 8713,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 271244,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "3c16907f147733da471c927f7fb568163e2f39c4ea2b0645b9d0fb57166321dc"
+    },
+    {
+      "action": "judge",
+      "label": "xqc-six",
+      "account": "1",
+      "at": "2026-09-06T05:44:03.385Z",
+      "status": 200,
+      "latencyMs": 7647,
+      "replayed": null,
+      "requestId": "7e23109e-db10-4d87-a708-f2091d66fa7c",
+      "error": null,
+      "attempt": {
+        "id": "0a04d70b-bb49-4c43-b0d4-525fd7a6aa4d",
+        "clipId": "xqc-six-consoles",
+        "clipVersion": "v1-d5502ac3ac95",
+        "roleId": "xqc",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 5650,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "judge",
+      "label": "xqc-six",
+      "account": "1",
+      "at": "2026-09-06T05:44:15.975Z",
+      "status": 200,
+      "latencyMs": 12532,
+      "replayed": "false",
+      "requestId": "026f392e-68fc-45a7-a2bb-a9a9fe996ed6",
+      "error": null,
+      "attempt": {
+        "id": "0a04d70b-bb49-4c43-b0d4-525fd7a6aa4d",
+        "clipId": "xqc-six-consoles",
+        "clipVersion": "v1-d5502ac3ac95",
+        "roleId": "xqc",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 5650,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 100,
+          "rhythm": 69,
+          "timing": 81,
+          "overall": 88,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 2.3399999141693115,
+                "actualStart": 0.25,
+                "expectedEnd": 2.2,
+                "expectedStart": 0.18
+              },
+              {
+                "cueId": "cue-2",
+                "actualEnd": 3.740000009536743,
+                "actualStart": 2.859999895095825,
+                "expectedEnd": 3.82,
+                "expectedStart": 2.43
+              },
+              {
+                "cueId": "cue-3",
+                "actualEnd": 5.36,
+                "actualStart": 4.5,
+                "expectedEnd": 5.55,
+                "expectedStart": 4.26
+              }
+            ],
+            "additions": 0,
+            "audioHash": "3c16907f147733da471c927f7fb568163e2f39c4ea2b0645b9d0fb57166321dc",
+            "omissions": 0,
+            "matchedWords": 8,
+            "expectedWords": 8,
+            "substitutions": 0,
+            "meanStartErrorMs": 247,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 0,
+                  "measuredSeconds": 0.25
+                },
+                {
+                  "edge": "end",
+                  "wordIndex": 7,
+                  "rawSeconds": 5.059999942779541,
+                  "measuredSeconds": 5.36
+                }
+              ],
+              "thresholdRms": 0.0035332846851777373,
+              "noiseFloorRms": 0.000045433170771465427
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Listen once for the length of each phrase and the silence between them; copy that pattern.",
+          "transcript": "A gaming guitar, controllers, six consoles, ten computers.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Matched phrase entries averaged about 0.2 seconds late."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      },
+      "usage": {
+        "tier": "free",
+        "used": 2,
+        "limit": 5,
+        "remaining": 3,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "upload",
+      "label": "xqc-delay",
+      "account": "1",
+      "at": "2026-09-06T05:44:25.062Z",
+      "status": 201,
+      "latencyMs": 8936,
+      "replayed": "false",
+      "requestId": "83608d9b-337d-483a-acb2-daf3e17990ad",
+      "error": null,
+      "attempt": {
+        "id": "55980f5a-3e4b-4028-bf2e-8257649595c9",
+        "clipId": "xqc-fifteen-minute-delay",
+        "clipVersion": "v1-954e03856883",
+        "roleId": "xqc",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 5850,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "audio",
+      "label": "xqc-delay",
+      "account": "1",
+      "at": "2026-09-06T05:44:33.940Z",
+      "status": 200,
+      "latencyMs": 8733,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 280844,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "dd9cf1de36549ff0d988158610ffdede8393295f4740165a9ea1ac59b8df717d"
+    },
+    {
+      "action": "judge",
+      "label": "xqc-delay",
+      "account": "1",
+      "at": "2026-09-06T05:44:42.559Z",
+      "status": 200,
+      "latencyMs": 8221,
+      "replayed": null,
+      "requestId": "5421d08e-8831-4e90-bea5-b78e264a3167",
+      "error": null,
+      "attempt": {
+        "id": "55980f5a-3e4b-4028-bf2e-8257649595c9",
+        "clipId": "xqc-fifteen-minute-delay",
+        "clipVersion": "v1-954e03856883",
+        "roleId": "xqc",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 5850,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "judge",
+      "label": "xqc-delay",
+      "account": "1",
+      "at": "2026-09-06T05:44:53.815Z",
+      "status": 200,
+      "latencyMs": 11200,
+      "replayed": "false",
+      "requestId": "79e4f4ba-97bf-4723-9804-87dc11f069f9",
+      "error": null,
+      "attempt": {
+        "id": "55980f5a-3e4b-4028-bf2e-8257649595c9",
+        "clipId": "xqc-fifteen-minute-delay",
+        "clipVersion": "v1-954e03856883",
+        "roleId": "xqc",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 5850,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 100,
+          "rhythm": 83,
+          "timing": 96,
+          "overall": 95,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 1.4600000381469727,
+                "actualStart": 0.35,
+                "expectedEnd": 1.45,
+                "expectedStart": 0.3
+              },
+              {
+                "cueId": "cue-2",
+                "actualEnd": 3,
+                "actualStart": 1.95,
+                "expectedEnd": 3.35,
+                "expectedStart": 1.85
+              },
+              {
+                "cueId": "cue-3",
+                "actualEnd": 5.539999961853027,
+                "actualStart": 4.95,
+                "expectedEnd": 5.72,
+                "expectedStart": 4.92
+              }
+            ],
+            "additions": 0,
+            "audioHash": "dd9cf1de36549ff0d988158610ffdede8393295f4740165a9ea1ac59b8df717d",
+            "omissions": 0,
+            "matchedWords": 8,
+            "expectedWords": 8,
+            "substitutions": 0,
+            "meanStartErrorMs": 60,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 0,
+                  "measuredSeconds": 0.35
+                },
+                {
+                  "edge": "start",
+                  "wordIndex": 3,
+                  "rawSeconds": 1.5800000429153442,
+                  "measuredSeconds": 1.95
+                },
+                {
+                  "edge": "start",
+                  "wordIndex": 6,
+                  "rawSeconds": 4.860000133514404,
+                  "measuredSeconds": 4.95
+                }
+              ],
+              "thresholdRms": 0.0036353700728669596,
+              "noiseFloorRms": 0
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+          "transcript": "Fifteen-minute delay, and then what? Then what?",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Your matched phrase entries landed close to the scene cues."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      },
+      "usage": {
+        "tier": "free",
+        "used": 3,
+        "limit": 5,
+        "remaining": 2,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "upload",
+      "label": "space",
+      "account": "1",
+      "at": "2026-09-06T05:45:03.163Z",
+      "status": 201,
+      "latencyMs": 9183,
+      "replayed": "false",
+      "requestId": "f2ae35c3-212b-4138-ae15-71dbd4d20746",
+      "error": null,
+      "attempt": {
+        "id": "2290d3ae-db39-4e8b-82bf-57a3c32fa2d4",
+        "clipId": "tos-awesome-in-space",
+        "clipVersion": "v1-48e404b004af",
+        "roleId": "thom",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 3350,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "audio",
+      "label": "space",
+      "account": "1",
+      "at": "2026-09-06T05:45:11.577Z",
+      "status": 200,
+      "latencyMs": 8239,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 160844,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "d6e84954da3f9e126c3a08756a3fb591b3afadd4becdba8a98401b72b4754f8c"
+    },
+    {
+      "action": "judge",
+      "label": "space",
+      "account": "1",
+      "at": "2026-09-06T05:45:19.849Z",
+      "status": 200,
+      "latencyMs": 7859,
+      "replayed": null,
+      "requestId": "44559dc2-1f16-4a06-9e93-152594dcb992",
+      "error": null,
+      "attempt": {
+        "id": "2290d3ae-db39-4e8b-82bf-57a3c32fa2d4",
+        "clipId": "tos-awesome-in-space",
+        "clipVersion": "v1-48e404b004af",
+        "roleId": "thom",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 3350,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "judge",
+      "label": "space",
+      "account": "1",
+      "at": "2026-09-06T05:45:31.604Z",
+      "status": 200,
+      "latencyMs": 11708,
+      "replayed": "false",
+      "requestId": "e63b38e2-48b4-4fef-9c49-dcd5c84af6ef",
+      "error": null,
+      "attempt": {
+        "id": "2290d3ae-db39-4e8b-82bf-57a3c32fa2d4",
+        "clipId": "tos-awesome-in-space",
+        "clipVersion": "v1-48e404b004af",
+        "roleId": "thom",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 3350,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 92,
+          "rhythm": 60,
+          "timing": 53,
+          "overall": 74,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 1.2400000095367432,
+                "actualStart": null,
+                "expectedEnd": 1.138,
+                "expectedStart": 0.498
+              },
+              {
+                "cueId": "cue-2",
+                "actualEnd": 2.87,
+                "actualStart": 1.5399999618530273,
+                "expectedEnd": 2.918,
+                "expectedStart": 1.318
+              }
+            ],
+            "additions": 0,
+            "audioHash": "d6e84954da3f9e126c3a08756a3fb591b3afadd4becdba8a98401b72b4754f8c",
+            "omissions": 0,
+            "matchedWords": 12,
+            "expectedWords": 13,
+            "substitutions": 1,
+            "meanStartErrorMs": 222,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 0.3400000035762787,
+                  "measuredSeconds": 0.53
+                },
+                {
+                  "edge": "end",
+                  "wordIndex": 12,
+                  "rawSeconds": 2.799999952316284,
+                  "measuredSeconds": 2.87
+                }
+              ],
+              "thresholdRms": 0.002840634097033346,
+              "noiseFloorRms": 0
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Try entering on the caption cue instead of waiting for the line to begin.",
+          "transcript": "I have your robotics, and I just want to be awesome in space.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "1 changed, 0 missing and 0 extra word in the transcript.",
+            "Matched phrase entries averaged about 0.2 seconds late."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      },
+      "usage": {
+        "tier": "free",
+        "used": 4,
+        "limit": 5,
+        "remaining": 1,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "upload",
+      "label": "claws",
+      "account": "1",
+      "at": "2026-09-06T05:46:03.031Z",
+      "status": 201,
+      "latencyMs": 31304,
+      "replayed": "false",
+      "requestId": "f721530a-a45c-47ac-bb48-485a96133c95",
+      "error": null,
+      "attempt": {
+        "id": "d62622a7-1fc0-4149-b040-7a50071a7931",
+        "clipId": "tos-robotic-claws",
+        "clipVersion": "v1-1c7786e28ced",
+        "roleId": "thom",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 6670,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "audio",
+      "label": "claws",
+      "account": "1",
+      "at": "2026-09-06T05:46:12.721Z",
+      "status": 200,
+      "latencyMs": 9504,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 320204,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "78bd5ea73092efa7fcae8d1e936a6bbf395551b161a62f86f36daa84c02fd697"
+    },
+    {
+      "action": "judge",
+      "label": "claws",
+      "account": "1",
+      "at": "2026-09-06T05:46:21.045Z",
+      "status": 200,
+      "latencyMs": 8086,
+      "replayed": null,
+      "requestId": "74c2f6bc-f613-4267-bf56-c2c8bcd1cc55",
+      "error": null,
+      "attempt": {
+        "id": "d62622a7-1fc0-4149-b040-7a50071a7931",
+        "clipId": "tos-robotic-claws",
+        "clipVersion": "v1-1c7786e28ced",
+        "roleId": "thom",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 6670,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "judge",
+      "label": "claws",
+      "account": "1",
+      "at": "2026-09-06T05:46:32.719Z",
+      "status": 200,
+      "latencyMs": 11652,
+      "replayed": "false",
+      "requestId": "7544ce20-2cd2-417b-a9df-10bf2155b768",
+      "error": null,
+      "attempt": {
+        "id": "d62622a7-1fc0-4149-b040-7a50071a7931",
+        "clipId": "tos-robotic-claws",
+        "clipVersion": "v1-1c7786e28ced",
+        "roleId": "thom",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 6670,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 100,
+          "rhythm": 93,
+          "timing": 82,
+          "overall": 93,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 1.0399999618530273,
+                "actualStart": 0.38,
+                "expectedEnd": 0.968,
+                "expectedStart": 0.368
+              },
+              {
+                "cueId": "cue-2",
+                "actualEnd": 2.819999933242798,
+                "actualStart": 1.3600000143051147,
+                "expectedEnd": 2.368,
+                "expectedStart": 1.208
+              },
+              {
+                "cueId": "cue-3",
+                "actualEnd": 4.76,
+                "actualStart": 2.819999933242798,
+                "expectedEnd": 4.468,
+                "expectedStart": 2.368
+              }
+            ],
+            "additions": 0,
+            "audioHash": "78bd5ea73092efa7fcae8d1e936a6bbf395551b161a62f86f36daa84c02fd697",
+            "omissions": 0,
+            "matchedWords": 17,
+            "expectedWords": 17,
+            "substitutions": 0,
+            "meanStartErrorMs": 205,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 0,
+                  "measuredSeconds": 0.38
+                },
+                {
+                  "edge": "end",
+                  "wordIndex": 16,
+                  "rawSeconds": 4.800000190734863,
+                  "measuredSeconds": 4.76
+                }
+              ],
+              "thresholdRms": 0.0034634076542583627,
+              "noiseFloorRms": 0
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+          "transcript": "I'm freaked out. I'm having nightmares that I'm being chased by these giant robotic claws of death.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Matched phrase entries averaged about 0.2 seconds late."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      },
+      "usage": {
+        "tier": "free",
+        "used": 5,
+        "limit": 5,
+        "remaining": 0,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "upload",
+      "label": "heart",
+      "account": "0",
+      "at": "2026-09-06T05:46:42.698Z",
+      "status": 201,
+      "latencyMs": 9805,
+      "replayed": "false",
+      "requestId": "fc484812-1ab5-4fd8-9981-dac8851db81d",
+      "error": null,
+      "attempt": {
+        "id": "fe0c9d11-dc70-43ab-bb1e-348ea2ed4851",
+        "clipId": "tos-broken-heart",
+        "clipVersion": "v1-13b20de37e44",
+        "roleId": "celia",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 10150,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "audio",
+      "label": "heart",
+      "account": "0",
+      "at": "2026-09-06T05:46:51.111Z",
+      "status": 200,
+      "latencyMs": 8159,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 487244,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "a36159080511f71a840a66c5a5871d5e5441e9ce32aeb85ac79a85e4c42de6d4"
+    },
+    {
+      "action": "judge",
+      "label": "heart",
+      "account": "0",
+      "at": "2026-09-06T05:46:59.789Z",
+      "status": 200,
+      "latencyMs": 8436,
+      "replayed": null,
+      "requestId": "74bd00a6-9582-4118-9f37-33f000e8d7e8",
+      "error": null,
+      "attempt": {
+        "id": "fe0c9d11-dc70-43ab-bb1e-348ea2ed4851",
+        "clipId": "tos-broken-heart",
+        "clipVersion": "v1-13b20de37e44",
+        "roleId": "celia",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 10150,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "judge",
+      "label": "heart",
+      "account": "0",
+      "at": "2026-09-06T05:47:09.861Z",
+      "status": 200,
+      "latencyMs": 10049,
+      "replayed": "false",
+      "requestId": "d40abf9e-8dd0-4d22-b06e-9a1c91efb3be",
+      "error": null,
+      "attempt": {
+        "id": "fe0c9d11-dc70-43ab-bb1e-348ea2ed4851",
+        "clipId": "tos-broken-heart",
+        "clipVersion": "v1-13b20de37e44",
+        "roleId": "celia",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 10150,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 100,
+          "rhythm": 87,
+          "timing": 94,
+          "overall": 96,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 2.140000104904175,
+                "actualStart": 0.64,
+                "expectedEnd": 2.148,
+                "expectedStart": 0.548
+              },
+              {
+                "cueId": "cue-3",
+                "actualEnd": 5.739999771118164,
+                "actualStart": 4.539999961853027,
+                "expectedEnd": 5.848,
+                "expectedStart": 4.328
+              },
+              {
+                "cueId": "cue-5",
+                "actualEnd": 9.29,
+                "actualStart": 7.89,
+                "expectedEnd": 9.488,
+                "expectedStart": 7.748
+              }
+            ],
+            "additions": 0,
+            "audioHash": "a36159080511f71a840a66c5a5871d5e5441e9ce32aeb85ac79a85e4c42de6d4",
+            "omissions": 0,
+            "matchedWords": 14,
+            "expectedWords": 14,
+            "substitutions": 0,
+            "meanStartErrorMs": 149,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 0,
+                  "measuredSeconds": 0.64
+                },
+                {
+                  "edge": "end",
+                  "wordIndex": 13,
+                  "rawSeconds": 9.239999771118164,
+                  "measuredSeconds": 9.29
+                },
+                {
+                  "edge": "start",
+                  "wordIndex": 9,
+                  "rawSeconds": 7.78000020980835,
+                  "measuredSeconds": 7.89
+                }
+              ],
+              "thresholdRms": 0.005168881957921301,
+              "noiseFloorRms": 0
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+          "transcript": "You broke my heart. You forgot me on Earth. I should just crush you.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Your matched phrase entries landed close to the scene cues."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      },
+      "usage": {
+        "tier": "free",
+        "used": 4,
+        "limit": 5,
+        "remaining": 1,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "upload",
+      "label": "divorce",
+      "account": "0",
+      "at": "2026-09-06T05:47:18.870Z",
+      "status": 201,
+      "latencyMs": 8619,
+      "replayed": "false",
+      "requestId": "a31011ee-7090-4222-9888-9ca72ab1437d",
+      "error": null,
+      "attempt": {
+        "id": "72c646db-7e50-428b-a717-4b72321abe31",
+        "clipId": "hgf-old-fashioned-divorce",
+        "clipVersion": "v1-e29dd7364548",
+        "roleId": "walter",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 4930,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "audio",
+      "label": "divorce",
+      "account": "0",
+      "at": "2026-09-06T05:47:27.057Z",
+      "status": 200,
+      "latencyMs": 8011,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 236684,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "5e4a9f7c11b670a3205a8c28403dc37d01d749a6f89c5f7f1651f990db47c3f7"
+    },
+    {
+      "action": "judge",
+      "label": "divorce",
+      "account": "0",
+      "at": "2026-09-06T05:47:35.610Z",
+      "status": 200,
+      "latencyMs": 8306,
+      "replayed": null,
+      "requestId": "60ec46e9-6caf-4941-9958-94bd9b05d25c",
+      "error": null,
+      "attempt": {
+        "id": "72c646db-7e50-428b-a717-4b72321abe31",
+        "clipId": "hgf-old-fashioned-divorce",
+        "clipVersion": "v1-e29dd7364548",
+        "roleId": "walter",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 4930,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "judge",
+      "label": "divorce",
+      "account": "0",
+      "at": "2026-09-06T05:47:47.832Z",
+      "status": 200,
+      "latencyMs": 12182,
+      "replayed": "false",
+      "requestId": "70f702a3-58ec-4c60-a853-b3404fc13c7c",
+      "error": null,
+      "attempt": {
+        "id": "72c646db-7e50-428b-a717-4b72321abe31",
+        "clipId": "hgf-old-fashioned-divorce",
+        "clipVersion": "v1-e29dd7364548",
+        "roleId": "walter",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 4930,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 100,
+          "rhythm": 96,
+          "timing": 95,
+          "overall": 98,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 2.119999885559082,
+                "actualStart": 0.36,
+                "expectedEnd": 2.148,
+                "expectedStart": 0.328
+              },
+              {
+                "cueId": "cue-2",
+                "actualEnd": 3.3399999141693115,
+                "actualStart": 2.119999885559082,
+                "expectedEnd": 3.468,
+                "expectedStart": 2.268
+              },
+              {
+                "cueId": "cue-3",
+                "actualEnd": 4.300000190734863,
+                "actualStart": 3.3399999141693115,
+                "expectedEnd": 4.688,
+                "expectedStart": 3.468
+              }
+            ],
+            "additions": 0,
+            "audioHash": "5e4a9f7c11b670a3205a8c28403dc37d01d749a6f89c5f7f1651f990db47c3f7",
+            "omissions": 0,
+            "matchedWords": 18,
+            "expectedWords": 18,
+            "substitutions": 0,
+            "meanStartErrorMs": 103,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 0.41999998688697815,
+                  "measuredSeconds": 0.36
+                }
+              ],
+              "thresholdRms": 0.003148019915787674,
+              "noiseFloorRms": 0
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+          "transcript": "Nonsense, you've got an old-fashioned idea divorce is something that lasts forever till death do us part",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Your matched phrase entries landed close to the scene cues."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      },
+      "usage": {
+        "tier": "free",
+        "used": 5,
+        "limit": 5,
+        "remaining": 0,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "upload",
+      "label": "stinker",
+      "account": "2",
+      "at": "2026-09-06T05:47:57.485Z",
+      "status": 201,
+      "latencyMs": 9486,
+      "replayed": "false",
+      "requestId": "b3027ec5-1f5f-4e12-bbfa-b1eaa3ae21d0",
+      "error": null,
+      "attempt": {
+        "id": "dd8eb389-27e8-40da-90e0-bdeda39edcbb",
+        "clipId": "hgf-such-a-stinker",
+        "clipVersion": "v1-ff21eb36f33b",
+        "roleId": "hildy",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 5290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "audio",
+      "label": "stinker",
+      "account": "2",
+      "at": "2026-09-06T05:48:05.961Z",
+      "status": 200,
+      "latencyMs": 8284,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 253964,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "43355ed38caecd90ba267b597b8122aade573f295a363db0016334fa54c1bf22"
+    },
+    {
+      "action": "judge",
+      "label": "stinker",
+      "account": "2",
+      "at": "2026-09-06T05:48:14.645Z",
+      "status": 200,
+      "latencyMs": 8368,
+      "replayed": null,
+      "requestId": "cae6ca0d-a372-411b-9c09-e2f522bfe240",
+      "error": null,
+      "attempt": {
+        "id": "dd8eb389-27e8-40da-90e0-bdeda39edcbb",
+        "clipId": "hgf-such-a-stinker",
+        "clipVersion": "v1-ff21eb36f33b",
+        "roleId": "hildy",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 5290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "judge",
+      "label": "stinker",
+      "account": "2",
+      "at": "2026-09-06T05:48:24.847Z",
+      "status": 200,
+      "latencyMs": 10152,
+      "replayed": "false",
+      "requestId": "b3572851-1dfb-4742-8da3-65376a6af358",
+      "error": null,
+      "attempt": {
+        "id": "dd8eb389-27e8-40da-90e0-bdeda39edcbb",
+        "clipId": "hgf-such-a-stinker",
+        "clipVersion": "v1-ff21eb36f33b",
+        "roleId": "hildy",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 5290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 100,
+          "rhythm": 61,
+          "timing": 87,
+          "overall": 88,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 1.2400000095367432,
+                "actualStart": 0.3,
+                "expectedEnd": 1.738,
+                "expectedStart": 0.278
+              },
+              {
+                "cueId": "cue-2",
+                "actualEnd": 4.579999923706055,
+                "actualStart": 3.240000009536743,
+                "expectedEnd": 4.958,
+                "expectedStart": 3.218
+              }
+            ],
+            "additions": 0,
+            "audioHash": "43355ed38caecd90ba267b597b8122aade573f295a363db0016334fa54c1bf22",
+            "omissions": 0,
+            "matchedWords": 15,
+            "expectedWords": 15,
+            "substitutions": 0,
+            "meanStartErrorMs": 22,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 0,
+                  "measuredSeconds": 0.3
+                }
+              ],
+              "thresholdRms": 0.0030215275005492223,
+              "noiseFloorRms": 0
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Listen once for the length of each phrase and the silence between them; copy that pattern.",
+          "transcript": "I am fond of you, you know. I often wish you weren't such a stinker.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Your matched phrase entries landed close to the scene cues."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      },
+      "usage": {
+        "tier": "free",
+        "used": 1,
+        "limit": 5,
+        "remaining": 4,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "upload",
+      "label": "talk",
+      "account": "2",
+      "at": "2026-09-06T05:48:34.094Z",
+      "status": 201,
+      "latencyMs": 8969,
+      "replayed": "false",
+      "requestId": "359c2b2b-fd43-4d6a-975b-17be510f7e83",
+      "error": null,
+      "attempt": {
+        "id": "5cde32f1-8fb8-4558-8b38-9c4407c48b0d",
+        "clipId": "notld-hear-yourself-talk",
+        "clipVersion": "v1-645385255383",
+        "roleId": "barbra",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 6000,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "audio",
+      "label": "talk",
+      "account": "2",
+      "at": "2026-09-06T05:48:42.638Z",
+      "status": 200,
+      "latencyMs": 8296,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 288044,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "e56cb1fcebe8ef0f5ec9c7886b952d95e982d46b640eec88a87339acfba7216b"
+    },
+    {
+      "action": "judge",
+      "label": "talk",
+      "account": "2",
+      "at": "2026-09-06T05:48:51.455Z",
+      "status": 200,
+      "latencyMs": 8492,
+      "replayed": null,
+      "requestId": "86a6c820-a812-4baa-8b58-7df4915fa11d",
+      "error": null,
+      "attempt": {
+        "id": "5cde32f1-8fb8-4558-8b38-9c4407c48b0d",
+        "clipId": "notld-hear-yourself-talk",
+        "clipVersion": "v1-645385255383",
+        "roleId": "barbra",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 6000,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "judge",
+      "label": "talk",
+      "account": "2",
+      "at": "2026-09-06T05:49:02.587Z",
+      "status": 200,
+      "latencyMs": 11110,
+      "replayed": "false",
+      "requestId": "f806df5d-ebef-46a3-a707-56fc5203f65a",
+      "error": null,
+      "attempt": {
+        "id": "5cde32f1-8fb8-4558-8b38-9c4407c48b0d",
+        "clipId": "notld-hear-yourself-talk",
+        "clipVersion": "v1-645385255383",
+        "roleId": "barbra",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 6000,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 100,
+          "rhythm": 97,
+          "timing": 100,
+          "overall": 99,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 5.47,
+                "actualStart": 3.47,
+                "expectedEnd": 5.538,
+                "expectedStart": 3.378
+              }
+            ],
+            "additions": 0,
+            "audioHash": "e56cb1fcebe8ef0f5ec9c7886b952d95e982d46b640eec88a87339acfba7216b",
+            "omissions": 0,
+            "matchedWords": 9,
+            "expectedWords": 9,
+            "substitutions": 0,
+            "meanStartErrorMs": 92,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 3.0199999809265137,
+                  "measuredSeconds": 3.47
+                },
+                {
+                  "edge": "end",
+                  "wordIndex": 8,
+                  "rawSeconds": 5.539999961853027,
+                  "measuredSeconds": 5.47
+                }
+              ],
+              "thresholdRms": 0.0026393906472816364,
+              "noiseFloorRms": 0
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+          "transcript": "I think you complain just to hear yourself talk.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Your matched phrase entries landed close to the scene cues."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      },
+      "usage": {
+        "tier": "free",
+        "used": 2,
+        "limit": 5,
+        "remaining": 3,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "upload",
+      "label": "barbara",
+      "account": "2",
+      "at": "2026-09-06T05:49:11.545Z",
+      "status": 201,
+      "latencyMs": 8633,
+      "replayed": "false",
+      "requestId": "8cc7b700-373e-4f8f-92c1-9eca56388386",
+      "error": null,
+      "attempt": {
+        "id": "4be6a31c-98c7-4984-97c8-9973beababbe",
+        "clipId": "notld-coming-to-get-you",
+        "clipVersion": "v1-0f237846a300",
+        "roleId": "johnny",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 9450,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "audio",
+      "label": "barbara",
+      "account": "2",
+      "at": "2026-09-06T05:49:20.416Z",
+      "status": 200,
+      "latencyMs": 8683,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 453644,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "6d769c06bd4c2486ed7eddf91b51034be9a55172c51bf9058d02954cd768b173"
+    },
+    {
+      "action": "judge",
+      "label": "barbara",
+      "account": "2",
+      "at": "2026-09-06T05:49:28.395Z",
+      "status": 200,
+      "latencyMs": 7691,
+      "replayed": null,
+      "requestId": "37061a91-6075-425d-8a95-9d2e92bc6cef",
+      "error": null,
+      "attempt": {
+        "id": "4be6a31c-98c7-4984-97c8-9973beababbe",
+        "clipId": "notld-coming-to-get-you",
+        "clipVersion": "v1-0f237846a300",
+        "roleId": "johnny",
+        "status": "ready",
+        "saved": true,
+        "owned": true,
+        "durationMs": 9450,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "judge",
+      "label": "barbara",
+      "account": "2",
+      "at": "2026-09-06T05:49:39.643Z",
+      "status": 200,
+      "latencyMs": 11223,
+      "replayed": "false",
+      "requestId": "0972584a-3c10-4c9c-a5db-0483f26d0a04",
+      "error": null,
+      "attempt": {
+        "id": "4be6a31c-98c7-4984-97c8-9973beababbe",
+        "clipId": "notld-coming-to-get-you",
+        "clipVersion": "v1-0f237846a300",
+        "roleId": "johnny",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 9450,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1.1",
+        "score": {
+          "words": 45,
+          "rhythm": 0,
+          "timing": 0,
+          "overall": 23,
+          "version": "say-match-v1.1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": null,
+                "actualStart": null,
+                "expectedEnd": 3.338,
+                "expectedStart": 0.718
+              },
+              {
+                "cueId": "cue-2",
+                "actualEnd": null,
+                "actualStart": null,
+                "expectedEnd": 8.778,
+                "expectedStart": 7.198
+              }
+            ],
+            "additions": 2,
+            "audioHash": "6d769c06bd4c2486ed7eddf91b51034be9a55172c51bf9058d02954cd768b173",
+            "omissions": 0,
+            "matchedWords": 7,
+            "expectedWords": 11,
+            "substitutions": 4,
+            "meanStartErrorMs": null,
+            "timingRefinement": {
+              "method": "pcm-energy-v1",
+              "status": "refined",
+              "frameMs": 10,
+              "adjustments": [
+                {
+                  "edge": "start",
+                  "wordIndex": 0,
+                  "rawSeconds": 0,
+                  "measuredSeconds": 0.74
+                },
+                {
+                  "edge": "end",
+                  "wordIndex": 12,
+                  "rawSeconds": 8.859999656677246,
+                  "measuredSeconds": 8.93
+                }
+              ],
+              "thresholdRms": 0.003844255296377547,
+              "noiseFloorRms": 0
+            },
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Replay the original with captions, then keep every scripted word and leave out extra commentary.",
+          "transcript": "They are coming to get you, Barbareth. They are coming for you, Barbareth.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+            "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+          ],
+          "observations": [
+            "4 changed, 0 missing and 2 extra words in the transcript.",
+            "No scripted phrase entry could be aligned to this take."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      },
+      "usage": {
+        "tier": "free",
+        "used": 3,
+        "limit": 5,
+        "remaining": 2,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "challenge-get",
+      "label": null,
+      "account": "0",
+      "at": "2026-09-06T05:50:15.291Z",
+      "status": 200,
+      "latencyMs": 10456,
+      "replayed": null,
+      "requestId": "9bf2c8d1-c540-4579-a1b1-457c4f9993a3",
+      "error": null,
+      "challenge": {
+        "id": "42318132-08f0-4103-891c-3200c58e4a2a",
+        "clipId": "tos-youre-a-jerk",
+        "roleId": "celia",
+        "scoringVersion": "say-match-v1.1",
+        "challengerAttempt": {
+          "id": "e3eea1f4-e88b-40d6-9a9d-c91d135b7903",
+          "clipId": "tos-youre-a-jerk",
+          "clipVersion": "v1-a1664e1509a2",
+          "roleId": "celia",
+          "status": "scored",
+          "saved": true,
+          "owned": true,
+          "durationMs": 2290,
+          "recordingOffsetMs": 0,
+          "scoringVersion": "say-match-v1.1",
+          "score": {
+            "words": 100,
+            "rhythm": 91,
+            "timing": 100,
+            "overall": 98,
+            "version": "say-match-v1.1",
+            "weights": {
+              "words": 50,
+              "rhythm": 20,
+              "timing": 30,
+              "delivery": 0
+            },
+            "delivery": null,
+            "evidence": {
+              "phrases": [
+                {
+                  "cueId": "cue-1",
+                  "actualEnd": 1.98,
+                  "actualStart": 0.87,
+                  "expectedEnd": 2.108,
+                  "expectedStart": 0.808
+                }
+              ],
+              "additions": 0,
+              "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+              "omissions": 0,
+              "matchedWords": 4,
+              "expectedWords": 4,
+              "substitutions": 0,
+              "meanStartErrorMs": 62,
+              "timingRefinement": {
+                "method": "pcm-energy-v1",
+                "status": "refined",
+                "frameMs": 10,
+                "adjustments": [
+                  {
+                    "edge": "start",
+                    "wordIndex": 0,
+                    "rawSeconds": 0,
+                    "measuredSeconds": 0.87
+                  },
+                  {
+                    "edge": "end",
+                    "wordIndex": 3,
+                    "rawSeconds": 1.8600000143051147,
+                    "measuredSeconds": 1.98
+                  }
+                ],
+                "thresholdRms": 0.004029522740718016,
+                "noiseFloorRms": 0
+              },
+              "transcriptionModel": "whisper-1"
+            },
+            "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+            "transcript": "You're a jerk, Tom.",
+            "limitations": [
+              "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+              "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+              "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+            ],
+            "observations": [
+              "Every scripted word matched the transcript.",
+              "Your matched phrase entries landed close to the scene cues."
+            ]
+          },
+          "hasProtectedAudio": true
+        },
+        "recipientAttempts": [
+          {
+            "id": "2d6c50ad-ce5a-471d-83ee-bfb79a16080f",
+            "clipId": "tos-youre-a-jerk",
+            "clipVersion": "v1-a1664e1509a2",
+            "roleId": "celia",
+            "status": "scored",
+            "saved": true,
+            "owned": false,
+            "durationMs": 2290,
+            "recordingOffsetMs": 0,
+            "scoringVersion": "say-match-v1.1",
+            "score": {
+              "words": 100,
+              "rhythm": 91,
+              "timing": 100,
+              "overall": 98,
+              "version": "say-match-v1.1",
+              "weights": {
+                "words": 50,
+                "rhythm": 20,
+                "timing": 30,
+                "delivery": 0
+              },
+              "delivery": null,
+              "evidence": {
+                "phrases": [
+                  {
+                    "cueId": "cue-1",
+                    "actualEnd": 1.98,
+                    "actualStart": 0.87,
+                    "expectedEnd": 2.108,
+                    "expectedStart": 0.808
+                  }
+                ],
+                "additions": 0,
+                "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+                "omissions": 0,
+                "matchedWords": 4,
+                "expectedWords": 4,
+                "substitutions": 0,
+                "meanStartErrorMs": 62,
+                "timingRefinement": {
+                  "method": "pcm-energy-v1",
+                  "status": "refined",
+                  "frameMs": 10,
+                  "adjustments": [
+                    {
+                      "edge": "start",
+                      "wordIndex": 0,
+                      "rawSeconds": 0,
+                      "measuredSeconds": 0.87
+                    },
+                    {
+                      "edge": "end",
+                      "wordIndex": 3,
+                      "rawSeconds": 1.8600000143051147,
+                      "measuredSeconds": 1.98
+                    }
+                  ],
+                  "thresholdRms": 0.004029522740718016,
+                  "noiseFloorRms": 0
+                },
+                "transcriptionModel": "whisper-1"
+              },
+              "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+              "transcript": "You're a jerk, Tom.",
+              "limitations": [
+                "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+                "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+                "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+              ],
+              "observations": [
+                "Every scripted word matched the transcript.",
+                "Your matched phrase entries landed close to the scene cues."
+              ]
+            },
+            "hasProtectedAudio": true
+          }
+        ]
+      }
+    },
+    {
+      "action": "challenge-get",
+      "label": null,
+      "account": "1",
+      "at": "2026-09-06T05:54:12.561Z",
+      "status": 200,
+      "latencyMs": 23089,
+      "replayed": null,
+      "requestId": "b00a5030-eea4-4cf9-8e49-0c9c59a62564",
+      "error": null,
+      "challenge": {
+        "id": "42318132-08f0-4103-891c-3200c58e4a2a",
+        "clipId": "tos-youre-a-jerk",
+        "roleId": "celia",
+        "scoringVersion": "say-match-v1.1",
+        "challengerAttempt": {
+          "id": "e3eea1f4-e88b-40d6-9a9d-c91d135b7903",
+          "clipId": "tos-youre-a-jerk",
+          "clipVersion": "v1-a1664e1509a2",
+          "roleId": "celia",
+          "status": "scored",
+          "saved": true,
+          "owned": false,
+          "durationMs": 2290,
+          "recordingOffsetMs": 0,
+          "scoringVersion": "say-match-v1.1",
+          "score": {
+            "words": 100,
+            "rhythm": 91,
+            "timing": 100,
+            "overall": 98,
+            "version": "say-match-v1.1",
+            "weights": {
+              "words": 50,
+              "rhythm": 20,
+              "timing": 30,
+              "delivery": 0
+            },
+            "delivery": null,
+            "evidence": {
+              "phrases": [
+                {
+                  "cueId": "cue-1",
+                  "actualEnd": 1.98,
+                  "actualStart": 0.87,
+                  "expectedEnd": 2.108,
+                  "expectedStart": 0.808
+                }
+              ],
+              "additions": 0,
+              "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+              "omissions": 0,
+              "matchedWords": 4,
+              "expectedWords": 4,
+              "substitutions": 0,
+              "meanStartErrorMs": 62,
+              "timingRefinement": {
+                "method": "pcm-energy-v1",
+                "status": "refined",
+                "frameMs": 10,
+                "adjustments": [
+                  {
+                    "edge": "start",
+                    "wordIndex": 0,
+                    "rawSeconds": 0,
+                    "measuredSeconds": 0.87
+                  },
+                  {
+                    "edge": "end",
+                    "wordIndex": 3,
+                    "rawSeconds": 1.8600000143051147,
+                    "measuredSeconds": 1.98
+                  }
+                ],
+                "thresholdRms": 0.004029522740718016,
+                "noiseFloorRms": 0
+              },
+              "transcriptionModel": "whisper-1"
+            },
+            "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+            "transcript": "You're a jerk, Tom.",
+            "limitations": [
+              "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+              "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+              "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+            ],
+            "observations": [
+              "Every scripted word matched the transcript.",
+              "Your matched phrase entries landed close to the scene cues."
+            ]
+          },
+          "hasProtectedAudio": true
+        },
+        "recipientAttempts": [
+          {
+            "id": "2d6c50ad-ce5a-471d-83ee-bfb79a16080f",
+            "clipId": "tos-youre-a-jerk",
+            "clipVersion": "v1-a1664e1509a2",
+            "roleId": "celia",
+            "status": "scored",
+            "saved": true,
+            "owned": true,
+            "durationMs": 2290,
+            "recordingOffsetMs": 0,
+            "scoringVersion": "say-match-v1.1",
+            "score": {
+              "words": 100,
+              "rhythm": 91,
+              "timing": 100,
+              "overall": 98,
+              "version": "say-match-v1.1",
+              "weights": {
+                "words": 50,
+                "rhythm": 20,
+                "timing": 30,
+                "delivery": 0
+              },
+              "delivery": null,
+              "evidence": {
+                "phrases": [
+                  {
+                    "cueId": "cue-1",
+                    "actualEnd": 1.98,
+                    "actualStart": 0.87,
+                    "expectedEnd": 2.108,
+                    "expectedStart": 0.808
+                  }
+                ],
+                "additions": 0,
+                "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+                "omissions": 0,
+                "matchedWords": 4,
+                "expectedWords": 4,
+                "substitutions": 0,
+                "meanStartErrorMs": 62,
+                "timingRefinement": {
+                  "method": "pcm-energy-v1",
+                  "status": "refined",
+                  "frameMs": 10,
+                  "adjustments": [
+                    {
+                      "edge": "start",
+                      "wordIndex": 0,
+                      "rawSeconds": 0,
+                      "measuredSeconds": 0.87
+                    },
+                    {
+                      "edge": "end",
+                      "wordIndex": 3,
+                      "rawSeconds": 1.8600000143051147,
+                      "measuredSeconds": 1.98
+                    }
+                  ],
+                  "thresholdRms": 0.004029522740718016,
+                  "noiseFloorRms": 0
+                },
+                "transcriptionModel": "whisper-1"
+              },
+              "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+              "transcript": "You're a jerk, Tom.",
+              "limitations": [
+                "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+                "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+                "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+              ],
+              "observations": [
+                "Every scripted word matched the transcript.",
+                "Your matched phrase entries landed close to the scene cues."
+              ]
+            },
+            "hasProtectedAudio": true
+          }
+        ]
+      }
+    },
+    {
+      "action": "audio",
+      "label": "jerk-v11",
+      "account": "anon",
+      "at": "2026-09-06T05:54:28.615Z",
+      "status": 200,
+      "latencyMs": 13305,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 109964,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0"
+    },
+    {
+      "action": "audio",
+      "label": "reply-v11",
+      "account": "0",
+      "at": "2026-09-06T05:54:40.061Z",
+      "status": 200,
+      "latencyMs": 11199,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 109964,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0"
+    },
+    {
+      "action": "audio",
+      "label": "reply-v11",
+      "account": "2",
+      "at": "2026-09-06T05:54:49.492Z",
+      "status": 404,
+      "latencyMs": 9238,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 204,
+      "contentType": "application/json",
+      "contentRange": null,
+      "sha256": null
+    },
+    {
+      "action": "audio",
+      "label": "reply-v11",
+      "account": "anon",
+      "at": "2026-09-06T05:54:57.678Z",
+      "status": 404,
+      "latencyMs": 7961,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 204,
+      "contentType": "application/json",
+      "contentRange": null,
+      "sha256": null
+    },
+    {
+      "action": "history",
+      "label": null,
+      "account": "2",
+      "at": "2026-09-06T05:55:06.225Z",
+      "status": 200,
+      "latencyMs": 8377,
+      "replayed": null,
+      "requestId": "c9e0f189-ae4a-4499-9c32-89ef65207690",
+      "error": null,
+      "attempts": [
+        {
+          "id": "4be6a31c-98c7-4984-97c8-9973beababbe",
+          "clipId": "notld-coming-to-get-you",
+          "clipVersion": "v1-0f237846a300",
+          "roleId": "johnny",
+          "status": "scored",
+          "saved": true,
+          "owned": true,
+          "durationMs": 9450,
+          "recordingOffsetMs": 0,
+          "scoringVersion": "say-match-v1.1",
+          "score": {
+            "words": 45,
+            "rhythm": 0,
+            "timing": 0,
+            "overall": 23,
+            "version": "say-match-v1.1",
+            "weights": {
+              "words": 50,
+              "rhythm": 20,
+              "timing": 30,
+              "delivery": 0
+            },
+            "delivery": null,
+            "evidence": {
+              "phrases": [
+                {
+                  "cueId": "cue-1",
+                  "actualEnd": null,
+                  "actualStart": null,
+                  "expectedEnd": 3.338,
+                  "expectedStart": 0.718
+                },
+                {
+                  "cueId": "cue-2",
+                  "actualEnd": null,
+                  "actualStart": null,
+                  "expectedEnd": 8.778,
+                  "expectedStart": 7.198
+                }
+              ],
+              "additions": 2,
+              "audioHash": "6d769c06bd4c2486ed7eddf91b51034be9a55172c51bf9058d02954cd768b173",
+              "omissions": 0,
+              "matchedWords": 7,
+              "expectedWords": 11,
+              "substitutions": 4,
+              "meanStartErrorMs": null,
+              "timingRefinement": {
+                "method": "pcm-energy-v1",
+                "status": "refined",
+                "frameMs": 10,
+                "adjustments": [
+                  {
+                    "edge": "start",
+                    "wordIndex": 0,
+                    "rawSeconds": 0,
+                    "measuredSeconds": 0.74
+                  },
+                  {
+                    "edge": "end",
+                    "wordIndex": 12,
+                    "rawSeconds": 8.859999656677246,
+                    "measuredSeconds": 8.93
+                  }
+                ],
+                "thresholdRms": 0.003844255296377547,
+                "noiseFloorRms": 0
+              },
+              "transcriptionModel": "whisper-1"
+            },
+            "coachNote": "Replay the original with captions, then keep every scripted word and leave out extra commentary.",
+            "transcript": "They are coming to get you, Barbareth. They are coming for you, Barbareth.",
+            "limitations": [
+              "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+              "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+              "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+            ],
+            "observations": [
+              "4 changed, 0 missing and 2 extra words in the transcript.",
+              "No scripted phrase entry could be aligned to this take."
+            ]
+          },
+          "hasProtectedAudio": true
+        },
+        {
+          "id": "5cde32f1-8fb8-4558-8b38-9c4407c48b0d",
+          "clipId": "notld-hear-yourself-talk",
+          "clipVersion": "v1-645385255383",
+          "roleId": "barbra",
+          "status": "scored",
+          "saved": true,
+          "owned": true,
+          "durationMs": 6000,
+          "recordingOffsetMs": 0,
+          "scoringVersion": "say-match-v1.1",
+          "score": {
+            "words": 100,
+            "rhythm": 97,
+            "timing": 100,
+            "overall": 99,
+            "version": "say-match-v1.1",
+            "weights": {
+              "words": 50,
+              "rhythm": 20,
+              "timing": 30,
+              "delivery": 0
+            },
+            "delivery": null,
+            "evidence": {
+              "phrases": [
+                {
+                  "cueId": "cue-1",
+                  "actualEnd": 5.47,
+                  "actualStart": 3.47,
+                  "expectedEnd": 5.538,
+                  "expectedStart": 3.378
+                }
+              ],
+              "additions": 0,
+              "audioHash": "e56cb1fcebe8ef0f5ec9c7886b952d95e982d46b640eec88a87339acfba7216b",
+              "omissions": 0,
+              "matchedWords": 9,
+              "expectedWords": 9,
+              "substitutions": 0,
+              "meanStartErrorMs": 92,
+              "timingRefinement": {
+                "method": "pcm-energy-v1",
+                "status": "refined",
+                "frameMs": 10,
+                "adjustments": [
+                  {
+                    "edge": "start",
+                    "wordIndex": 0,
+                    "rawSeconds": 3.0199999809265137,
+                    "measuredSeconds": 3.47
+                  },
+                  {
+                    "edge": "end",
+                    "wordIndex": 8,
+                    "rawSeconds": 5.539999961853027,
+                    "measuredSeconds": 5.47
+                  }
+                ],
+                "thresholdRms": 0.0026393906472816364,
+                "noiseFloorRms": 0
+              },
+              "transcriptionModel": "whisper-1"
+            },
+            "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+            "transcript": "I think you complain just to hear yourself talk.",
+            "limitations": [
+              "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+              "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+              "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+            ],
+            "observations": [
+              "Every scripted word matched the transcript.",
+              "Your matched phrase entries landed close to the scene cues."
+            ]
+          },
+          "hasProtectedAudio": true
+        },
+        {
+          "id": "dd8eb389-27e8-40da-90e0-bdeda39edcbb",
+          "clipId": "hgf-such-a-stinker",
+          "clipVersion": "v1-ff21eb36f33b",
+          "roleId": "hildy",
+          "status": "scored",
+          "saved": true,
+          "owned": true,
+          "durationMs": 5290,
+          "recordingOffsetMs": 0,
+          "scoringVersion": "say-match-v1.1",
+          "score": {
+            "words": 100,
+            "rhythm": 61,
+            "timing": 87,
+            "overall": 88,
+            "version": "say-match-v1.1",
+            "weights": {
+              "words": 50,
+              "rhythm": 20,
+              "timing": 30,
+              "delivery": 0
+            },
+            "delivery": null,
+            "evidence": {
+              "phrases": [
+                {
+                  "cueId": "cue-1",
+                  "actualEnd": 1.2400000095367432,
+                  "actualStart": 0.3,
+                  "expectedEnd": 1.738,
+                  "expectedStart": 0.278
+                },
+                {
+                  "cueId": "cue-2",
+                  "actualEnd": 4.579999923706055,
+                  "actualStart": 3.240000009536743,
+                  "expectedEnd": 4.958,
+                  "expectedStart": 3.218
+                }
+              ],
+              "additions": 0,
+              "audioHash": "43355ed38caecd90ba267b597b8122aade573f295a363db0016334fa54c1bf22",
+              "omissions": 0,
+              "matchedWords": 15,
+              "expectedWords": 15,
+              "substitutions": 0,
+              "meanStartErrorMs": 22,
+              "timingRefinement": {
+                "method": "pcm-energy-v1",
+                "status": "refined",
+                "frameMs": 10,
+                "adjustments": [
+                  {
+                    "edge": "start",
+                    "wordIndex": 0,
+                    "rawSeconds": 0,
+                    "measuredSeconds": 0.3
+                  }
+                ],
+                "thresholdRms": 0.0030215275005492223,
+                "noiseFloorRms": 0
+              },
+              "transcriptionModel": "whisper-1"
+            },
+            "coachNote": "Listen once for the length of each phrase and the silence between them; copy that pattern.",
+            "transcript": "I am fond of you, you know. I often wish you weren't such a stinker.",
+            "limitations": [
+              "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+              "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+              "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+            ],
+            "observations": [
+              "Every scripted word matched the transcript.",
+              "Your matched phrase entries landed close to the scene cues."
+            ]
+          },
+          "hasProtectedAudio": true
+        }
+      ]
     }
   ]
 }

@@ -85,9 +85,13 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
   const [createdChallenge, setCreatedChallenge] = useState<SayChallenge | null>(null);
   const [copied, setCopied] = useState(false);
   const [showFriend, setShowFriend] = useState(false);
+  const [openResponseId, setOpenResponseId] = useState<string | null>(null);
+  const [checkingResponses, setCheckingResponses] = useState(false);
+  const [responseError, setResponseError] = useState("");
   const [takeNumber, setTakeNumber] = useState(1);
   const playerRef = useRef<DubPlayerHandle>(null);
   const friendPlayerRef = useRef<DubPlayerHandle>(null);
+  const responsePlayerRef = useRef<DubPlayerHandle>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
   const recorder = useAudioRecorder();
   const { reset, stop, start, requestPermission, getCapturePositionMs, primeAudioContext } = recorder;
@@ -107,6 +111,8 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
 
   const selectClip = useCallback((next: SayClip, requestedRole?: string) => {
     playerRef.current?.pause();
+    friendPlayerRef.current?.pause(); responsePlayerRef.current?.pause();
+    setOpenResponseId(null); setShowFriend(false); setResponseError("");
     reset();
     setClip(next);
     setRoleId(next.roles.some((item) => item.id === requestedRole) ? requestedRole! : next.roles[0]?.id ?? "");
@@ -176,6 +182,7 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
   const beginRecording = async () => {
     if (!clip || !role || actionInFlight.current || captureBusy) return;
     actionInFlight.current = true; setError(""); setNotice(""); setShowFriend(false);
+    friendPlayerRef.current?.pause(); responsePlayerRef.current?.pause(); setOpenResponseId(null);
     const token = ++countdownToken.current;
     try {
       primeAudioContext();
@@ -273,7 +280,18 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
   };
 
   const backToScenes = () => {
-    playerRef.current?.pause(); reset(); setClip(null); setAttempt(null); setChallenge(null); setError(""); setNotice(""); setCreatedChallenge(null); setSharing(false);
+    playerRef.current?.pause(); friendPlayerRef.current?.pause(); responsePlayerRef.current?.pause(); reset(); setClip(null); setAttempt(null); setChallenge(null); setError(""); setNotice(""); setCreatedChallenge(null); setSharing(false); setOpenResponseId(null);
+  };
+
+  const checkResponses = async () => {
+    if (!challenge || checkingResponses) return;
+    setCheckingResponses(true); setResponseError("");
+    try {
+      const refreshed = (await api<{ challenge: SayChallenge }>(`/api/say-it-back/challenges/${encodeURIComponent(challenge.token)}`)).challenge;
+      setChallenge((current) => current?.id === refreshed.id ? refreshed : current);
+    }
+    catch (cause) { setResponseError(cause instanceof Error ? cause.message : "Responses could not refresh. Try again."); }
+    finally { setCheckingResponses(false); }
   };
 
   if (!clip || !role) return <main className="min-h-screen px-4 pb-28 pt-28 sm:px-8 sm:pt-32"><div className="mx-auto max-w-[1184px]">
@@ -292,18 +310,39 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
 
   const ownCues = clip.cues.filter((cue) => cue.roleId === role.id);
   const friendScore = challenge?.challengerAttempt.score;
+  const challengeOwner = Boolean(challenge?.challengerAttempt.owned);
+  const friendResponses = challengeOwner ? (challenge?.recipientAttempts ?? []).filter((response) => !response.owned && response.status === "scored" && response.score != null && response.score.version === challenge?.scoringVersion && response.score.timing != null && response.score.rhythm != null) : [];
   const comparableChallenge = currentScore && friendScore && currentScore.timing != null && currentScore.rhythm != null && friendScore.timing != null && friendScore.rhythm != null && currentScore.version === friendScore.version;
   const recordingReady = recorder.status === "ready";
   const canTryAgain = !busy && !captureBusy;
 
   return <main className="min-h-screen px-4 pb-16 pt-[96px] sm:px-8 sm:pt-28"><div className="mx-auto max-w-[1184px]">
     <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><button type="button" className="button-ghost -ml-3 px-3" disabled={!canTryAgain} onClick={backToScenes}><ArrowLeft className="size-4" />All scenes</button><div className="flex items-center gap-3"><Link href="/play" className="text-xs text-white/55 hover:text-white">Classic</Link><span className="h-4 w-px bg-white/20" /><span className="mono-label text-hot">Say It Back</span></div></div>
-    {challenge && selectedAllowed && <section className="mb-5 rounded-xl border border-hot/35 bg-hot/10 p-4 sm:p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="mono-label text-hot">Friend challenge</p><h2 className="mt-1 text-lg font-bold">{challenge.challengerName} set the scene.{friendScore ? ` Can you beat ${Math.round(friendScore.overall)}?` : " Your turn."}</h2><p className="mt-1 text-xs leading-5 text-white/60">Same clip. Same role. Same scoring version.</p></div><button type="button" className="button-secondary" onClick={() => { playerRef.current?.pause(); setShowFriend(!showFriend); }} disabled={captureBusy}>{showFriend ? "Close friend’s take" : "Watch friend’s take"}<Headphones className="size-4" /></button></div>{showFriend && <div className="mt-4 max-w-xl"><DubPlayer ref={friendPlayerRef} onPlaybackStart={() => playerRef.current?.pause()} clip={challenge.clip} role={challenge.clip.roles.find((item) => item.id === challenge.roleId)!} takeUrl={challenge.challengerAttempt.audioUrl} recordingOffsetMs={challenge.challengerAttempt.recordingOffsetMs} /></div>}</section>}
+    {challenge && selectedAllowed && <section className="mb-5 rounded-xl border border-hot/35 bg-hot/10 p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><p className="mono-label text-hot">Friend challenge</p><h2 className="mt-1 text-lg font-bold">{challengeOwner ? "You set the scene." : `${challenge.challengerName} set the scene.`}{friendScore ? (challengeOwner ? ` Your ${Math.round(friendScore.overall)} is the score to beat.` : ` Can you beat ${Math.round(friendScore.overall)}?`) : " Your turn."}</h2><p className="mt-1 text-xs leading-5 text-white/60">Same clip. Same role. Same scoring version.</p></div>
+        <button type="button" className="button-secondary" onClick={() => { playerRef.current?.pause(); responsePlayerRef.current?.pause(); setShowFriend(!showFriend); }} disabled={captureBusy}>{challengeOwner ? (showFriend ? "Close your take" : "Watch your challenge take") : (showFriend ? "Close friend’s take" : "Watch friend’s take")}<Headphones className="size-4" /></button>
+      </div>
+      {showFriend && <div className="mt-4 max-w-xl"><DubPlayer takeLabel={challengeOwner ? "Your take" : "Friend’s take"} ref={friendPlayerRef} onPlaybackStart={() => { playerRef.current?.pause(); responsePlayerRef.current?.pause(); }} clip={challenge.clip} role={challenge.clip.roles.find((item) => item.id === challenge.roleId)!} takeUrl={challenge.challengerAttempt.audioUrl} recordingOffsetMs={challenge.challengerAttempt.recordingOffsetMs} /></div>}
+      {challengeOwner && <div className="mt-5 border-t border-hot/20 pt-4" aria-label="Friend responses">
+        <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-bold">Friend responses{friendResponses.length > 0 ? ` · ${friendResponses.length}` : ""}</h3><button type="button" className="button-ghost min-h-10 px-2 text-xs" disabled={captureBusy || checkingResponses} onClick={() => void checkResponses()}>{checkingResponses ? <LoaderCircle className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}Check responses</button></div>
+        {friendResponses.length === 0 ? <p className="mt-1 text-xs leading-6 text-white/60">Your friends’ shared, scored takes will appear here. Send them the challenge link to get started.</p> : <div className="mt-2 space-y-3">{friendResponses.map((response, index) => {
+          const score = response.score!;
+          const difference = friendScore ? Math.round(score.overall - friendScore.overall) : null;
+          const responseRole = response.clip.roles.find((item) => item.id === response.roleId)!;
+          return <div key={response.id} className="rounded-xl border border-white/15 bg-ink/30 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-bold text-white/60">Response {index + 1}</p><p className="mt-1 flex items-baseline gap-2"><span className="text-3xl font-bold">{Math.round(score.overall)}</span><span className="text-xs text-white/60">/100{difference === 0 ? " · Tied with your take" : difference == null ? "" : difference > 0 ? ` · ${difference} ahead of your take` : ` · ${Math.abs(difference)} behind your take`}</span></p></div><button type="button" className="button-secondary" disabled={captureBusy} onClick={() => { playerRef.current?.pause(); friendPlayerRef.current?.pause(); responsePlayerRef.current?.pause(); setOpenResponseId(openResponseId === response.id ? null : response.id); }}><Headphones className="size-4" />{openResponseId === response.id ? "Close response" : "Listen"}</button></div>
+            {openResponseId === response.id && <div className="mt-4 max-w-xl"><DubPlayer ref={responsePlayerRef} takeLabel="Friend’s take" clip={response.clip} role={responseRole} takeUrl={response.audioUrl} recordingOffsetMs={response.recordingOffsetMs} onPlaybackStart={() => { playerRef.current?.pause(); friendPlayerRef.current?.pause(); }} /></div>}
+          </div>;
+        })}</div>}
+        {responseError && <p role="alert" className="mt-3 text-xs leading-5 text-[#ffbcaa]">{responseError}</p>}
+      </div>}
+    </section>}
     {!selectedAllowed ? <section className="panel p-7"><h1 className="text-2xl font-bold">This scene is outside your content setting.</h1><p className="my-4 text-sm text-white/65">It is classified {CONTENT_LABELS[clip.rating]}. Choose the appropriate setting to open the scene and its recordings.</p><ContentControl value={contentRating} onChange={(rating) => updatePreferences({ contentRating: rating })} /></section> : <>
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3"><div><p className="mono-label mb-2 text-white/50">{clip.source.title}</p><h1 className="text-[clamp(1.7rem,4vw,2.7rem)] font-bold leading-tight tracking-tight">{clip.title}</h1></div><div className="flex flex-wrap items-center gap-2 text-xs text-white/65"><span className="rounded-md border border-white/15 px-2.5 py-1.5">{durationLabel(clip.duration)}</span><span className="rounded-md border border-white/15 px-2.5 py-1.5">{difficultyLabels[clip.difficulty]}</span><span className="rounded-md border border-white/15 px-2.5 py-1.5">{CONTENT_LABELS[clip.rating]}</span></div></div>
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(285px,1fr)]">
         <div ref={sceneRef} className="min-w-0 scroll-mt-24 space-y-5">
-          <DubPlayer key={`${clip.id}:${clip.version}:${role.id}`} ref={playerRef} clip={clip} role={role} takeUrl={takeUrl} recordingOffsetMs={attempt && !recorder.audioUrl ? attempt.recordingOffsetMs : offsetMs} recording={recording} countdown={countdown} onCancelCountdown={cancelCountdown} onEnded={finishRecording} onTime={setTime} onPlaybackStart={() => friendPlayerRef.current?.pause()} onAudioError={refreshPlayback} onInterruption={() => { finishRecording(); setError("Scene playback was interrupted, so recording stopped to preserve timing. Replay your partial take, or let the scene load and retake."); }} />
+          <DubPlayer key={`${clip.id}:${clip.version}:${role.id}`} ref={playerRef} clip={clip} role={role} takeUrl={takeUrl} recordingOffsetMs={attempt && !recorder.audioUrl ? attempt.recordingOffsetMs : offsetMs} recording={recording} countdown={countdown} onCancelCountdown={cancelCountdown} onEnded={finishRecording} onTime={setTime} onPlaybackStart={() => { friendPlayerRef.current?.pause(); responsePlayerRef.current?.pause(); }} onAudioError={refreshPlayback} onInterruption={() => { finishRecording(); setError("Scene playback was interrupted, so recording stopped to preserve timing. Replay your partial take, or let the scene load and retake."); }} />
           {takeUrl && <section className="rounded-xl border border-electric/25 bg-electric/[0.07] px-5 py-4"><div className="flex items-start gap-3"><Headphones className="mt-0.5 size-5 shrink-0 text-electric" /><div><h2 className="font-bold">Your dub is ready.</h2><p className="mt-1 text-sm leading-6 text-white/65">Tap play above. Switch between Original and Your take to hear the difference.{busy === "judge" ? " Keep watching while we check your match." : ""}</p></div></div></section>}
           {currentScore && <ScorePanel score={currentScore} previousBest={attempt?.previousBest} />}
           {comparableChallenge && <section className="rounded-2xl border border-hot/40 bg-hot/10 p-6"><p className="mono-label text-hot">Head to head</p><h2 className="mt-2 text-2xl font-bold">{currentScore.overall > friendScore.overall ? "You took the scene." : currentScore.overall === friendScore.overall ? "A scene-stealing tie." : "They’ve got you. For now."}</h2><div className="mt-5 grid grid-cols-2 gap-4"><div className="rounded-xl bg-paper p-4 text-ink"><p className="text-xs font-bold">You</p><p className="mt-1 text-4xl font-bold">{Math.round(currentScore.overall)}</p></div><div className="rounded-xl border border-white/20 p-4"><p className="text-xs font-bold">{challenge?.challengerName}</p><p className="mt-1 text-4xl font-bold">{Math.round(friendScore.overall)}</p></div></div><button type="button" className="button-secondary mt-5" disabled={!canTryAgain} onClick={retake}><RotateCcw className="size-4" />Rematch this scene</button></section>}

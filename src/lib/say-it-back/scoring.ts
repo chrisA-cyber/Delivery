@@ -27,9 +27,21 @@ const spokenNumberTokens = new Map<string, string>(
   ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"]
     .map((word, value): [string, string] => [word, String(value)]),
 );
+// Expand only unambiguous forms used by the curated scripts (plus "we're",
+// whose apostrophe must distinguish "we are" from "were"). Do this before
+// punctuation normalization; do not guess whether "he's" means is or has.
+const contractionTokens = new Map<string, readonly string[]>([
+  ["i'm", ["i", "am"]],
+  ["you're", ["you", "are"]],
+  ["you've", ["you", "have"]],
+  ["weren't", ["were", "not"]],
+  ["they're", ["they", "are"]],
+  ["we're", ["we", "are"]],
+]);
 
 function tokenize(text: string): string[] {
   return (text.normalize("NFKC").toLowerCase().replace(/[’‘]/g, "'").match(/[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)*/gu) ?? [])
+    .flatMap((word) => contractionTokens.get(word) ?? [word])
     .map((word) => {
       const token = word.replace(/'/g, "");
       return token === "thom" ? "tom" : spokenNumberTokens.get(token) ?? token;
@@ -89,6 +101,9 @@ function timedTranscript(words: SayWord[], transcript: string[]): Map<number, Sa
   for (const word of words) {
     if (!Number.isFinite(word.start) || !Number.isFinite(word.end) || word.start < 0 || word.end < word.start || word.start < previousStart) return null;
     previousStart = word.start;
+    // If ASR writes one contraction, both canonical units share its measured
+    // window. They never receive invented sub-word timings; phrase entry/exit
+    // still uses the outer edges of the original spoken word.
     for (const token of tokenize(word.text)) timed.push({ ...word, text: token });
   }
   if (!timed.length || timed.filter((word) => word.end > word.start).length / timed.length < 0.5) return null;

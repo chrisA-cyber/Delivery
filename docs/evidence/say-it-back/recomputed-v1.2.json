@@ -1,0 +1,528 @@
+{
+  "at": "2026-09-06T05:56:25.534Z",
+  "kind": "free-deterministic-recomputation",
+  "version": "say-match-v1.2",
+  "source": "Persisted real Whisper transcripts/word timestamps and exact original hashed local synthetic PCM. No new transcription, database mutation or play charge.",
+  "paidCalls": 0,
+  "estimatedSpendUsd": 0,
+  "entries": [
+    {
+      "label": "jerk-guest",
+      "attemptId": "d58bc196-c213-4740-ac94-09441c686ca4",
+      "clipId": "tos-youre-a-jerk",
+      "clipVersion": "v1-a1664e1509a2",
+      "roleId": "celia",
+      "audioSha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+      "transcript": "You're a jerk, Tom.",
+      "previous": {
+        "version": "say-match-v1",
+        "overall": 65,
+        "words": 100,
+        "timing": 20,
+        "rhythm": 44,
+        "expectedWords": 4,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 808
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 98,
+        "words": 100,
+        "timing": 100,
+        "rhythm": 91,
+        "expectedWords": 5,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 62
+      },
+      "observations": [
+        "Every scripted word matched the transcript.",
+        "Your matched phrase entries landed close to the scene cues."
+      ]
+    },
+    {
+      "label": "jerk-v11",
+      "attemptId": "e3eea1f4-e88b-40d6-9a9d-c91d135b7903",
+      "clipId": "tos-youre-a-jerk",
+      "clipVersion": "v1-a1664e1509a2",
+      "roleId": "celia",
+      "audioSha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+      "transcript": "You're a jerk, Tom.",
+      "previous": {
+        "version": "say-match-v1.1",
+        "overall": 98,
+        "words": 100,
+        "timing": 100,
+        "rhythm": 91,
+        "expectedWords": 4,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 62
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 98,
+        "words": 100,
+        "timing": 100,
+        "rhythm": 91,
+        "expectedWords": 5,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 62
+      },
+      "observations": [
+        "Every scripted word matched the transcript.",
+        "Your matched phrase entries landed close to the scene cues."
+      ]
+    },
+    {
+      "label": "shift-v11",
+      "attemptId": "6b8a90bc-ca78-476f-86fc-b565a7668e72",
+      "clipId": "tos-youre-a-jerk",
+      "clipVersion": "v1-a1664e1509a2",
+      "roleId": "celia",
+      "audioSha256": "e4055995a04ac95faf74729a5f7846c5214be180c9d41068dbc0734b47e12802",
+      "transcript": "You're a jerk, Tom.",
+      "previous": {
+        "version": "say-match-v1.1",
+        "overall": 68,
+        "words": 100,
+        "timing": 0,
+        "rhythm": 91,
+        "expectedWords": 4,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 1062
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 68,
+        "words": 100,
+        "timing": 0,
+        "rhythm": 91,
+        "expectedWords": 5,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 1062
+      },
+      "observations": [
+        "Every scripted word matched the transcript.",
+        "Matched phrase entries averaged about 1.1 seconds late."
+      ]
+    },
+    {
+      "label": "changed-v11",
+      "attemptId": "ea49f433-ba5a-42a8-bf2b-5440e0637df4",
+      "clipId": "tos-youre-a-jerk",
+      "clipVersion": "v1-a1664e1509a2",
+      "roleId": "celia",
+      "audioSha256": "1e3d50c41bda8c138ad26fbc0cd7475b70b3ee8e44bc70e5769bd39652a7cefa",
+      "transcript": "You're a gem, Tom.",
+      "previous": {
+        "version": "say-match-v1.1",
+        "overall": 72,
+        "words": 75,
+        "timing": 74,
+        "rhythm": 63,
+        "expectedWords": 4,
+        "substitutions": 1,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 72
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 77,
+        "words": 80,
+        "timing": 78,
+        "rhythm": 68,
+        "expectedWords": 5,
+        "substitutions": 1,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 72
+      },
+      "observations": [
+        "1 changed, 0 missing and 0 extra word in the transcript.",
+        "Your matched phrase entries landed close to the scene cues."
+      ]
+    },
+    {
+      "label": "reply-v11",
+      "attemptId": "2d6c50ad-ce5a-471d-83ee-bfb79a16080f",
+      "clipId": "tos-youre-a-jerk",
+      "clipVersion": "v1-a1664e1509a2",
+      "roleId": "celia",
+      "audioSha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+      "transcript": "You're a jerk, Tom.",
+      "previous": {
+        "version": "say-match-v1.1",
+        "overall": 98,
+        "words": 100,
+        "timing": 100,
+        "rhythm": 91,
+        "expectedWords": 4,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 62
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 98,
+        "words": 100,
+        "timing": 100,
+        "rhythm": 91,
+        "expectedWords": 5,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 62
+      },
+      "observations": [
+        "Every scripted word matched the transcript.",
+        "Your matched phrase entries landed close to the scene cues."
+      ]
+    },
+    {
+      "label": "xqc-six",
+      "attemptId": "0a04d70b-bb49-4c43-b0d4-525fd7a6aa4d",
+      "clipId": "xqc-six-consoles",
+      "clipVersion": "v1-d5502ac3ac95",
+      "roleId": "xqc",
+      "audioSha256": "3c16907f147733da471c927f7fb568163e2f39c4ea2b0645b9d0fb57166321dc",
+      "transcript": "A gaming guitar, controllers, six consoles, ten computers.",
+      "previous": {
+        "version": "say-match-v1.1",
+        "overall": 88,
+        "words": 100,
+        "timing": 81,
+        "rhythm": 69,
+        "expectedWords": 8,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 247
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 88,
+        "words": 100,
+        "timing": 81,
+        "rhythm": 69,
+        "expectedWords": 8,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 247
+      },
+      "observations": [
+        "Every scripted word matched the transcript.",
+        "Matched phrase entries averaged about 0.2 seconds late."
+      ]
+    },
+    {
+      "label": "xqc-delay",
+      "attemptId": "55980f5a-3e4b-4028-bf2e-8257649595c9",
+      "clipId": "xqc-fifteen-minute-delay",
+      "clipVersion": "v1-954e03856883",
+      "roleId": "xqc",
+      "audioSha256": "dd9cf1de36549ff0d988158610ffdede8393295f4740165a9ea1ac59b8df717d",
+      "transcript": "Fifteen-minute delay, and then what? Then what?",
+      "previous": {
+        "version": "say-match-v1.1",
+        "overall": 95,
+        "words": 100,
+        "timing": 96,
+        "rhythm": 83,
+        "expectedWords": 8,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 60
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 95,
+        "words": 100,
+        "timing": 96,
+        "rhythm": 83,
+        "expectedWords": 8,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 60
+      },
+      "observations": [
+        "Every scripted word matched the transcript.",
+        "Your matched phrase entries landed close to the scene cues."
+      ]
+    },
+    {
+      "label": "space",
+      "attemptId": "2290d3ae-db39-4e8b-82bf-57a3c32fa2d4",
+      "clipId": "tos-awesome-in-space",
+      "clipVersion": "v1-48e404b004af",
+      "roleId": "thom",
+      "audioSha256": "d6e84954da3f9e126c3a08756a3fb591b3afadd4becdba8a98401b72b4754f8c",
+      "transcript": "I have your robotics, and I just want to be awesome in space.",
+      "previous": {
+        "version": "say-match-v1.1",
+        "overall": 74,
+        "words": 92,
+        "timing": 53,
+        "rhythm": 60,
+        "expectedWords": 13,
+        "substitutions": 1,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 222
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 74,
+        "words": 92,
+        "timing": 53,
+        "rhythm": 60,
+        "expectedWords": 13,
+        "substitutions": 1,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 222
+      },
+      "observations": [
+        "1 changed, 0 missing and 0 extra word in the transcript.",
+        "Matched phrase entries averaged about 0.2 seconds late."
+      ]
+    },
+    {
+      "label": "claws",
+      "attemptId": "d62622a7-1fc0-4149-b040-7a50071a7931",
+      "clipId": "tos-robotic-claws",
+      "clipVersion": "v1-1c7786e28ced",
+      "roleId": "thom",
+      "audioSha256": "78bd5ea73092efa7fcae8d1e936a6bbf395551b161a62f86f36daa84c02fd697",
+      "transcript": "I'm freaked out. I'm having nightmares that I'm being chased by these giant robotic claws of death.",
+      "previous": {
+        "version": "say-match-v1.1",
+        "overall": 93,
+        "words": 100,
+        "timing": 82,
+        "rhythm": 93,
+        "expectedWords": 17,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 205
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 93,
+        "words": 100,
+        "timing": 82,
+        "rhythm": 93,
+        "expectedWords": 20,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 205
+      },
+      "observations": [
+        "Every scripted word matched the transcript.",
+        "Matched phrase entries averaged about 0.2 seconds late."
+      ]
+    },
+    {
+      "label": "heart",
+      "attemptId": "fe0c9d11-dc70-43ab-bb1e-348ea2ed4851",
+      "clipId": "tos-broken-heart",
+      "clipVersion": "v1-13b20de37e44",
+      "roleId": "celia",
+      "audioSha256": "a36159080511f71a840a66c5a5871d5e5441e9ce32aeb85ac79a85e4c42de6d4",
+      "transcript": "You broke my heart. You forgot me on Earth. I should just crush you.",
+      "previous": {
+        "version": "say-match-v1.1",
+        "overall": 96,
+        "words": 100,
+        "timing": 94,
+        "rhythm": 87,
+        "expectedWords": 14,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 149
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 96,
+        "words": 100,
+        "timing": 94,
+        "rhythm": 87,
+        "expectedWords": 14,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 149
+      },
+      "observations": [
+        "Every scripted word matched the transcript.",
+        "Your matched phrase entries landed close to the scene cues."
+      ]
+    },
+    {
+      "label": "divorce",
+      "attemptId": "72c646db-7e50-428b-a717-4b72321abe31",
+      "clipId": "hgf-old-fashioned-divorce",
+      "clipVersion": "v1-e29dd7364548",
+      "roleId": "walter",
+      "audioSha256": "5e4a9f7c11b670a3205a8c28403dc37d01d749a6f89c5f7f1651f990db47c3f7",
+      "transcript": "Nonsense, you've got an old-fashioned idea divorce is something that lasts forever till death do us part",
+      "previous": {
+        "version": "say-match-v1.1",
+        "overall": 98,
+        "words": 100,
+        "timing": 95,
+        "rhythm": 96,
+        "expectedWords": 18,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 103
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 98,
+        "words": 100,
+        "timing": 95,
+        "rhythm": 96,
+        "expectedWords": 19,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 103
+      },
+      "observations": [
+        "Every scripted word matched the transcript.",
+        "Your matched phrase entries landed close to the scene cues."
+      ]
+    },
+    {
+      "label": "stinker",
+      "attemptId": "dd8eb389-27e8-40da-90e0-bdeda39edcbb",
+      "clipId": "hgf-such-a-stinker",
+      "clipVersion": "v1-ff21eb36f33b",
+      "roleId": "hildy",
+      "audioSha256": "43355ed38caecd90ba267b597b8122aade573f295a363db0016334fa54c1bf22",
+      "transcript": "I am fond of you, you know. I often wish you weren't such a stinker.",
+      "previous": {
+        "version": "say-match-v1.1",
+        "overall": 88,
+        "words": 100,
+        "timing": 87,
+        "rhythm": 61,
+        "expectedWords": 15,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 22
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 88,
+        "words": 100,
+        "timing": 87,
+        "rhythm": 61,
+        "expectedWords": 16,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 22
+      },
+      "observations": [
+        "Every scripted word matched the transcript.",
+        "Your matched phrase entries landed close to the scene cues."
+      ]
+    },
+    {
+      "label": "talk",
+      "attemptId": "5cde32f1-8fb8-4558-8b38-9c4407c48b0d",
+      "clipId": "notld-hear-yourself-talk",
+      "clipVersion": "v1-645385255383",
+      "roleId": "barbra",
+      "audioSha256": "e56cb1fcebe8ef0f5ec9c7886b952d95e982d46b640eec88a87339acfba7216b",
+      "transcript": "I think you complain just to hear yourself talk.",
+      "previous": {
+        "version": "say-match-v1.1",
+        "overall": 99,
+        "words": 100,
+        "timing": 100,
+        "rhythm": 97,
+        "expectedWords": 9,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 92
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 99,
+        "words": 100,
+        "timing": 100,
+        "rhythm": 97,
+        "expectedWords": 9,
+        "substitutions": 0,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 92
+      },
+      "observations": [
+        "Every scripted word matched the transcript.",
+        "Your matched phrase entries landed close to the scene cues."
+      ]
+    },
+    {
+      "label": "barbara",
+      "attemptId": "4be6a31c-98c7-4984-97c8-9973beababbe",
+      "clipId": "notld-coming-to-get-you",
+      "clipVersion": "v1-0f237846a300",
+      "roleId": "johnny",
+      "audioSha256": "6d769c06bd4c2486ed7eddf91b51034be9a55172c51bf9058d02954cd768b173",
+      "transcript": "They are coming to get you, Barbareth. They are coming for you, Barbareth.",
+      "previous": {
+        "version": "say-match-v1.1",
+        "overall": 23,
+        "words": 45,
+        "timing": 0,
+        "rhythm": 0,
+        "expectedWords": 11,
+        "substitutions": 4,
+        "omissions": 0,
+        "additions": 2,
+        "meanStartErrorMs": null
+      },
+      "recomputed": {
+        "version": "say-match-v1.2",
+        "overall": 61,
+        "words": 85,
+        "timing": 62,
+        "rhythm": 0,
+        "expectedWords": 13,
+        "substitutions": 2,
+        "omissions": 0,
+        "additions": 0,
+        "meanStartErrorMs": 82
+      },
+      "observations": [
+        "2 changed, 0 missing and 0 extra words in the transcript.",
+        "Your matched phrase entries landed close to the scene cues."
+      ]
+    }
+  ]
+}

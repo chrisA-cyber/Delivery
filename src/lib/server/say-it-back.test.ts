@@ -132,7 +132,7 @@ describe("Say It Back private and recoverable attempts", () => {
   });
   it("approves an exact curated fictional insult without reclassifying the approved script", async () => {
     const scene = { ...clip, cues: [{ id: "one", roleId: "actor", text: "You're a jerk, Thom.", start: 0.2, end: 1.8 }] };
-    const score = scoreSayAttempt({ clip: scene, roleId: "actor", transcript: "You're a jerk, Tom.", words: [], recordingOffsetMs: 0, audioHash: "abc" });
+    const score = scoreSayAttempt({ clip: scene, roleId: "actor", transcript: "You are a jerk, Tom.", words: [], recordingOffsetMs: 0, audioHash: "abc" });
     Object.assign(state.rows[0]!, { clip_snapshot: scene, status: "scored", score, moderation_state: "rejected" });
     await approveSaySharing(state.rows[0]!);
     expect(mocks.moderate).not.toHaveBeenCalled();

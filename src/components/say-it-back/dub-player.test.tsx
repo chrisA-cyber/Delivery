@@ -65,6 +65,42 @@ describe("synchronized scene playback", () => {
     expect(voice.paused).toBe(false);
   });
 
+  it("recovers expected audio-play aborts during replay and labels a friend's take distinctly", async () => {
+    const interrupted = new WeakSet<HTMLMediaElement>();
+    vi.mocked(HTMLMediaElement.prototype.play).mockImplementation(function (this: HTMLMediaElement) {
+      if (this.tagName === "AUDIO" && !interrupted.has(this)) {
+        interrupted.add(this);
+        stopped.set(this, true);
+        return Promise.reject(new DOMException("Interrupted by seek", "AbortError"));
+      }
+      stopped.set(this, false);
+      return Promise.resolve();
+    });
+    const { container } = render(<DubPlayer clip={clip} role={clip.roles[0]!} takeUrl="/private.wav" takeLabel="Friend’s take" />);
+    const video = container.querySelector("video")!;
+    const voice = container.querySelector("audio")!;
+    fireEvent.loadedData(video);
+    video.currentTime = clip.duration;
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Play scene" })); });
+    await act(async () => frame(100));
+    expect(video.currentTime).toBe(0);
+    expect(video.paused).toBe(false);
+    expect(voice.paused).toBe(false);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Original" }));
+    await act(async () => frame(200));
+    expect(video.paused).toBe(true);
+    expect(voice.paused).toBe(true);
+    expect(voice.muted).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Friend’s take" }));
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Play scene" })); frame(300); });
+    expect(video.paused).toBe(false);
+    expect(voice.paused).toBe(false);
+    expect(video.muted).toBe(true);
+    expect(screen.queryByRole("button", { name: "Your take" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("refreshes a failed private source once, then waits for an explicit recovery request", async () => {
     const refresh = vi.fn().mockResolvedValue(undefined);
     const { container } = render(<DubPlayer clip={clip} role={clip.roles[0]!} takeUrl="/private.wav" onAudioError={refresh} />);

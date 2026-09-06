@@ -170,7 +170,7 @@ describe("Say It Back deterministic lexical and temporal scoring", () => {
     expect(score).toMatchObject({ words: 100, timing: 100, rhythm: 100, overall: 100 });
     expect(score.transcript).toBe("You're a jerk, Tom.");
     const wrong = scoreSayAttempt(input({ clip: changedClip, transcript: "You're a jerk, Sam.", words: words.map((word) => ({ ...word, text: word.text === "Tom." ? "Sam." : word.text })) }));
-    expect(wrong.words).toBe(75);
+    expect(wrong.words).toBe(80);
     expect(wrong.evidence.substitutions).toBe(1);
   });
 
@@ -181,5 +181,52 @@ describe("Say It Back deterministic lexical and temporal scoring", () => {
     const score = scoreSayAttempt(input({ clip: changedClip, transcript, words }));
     expect(score).toMatchObject({ words: 100, timing: 100, rhythm: 100, overall: 100 });
     expect(score.transcript).toBe(transcript);
+  });
+
+  it.each([
+    ["I'm here.", "I am here."],
+    ["You're here.", "You are here."],
+    ["You've arrived.", "You have arrived."],
+    ["You weren't here.", "You were not here."],
+    ["They're coming.", "They are coming."],
+  ])("matches expanded and contracted forms of %s without inventing word timing", (contracted, expanded) => {
+    for (const [reference, transcript] of [[contracted, expanded], [expanded, contracted]]) {
+      const changedClip = { ...clip, cues: [{ id: "only", roleId: "player", text: reference!, start: 1, end: 2 }] };
+      const tokens = transcript!.split(" ");
+      const words = tokens.map((text, index) => ({ text, start: 1 + index / tokens.length, end: 1 + (index + 1) / tokens.length }));
+      const score = scoreSayAttempt(input({ clip: changedClip, transcript: transcript!, words }));
+      expect(score).toMatchObject({ words: 100, timing: 100, rhythm: 100, overall: 100 });
+      expect(score.evidence.phrases[0]).toMatchObject({ actualStart: 1, actualEnd: 2 });
+      expect(score.transcript).toBe(transcript);
+    }
+  });
+
+  it("keeps were distinct from we're and preserves genuinely changed words", () => {
+    const changedClip = { ...clip, cues: [{ id: "only", roleId: "player", text: "We're coming, Barbara.", start: 1, end: 2 }] };
+    const score = scoreSayAttempt(input({ clip: changedClip, transcript: "Were coming, Barbareth.", words: [{ text: "Were", start: 1, end: 1.2 }, { text: "coming", start: 1.2, end: 1.6 }, { text: "Barbareth", start: 1.6, end: 2 }] }));
+    expect(score.words).toBeLessThan(100);
+    expect(score.evidence.substitutions).toBeGreaterThanOrEqual(1);
+    expect(score.evidence.omissions).toBeGreaterThanOrEqual(1);
+    expect(score.evidence.matchedWords).toBe(1);
+  });
+
+  it("maps expanded transcript units to a single original ASR contraction window", () => {
+    const changedClip = { ...clip, cues: [{ id: "only", roleId: "player", text: "You're", start: 1, end: 2 }] };
+    const words = [{ text: "You're", start: 1, end: 2 }];
+    const score = scoreSayAttempt(input({ clip: changedClip, transcript: "You are", words }));
+    expect(score).toMatchObject({ words: 100, timing: 100, rhythm: 100, overall: 100 });
+    expect(score.evidence).toMatchObject({ expectedWords: 2, matchedWords: 2, phrases: [{ cueId: "only", actualStart: 1, actualEnd: 2, expectedStart: 1, expectedEnd: 2 }] });
+    expect(words).toEqual([{ text: "You're", start: 1, end: 2 }]);
+  });
+
+  it("aligns expanded They're phrase entries but still penalizes Barbareth", () => {
+    const changedClip = { ...clip, cues: [{ id: "only", roleId: "player", text: "They're coming to get you, Barbara.", start: 1, end: 2 }] };
+    const tokens = "They are coming to get you Barbareth".split(" ");
+    const words = tokens.map((text, index) => ({ text, start: 1 + index / tokens.length, end: 1 + (index + 1) / tokens.length }));
+    const score = scoreSayAttempt(input({ clip: changedClip, transcript: "They are coming to get you, Barbareth.", words }));
+    expect(score.words).toBe(86);
+    expect(score.evidence).toMatchObject({ substitutions: 1, omissions: 0, additions: 0, expectedWords: 7 });
+    expect(score.evidence.phrases[0]!.actualStart).toBe(1);
+    expect(score.timing).toBeGreaterThan(0);
   });
 });

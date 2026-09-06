@@ -254,5 +254,31 @@
     "smtpStatus": "Public Auth settings do not expose SMTP configuration. Prior signup429 is consistent with email-send quota exhaustion; custom SMTP status remains unverified.",
     "ownerAction": "Configure a working custom SMTP sender in this isolated Supabase project Authentication > Email > SMTP Settings, keeping email confirmation enabled; alternatively configure an OAuth provider. Then verify one delivered magic link.",
     "documentation": "https://supabase.com/docs/guides/auth/auth-smtp"
+  },
+  "postDeployment": {
+    "purpose": "Classic saved result preserved after final shared account and Say It Back deployment",
+    "deploymentId": "3e1ace42-4d1b-49d3-8618-426903405813",
+    "revision": "11ede22b3b6794a40ddacafa933e39964c55f9b0",
+    "checkedAt": "2026-09-06T05:37:38.441Z",
+    "accountStatus": 200,
+    "authenticated": true,
+    "matchingClassicRows": 1,
+    "scores": {
+      "overall": 50,
+      "commitment": 60,
+      "comedy": 20,
+      "accuracy": 100,
+      "chaos": 10
+    },
+    "visibility": "private",
+    "rubricVersion": "delivery-voice-v1.2",
+    "scoringVersion": "delivery-voice-v1",
+    "playbackStatus": 200,
+    "audioStatus": 200,
+    "audioBytes": 99820,
+    "audioSha256": "03d573b8f99c92f4bd554c26f16e4bf9ce9df06e1513f195ee1d0087843166fa",
+    "unchangedAudio": true,
+    "authCookiesReturned": false,
+    "credentialSourceModified": false
   }
 }

@@ -4,7 +4,7 @@ Current execution — September 6, 2026: Classic connected-account validation no
 
 Working draft, updated September 6, 2026. The sequence is Classic validation → Say It Back → groups and streamer participation → Switch. Camera-free participation remains central. This document records proposals for planning; it does not authorize implementation or deployment by itself. Update it as product decisions and implementation evidence arrive.
 
-Current implementation baseline: `chrisA-cyber/Delivery`, `main`, commit `c74baddcc93783490ec636291cc5b03397bdaa7b`, fetched September 6, 2026. Step 1B is committed and its [handoff](CLASSIC_STEP_1B_HANDOFF.md), [independent review](CLASSIC_STEP_1B_REVIEW.md), and recorded evidence have been read. Step 1C changes and validation boundaries are recorded in [CLASSIC_STEP_1C_HANDOFF.md](CLASSIC_STEP_1C_HANDOFF.md). Later tasks must fetch the current branch rather than assume this snapshot remains current.
+Historical implementation baseline: `chrisA-cyber/Delivery`, `main`, commit `c74baddcc93783490ec636291cc5b03397bdaa7b`, fetched September 6, 2026. Step 1B is committed and its [handoff](CLASSIC_STEP_1B_HANDOFF.md), [independent review](CLASSIC_STEP_1B_REVIEW.md), and recorded evidence have been read. Step 1C changes and validation boundaries are recorded in [CLASSIC_STEP_1C_HANDOFF.md](CLASSIC_STEP_1C_HANDOFF.md). Later tasks must fetch the current branch rather than assume this snapshot remains current.
 
 Step 1B completed the content/UI implementation: 86 active lines, 36 directions, six packs, historical identity preservation, a separate Scribe companion transcript, and a ready human-playtest kit. Its recorded evidence includes 517 database assertions in PostgreSQL WASM and 11 live synthetic Scribe requests; neither establishes full Supabase HTTP integration or live OpenAI judging. Human enjoyment, judging calibration, and real-device behavior remain unvalidated. Do not repeat the catalog redesign or treat those external gates as passed.
 
@@ -245,18 +245,18 @@ Every completion report should include the branch/commit or exact diff, behavior
 
 Review outcomes are: accepted with evidence; a specific correction is needed; or external validation is still needed. Preserve narrower completion when appropriate—for example, local media capture can be complete while production upload remains unverified.
 
-**Current prompt queue — supersedes the original sequence**
+**Current completion and next work — September 6, 2026**
 
-1. Resume from the Step 1D setup handoff once an existing suitable validation machine or explicitly designated disposable environment is available. Complete bounded consented OpenAI judging, actual isolated Supabase HTTP integration, and the first owner microphone/playback session; record the real device/browser. Resolve material Classic failures before advancing; do not repeat completed content work or claim pending tests passed.
-2. Write the next bounded implementation prompt for Say It Back after the Classic gate review. No later mode is implemented in Step 1C.
-3. Expand friend challenges and streamer participation around Classic and Say It Back.
-4. Add Switch afterward, then revisit the later phases using actual play evidence.
+1. Classic connected account engineering is complete and verified on the isolated Railway/Supabase environment. Saved results, renewed private links, session refresh and cached retry charges pass; existing records and rubric semantics are preserved.
+2. Say It Back is built and deployed with ten real clips, timed microphone capture, synchronized private dubs, separate versioned matching, guest claiming, history and friend challenges. Final release evidence and limits are in [the current handoff](SAY_IT_BACK_HANDOFF.md). Reliable public signup still needs working SMTP or OAuth; physical laptop/phone microphone checks remain the owner launch session.
+3. Observe a short owner/player session and fix demonstrated problems in Classic and Say It Back. Do not substitute further broad audits or synthetic evaluations for physical microphone and enjoyment feedback.
+4. Groups and streamer participation follow that launch session. Switch remains later work.
 
 **Say It Back — confirmed product decision**
 
 The core loop is: watch/listen to the original short clip → record the same line with timing cues → replay the video with the player's voice replacing the original dialogue → inspect a match score → retry or challenge a friend. Dubbed playback is the main payoff. The mode is camera-free by design.
 
-Focus on matching word accuracy, timing, pacing, intonation, and emotional delivery. Natural vocal identity should not determine success; do not require an identical voice or introduce voice cloning. Define and validate a separate scoring contract from Classic, with measured alignment and honest limits for subjective delivery similarity. Absurd reinterpretation remains in Classic, not the initial Say It Back scope.
+The shipped matching version measures words (50%), phrase timing (30%) and rhythm (20%). Intonation and emotional delivery remain unscored until a credible audio measurement is available. Natural vocal identity should not determine success; do not require an identical voice or introduce voice cloning. Define and validate a separate scoring contract from Classic, with measured alignment and honest limits for subjective delivery similarity. Absurd reinterpretation remains in Classic, not the initial Say It Back scope.
 
 Use a curated, publishable clip collection spanning recognizable sources where feasible. Record source attribution and media-use status separately from short-text quote publication decisions. Preserve background music/effects when suitable source tracks or validated separation permit it; do not promise clean separation from arbitrary clips. Verify that the original dialogue is actually replaced, the user's voice is synchronized, and the reference is not recorded as microphone leakage. Prioritize immediate original-versus-yours comparison and quick retries. Finished exports follow the same source-media publication constraints.
 
