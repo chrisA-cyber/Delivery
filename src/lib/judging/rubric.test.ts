@@ -11,13 +11,14 @@ describe("voice score compatibility", () => {
       { dimensions: [0, 0, 0, 100], overall: 20 },
       { dimensions: [87, 79, 100, 72], overall: 85 },
       { dimensions: [42, 65, 81, 20], overall: 53 },
+      { dimensions: [7, 6, 100, 2], overall: 29 },
     ];
     for (const receipt of historicalReceipts) {
       const [commitment, comedy, accuracy, chaos] = receipt.dimensions;
       expect(overallScore(commitment!, comedy!, accuracy!, chaos!)).toBe(receipt.overall);
     }
     expect(SCORING_VERSION).toBe("delivery-voice-v1");
-    expect(RUBRIC_VERSION).toBe("delivery-voice-v1.1");
+    expect(RUBRIC_VERSION).toBe("delivery-voice-v1.2");
   });
 
   it("allows restrained interpretations and guards against spoken instructions", () => {

@@ -69,9 +69,9 @@ const JUDGMENT_TOOL = {
           description: "True only when clear human speech is actually audible in the recording.",
         },
         transcript: { type: "string", maxLength: 2_000 },
-        commitment: { type: "integer", minimum: 0, maximum: 100 },
-        comedy: { type: "integer", minimum: 0, maximum: 100 },
-        chaos: { type: "integer", minimum: 0, maximum: 100 },
+        commitment: { type: "integer", minimum: 0, maximum: 100, description: "Commitment score out of 100, not out of 10." },
+        comedy: { type: "integer", minimum: 0, maximum: 100, description: "Comedy score out of 100, not out of 10." },
+        chaos: { type: "integer", minimum: 0, maximum: 100, description: "Chaos score out of 100, not out of 10." },
         verdict: { type: "string", minLength: 8, maxLength: 240 },
         verdictTag: {
           type: "string",

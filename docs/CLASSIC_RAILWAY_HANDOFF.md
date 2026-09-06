@@ -1,5 +1,34 @@
 # Classic Railway migration
 
+## Current runtime evidence — September 6, 2026
+
+The historical setup blockers below have been resolved by the owner granting Railway GitHub access, entering the three private settings directly in Railway, and saving the Railway Supabase Auth URLs (Auth configuration is owner-reported). Deployment `3108860b-d957-407c-81cc-7af069e17a75` is SUCCESS at code revision `71d7a1a86dfdf99eb675ae607f14d9253ce60f88`. The allocated `/play` URL now returns 200. `/api/account` returns 200 with `configured:true, authenticated:false`; `/api/prompts/daily` returns 200 through the real Supabase service-role RPC and public read; guest access to a nonexistent report target returns expected 404 `REPORT_TARGET_NOT_FOUND` with a signed device cookie, verifying the deployed device secret and native Redis route. No report row was created.
+
+Owner approved a $1 ceiling, three short judged takes and at most six OpenAI judging dispatches including repair, then requested realistic synthetic speech instead of supplying human takes. A one-second all-zero PCM WAV sent to the actual `/api/judge` returned 422 `NO_SPEECH_DETECTED` in 8,152 ms (client-observed), request ID `f6b37c01-09c6-4be7-bf57-2082386d761d`, before any provider call. Stripe and cleanup launch settings remain separate from these passing free-session routes.
+
+## Live synthetic judging results
+
+[Recorded responses and sample hashes](evidence/classic-railway/synthetic-live.json) come from the actual deployed app, native Redis, Supabase catalog and OpenAI judge. Free local Kokoro synthesis ran in Railway's execution sandbox after workspace download access failed; no new deployed service or exposed credential was needed. Stock voices `af_sarah` and `am_michael` generated 3.593-second and 3.674-second mono PCM16 WAVs. These are synthetic fixtures, not human performance evidence.
+
+| Case | Overall | Word accuracy | HTTP latency |
+| --- | --- | --- | --- |
+| Correct line, Sarah | 29 | 100 | 4,221 ms |
+| Exact same attempt replay | 29 | 100 | 33 ms |
+| Identical audio, fresh attempt | 29 | 100 | 2,429 ms |
+| Changed words, Michael | 20 | 70 | 1,997 ms |
+
+All four successful responses were live `source:ai`, rubric `delivery-voice-v1.1`, scoring `delivery-voice-v1`. Guest results correctly remained unpersisted. Cached replay returned the identical result ID and kept quota usage at one; fresh judgments advanced usage to two and three. Literal transcripts matched both synthesized texts. The first test setup used a direction slug instead of full text and returned 409 `ENERGY_MISMATCH` before reservation/provider invocation; the test payload was corrected, without an application change or paid retry.
+
+Feedback addressed the steady tone and pause before the second sentence, and did not prescribe shouting. However, the identical recording received conflicting coaching: first insert a clearer pause, then tighten the existing pause. Overall repeat difference was zero, comedy differed by one, and two repeats are insufficient competition-calibration evidence. The changed-word case also changes voice, so performance-score differences cannot establish accent/voice fairness or isolate word changes from vocal delivery.
+
+Three unique successful judgments imply **3–6 provider dispatches** including bounded repairs. The route does not expose token usage or exact dispatch count; neither is invented here. The cached replay and two pre-provider rejections add no provider calls. Estimated spend remains below the prior $0.50 planning estimate for these short clips, but actual spend is unverified; $1 was authorized. All six possible dispatch slots are accounted for, so no paid rerun was made.
+
+## Scale clarification and remaining validation
+
+Positive feedback and `MAIN_CHARACTER` badges accompanied commitment/comedy/chaos values of 2–7, producing overall 29 despite 100 accuracy. This suggests scale ambiguity; it does not prove the model intended 70 rather than 7. The existing schema required 0–100, but the prose did not explain that range. Rubric **`delivery-voice-v1.2`** now explicitly requests 0–100 rather than 0–10, with matching field descriptions. The scoring version, 30/25/25/20 weights, OpenAI transcript source and legitimate low scores remain unchanged; no historic result is multiplied or rewritten. This prompt clarification can shift new scores, so v1.1 and v1.2 are not proven calibrated/comparable and should be identified by rubric version. A regression fixture preserves the observed 7/6/100/2 → 29 arithmetic.
+
+The clarification passed `npx vitest run src/lib/judging/rubric.test.ts src/lib/server/openai-contract.test.ts` (14 tests), `npm run typecheck`, `npm run lint`, and `git diff --check`, but has **no paid live rerun yet**. Quiet-direction weighting and feedback stability remain unresolved. Signed-in save/history/private playback, browser microphone/replay, real devices and human enjoyment remain untested. Next: one explicitly authorized synthetic rerun (at most two additional provider dispatches), then one signed-in save/playback check. Live transport and guest retry handling work; this is not a public-launch validation or proof of comedy quality. No later mode work began.
+
 2026-09-06. The owner authorized moving the isolated Classic preview to Railway on their existing plan. Production Netlify, main, PR #1 and the separate Clipping Railway project remain untouched. This is an environment migration, not repeated Step 1C/1D validation.
 
 ## Code and verification
@@ -25,7 +54,7 @@ Web build/runtime variables present: `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SUPABAS
 
 Staged `REDIS_URL` reference was corrected to `${{Redis-u2D6.REDIS_URL}}` using Railway's reference tool and verified against the exact replacement service; no rendered credential was exposed. Supabase, build/start and domain configuration were reverified intact. The application has **no deployment yet**; the owner must apply the staged changes through the required dashboard verification. This is a Railway access requirement, not an automatic approval-review rejection.
 
-## Actual access blockers
+## Initial access blockers (resolved; historical record)
 
 Railway returned: “These staged changes require two-factor verification, which isn't available over an API/MCP token. Apply them from the Railway dashboard.” No alternate tool was used to bypass that requirement. Open [the isolated project](https://railway.com/project/321c764e-38fe-4ecb-98f2-39c8654d0956?environmentId=8470f7d3-49f4-41bc-b39e-65fc1e5a1e22), review staged changes and apply them with the account's verification.
 

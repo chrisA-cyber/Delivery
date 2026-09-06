@@ -1,0 +1,285 @@
+{
+  "baseUrl": "https://delivery-production-0577.up.railway.app",
+  "budgetUsd": 1,
+  "complete": true,
+  "kind": "synthetic-stock-voices-real-Railway-HTTP-live-judge",
+  "manifest": [
+    {
+      "case": "correct",
+      "durationMs": 3593,
+      "sampleRate": 24000,
+      "sha256": "710639acd075bf27fd23b67e6759b0668c454a4a3275b96b5ab6c2d5d2242d9c",
+      "text": "I am my own emergency contact. We are both panicking.",
+      "voice": "af_sarah"
+    },
+    {
+      "case": "changed",
+      "durationMs": 3674,
+      "sampleRate": 24000,
+      "sha256": "3df7d8843258d5d3e44bb7366a069fca8ae666149c05a77026f4eb89c253d03f",
+      "text": "I am your emergency contact. We are both dancing.",
+      "voice": "am_michael"
+    }
+  ],
+  "maxProviderDispatches": 6,
+  "maxUniqueTakes": 3,
+  "providerDispatchesActual": null,
+  "providerDispatchesUpperBound": 6,
+  "runs": [
+    {
+      "attemptId": "04a87146-dd6e-4e54-b35e-364d956e7a21",
+      "body": {
+        "delivery": {
+          "id": null,
+          "persisted": false,
+          "warning": "Sign in to save this take to your profile."
+        },
+        "requestId": "4e5653c7-3da1-49c4-ab86-d6daae2952ca",
+        "result": {
+          "badge": "MAIN_CHARACTER",
+          "coachNote": "Try inserting a clear pause right before 'We are both panicking' to emphasize the embarrassing twist.",
+          "highlights": [
+            "Matter-of-fact tone on 'I am my own emergency contact'",
+            "Smooth transition into 'We are both panicking'"
+          ],
+          "id": "ef9666df-d220-4af1-ad30-c3cb2553cd3b",
+          "moment": "Matter-of-fact tone on 'I am my own emergency contact'",
+          "rubricVersion": "delivery-voice-v1.1",
+          "scores": {
+            "accuracy": 100,
+            "chaos": 2,
+            "comedy": 6,
+            "commitment": 7,
+            "overall": 29
+          },
+          "scoringVersion": "delivery-voice-v1",
+          "source": "ai",
+          "title": "MAIN CHARACTER",
+          "transcript": "I am my own emergency contact. We are both panicking.",
+          "verdict": "A steady, no-nonsense delivery that fit the flat testimony spirit well, though it could have used a more marked pause before the panic reveal to really sell that awkwardness.",
+          "xp": 35
+        },
+        "usage": {
+          "limit": 5,
+          "remaining": 4,
+          "replayed": false,
+          "resetAt": "2026-09-07T00:00:00.000Z",
+          "tier": "guest",
+          "tracked": true,
+          "used": 1
+        },
+        "warning": "Sign in to save this take to your profile."
+      },
+      "case": "correct-first",
+      "httpStatus": 200,
+      "latencyMs": 4221,
+      "replayed": "false",
+      "requestId": null,
+      "sha256": "710639acd075bf27fd23b67e6759b0668c454a4a3275b96b5ab6c2d5d2242d9c",
+      "startedAt": "2026-09-06T03:43:35.155119+00:00"
+    },
+    {
+      "attemptId": "04a87146-dd6e-4e54-b35e-364d956e7a21",
+      "body": {
+        "delivery": {
+          "id": null,
+          "persisted": false,
+          "warning": "Sign in to save this take to your profile."
+        },
+        "requestId": "32435544-ee28-495a-918d-a9a0a61aec2f",
+        "result": {
+          "badge": "MAIN_CHARACTER",
+          "coachNote": "Try inserting a clear pause right before 'We are both panicking' to emphasize the embarrassing twist.",
+          "highlights": [
+            "Matter-of-fact tone on 'I am my own emergency contact'",
+            "Smooth transition into 'We are both panicking'"
+          ],
+          "id": "ef9666df-d220-4af1-ad30-c3cb2553cd3b",
+          "moment": "Matter-of-fact tone on 'I am my own emergency contact'",
+          "rubricVersion": "delivery-voice-v1.1",
+          "scores": {
+            "accuracy": 100,
+            "chaos": 2,
+            "comedy": 6,
+            "commitment": 7,
+            "overall": 29
+          },
+          "scoringVersion": "delivery-voice-v1",
+          "source": "ai",
+          "title": "MAIN CHARACTER",
+          "transcript": "I am my own emergency contact. We are both panicking.",
+          "verdict": "A steady, no-nonsense delivery that fit the flat testimony spirit well, though it could have used a more marked pause before the panic reveal to really sell that awkwardness.",
+          "xp": 35
+        },
+        "usage": {
+          "limit": 5,
+          "remaining": 4,
+          "replayed": false,
+          "resetAt": "2026-09-07T00:00:00.000Z",
+          "tier": "guest",
+          "tracked": true,
+          "used": 1
+        },
+        "warning": "Sign in to save this take to your profile."
+      },
+      "case": "same-attempt-replay",
+      "httpStatus": 200,
+      "latencyMs": 33,
+      "replayed": "true",
+      "requestId": null,
+      "sha256": "710639acd075bf27fd23b67e6759b0668c454a4a3275b96b5ab6c2d5d2242d9c",
+      "startedAt": "2026-09-06T03:43:39.376712+00:00"
+    },
+    {
+      "attemptId": "349ec3a6-faf1-48a0-a079-c6220507d87a",
+      "body": {
+        "delivery": {
+          "id": null,
+          "persisted": false,
+          "warning": "Sign in to save this take to your profile."
+        },
+        "requestId": "0c71ecc9-80a2-43c1-94d5-b2affbae9b34",
+        "result": {
+          "badge": "MAIN_CHARACTER",
+          "coachNote": "Try tightening the pause before 'We are both panicking' just a bit for an even more precise delivery.",
+          "highlights": [
+            "Steady tone maintained throughout",
+            "Natural pause before 'We are both panicking.'"
+          ],
+          "id": "8dfd97b0-b0a1-41cf-9f09-14258360462b",
+          "moment": "Steady tone maintained throughout",
+          "rubricVersion": "delivery-voice-v1.1",
+          "scores": {
+            "accuracy": 100,
+            "chaos": 2,
+            "comedy": 5,
+            "commitment": 7,
+            "overall": 29
+          },
+          "scoringVersion": "delivery-voice-v1",
+          "source": "ai",
+          "title": "MAIN CHARACTER",
+          "transcript": "I am my own emergency contact. We are both panicking.",
+          "verdict": "Straightforward delivery with a solid pause before the panic worked, making the humor dry and honest.",
+          "xp": 35
+        },
+        "usage": {
+          "limit": 5,
+          "remaining": 3,
+          "replayed": false,
+          "resetAt": "2026-09-07T00:00:00.000Z",
+          "tier": "guest",
+          "tracked": true,
+          "used": 2
+        },
+        "warning": "Sign in to save this take to your profile."
+      },
+      "case": "identical-recording-new-attempt",
+      "httpStatus": 200,
+      "latencyMs": 2429,
+      "replayed": "false",
+      "requestId": null,
+      "sha256": "710639acd075bf27fd23b67e6759b0668c454a4a3275b96b5ab6c2d5d2242d9c",
+      "startedAt": "2026-09-06T03:43:39.411163+00:00"
+    },
+    {
+      "attemptId": "4c53f5b0-d543-442e-88b8-3ec32ea8ac75",
+      "body": {
+        "delivery": {
+          "id": null,
+          "persisted": false,
+          "warning": "Sign in to save this take to your profile."
+        },
+        "requestId": "c0bf3344-b77a-4fe0-b1ee-764386db45f3",
+        "result": {
+          "badge": "NEEDS_MORE_SAUCE",
+          "coachNote": "Try inserting a small pause before the second sentence to let the awkwardness linger.",
+          "highlights": [
+            "Steady even tone throughout",
+            "Unvarying pace without a pause before 'dancing'"
+          ],
+          "id": "8b15cf7d-60db-4b72-91be-61b89937b3c2",
+          "moment": "Steady even tone throughout",
+          "rubricVersion": "delivery-voice-v1.1",
+          "scores": {
+            "accuracy": 70,
+            "chaos": 2,
+            "comedy": 2,
+            "commitment": 4,
+            "overall": 20
+          },
+          "scoringVersion": "delivery-voice-v1",
+          "source": "ai",
+          "title": "NEEDS MORE SAUCE",
+          "transcript": "I am your emergency contact. We are both dancing.",
+          "verdict": "You kept things flat and precise, but didn't quite pause to let the weirdness land, and the line changed from panicking to dancing which shifted the tone.",
+          "xp": 35
+        },
+        "usage": {
+          "limit": 5,
+          "remaining": 2,
+          "replayed": false,
+          "resetAt": "2026-09-07T00:00:00.000Z",
+          "tier": "guest",
+          "tracked": true,
+          "used": 3
+        },
+        "warning": "Sign in to save this take to your profile."
+      },
+      "case": "changed-words",
+      "httpStatus": 200,
+      "latencyMs": 1997,
+      "replayed": "false",
+      "requestId": null,
+      "sha256": "3df7d8843258d5d3e44bb7366a069fca8ae666149c05a77026f4eb89c253d03f",
+      "startedAt": "2026-09-06T03:43:41.841461+00:00"
+    }
+  ],
+  "voiceGenerationCostUsd": 0,
+  "codeRevision": "71d7a1a86dfdf99eb675ae607f14d9253ce60f88",
+  "deploymentId": "3108860b-d957-407c-81cc-7af069e17a75",
+  "audioProvenance": {
+    "engine": "kokoro-onnx 0.4.7",
+    "model": "kokoro-v1.0.onnx",
+    "voices": "voices-v1.0.bin",
+    "source": "https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.1",
+    "execution": "Railway execution sandbox; stock synthetic voices; mono PCM16 WAV; no human recordings"
+  },
+  "preflightRejectedRequest": {
+    "attemptId": "04a87146-dd6e-4e54-b35e-364d956e7a21",
+    "body": {
+      "error": {
+        "code": "ENERGY_MISMATCH",
+        "message": "This round changed after it loaded. Refresh the line before submitting your take."
+      },
+      "ok": false,
+      "requestId": "fa63a9d0-2004-4b64-9208-263152375107"
+    },
+    "case": "correct-first",
+    "httpStatus": 409,
+    "latencyMs": 728,
+    "replayed": null,
+    "requestId": null,
+    "sha256": "710639acd075bf27fd23b67e6759b0668c454a4a3275b96b5ab6c2d5d2242d9c",
+    "startedAt": "2026-09-06T03:42:04.560924+00:00",
+    "providerDispatches": 0
+  },
+  "silence": {
+    "httpStatus": 422,
+    "errorCode": "NO_SPEECH_DETECTED",
+    "latencyMs": 8152,
+    "providerDispatches": 0,
+    "requestId": "f6b37c01-09c6-4be7-bf57-2082386d761d"
+  },
+  "providerDispatchesLowerBound": 3,
+  "estimatedCostUsd": null,
+  "costNote": "Three unique live judging attempts, each at most two OpenAI dispatches; one successful idempotent HTTP replay makes no new provider call. Exact provider dispatch count and token usage are not exposed by the HTTP route. Planning estimate below $0.50 for these short clips; actual billing unverified. No additional paid requests authorized or made after this batch.",
+  "limitations": [
+    "Synthetic speech does not validate human acting quality, comedy, fairness or enjoyment.",
+    "Guest API testing does not verify browser microphone capture or audible replay.",
+    "Signed-in save/history/private playback not exercised.",
+    "Performance dimensions 2–7 with positive feedback suggest a 0–10 vs 0–100 interpretation issue; not proven from scores alone.",
+    "Identical audio returned same overall 29 but conflicting pause coaching; feedback stability unresolved.",
+    "No automatic rescaling, weighting change or accuracy transcript substitution."
+  ]
+}

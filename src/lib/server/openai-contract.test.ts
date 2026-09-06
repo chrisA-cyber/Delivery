@@ -81,6 +81,10 @@ describe("direct audio judge contract (mocked SDK; no network)", () => {
     const result = await judgeDelivery(input({ onOpenAIUsage }));
     const [request, options] = fixture.create.mock.calls[0]!;
     expect(request.store).toBe(false);
+    expect(request.messages[0].content).toContain("0–100 scale, not a 0–10 scale");
+    for (const dimension of ["commitment", "comedy", "chaos"]) {
+      expect(request.tools[0].function.parameters.properties[dimension].description).toContain("out of 100, not out of 10");
+    }
     expect(request.safety_identifier).toMatch(/^[a-f0-9]{64}$/);
     expect(request.safety_identifier).not.toContain("private-player");
     expect(request.messages[1].content[0].text).toContain(JSON.stringify(input().energy));
@@ -89,7 +93,7 @@ describe("direct audio judge contract (mocked SDK; no network)", () => {
     });
     expect(options.maxRetries).toBe(0);
     expect(result.scores).toEqual({ commitment: 92, comedy: 84, chaos: 82, accuracy: 100, overall: 90 });
-    expect(result.rubricVersion).toBe("delivery-voice-v1.1");
+    expect(result.rubricVersion).toBe("delivery-voice-v1.2");
     expect(result.scoringVersion).toBe("delivery-voice-v1");
     expect(result.coachNote).toContain("one beat");
     expect(onOpenAIUsage).toHaveBeenCalledWith(usage);
