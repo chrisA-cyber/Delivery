@@ -1,0 +1,87 @@
+{
+  "kind": "synthetic-stock-voices-real-Railway-HTTP-live-judge",
+  "baseUrl": "https://delivery-production-0577.up.railway.app",
+  "manifest": [
+    {
+      "case": "correct",
+      "voice": "af_sarah",
+      "text": "I am my own emergency contact. We are both panicking.",
+      "sampleRate": 24000,
+      "durationMs": 3593,
+      "sha256": "0ff0161bad13ed49a9195d200e26e3f220831cdac68c598f7c0f8d435d84a369"
+    }
+  ],
+  "maxUniqueTakes": 1,
+  "maxProviderDispatches": 2,
+  "budgetUsd": 0.1,
+  "voiceGenerationCostUsd": 0,
+  "runs": [
+    {
+      "case": "scale-v12-regenerated-same-voice-text",
+      "attemptId": "ca83da4b-3e2b-45f4-8ced-8ab9eb9d42ac",
+      "sha256": "0ff0161bad13ed49a9195d200e26e3f220831cdac68c598f7c0f8d435d84a369",
+      "startedAt": "2026-09-06T03:59:54.408892+00:00",
+      "httpStatus": 200,
+      "latencyMs": 3827,
+      "replayed": "false",
+      "requestId": null,
+      "body": {
+        "result": {
+          "id": "9bd39b23-a0b3-4059-9c0b-ba5af8b93c36",
+          "scores": {
+            "commitment": 80,
+            "comedy": 60,
+            "accuracy": 100,
+            "chaos": 30,
+            "overall": 70
+          },
+          "verdict": "Your flat delivery with that well-placed pause felt like a nervous testimony, nicely understated.",
+          "title": "CINEMA",
+          "moment": "deliberate pause before 'we are both panicking'",
+          "transcript": "I am my own emergency contact... we are both panicking.",
+          "coachNote": "Try hitting the word 'panicking' with a slightly more measured pace to drive home the embarrassment.",
+          "highlights": [
+            "deliberate pause before 'we are both panicking'",
+            "steady, flat tone throughout"
+          ],
+          "rubricVersion": "delivery-voice-v1.2",
+          "scoringVersion": "delivery-voice-v1",
+          "badge": "CINEMA",
+          "xp": 35,
+          "source": "ai"
+        },
+        "delivery": {
+          "id": null,
+          "persisted": false,
+          "warning": "Sign in to save this take to your profile."
+        },
+        "usage": {
+          "tier": "guest",
+          "used": 1,
+          "limit": 5,
+          "remaining": 4,
+          "resetAt": "2026-09-07T00:00:00.000Z",
+          "tracked": true,
+          "replayed": false
+        },
+        "warning": "Sign in to save this take to your profile.",
+        "requestId": "6698449b-5604-44f8-bdfb-cbbe75053c7e"
+      }
+    }
+  ],
+  "complete": true,
+  "providerDispatchesActual": null,
+  "providerDispatchesUpperBound": 2,
+  "deployedCommit": "5618fb8040d6ae45aee6548f3ac1953ee364caa4",
+  "deploymentId": "bb72afad-fed7-4dda-b56c-80a5184e4963",
+  "sampleLimitation": "Original WAV expired. Regenerated same stock voice/text has different bytes; this is NOT a paired identical-audio before/after comparison.",
+  "kokoroVersion": "0.6.1",
+  "evidenceNotes": {
+    "providerDispatches": "One app request; actual provider dispatch count not exposed, range 1–2 including repair. No further paid requests authorized by this batch.",
+    "estimatedCostUsdUpper": 0.1,
+    "actualCostUsd": null,
+    "preflightFailures": "Expired original fixture; pinned kokoro-onnx 0.4.7 failed input dtype; upgraded 0.6.1 generated different bytes. All stopped before app/provider dispatch. New hash explicitly recorded before one allowed take.",
+    "interpretation": "New rubric confirmed; no 0–10-like clustering in this take. Different audio bytes and one sample prevent causal before/after or calibration conclusions.",
+    "unchanged": "Scoring version, weights, historical scores and OpenAI accuracy transcript source."
+  }
+}
