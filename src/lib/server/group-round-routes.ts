@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { getServerEnv } from "@/lib/server/env";
 import { AppError, jsonError, jsonOk, requestIdFrom } from "@/lib/server/api-error";
 import { createGroupRound, getGroupRound, getGroupViewer, mutateGroupRound, submitGroupPerformance } from "@/lib/server/group-rounds";
 import { enforceRateLimit, getClientKey } from "@/lib/server/rate-limit";
@@ -29,7 +30,10 @@ export async function handleGroupRoute(request: Request, action: GroupRouteActio
     const creation = action === "create" || action === "rematch" ? createRoundSchema.parse(body) : null;
     const viewer = await getGroupViewer(request, creation?.requestId); cookie = viewer.setCookie;
     await enforceRateLimit(getClientKey(request, `group-${action}`), { limit: action === "create" || action === "rematch" ? 10 : action === "read" ? 600 : 60, windowMs: 10 * 60_000 });
-    const origin = new URL(request.url).origin;
+    // Railway passes an internal listen address in Request.url. Invitations
+    // must use the same configured public origin as auth and CSRF protection.
+    const publicUrl = getServerEnv().NEXT_PUBLIC_APP_URL;
+    const origin = new URL(publicUrl || request.url).origin;
     let round;
     if (creation) round = await createGroupRound(creation, viewer, origin, action === "rematch" ? token : undefined);
     else if (action === "read") round = await getGroupRound(token!, viewer, origin, groupRatingSchema.parse(new URL(request.url).searchParams.get("maxRating") ?? "everyone"));

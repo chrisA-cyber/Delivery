@@ -1,0 +1,40 @@
+{
+  "candidateCommit": "23177da18a46293961a0b83bf855da20250d0a6b",
+  "candidateTree": "bfd16b6b75dfc98c4557c37294534e677136a221",
+  "verification": {
+    "lint": "passed",
+    "productionBuild": "passed",
+    "applicationTests": {
+      "passed": 362,
+      "skippedPaidEvaluations": 3
+    },
+    "databaseAssertions": 579,
+    "upgradeChecks": 12,
+    "mediaProbe": {
+      "scenes": 17,
+      "newScenes": 7,
+      "newCleanScenes": 4,
+      "newDurationSeconds": [
+        10.6,
+        17.55
+      ]
+    }
+  },
+  "migration": {
+    "project": "rcsopyxrotbbfaqikire",
+    "version": "20260906154403",
+    "name": "asynchronous_group_rounds",
+    "sqlSha256": "766daa1c50bf6d48280f1984add8566d65469d0da286d4064e74f3078e7183af",
+    "liveBrowserTableGrants": 0
+  },
+  "cost": {
+    "newPaidRequests": 0,
+    "cumulativeConservativeUSD": 1.675,
+    "originalCapUSD": 5
+  },
+  "limitations": [
+    "No physical microphone or phone session; cloud browser has no isolated contexts or microphone device control.",
+    "Existing GitHub OAuth is owner-confirmed; new real account claiming requires a login unavailable to this engineering session.",
+    "Unscored reference fixture replay does not establish live judging or human performance quality."
+  ]
+}

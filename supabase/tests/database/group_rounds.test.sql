@@ -8,6 +8,9 @@ select ok(not has_table_privilege('authenticated','public.challenge_group_takes'
 select ok(not has_table_privilege('authenticated','public.challenge_group_votes','INSERT'), 'votes require the authorized API');
 select ok(not has_function_privilege('authenticated','public.group_round_action(uuid,uuid,text,text,jsonb)','EXECUTE'), 'clients cannot impersonate RPC owners');
 select ok(has_function_privilege('service_role','public.group_round_action(uuid,uuid,text,text,jsonb)','EXECUTE'), 'application may perform checked group mutations');
+select ok(has_function_privilege('service_role','public.lock_users_for_account_mutation(uuid[])','EXECUTE'), 'invoker group RPCs can execute the account containment helper');
+select ok(not has_function_privilege('anon','public.lock_users_for_account_mutation(uuid[])','EXECUTE'), 'anonymous clients cannot execute the account containment helper');
+select ok(not has_function_privilege('authenticated','public.lock_users_for_account_mutation(uuid[])','EXECUTE'), 'signed-in clients cannot execute the account containment helper');
 select ok(not (select prosecdef from pg_proc where oid = 'public.group_round_action(uuid,uuid,text,text,jsonb)'::regprocedure), 'group mutations are security invoker');
 
 insert into auth.users(id,email,raw_user_meta_data) values
