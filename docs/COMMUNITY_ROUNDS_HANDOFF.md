@@ -4,6 +4,8 @@
 
 ## Release
 
+Latest follow-up: `a78c2b4` routes the production Netlify address to Railway while preserving paths and query parameters. Netlify deployment `6a9daa0b94f6ba00084b2ebb` was verified ready; its login URL redirects to Railway and displays Continue with GitHub. The owner subsequently confirmed sign-in works. Railway application release `fb96d6b` is live in deployment `1cb06e4e-091e-4728-9098-fcf343735ceb`. This follow-up changes Netlify routing and documentation, not Railway application behavior.
+
 Started from fetched main `2be9ebe`; preserved the prior worktree. Implementation commits: `7de3877` (community rounds/claim return), `3d395ea` (polling and UI polish), `f320ffb` (results replay), `ea28e69` (automatic broadcast next-round transition). The remaining PR changes are this roadmap/handoff and evidence. Compare the PR merge against `ea28e69` to establish the unchanged application tree.
 
 Railway Delivery service `34d3b855-25f3-4eea-9438-c43974cef738`, project `321c764e-38fe-4ecb-98f2-39c8654d0956`, production environment `8470f7d3-49f4-41bc-b39e-65fc1e5a1e22`. Its actual source initially pointed at `codex/classic-railway`/`ed38bdb`; it was explicitly advanced to this implementation, not assumed to follow main. Verified deployment `fbb3b626-6173-49ce-a8d9-22bf05810b65` serves `3d395ea`. Final release deployment/source is recorded in PR #4 and the delivery response after merging. Netlify previews build successfully and main triggers production deployment, but its backend is still unconfigured; Railway remains playable. No credentials were copied. Clipping, Redis, cleanup scheduling, and unrelated services were unchanged.
@@ -34,8 +36,8 @@ The existing 20-second recording, upload-size/rate limits, per-member take cap, 
 
 **Costs: $0 new provider calls; cumulative $1.675 / original $5 cap.** No new recurring resources. Existing broad `/api/health` still reports missing configuration (including unavailable payment configuration); Railway's configured `/play` health route and free round flows work. SMTP/payments remain outside this milestone.
 
-## Exact remaining owner session
+## Owner confirmation and remaining session
 
-No authenticated Delivery browser session or owner GitHub login was available. On the same browser that joins/submits as a guest, choose **Sign in & keep my access**, complete the real provider login, and confirm return to the same member/submission. Sign out/in and repeat for a guest host. The application/SQL claim path is verified separately; the full external login path is not yet accepted.
+The owner confirmed that real sign-in works after the Netlify routing fix. Sign-in itself is accepted based on that owner report. This does not separately establish that a submitted guest performance or guest host ownership was retained through sign-in and sign-out/in. Confirm those specific continuity cases if they were not part of the owner's test; the application/SQL claim invariants are already covered.
 
 Use a physical phone to join by code, record/redo/submit, return from sign-in, then watch and vote without microphone access. Open the display in OBS/browser, enable audio, listen for one dub without doubled reference speech, reveal results, and rematch. Cloud-browser tools did not provide mobile viewport emulation, physical microphones, or subjective audio listening; none is claimed. Report demonstrated issues with device/browser details. No paid synthetic batch is needed.
