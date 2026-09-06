@@ -200,7 +200,7 @@ export function useAudioRecorder() {
     if (backup?.url && backup.url !== audioUrlRef.current) URL.revokeObjectURL(backup.url);
   }, []);
 
-  const start = useCallback(async (options?: { preservePreviousTake?: boolean }) => {
+  const start = useCallback(async (options?: { preservePreviousTake?: boolean; maxDurationMs?: number }) => {
     // Catch clicks arriving before React rerenders.
     if (startPendingRef.current || sessionRef.current) return false;
     startPendingRef.current = true;
@@ -235,7 +235,8 @@ export function useAudioRecorder() {
       silentGain.gain.value = 0;
       const session: RecorderSession = { context, source, processor, silentGain, frames: [], sampleCount: 0, lastFrameAt: null, waveform: [], waveformBinSamples: 0, waveformBinPeak: 0, cleanup: () => undefined };
       sessionRef.current = session;
-      const durationSamples = Math.floor(context.sampleRate * MAX_RECORDING_MS / 1_000);
+      const captureLimitMs = Math.min(MAX_RECORDING_MS, Math.max(250, options?.maxDurationMs ?? MAX_RECORDING_MS));
+      const durationSamples = Math.floor(context.sampleRate * captureLimitMs / 1_000);
       const sizeSamples = Math.floor((MAX_RECORDING_BYTES - 44) / 2);
       const maxSamples = Math.min(durationSamples, sizeSamples);
       processor.onaudioprocess = (event) => {
@@ -289,7 +290,11 @@ export function useAudioRecorder() {
       const contextChanged = () => { if (session.context.state !== "running") interrupted(); };
       const visibilityChanged = () => { if (document.visibilityState === "hidden") stopRef.current("hidden"); };
       const pageHidden = () => stopRef.current("hidden");
-      const hardStop = setTimeout(() => stopRef.current("limit"), MAX_RECORDING_MS);
+      // Sample count ends timed modes exactly. This watchdog only catches a
+      // device that stops delivering input; it must not cut off startup latency.
+      const hardStop = options?.maxDurationMs
+        ? setTimeout(() => stopRef.current("interrupted"), MAX_RECORDING_MS + 2000)
+        : setTimeout(() => stopRef.current("limit"), MAX_RECORDING_MS);
       const tracks = stream.getAudioTracks();
       for (const track of tracks) {
         track.addEventListener("ended", interrupted);

@@ -308,6 +308,26 @@ describe("microphone capture lifecycle", () => {
     expect(stream.track.stop).toHaveBeenCalledOnce();
   });
 
+  it.each([18_000, 20_000])("finishes a %sms timed take by sample count despite ordinary startup latency", async (maxDurationMs) => {
+    const { result } = renderHook(() => useAudioRecorder());
+    await act(async () => { expect(await result.current.start({ maxDurationMs })).toBe(true); });
+    const context = FakeAudioContext.instances[0]!;
+    act(() => {
+      vi.advanceTimersByTime(500);
+      context.push(48 * (maxDurationMs - 100));
+      vi.advanceTimersByTime(maxDurationMs - 100);
+    });
+    expect(result.current.status).toBe("recording");
+    expect(result.current.durationMs).toBe(maxDurationMs - 100);
+    act(() => context.push(48_000));
+    expect(result.current.status).toBe("stopped");
+    expect(result.current.stopReason).toBe("limit");
+    expect(result.current.durationMs).toBe(maxDurationMs);
+    expect(result.current.audioBlob?.size).toBe(44 + 48 * maxDurationMs * 2);
+    expect(stream.track.stop).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it("enforces the byte cap independently of an unexpected input sample rate", async () => {
     FakeAudioContext.rate = 1_000_000;
     const { result, context } = await record();

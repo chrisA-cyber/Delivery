@@ -11,8 +11,8 @@ describe("safeInternalAppPath", () => {
     );
   });
 
-  it("returns players to their exact Say It Back clip, saved take, or challenge", () => {
-    for (const path of ["/say-it-back?clip=fixture&role=lead", "/say-it-back?attempt=take&claim=take", "/say-it-back/challenge/friend?rematch=1", "/rounds/invitation?take=chosen", "/rounds/invitation/record?attempt=owned"]) {
+  it("returns players to their exact Say It Back clip, saved take, Switch challenge, or round", () => {
+    for (const path of ["/switch?challenge=friend&attempt=take&claim=take", "/say-it-back?clip=fixture&role=lead", "/say-it-back?attempt=take&claim=take", "/say-it-back/challenge/friend?rematch=1", "/rounds/invitation?take=chosen", "/rounds/invitation/record?attempt=owned"]) {
       expect(safeInternalAppPath(path, origin)).toBe(path);
     }
   });

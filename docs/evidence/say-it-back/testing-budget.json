@@ -2,7 +2,7 @@
   "assignment": "say-it-back-2026-09-06",
   "ceilingUsd": 5,
   "coordinator": "root-only; no competing paid batches",
-  "reservedUpperBoundUsd": 1.675,
+  "reservedUpperBoundUsd": 2.675,
   "actualBilledUsd": null,
   "reservations": [
     {
@@ -45,6 +45,18 @@
       "workerInvocations": 1,
       "providerCalls": 0,
       "outcome": "Authenticated scheduled worker exited zero; exact expired fixture row and private object both absent in independent SQL verification."
+    },
+    {
+      "id": "switch-live-01",
+      "owner": "root",
+      "maximumNewJudgeAppRequests": 2,
+      "maximumJudgeProviderDispatches": 2,
+      "maximumAudioSecondsPerRequest": 20,
+      "upperBoundUsd": 1.0,
+      "state": "reserved",
+      "newJudgeAppRequests": 0,
+      "actualBilledUsd": null,
+      "notes": "Two serial Switch evaluations only: neutral repeated-phrase emotion take and relative-speed take. Local flite synthesis $0. One gpt-audio-1.5 call per new judged take, SDK retries0, max1800 output tokens. $0.50 conservative bound per dispatch. Runner reserves before dispatch and refuses automatic reruns/unknown-outcome retries. Cached repeat only after scored status confirmed. No other agent may call a paid provider. Price reference https://developers.openai.com/api/docs/models/gpt-audio-1.5 ($32/M input audio,$2.50/M input text,$10/M output text). No audio output."
     }
   ],
   "requests": [
@@ -484,10 +496,10 @@
       1,
       2
     ],
-    "conservativeUpperBoundUsd": 1.675,
+    "conservativeUpperBoundUsd": 2.675,
     "actualBilledUsd": null,
     "priceBasis": "Conservative reserved bounds including $0.05 for the single worker verification; no account billing export available. Local synthesis $0; moderation endpoint free.",
-    "paidTestingClosed": true,
+    "paidTestingClosed": false,
     "retentionWorkerInvocations": 1
   }
 }

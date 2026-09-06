@@ -3,15 +3,25 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GroupMember, GroupPerformance, GroupRound } from "@/lib/groups/types";
 import type { ContentRating } from "@/lib/content/types";
+import { SWITCH_CHALLENGES } from "@/lib/switch/catalog";
+import type { SwitchScore } from "@/lib/switch/types";
 import type { SayClip, SayScore } from "@/lib/say-it-back/types";
 import { RoundRoom } from "./round-room";
 
-const mocks = vi.hoisted(() => ({ round: null as GroupRound | null, rating: "everyone" as ContentRating, act: vi.fn(), refresh: vi.fn(), replace: vi.fn() }));
+const mocks = vi.hoisted(() => ({ round: null as GroupRound | null, rating: "everyone" as ContentRating, act: vi.fn(), refresh: vi.fn(), replace: vi.fn(), seek: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: mocks.replace }) }));
 vi.mock("./use-round", () => ({ useRound: () => ({ round: mocks.round, loading: false, error: null, busy: "", act: mocks.act, refresh: mocks.refresh }) }));
 vi.mock("@/components/providers/app-provider", () => ({ useApp: () => ({ authenticated: false, profile: { displayName: "UI fixture guest" }, contentRating: mocks.rating, updatePreferences: vi.fn() }) }));
 vi.mock("@/components/say-it-back/dub-player", () => ({ DubPlayer: ({ clip, takeUrl, takeLabel }: { clip: SayClip; takeUrl?: string; takeLabel?: string }) => <div data-testid="scene-playback" data-source={takeUrl ?? clip.videoUrl}>{takeLabel ?? "Original fixture scene"}</div> }));
 vi.mock("@/components/game/saved-audio", () => ({ SavedAudio: ({ url }: { url: string }) => <div data-testid="classic-playback" data-source={url} /> }));
+
+vi.mock("@/components/switch/switch-player", async () => {
+  const React = await import("react");
+  return { SwitchPlayer: React.forwardRef(function FixtureSwitchPlayer({ audioUrl }: { audioUrl: string }, ref) {
+    React.useImperativeHandle(ref, () => ({ seek: mocks.seek }));
+    return <div data-testid="switch-playback" data-source={audioUrl} />;
+  }) };
+});
 
 // Deliberately synthetic UI fixtures. Nothing is uploaded or represented as a
 // live provider result; these values exercise visibility and comparison only.
@@ -116,5 +126,56 @@ describe("private group round UI boundaries", () => {
     expect(screen.getByText("Your current submission")).toBeInTheDocument();
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Replace my submitted performance" })).not.toBeInTheDocument();
+  });
+});
+
+const switchChallenge = { ...SWITCH_CHALLENGES[0]!, cues: SWITCH_CHALLENGES[0]!.cues.map((cue) => ({ ...cue })) };
+function switchPerformance(id: string, memberId = "me", overall: number | null = null): GroupPerformance {
+  const score: SwitchScore | null = overall == null ? null : { version: switchChallenge.scoringVersion, rubricVersion: switchChallenge.rubricVersion, beta: true, ranked: false, overall, words: overall, delivery: overall, transitions: overall, transcript: "Synthetic UI fixture", segments: switchChallenge.cues.map((cue) => ({ cueId: cue.id, words: overall, delivery: overall, feedback: `Fixture feedback for ${cue.id}` })), transitionFeedback: "Synthetic transition note.", coachNote: "Synthetic retry note.", limitations: [], evidence: { source: "audio", model: "synthetic-ui-fixture", audioHash: "fixture", timing: "approximate", timingToleranceMs: 750, recordingOffsetMs: 0 } };
+  return { takeId: id, memberId, mode: "switch", audioUrl: `/fixtures/${id}.wav`, durationMs: switchChallenge.duration * 1000, submittedAt: null, canSubmit: true, sharingStatus: score ? "approved" : "unreviewed", score, scoreGroup: score ? "switch-beta" : "unscored", switchAttempt: { id, mode: "switch", challenge: switchChallenge, status: score ? "scored" : "ready", score, audioUrl: `/fixtures/${id}.wav`, audioExpiresAt: "2026-09-07T01:00:00Z", durationMs: switchChallenge.duration * 1000, recordingOffsetMs: 0, scoringVersion: switchChallenge.scoringVersion, createdAt: "2026-09-06T12:00:00Z", saved: false, owned: memberId === "me" } };
+}
+const switchAssignment = { mode: "switch" as const, challenge: switchChallenge, rating: switchChallenge.rating, scoringVersion: switchChallenge.scoringVersion, rubricVersion: switchChallenge.rubricVersion };
+
+describe("Switch round integrations", () => {
+  it("keeps uncertain audio judgments playable without inventing a comparison score", () => {
+    const uncertain = switchPerformance("switch-uncertain", "me", 75);
+    const score = uncertain.score as SwitchScore;
+    score.overall = null;
+    score.limitations = ["Fixture audio judgment was uncertain."];
+    mocks.round = round({ state: "revealed", assignment: switchAssignment, members: [member("me", "Uncertain performer", uncertain)], submittedCount: 1 });
+    render(<RoundRoom token="ui-token" />);
+    expect(screen.getByTestId("switch-playback")).toBeInTheDocument();
+    expect(screen.getByText(/Judgment is uncertain/)).toBeInTheDocument();
+    expect(screen.getByText("Fixture audio judgment was uncertain.")).toBeInTheDocument();
+    expect(screen.queryByRole("table", { name: "Unranked Switch beta comparison" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "The show comes first." })).toBeInTheDocument();
+  });
+
+  it("submits a Switch source with fresh consent and recognizes the existing wrapper", async () => {
+    const source = switchPerformance("switch-source");
+    mocks.round = round({ assignment: switchAssignment, yourTakes: [source] });
+    const { rerender } = render(<RoundRoom token="ui-token" pendingAttemptId="switch-source" />);
+    expect(screen.getByRole("button", { name: "Submit this performance" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Submit this performance" }));
+    await waitFor(() => expect(mocks.act).toHaveBeenCalledWith("submit", { switchAttemptId: "switch-source", consent: true }));
+    mocks.round = round({ assignment: switchAssignment, yourTakes: [source], members: [member("me", "Switch host", { ...source, takeId: "round-wrapper", submittedAt: "2026-09-06T12:01:00Z" })], submittedCount: 1 });
+    rerender(<RoundRoom token="ui-token" pendingAttemptId="switch-source" />);
+    expect(screen.getByText("Your current submission")).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  });
+
+  it("labels casual Switch comparison separately from the audience favorite and seeks feedback", () => {
+    const host = member("me", "Switch judge leader", switchPerformance("switch-host", "me", 82));
+    const friend = { ...member("friend", "Audience favorite fixture", switchPerformance("switch-friend", "friend", 70)), votes: 3 };
+    mocks.round = round({ state: "revealed", assignment: switchAssignment, members: [host, friend], submittedCount: 2 });
+    render(<RoundRoom token="ui-token" />);
+    expect(screen.getByRole("table", { name: "Unranked Switch beta comparison" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Switch judge leader leads with 82." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Audience favorite fixture" })).toBeInTheDocument();
+    const secondCue = switchChallenge.cues[1]!;
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(`Jump to ${secondCue.start}s`) }));
+    expect(mocks.seek).toHaveBeenCalledWith(secondCue.start);
+    expect(screen.queryByRole("table", { name: "Full words, timing, and rhythm matches" })).not.toBeInTheDocument();
   });
 });

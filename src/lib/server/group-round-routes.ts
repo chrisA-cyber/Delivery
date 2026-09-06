@@ -11,13 +11,14 @@ export const groupTokenSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 const displayName = z.string().trim().min(1).max(32).regex(/^[^\u0000-\u001f\u007f<>]+$/, "Choose a readable display name.");
 export const createRoundSchema = z.object({
   requestId: z.string().uuid(), name: z.string().trim().min(1).max(60), displayName,
-  mode: z.enum(["classic", "say-it-back"]), closesInHours: z.union([z.literal(1), z.literal(24), z.literal(72), z.literal(168)]).default(24),
+  mode: z.enum(["classic", "say-it-back", "switch"]), closesInHours: z.union([z.literal(1), z.literal(24), z.literal(72), z.literal(168)]).default(24),
   maxRating: groupRatingSchema.default("everyone"),
   community: z.boolean().optional(), submissionLimit: z.number().int().min(10).max(50).optional(), audienceVoting: z.boolean().optional(),
   clipId: z.string().regex(/^[a-z0-9-]{1,80}$/).optional(), clipVersion: z.string().regex(/^[a-z0-9-]{1,80}$/).optional(), roleId: z.string().regex(/^[a-z0-9-]{1,80}$/).optional(),
+  challengeId: z.string().regex(/^[a-z0-9-]{1,80}$/).optional(), challengeVersion: z.string().regex(/^[a-z0-9.-]{1,80}$/).optional(),
   promptId: z.string().min(1).max(100).optional(), energyId: z.string().min(1).max(100).optional(),
 }).strict();
-const payloadSchema = z.object({ maxRating: groupRatingSchema.default("everyone"), displayName: displayName.optional(), memberId: z.string().uuid().optional(), takeId: z.string().uuid().optional(), sayAttemptId: z.string().uuid().optional(), consent: z.literal(true).optional(), broadcastConsent: z.literal(true).optional(), command: z.enum(["play","pause","replay"]).optional(), revision: z.number().int().min(0).optional() }).strict();
+const payloadSchema = z.object({ maxRating: groupRatingSchema.default("everyone"), displayName: displayName.optional(), memberId: z.string().uuid().optional(), takeId: z.string().uuid().optional(), sayAttemptId: z.string().uuid().optional(), switchAttemptId: z.string().uuid().optional(), consent: z.literal(true).optional(), broadcastConsent: z.literal(true).optional(), command: z.enum(["play","pause","replay"]).optional(), revision: z.number().int().min(0).optional() }).strict();
 export const groupHeaders = (cookie?: string) => ({ "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", ...(cookie ? { "Set-Cookie": cookie } : {}) });
 
 type GroupRouteAction = "create" | "read" | "join" | "submit" | "close" | "revoke" | "vote" | "claim" | "rematch" | "select" | "hide" | "showcase" | "start-voting" | "end-voting" | "display" | "revoke-display";
@@ -42,7 +43,7 @@ export async function handleGroupRoute(request: Request, action: GroupRouteActio
     else {
       const payload = payloadSchema.parse(body);
       if (action === "submit") {
-        if (payload.consent !== true || (!payload.takeId && !payload.sayAttemptId)) throw new AppError("GROUP_CONSENT_REQUIRED", "Choose a performance and confirm sharing it with the group.", 422);
+        if (payload.consent !== true || (!payload.takeId && !payload.sayAttemptId && !payload.switchAttemptId)) throw new AppError("GROUP_CONSENT_REQUIRED", "Choose a performance and confirm sharing it with the group.", 422);
         round = await submitGroupPerformance(token!, viewer, origin, { ...payload, consent: true });
       } else {
         if (action === "join" && !payload.displayName) throw new AppError("ROUND_NAME_REQUIRED", "Choose a display name for this round.", 422);

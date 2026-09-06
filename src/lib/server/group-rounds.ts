@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHash, createHmac, randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import type { User } from "@supabase/supabase-js";
 import { getEnergyModifierById, getPromptById } from "@/data/content";
 import type { ContentRating } from "@/lib/content/types";
@@ -8,6 +9,8 @@ import type { CreateGroupRoundInput, GroupAssignment, GroupMember, GroupPerforma
 import { RUBRIC_VERSION, SCORING_VERSION } from "@/lib/judging/rubric";
 import { sayClipSchema } from "@/lib/say-it-back/schema";
 import { SAY_SCORING_VERSION, type SayAttempt, type SayScore } from "@/lib/say-it-back/types";
+import { getSwitchChallenge, snapshotSwitchChallenge } from "@/lib/switch/catalog";
+import type { SwitchAttempt, SwitchScore } from "@/lib/switch/types";
 import type { DeliveryJudgment } from "@/lib/types";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getOptionalUser } from "@/lib/supabase/auth";
@@ -20,6 +23,7 @@ import { getGuestIdentity, type GuestIdentity } from "@/lib/server/guest";
 import { createRequestFingerprint, runIdempotent } from "@/lib/server/idempotency";
 import { moderateLine } from "@/lib/server/moderation";
 import { approveSaySharing } from "@/lib/server/say-it-back";
+import { approveSwitchSharing } from "@/lib/server/switch";
 
 type Row = Record<string, unknown>;
 export interface GroupViewer { user: User | null; guest: GuestIdentity; setCookie?: string; display?: boolean }
@@ -39,7 +43,7 @@ function checked(error: unknown): void {
     ROUND_TAKE_LIMIT: ["You have saved 20 takes for this round. Choose one of them or start a rematch.", 429],
     ROUND_INVITE_REVOKED: ["This invitation was revoked. Existing players can still finish the round.", 404],
     ROUND_EXPIRED: ["This round's replay window has ended. Start another round.", 410],
-    ROUND_ASSIGNMENT_INVALID: ["Choose an available scene or Classic assignment.", 422],
+    ROUND_ASSIGNMENT_INVALID: ["Choose an available Classic, Say It Back, or Switch assignment.", 422],
     ROUND_ASSIGNMENT_IMMUTABLE: ["A round's assignment cannot change. Start a rematch instead.", 409],
     ROUND_ACTION_INVALID: ["That action is unavailable for this round.", 422],
     ROUND_CLOSED: ["This round has closed. Your private take is still available; start a rematch.", 409],
@@ -140,7 +144,24 @@ function assertOpen(row: Row): void {
   if (row.state !== "open" || isExpired(row.group_closes_at) || isExpired(row.group_replay_until)) throw new AppError("ROUND_CLOSED", "The round has closed. Your private take is safe; start a rematch to play again.", 409);
 }
 
+/** Resolve the invitation snapshot before uploading; never reconstruct old cues from a live catalog. */
+export async function getGroupSwitchChallenge(token: string, viewer: GroupViewer, maxRating: ContentRating = "everyone"): Promise<SwitchAttempt["challenge"]> {
+  const { row, member } = await loadRound(token, viewer, maxRating);
+  if (!member) throw new AppError("ROUND_NOT_MEMBER", "Join this round before recording.", 403);
+  assertOpen(row);
+  const assignment = row.group_assignment as GroupAssignment;
+  if (assignment.mode !== "switch") throw new AppError("ROUND_ASSIGNMENT_INVALID", "Choose a Switch round.", 409);
+  return assignment.challenge;
+}
+
 async function assignmentFor(input: CreateGroupRoundInput, viewer: GroupViewer): Promise<GroupAssignment> {
+  if (input.mode === "switch") {
+    const challenge = getSwitchChallenge(input.challengeId ?? "", input.challengeVersion);
+    if (!challenge) throw new AppError("ROUND_ASSIGNMENT_INVALID", "Choose an available Switch challenge.", 422);
+    assertContentRating(challenge.rating, input.maxRating);
+    if (challenge.rating === "mature") throw new AppError("GROUP_MATURE_PRIVATE", "Mature challenges stay private. Choose a Clean or Spicy challenge for friends.", 403);
+    return { mode: "switch", challenge: snapshotSwitchChallenge(challenge), rating: challenge.rating, scoringVersion: challenge.scoringVersion, rubricVersion: challenge.rubricVersion };
+  }
   if (input.mode === "say-it-back") {
     const found = await createSupabaseAdminClient().from("say_clip_versions").select("manifest,enabled").eq("id", `${input.clipId}:${input.clipVersion}`).maybeSingle();
     checked(found.error);
@@ -188,9 +209,10 @@ export async function createGroupRound(input: CreateGroupRoundInput, viewer: Gro
   return getGroupRound(token, viewer, origin, input.maxRating);
 }
 
-export function groupScoreGroup(mode: "classic" | "say-it-back", score: DeliveryJudgment | SayScore | null): GroupPerformance["scoreGroup"] {
+export function groupScoreGroup(mode: "classic" | "say-it-back" | "switch", score: DeliveryJudgment | SayScore | SwitchScore | null): GroupPerformance["scoreGroup"] {
   if (!score) return "unscored";
   if (mode === "classic") return "classic";
+  if (mode === "switch") return "switch-beta";
   const match = score as SayScore;
   return match.timing !== null && match.rhythm !== null && match.weights.timing > 0 && match.weights.rhythm > 0 ? "full-match" : "words-only";
 }
@@ -209,6 +231,27 @@ function sayPerformance(attempt: Row, memberId: string, audioUrl: string, submit
   };
   return { takeId: String(attempt.id), memberId, mode: "say-it-back", audioUrl, durationMs: Number(attempt.duration_ms), submittedAt,
     score, scoreGroup: groupScoreGroup("say-it-back", score), sayAttempt, canSubmit: (attempt.status === "scored" && !["rejected", "review"].includes(String(attempt.moderation_state))) || (!score && attempt.moderation_state === "pending" && attempt.status !== "judging"), sharingStatus: attempt.moderation_state === "pending" && !score ? "unreviewed" : attempt.moderation_state as GroupPerformance["sharingStatus"] };
+}
+
+/** Full snapshot equality prevents edited cues or timing from entering casual comparisons. */
+export function matchesGroupSwitchAssignment(attempt: Row, assignment: GroupAssignment): boolean {
+  return assignment.mode === "switch" && attempt.challenge_version_id === `${assignment.challenge.id}:${assignment.challenge.version}`
+    && attempt.scoring_version === assignment.scoringVersion && assignment.rubricVersion === assignment.challenge.rubricVersion
+    && isDeepStrictEqual(attempt.challenge_snapshot, assignment.challenge);
+}
+
+function switchPerformance(attempt: Row, memberId: string, audioUrl: string, submittedAt: string | null = null): GroupPerformance {
+  const score = attempt.score as SwitchScore | null;
+  const switchAttempt: SwitchAttempt = {
+    id: String(attempt.id), mode: "switch", challenge: attempt.challenge_snapshot as SwitchAttempt["challenge"],
+    status: attempt.status as SwitchAttempt["status"], score, audioUrl, audioExpiresAt: new Date(Date.now() + 60_000).toISOString(),
+    durationMs: Number(attempt.duration_ms), recordingOffsetMs: Number(attempt.recording_offset_ms), scoringVersion: String(attempt.scoring_version),
+    createdAt: String(attempt.created_at), saved: Boolean(attempt.user_id), owned: false,
+  };
+  return { takeId: String(attempt.id), memberId, mode: "switch", audioUrl, durationMs: Number(attempt.duration_ms), submittedAt,
+    score, scoreGroup: groupScoreGroup("switch", score), switchAttempt,
+    canSubmit: (attempt.status === "scored" && !["rejected", "review"].includes(String(attempt.moderation_state))) || (!score && attempt.moderation_state === "pending" && ["ready", "failed"].includes(String(attempt.status))),
+    sharingStatus: attempt.moderation_state === "pending" && !score ? "unreviewed" : attempt.moderation_state as GroupPerformance["sharingStatus"] };
 }
 
 function classicPerformance(take: Row, audioUrl: string): GroupPerformance {
@@ -231,6 +274,15 @@ async function listPrivateTakes(row: Row, member: Row, viewer: GroupViewer, toke
     });
   }
   const ownerKeys = [...(member.guest_owner_hash ? [`guest:${member.guest_owner_hash}`] : []), ...(viewer.user ? [`user:${viewer.user.id}`] : [])];
+  if (assignment.mode === "switch") {
+    const result = await admin.from("switch_attempts").select("*").in("owner_key", ownerKeys).eq("challenge_version_id", `${assignment.challenge.id}:${assignment.challenge.version}`).eq("scoring_version", assignment.scoringVersion).order("created_at", { ascending: false }).limit(20);
+    checked(result.error);
+    return (result.data ?? []).filter((attempt) => !isExpired(attempt.expires_at) && ownsGroupSaySource(member, attempt) && matchesGroupSwitchAssignment(attempt, assignment)).map((attempt) => {
+      const performance = switchPerformance(attempt, String(member.id), `/api/rounds/${token}/takes/${attempt.id}/audio?maxRating=${maxRating}`);
+      if (performance.switchAttempt) performance.switchAttempt.owned = true;
+      return performance;
+    });
+  }
   const result = await admin.from("say_attempts").select("*").in("owner_key", ownerKeys).eq("clip_version_id", `${assignment.clip.id}:${assignment.clip.version}`).eq("role_id", assignment.roleId).eq("scoring_version", assignment.scoringVersion).order("created_at", { ascending: false }).limit(20);
   checked(result.error);
   return (result.data ?? []).filter((attempt) => !isExpired(attempt.expires_at)).map((attempt) => {
@@ -259,6 +311,9 @@ export async function getGroupRound(token: string, viewer: GroupViewer, origin: 
   const sayIds = (submitted.data ?? []).flatMap((take) => take.say_attempt_id ? [String(take.say_attempt_id)] : []);
   const sources = sayIds.length ? await admin.from("say_attempts").select("*").in("id", sayIds) : { data: [], error: null };
   checked(sources.error);
+  const switchIds = (submitted.data ?? []).flatMap((take) => take.switch_attempt_id ? [String(take.switch_attempt_id)] : []);
+  const switchSources = switchIds.length ? await admin.from("switch_attempts").select("*").in("id", switchIds) : { data: [], error: null };
+  checked(switchSources.error);
   const visibleCandidates = community && !isHost ? members.filter((candidate) => candidate.id === member?.id || (revealed && candidate.showcased)) : members;
   const unavailable = await unavailableGroupUsers([...new Set(visibleCandidates.flatMap((m) => m.user_id ? [String(m.user_id)] : []))], viewer);
   for (const candidate of visibleCandidates) {
@@ -270,6 +325,13 @@ export async function getGroupRound(token: string, viewer: GroupViewer, origin: 
       if (take.data && (!community || candidate.id === member?.id || take.data.broadcast_consent_at) && ["approved", "unreviewed"].includes(String(take.data.moderation_state)) && !isExpired(take.data.expires_at)) {
         const audioUrl = `/api/rounds/${token}/performances/${candidate.id}/audio?maxRating=${maxRating}`;
         if (take.data.mode === "classic") performance = classicPerformance(take.data, audioUrl);
+        else if (take.data.mode === "switch" && take.data.switch_attempt_id) {
+          const attempt = switchSources.data?.find((source) => source.id === take.data!.switch_attempt_id);
+          if (attempt && ownsGroupSaySource(candidate, attempt) && matchesGroupSwitchAssignment(attempt, row.group_assignment as GroupAssignment) && !["rejected", "review"].includes(String(attempt.moderation_state)) && (attempt.moderation_state === "approved" || !attempt.score) && !isExpired(attempt.expires_at)) {
+            performance = switchPerformance(attempt, String(candidate.id), audioUrl, String(take.data.submitted_at));
+            performance.takeId = String(take.data.id);
+          }
+        }
         else if (take.data.say_attempt_id) {
           const attempt = { data: sources.data?.find((source) => source.id === take.data!.say_attempt_id), error: null };
           checked(attempt.error);
@@ -340,7 +402,7 @@ export async function mutateGroupRound(token: string, viewer: GroupViewer, origi
 export async function createClassicRoundTake(input: { token: string; audio: File; durationMs: number; attemptId: string; maxRating: ContentRating }, viewer: GroupViewer): Promise<{ id: string; replayed: boolean }> {
   const { row, member } = await loadRound(input.token, viewer, input.maxRating);
   if (!member) throw new AppError("ROUND_NOT_MEMBER", "Join the round before recording.", 403);
-  if (row.group_mode !== "classic") throw new AppError("ROUND_ASSIGNMENT_INVALID", "Use the Say It Back editor for this round.", 409);
+  if (row.group_mode !== "classic") throw new AppError("ROUND_ASSIGNMENT_INVALID", "Use the assigned recorder for this round.", 409);
   const audio = await validateAudio(input.audio, input.durationMs);
   if (audio.durationMs > 20_000) throw new AppError("AUDIO_TOO_LONG", "Classic takes must be 20 seconds or less.", 422);
   const fingerprint = createRequestFingerprint(audio.contentHash, String(row.id), String(member.id), String(audio.durationMs));
@@ -399,14 +461,39 @@ export async function attachClassicRoundJudge(input: { token: string; takeId: st
   } catch { /* Submit offers a safe moderation retry without rejudging. */ }
 }
 
-export async function submitGroupPerformance(token: string, viewer: GroupViewer, origin: string, input: { takeId?: string; sayAttemptId?: string; consent: true; broadcastConsent?: true; maxRating: ContentRating }): Promise<GroupRound> {
+export async function submitGroupPerformance(token: string, viewer: GroupViewer, origin: string, input: { takeId?: string; sayAttemptId?: string; switchAttemptId?: string; consent: true; broadcastConsent?: true; maxRating: ContentRating }): Promise<GroupRound> {
   const { row, member } = await loadRound(token, viewer, input.maxRating);
   if (!member) throw new AppError("ROUND_NOT_MEMBER", "Join this round first.", 403);
   if (input.consent !== true) throw new AppError("GROUP_CONSENT_REQUIRED", "Confirm that you want to share this performance with the group after reveal.", 422);
   const admin = createSupabaseAdminClient();
   const assignment = row.group_assignment as GroupAssignment;
   let takeId = input.takeId;
-  if (assignment.mode === "say-it-back") {
+  if (assignment.mode === "switch") {
+    if (!input.switchAttemptId) throw new AppError("ROUND_TAKE_INVALID", "Choose your continuous Switch take.", 422);
+    const result = await admin.from("switch_attempts").select("*").eq("id", input.switchAttemptId).maybeSingle();
+    checked(result.error);
+    const attempt = result.data;
+    if (!attempt || isExpired(attempt.expires_at) || !ownsGroupSaySource(member, attempt)) throw notFound();
+    if (!matchesGroupSwitchAssignment(attempt, assignment)) throw new AppError("ROUND_TAKE_INVALID", "Choose the exact script, cues, timing, and judging version for this round.", 409);
+    if (["rejected", "review"].includes(String(attempt.moderation_state))) throw new AppError("ROUND_TAKE_INVALID", "This take needs a safety review before sharing. Record another take.", 403);
+    if (attempt.score) await approveSwitchSharing(attempt);
+    else if (!["ready", "failed"].includes(String(attempt.status))) throw new AppError("ROUND_SCORE_PENDING", "Judging is finishing. Wait for its safety check, then submit.", 409);
+    const existing = await admin.from("challenge_group_takes").select("id").eq("member_id", String(member.id)).eq("switch_attempt_id", String(attempt.id)).maybeSingle();
+    checked(existing.error);
+    if (existing.data) {
+      takeId = String(existing.data.id);
+      if (attempt.score) {
+        const updated = await admin.from("challenge_group_takes").update({ score: attempt.score, moderation_state: "approved" }).eq("id", takeId);
+        checked(updated.error);
+      }
+    } else {
+      assertOpen(row);
+      const inserted = await admin.from("challenge_group_takes").upsert({ id: randomUUID(), challenge_id: row.id, member_id: member.id, attempt_key: attempt.id, request_fingerprint: String(attempt.audio_hash), mode: "switch", switch_attempt_id: attempt.id, score: attempt.score, scoring_version: attempt.scoring_version, moderation_state: attempt.score ? "approved" : "unreviewed", expires_at: row.group_replay_until }, { onConflict: "member_id,attempt_key", ignoreDuplicates: true });
+      checked(inserted.error);
+      const saved = await admin.from("challenge_group_takes").select("id").eq("member_id", String(member.id)).eq("attempt_key", String(attempt.id)).single();
+      checked(saved.error); takeId = String(saved.data!.id);
+    }
+  } else if (assignment.mode === "say-it-back") {
     if (!input.sayAttemptId) throw new AppError("ROUND_TAKE_INVALID", "Choose your recorded dub.", 422);
     const result = await admin.from("say_attempts").select("*").eq("id", input.sayAttemptId).maybeSingle();
     checked(result.error);
@@ -479,6 +566,13 @@ export async function groupAudioResponse(token: string, viewer: GroupViewer, req
   }
   const admin = createSupabaseAdminClient();
   const assignment = row.group_assignment as GroupAssignment;
+  if (assignment.mode === "switch" && selector.takeId) {
+    const result = await admin.from("switch_attempts").select("*").eq("id", selector.takeId).maybeSingle();
+    checked(result.error);
+    const attempt = result.data;
+    if (!attempt || !member || isExpired(attempt.expires_at) || !ownsGroupSaySource(member, attempt) || !matchesGroupSwitchAssignment(attempt, assignment)) throw notFound();
+    return streamSwitchRow(attempt, request);
+  }
   if (assignment.mode === "say-it-back" && selector.takeId) {
     const result = await admin.from("say_attempts").select("*").eq("id", selector.takeId).maybeSingle();
     checked(result.error);
@@ -496,10 +590,23 @@ export async function groupAudioResponse(token: string, viewer: GroupViewer, req
     if (!validGroupStoragePath(String(take.recording_path), target, String(row.id))) throw notFound();
     return streamAudio(String(take.recording_path), String(take.audio_mime), request);
   }
+  if (take.mode === "switch") {
+    const attempt = await admin.from("switch_attempts").select("*").eq("id", String(take.switch_attempt_id)).maybeSingle();
+    checked(attempt.error);
+    if (!attempt.data || !ownsGroupSaySource(target, attempt.data) || !matchesGroupSwitchAssignment(attempt.data, assignment) || isExpired(attempt.data.expires_at) || ["rejected", "review"].includes(String(attempt.data.moderation_state)) || (attempt.data.score && attempt.data.moderation_state !== "approved")) throw notFound();
+    return streamSwitchRow(attempt.data, request);
+  }
   const attempt = await admin.from("say_attempts").select("*").eq("id", String(take.say_attempt_id)).maybeSingle();
   checked(attempt.error);
   if (!attempt.data || !ownsGroupSaySource(target, attempt.data) || isExpired(attempt.data.expires_at) || (["rejected", "review"].includes(String(attempt.data.moderation_state)) || (attempt.data.score && attempt.data.moderation_state !== "approved"))) throw notFound();
   return streamSayRow(attempt.data, request);
+}
+
+function streamSwitchRow(attempt: Row, request: Request): Promise<Response> {
+  const path = String(attempt.recording_path);
+  const valid = attempt.user_id ? isOwnerStoragePath(path, String(attempt.user_id)) : /^guests\/[a-f0-9]{64}\/switch\/[a-f0-9-]{36}\.(wav|mp3)$/.test(path) && path.split("/")[1] === attempt.guest_owner_hash;
+  if (!valid) throw notFound();
+  return streamAudio(path, String(attempt.audio_mime), request);
 }
 
 function streamSayRow(attempt: Row, request: Request): Promise<Response> {
@@ -551,6 +658,17 @@ export async function deleteGroupAccountMedia(userId: string): Promise<void> {
           if (!/^guests\/[a-f0-9]{64}\/say\/[a-f0-9-]{36}\.(wav|mp3)$/.test(path) || path.split("/")[1] !== member.guest_owner_hash) throw new AppError("GROUP_MEDIA_PATH_INVALID", "A group recording path needs operator review.", 503);
           const removed = await admin.storage.from("delivery-audio").remove([path]); checked(removed.error);
           const deleted = await admin.from("say_attempts").delete().eq("id", String(source.id)); checked(deleted.error);
+        }
+      }
+      const switchIds = (takes.data ?? []).filter((take) => take.switch_attempt_id).map((take) => String(take.switch_attempt_id));
+      if (switchIds.length && member.guest_owner_hash) {
+        const sources = await admin.from("switch_attempts").select("*").in("id", switchIds).is("user_id", null).eq("guest_owner_hash", String(member.guest_owner_hash));
+        checked(sources.error);
+        for (const source of sources.data ?? []) {
+          const path = String(source.recording_path);
+          if (!/^guests\/[a-f0-9]{64}\/switch\/[a-f0-9-]{36}\.(wav|mp3)$/.test(path) || path.split("/")[1] !== member.guest_owner_hash) throw new AppError("GROUP_MEDIA_PATH_INVALID", "A group recording path needs operator review.", 503);
+          const removed = await admin.storage.from("delivery-audio").remove([path]); checked(removed.error);
+          const deleted = await admin.from("switch_attempts").delete().eq("id", String(source.id)); checked(deleted.error);
         }
       }
       for (let i = 0; i < paths.length; i += 100) { const removed = await admin.storage.from("delivery-audio").remove(paths.slice(i, i + 100)); checked(removed.error); }
@@ -605,6 +723,7 @@ export async function getBroadcast(token: string, origin: string, maxRating: Con
   for (const member of round.members) if (member.performance) {
     member.performance.audioUrl = `/api/broadcast/${token}/audio/${member.id}?maxRating=${maxRating}`;
     if (member.performance.sayAttempt) member.performance.sayAttempt.audioUrl = member.performance.audioUrl;
+    if (member.performance.switchAttempt) member.performance.switchAttempt.audioUrl = member.performance.audioUrl;
   }
   return round;
 }

@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Headphones,
   Radio,
+  Shuffle,
   Users,
 } from "lucide-react";
 import { HeroDemo } from "@/components/landing/hero-demo";
@@ -34,7 +35,7 @@ const ways = [
     icon: Radio,
     number: "03",
     title: "Take it on stream",
-    copy: "A host-operated stage with big prompts and keyboard controls. Clean content starts on. Available with Pro.",
+    copy: "Choose a round, collect community performances, and host the showcase. Classic, Say It Back, and Switch.",
   },
 ];
 export default function HomePage() {
@@ -71,6 +72,10 @@ export default function HomePage() {
                 Say It Back
                 <ArrowRight className="size-4" />
               </Link>
+              <Link href="/switch" className="button-secondary min-h-14">
+                <Shuffle className="size-4" />Switch <span className="rounded bg-hot/15 px-1.5 py-0.5 text-[9px] text-hot">BETA</span>
+                <ArrowRight className="size-4" />
+              </Link>
               </div>
               <p className="mt-4 text-xs leading-6 text-white/60">
                 No account needed. Retakes encouraged. Private until you share.
@@ -89,6 +94,12 @@ export default function HomePage() {
             <span className="mono-label">Clean → Spicy → Mature 18+</span>
           </div>
         </div>
+        <section className="home-wrap pt-10" aria-labelledby="switch-mode-title">
+          <Link href="/switch" className="group grid gap-6 rounded-2xl border border-hot/30 bg-hot/5 p-6 sm:p-8 md:grid-cols-[1.2fr_1fr] md:items-center">
+            <div><p className="mono-label flex items-center gap-2 text-hot"><Shuffle className="size-4" />New mode · Unranked beta</p><h2 id="switch-mode-title" className="display-type mt-4 text-5xl sm:text-6xl">One phrase.<br />Keep switching.</h2><p className="mt-4 max-w-lg text-sm leading-7 text-white/70">One short phrase. Repeat it as the emojis change your emotion or the cues change your speaking speed. One uninterrupted take. Solo or with the group chat.</p></div>
+            <div><div className="rounded-xl border border-white/15 bg-white/5 p-5"><p className="mono-label text-white/55">Same phrase. New energy.</p><div className="mt-5 flex flex-wrap justify-between gap-2 text-4xl" aria-label="Switch emotions: happy, sad, angry, surprised, sleepy">{["😄", "😢", "😠", "😳", "😴"].map((emoji) => <span key={emoji} aria-hidden="true">{emoji}</span>)}</div><p className="mt-5 text-xs leading-6 text-white/60">Or switch speaking speed: normal · 0.5× · 0.25× · 2× · 4×</p></div><span className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-hot">Play Switch<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span></div>
+          </Link>
+        </section>
         <section className="home-wrap home-section" id="how-to-play">
           <div className="mb-10 grid gap-5 md:grid-cols-2 md:items-end">
             <h2 className="display-type text-5xl sm:text-7xl">

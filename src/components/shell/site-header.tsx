@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/play", label: "Classic" },
   { href: "/say-it-back", label: "Say It Back" },
+  { href: "/switch", label: "Switch · Beta" },
   { href: "/daily", label: "Daily" },
   { href: "/discover", label: "Packs" },
   { href: "/rounds", label: "Friends" },
@@ -35,7 +36,7 @@ export function SiteHeader() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/15 bg-ink/95 backdrop-blur-lg">
       <div className="mx-auto flex h-[72px] max-w-[1248px] items-center justify-between gap-3 px-4 sm:px-8">
-        <div className="flex items-center gap-10">
+        <div className="flex items-center gap-5">
           <Logo />
           <nav
             className="hidden items-center gap-1 lg:flex"
@@ -49,7 +50,7 @@ export function SiteHeader() {
                   pathname.startsWith(link.href) ? "page" : undefined
                 }
                 className={cn(
-                  "inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-bold transition-colors",
+                  "inline-flex min-h-11 items-center rounded-lg px-2.5 text-xs font-bold transition-colors",
                   pathname.startsWith(link.href)
                     ? "bg-paper text-ink"
                     : "text-white/70 hover:bg-white/10 hover:text-white",

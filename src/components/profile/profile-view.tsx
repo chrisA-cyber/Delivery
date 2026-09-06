@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 
 import { useApp } from "@/components/providers/app-provider";
 import { BadgeShelf } from "@/components/profile/badge-shelf";
+import { SwitchHistory } from "@/components/profile/switch-history";
 import { SayHistory } from "@/components/profile/say-history";
 import { SavedAudio } from "@/components/game/saved-audio";
 import { isRatingAllowed, PROMPTS } from "@/data/content";
@@ -156,6 +157,7 @@ export function ProfileView() {
       <BadgeShelf badges={badges} />
 
       <SayHistory />
+      <SwitchHistory />
 
       {favoritePrompts.length > 0 && <section className="mt-10"><div className="mb-5"><p className="mono-label text-electric">Saved lines</p><h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">Run the bit back</h2></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{favoritePrompts.map((prompt) => <article key={prompt.id} className="panel flex flex-col p-4"><p className="mono-label text-electric">{prompt.category.replaceAll("-", " ")}</p><p className="mt-3 flex-1 text-sm font-black leading-5">“{prompt.line}”</p><div className="mt-4 flex gap-2"><Link href={`/play?prompt=${encodeURIComponent(prompt.id)}`} className="button-secondary min-h-11 flex-1 px-3 text-xs">Replay</Link><button onClick={() => toggleFavorite(prompt.id)} className="button-ghost min-h-11 px-3 text-xs" aria-label={`Remove ${prompt.line} from favorites`}>Remove</button></div></article>)}</div></section>}
 
