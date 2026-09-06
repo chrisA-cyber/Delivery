@@ -119,6 +119,9 @@ export interface JudgeDeliveryInput {
   durationMs?: number;
   safetyIdentifier?: string;
   requestId?: string;
+  /** Private evaluation hook; never included in a judgment or persisted receipt. */
+  onProviderRequest?: (provider: "openai" | "elevenlabs") => void;
+  onOpenAIUsage?: (usage: OpenAI.CompletionUsage | undefined) => void;
 }
 
 let openAIClient: OpenAI | undefined;
@@ -253,6 +256,7 @@ async function liveJudgment(input: JudgeDeliveryInput): Promise<DeliveryJudgment
     const remainingMs = deadlineAt - Date.now();
     if (remainingMs < MINIMUM_REPAIR_BUDGET_MS) break;
     attempts += 1;
+    input.onProviderRequest?.("openai");
     const completion = await client.chat.completions.create({
       model: env.OPENAI_AUDIO_JUDGE_MODEL,
       store: false,
@@ -293,6 +297,7 @@ async function liveJudgment(input: JudgeDeliveryInput): Promise<DeliveryJudgment
       maxRetries: 0,
       timeout: Math.min(JUDGMENT_ATTEMPT_TIMEOUT_MS, remainingMs),
     });
+    input.onOpenAIUsage?.(completion.usage);
 
     const message = completion.choices[0]?.message;
     if (message?.refusal) {
@@ -431,11 +436,14 @@ export async function judgeDelivery(input: JudgeDeliveryInput): Promise<Delivery
     return mockJudgment(input, "Demo scoring is enabled; no live AI judgment was performed.");
   }
 
-  if (!env.OPENAI_API_KEY && env.NODE_ENV !== "production") {
-    return mockJudgment(
-      input,
-      "OPENAI_API_KEY is missing, so this local take used deterministic demo scoring.",
-    );
+  if (!env.OPENAI_API_KEY) {
+    if (env.DELIVERY_AI_ALLOW_MOCK_FALLBACK && env.NODE_ENV !== "production") {
+      return mockJudgment(
+        input,
+        "OPENAI_API_KEY is missing; explicit local mock fallback produced demo scoring.",
+      );
+    }
+    throw new EnvironmentError("OPENAI_API_KEY is required for live AI judging.", ["OPENAI_API_KEY"]);
   }
 
   try {
@@ -443,9 +451,11 @@ export async function judgeDelivery(input: JudgeDeliveryInput): Promise<Delivery
     // judge or substituted into v1 accuracy: an STT rollout needs calibration
     // before it changes ranking semantics. A configured Scribe failure is a
     // visible retry, never an unnoticed provider switch.
-    const transcription = env.DELIVERY_TRANSCRIPTION_PROVIDER === "elevenlabs"
-      ? await transcribeWithScribe(input.audio, input.durationMs)
-      : undefined;
+    let transcription;
+    if (env.DELIVERY_TRANSCRIPTION_PROVIDER === "elevenlabs") {
+      input.onProviderRequest?.("elevenlabs");
+      transcription = await transcribeWithScribe(input.audio, input.durationMs);
+    }
     const judgment = await liveJudgment(input);
     return { ...judgment, ...(transcription ? { transcription } : {}) };
   } catch (error) {

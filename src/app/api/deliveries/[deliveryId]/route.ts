@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { assertAccountNotDeleting } from "@/lib/server/account-deletion";
 import { AppError, ExternalServiceError, jsonError, jsonOk, requestIdFrom } from "@/lib/server/api-error";
 import { enforceRateLimit, rateLimitHeaders } from "@/lib/server/rate-limit";
 import { assertSameOrigin } from "@/lib/server/request";
@@ -26,6 +27,7 @@ export async function GET(
   const requestId = requestIdFrom(request);
   try {
     const user = await requireUser();
+    await assertAccountNotDeleting(user.id);
     const rateLimit = await enforceRateLimit(`delivery-audio:${user.id}`, {
       limit: 120,
       windowMs: 60 * 60 * 1_000,

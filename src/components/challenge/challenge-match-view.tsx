@@ -2,11 +2,12 @@
 
 import { ArrowRight, Copy, Headphones, RefreshCw, Share2, Swords, Trophy } from "lucide-react";
 import Link from "next/link";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { ReportAction } from "@/components/safety/report-action";
 import { ContentControl } from "@/components/content/content-control";
 import { useApp } from "@/components/providers/app-provider";
 import { isRatingAllowed, type ContentRating } from "@/data/content";
+import { SavedAudio } from "@/components/game/saved-audio";
 
 type MatchEntry = {
   entrantId: string; displayName: string; handle: string; deliveryId: string; createdAt: string; audioUrl: string | null;
@@ -36,10 +37,5 @@ export function ChallengeMatchView({ entries, complete, invitePath, currentUserI
 }
 
 function ChallengeAudio({ url }: { url: string }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  useEffect(() => {
-    const audio = audioRef.current;
-    return () => { if (audio) { audio.pause(); audio.removeAttribute("src"); audio.load(); } };
-  }, []);
-  return <audio ref={audioRef} controls preload="metadata" src={url} className="w-full" aria-label="Challenge take playback" />;
+  return <SavedAudio key={url} url={url} label="Challenge take playback" reloadOnRetry />;
 }

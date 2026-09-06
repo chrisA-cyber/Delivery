@@ -75,8 +75,10 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("direct audio judge contract (mocked SDK; no network)", () => {
   it("sends actual audio, preserves direction, hashes identity, and computes accuracy itself", async () => {
-    fixture.create.mockResolvedValue(response());
-    const result = await judgeDelivery(input());
+    const usage = { prompt_tokens: 400, completion_tokens: 200, total_tokens: 600, prompt_tokens_details: { audio_tokens: 100 } };
+    fixture.create.mockResolvedValue({ ...response(), usage });
+    const onOpenAIUsage = vi.fn();
+    const result = await judgeDelivery(input({ onOpenAIUsage }));
     const [request, options] = fixture.create.mock.calls[0]!;
     expect(request.store).toBe(false);
     expect(request.safety_identifier).toMatch(/^[a-f0-9]{64}$/);
@@ -90,6 +92,8 @@ describe("direct audio judge contract (mocked SDK; no network)", () => {
     expect(result.rubricVersion).toBe("delivery-voice-v1.1");
     expect(result.scoringVersion).toBe("delivery-voice-v1");
     expect(result.coachNote).toContain("one beat");
+    expect(onOpenAIUsage).toHaveBeenCalledWith(usage);
+    expect(result).not.toHaveProperty("usage");
   });
 
   it("retains spoken manipulation in the transcript and penalizes the added words deterministically", async () => {
@@ -144,6 +148,31 @@ describe("direct audio judge contract (mocked SDK; no network)", () => {
     expect(fixture.create).not.toHaveBeenCalled();
   });
 
+  it("requires explicit fallback when the live judge key is missing, before invoking Scribe", async () => {
+    fixture.env.OPENAI_API_KEY = "";
+    fixture.env.DELIVERY_TRANSCRIPTION_PROVIDER = "elevenlabs";
+    await expect(judgeDelivery(input())).rejects.toThrow("OPENAI_API_KEY is required");
+    expect(fixture.create).not.toHaveBeenCalled();
+    expect(fixture.scribe).not.toHaveBeenCalled();
+
+    fixture.env.DELIVERY_AI_ALLOW_MOCK_FALLBACK = true;
+    const demo = await judgeDelivery(input());
+    expect(demo.source).toBe("mock");
+    expect(demo.warning).toContain("explicit local mock fallback");
+    fixture.env.NODE_ENV = "production";
+    await expect(judgeDelivery(input())).rejects.toThrow("OPENAI_API_KEY is required");
+  });
+
+  it("counts initial and repair requests and allows evaluation to stop before exceeding its ceiling", async () => {
+    fixture.create.mockResolvedValue(response({ ...scorecard, coachNote: " " }));
+    const onProviderRequest = vi.fn().mockImplementationOnce(() => undefined).mockImplementationOnce(() => {
+      throw new AppError("EVALUATION_REQUEST_LIMIT", "Approved request ceiling reached.", 429);
+    });
+    await expect(judgeDelivery(input({ onProviderRequest }))).rejects.toMatchObject({ code: "EVALUATION_REQUEST_LIMIT" });
+    expect(onProviderRequest.mock.calls).toEqual([["openai"], ["openai"]]);
+    expect(fixture.create).toHaveBeenCalledTimes(1);
+  });
+
   it("keeps a real Scribe companion out of the legacy score and audio prompt", async () => {
     fixture.env.DELIVERY_TRANSCRIPTION_PROVIDER = "elevenlabs";
     fixture.scribe.mockResolvedValue({
@@ -151,13 +180,16 @@ describe("direct audio judge contract (mocked SDK; no network)", () => {
       usedForAccuracy: false, words: [{ text: "Scribe", start: 0, end: 0.4 }],
     });
     fixture.create.mockResolvedValue(response());
-    const result = await judgeDelivery(input());
+    const onProviderRequest = vi.fn();
+    const result = await judgeDelivery(input({ onProviderRequest }));
     expect(result.transcription?.text).toBe("Scribe heard different words.");
     expect(result.transcript).toBe(scorecard.transcript);
     expect(result.scores.accuracy).toBe(100);
     expect(result.scoringVersion).toBe("delivery-voice-v1");
     expect(JSON.stringify(fixture.create.mock.calls[0]![0].messages)).not.toContain("Scribe heard different words");
     expect(fixture.scribe).toHaveBeenCalledOnce();
+    expect(onProviderRequest.mock.calls).toEqual([["elevenlabs"], ["openai"]]);
+    expect(result).not.toHaveProperty("onProviderRequest");
   });
 
   it("surfaces configured Scribe failure before a paid audio judgment, even with local fallback enabled", async () => {
