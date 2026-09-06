@@ -159,23 +159,24 @@ export async function DELETE(request: Request) {
           },
         });
 
-        // Say It Back uses the same private bucket, with its own durable receipts.
-        // Remove those objects before the Auth cascade can erase their paths.
-        await deleteAllDeliveryMedia({
-          ownerId: user.id,
-          loadPage: async (afterId, limit) => {
-            let query = admin.from("say_attempts")
-              .select("id,recording_path").eq("user_id", user.id)
-              .order("id", { ascending: true }).limit(limit);
-            if (afterId) query = query.gt("id", afterId);
-            const page = await query;
-            return { rows: (page.data ?? []) as Array<{ id: string; recording_path?: unknown }>, error: page.error ?? undefined };
-          },
-          remove: async (bucket, paths) => {
-            const result = await admin.storage.from(bucket).remove(paths);
-            return { error: result.error ?? undefined };
-          },
-        });
+        // Remove private mode media before the Auth cascade erases its paths.
+        for (const table of ["say_attempts", "switch_attempts"]) {
+          await deleteAllDeliveryMedia({
+            ownerId: user.id,
+            loadPage: async (afterId, limit) => {
+              let query = admin.from(table)
+                .select("id,recording_path").eq("user_id", user.id)
+                .order("id", { ascending: true }).limit(limit);
+              if (afterId) query = query.gt("id", afterId);
+              const page = await query;
+              return { rows: (page.data ?? []) as Array<{ id: string; recording_path?: unknown }>, error: page.error ?? undefined };
+            },
+            remove: async (bucket, paths) => {
+              const result = await admin.storage.from(bucket).remove(paths);
+              return { error: result.error ?? undefined };
+            },
+          });
+        }
 
         await deleteGroupAccountMedia(user.id);
 

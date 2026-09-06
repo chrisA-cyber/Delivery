@@ -8,6 +8,7 @@ import { enforceRateLimit, rateLimitHeaders } from "@/lib/server/rate-limit";
 import { assertSameOrigin } from "@/lib/server/request";
 import { requireStaff } from "@/lib/supabase/auth";
 import { cleanupExpiredGroupTakes } from "@/lib/server/group-rounds";
+import { cleanupExpiredSwitchGuests } from "@/lib/server/switch";
 import { cleanupExpiredSayGuests } from "@/lib/server/say-it-back";
 
 export const dynamic = "force-dynamic";
@@ -40,13 +41,14 @@ export async function POST(request: Request) {
     if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 100) {
       throw new AppError("INVALID_CLEANUP_LIMIT", "Cleanup limit must be between 1 and 100.", 422);
     }
-    const [moderation, accountReceiptsReconciled, expiredGuestDubs, expiredGroupTakes] = await Promise.all([
+    const [moderation, accountReceiptsReconciled, expiredGuestDubs, expiredGroupTakes, expiredGuestSwitchTakes] = await Promise.all([
       processModerationStorageCleanup(requestedLimit),
       reconcileCompletedAccountDeletions(requestedLimit),
       cleanupExpiredSayGuests(requestedLimit),
       cleanupExpiredGroupTakes(requestedLimit),
+      cleanupExpiredSwitchGuests(requestedLimit),
     ]);
-    return jsonOk({ moderation, accountReceiptsReconciled, expiredGuestDubs, expiredGroupTakes }, requestId, {
+    return jsonOk({ moderation, accountReceiptsReconciled, expiredGuestDubs, expiredGroupTakes, expiredGuestSwitchTakes }, requestId, {
       headers: {
         ...rateLimitHeaders(rateLimit),
         "Cache-Control": "private, no-store, max-age=0",

@@ -1,0 +1,556 @@
+{
+  "kind": "deployed-switch-guest-round-verification",
+  "origin": "https://delivery-production-0577.up.railway.app",
+  "startedAt": "2026-09-06T21:39:05.028Z",
+  "finishedAt": "2026-09-06T21:44:21.342Z",
+  "deploymentRevisions": [
+    "09f92c67b6b0db3c0716831ca70064164e960c9b"
+  ],
+  "passed": true,
+  "requestCount": 50,
+  "requestCap": 50,
+  "fixture": {
+    "kind": "offline ffmpeg flite synthetic transport speech",
+    "durationSeconds": 20,
+    "sha256": "4c05d0611830edf18af3151fb685fb4271cfe81e585808ae79f454f715ba16d8"
+  },
+  "paidCalls": 0,
+  "providerSpendUsd": 0,
+  "assertions": [
+    "catalog offers eight unranked beta challenges",
+    "emotion and speed use the same short phrase with five immutable cues",
+    "speed snapshot has requested ratios",
+    "private invitation has exact catalog snapshot",
+    "upload retry keeps one immutable attempt",
+    "saved attempt contains exact cue snapshot",
+    "reopened take preserves cue timeline",
+    "private reveal exposes both unscored performances",
+    "friend seeks revealed Switch audio: valid seekable WAV range",
+    "community assignment equals private assignment",
+    "replacement clears previous showcase selection",
+    "host previews private consented Switch audio: valid seekable WAV range",
+    "review contains no private performer media",
+    "broadcast includes only selected performance",
+    "broadcast replay snapshot matches original recording",
+    "broadcast uses dedicated audio capability",
+    "broadcast seeks selected recording: valid seekable WAV range",
+    "audience result is one vote with no invented judge score",
+    "rematch is linked and duplicate safe",
+    "speed rematch invitation preserves exact ratios and timings",
+    "speed recording stores its immutable invitation snapshot",
+    "deleted source has no accessible performance"
+  ],
+  "checks": [
+    {
+      "name": "catalog includes both Switch variants",
+      "actor": "host",
+      "method": "GET",
+      "route": "/api/switch/catalog",
+      "status": 200,
+      "expected": 200,
+      "ms": 8546,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "create private emotion round",
+      "actor": "host",
+      "method": "POST",
+      "route": "/api/rounds",
+      "status": 201,
+      "expected": 201,
+      "ms": 6132,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "first guest joins private round",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/join",
+      "status": 200,
+      "expected": 200,
+      "ms": 5349,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "second guest joins private round",
+      "actor": "performer2",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/join",
+      "status": 200,
+      "expected": 200,
+      "ms": 7210,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "upload first continuous take",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/switch/attempts",
+      "status": 201,
+      "expected": 201,
+      "ms": 6469,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "duplicate upload returns existing take",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/switch/attempts",
+      "status": 200,
+      "expected": 200,
+      "ms": 4974,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "guest reopens persisted private take",
+      "actor": "performer1",
+      "method": "GET",
+      "route": "/api/switch/attempts/ID",
+      "status": 200,
+      "expected": 200,
+      "ms": 5589,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "foreign guest cannot read private attempt audio",
+      "actor": "performer2",
+      "method": "GET",
+      "route": "/api/switch/attempts/ID/audio",
+      "status": 404,
+      "expected": 404,
+      "ms": 5062,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b",
+      "errorCode": "SWITCH_ATTEMPT_NOT_FOUND"
+    },
+    {
+      "name": "first guest submits private take",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/submit",
+      "status": 200,
+      "expected": 200,
+      "ms": 6152,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "second guest records matching take",
+      "actor": "performer2",
+      "method": "POST",
+      "route": "/api/switch/attempts",
+      "status": 201,
+      "expected": 201,
+      "ms": 7277,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "second guest submits private take",
+      "actor": "performer2",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/submit",
+      "status": 200,
+      "expected": 200,
+      "ms": 6455,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "private performance hidden before reveal",
+      "actor": "performer2",
+      "method": "GET",
+      "route": "/api/rounds/CAPABILITY/performances/ID/audio",
+      "status": 404,
+      "expected": 404,
+      "ms": 5387,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b",
+      "errorCode": "ROUND_NOT_FOUND"
+    },
+    {
+      "name": "host reveals private round",
+      "actor": "host",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/close",
+      "status": 200,
+      "expected": 200,
+      "ms": 5655,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "friend seeks revealed Switch audio",
+      "actor": "performer2",
+      "method": "GET",
+      "route": "/api/rounds/CAPABILITY/performances/ID/audio",
+      "status": 206,
+      "expected": 206,
+      "ms": 5689,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "create community with equivalent emotion snapshot",
+      "actor": "host",
+      "method": "POST",
+      "route": "/api/rounds",
+      "status": 201,
+      "expected": 201,
+      "ms": 6017,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "first guest joins community",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/join",
+      "status": 200,
+      "expected": 200,
+      "ms": 5579,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "second guest joins community",
+      "actor": "performer2",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/join",
+      "status": 200,
+      "expected": 200,
+      "ms": 6094,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "community rejects missing broadcast consent",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/submit",
+      "status": 422,
+      "expected": 422,
+      "ms": 5543,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b",
+      "errorCode": "ROUND_BROADCAST_CONSENT"
+    },
+    {
+      "name": "reuse equivalent private take with broadcast consent",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/submit",
+      "status": 200,
+      "expected": 200,
+      "ms": 6337,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "host selects consented first take",
+      "actor": "host",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/select",
+      "status": 200,
+      "expected": 200,
+      "ms": 6928,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "record full replacement take",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/switch/attempts",
+      "status": 201,
+      "expected": 201,
+      "ms": 6478,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "replace submission with full new take",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/submit",
+      "status": 200,
+      "expected": 200,
+      "ms": 6687,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "stale submission retry cannot overwrite replacement",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/submit",
+      "status": 409,
+      "expected": 409,
+      "ms": 5510,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b",
+      "errorCode": "ROUND_TAKE_SUPERSEDED"
+    },
+    {
+      "name": "second guest reuses equivalent take",
+      "actor": "performer2",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/submit",
+      "status": 200,
+      "expected": 200,
+      "ms": 6324,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "host selects replacement",
+      "actor": "host",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/select",
+      "status": 200,
+      "expected": 200,
+      "ms": 6430,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "host previews private consented Switch audio",
+      "actor": "host",
+      "method": "GET",
+      "route": "/api/rounds/CAPABILITY/performances/ID/audio",
+      "status": 206,
+      "expected": 206,
+      "ms": 6622,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "host closes community submissions",
+      "actor": "host",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/close",
+      "status": 200,
+      "expected": 200,
+      "ms": 6359,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "broadcast hides private review queue",
+      "actor": "audience",
+      "method": "GET",
+      "route": "/api/broadcast/CAPABILITY",
+      "status": 200,
+      "expected": 200,
+      "ms": 7522,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "host starts selected showcase",
+      "actor": "host",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/showcase",
+      "status": 200,
+      "expected": 200,
+      "ms": 6515,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "broadcast presents exact Switch cue snapshot",
+      "actor": "audience",
+      "method": "GET",
+      "route": "/api/broadcast/CAPABILITY",
+      "status": 200,
+      "expected": 200,
+      "ms": 6732,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "broadcast seeks selected recording",
+      "actor": "audience",
+      "method": "GET",
+      "route": "/api/broadcast/CAPABILITY/audio/ID",
+      "status": 206,
+      "expected": 206,
+      "ms": 6361,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "broadcast rejects unselected recording",
+      "actor": "audience",
+      "method": "GET",
+      "route": "/api/broadcast/CAPABILITY/audio/ID",
+      "status": 404,
+      "expected": 404,
+      "ms": 5659,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b",
+      "errorCode": "ROUND_NOT_FOUND"
+    },
+    {
+      "name": "audience joins without recording",
+      "actor": "audience",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/join",
+      "status": 200,
+      "expected": 200,
+      "ms": 7130,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "host controls Switch display playback",
+      "actor": "host",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/display",
+      "status": 200,
+      "expected": 200,
+      "ms": 6273,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "host opens audience voting",
+      "actor": "host",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/start-voting",
+      "status": 200,
+      "expected": 200,
+      "ms": 6183,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "performer cannot vote for self",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/vote",
+      "status": 409,
+      "expected": 409,
+      "ms": 6019,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b",
+      "errorCode": "ROUND_VOTE_INVALID"
+    },
+    {
+      "name": "audience chooses selected performer",
+      "actor": "audience",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/vote",
+      "status": 200,
+      "expected": 200,
+      "ms": 6876,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "duplicate audience vote remains one effective vote",
+      "actor": "audience",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/vote",
+      "status": 200,
+      "expected": 200,
+      "ms": 7774,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "host closes audience voting",
+      "actor": "host",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/end-voting",
+      "status": 200,
+      "expected": 200,
+      "ms": 6829,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "late audience vote rejected",
+      "actor": "audience",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/vote",
+      "status": 409,
+      "expected": 409,
+      "ms": 6088,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b",
+      "errorCode": "ROUND_VOTE_INVALID"
+    },
+    {
+      "name": "host rematches into speed Switch",
+      "actor": "host",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/rematch",
+      "status": 201,
+      "expected": 201,
+      "ms": 7041,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "rematch retry reuses the same next round",
+      "actor": "host",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/rematch",
+      "status": 201,
+      "expected": 201,
+      "ms": 6080,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "guest joins speed rematch",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/join",
+      "status": 200,
+      "expected": 200,
+      "ms": 6121,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "upload continuous speed transport take",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/switch/attempts",
+      "status": 201,
+      "expected": 201,
+      "ms": 6491,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "submit speed performance",
+      "actor": "performer1",
+      "method": "POST",
+      "route": "/api/rounds/CAPABILITY/submit",
+      "status": 200,
+      "expected": 200,
+      "ms": 6835,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "owner deletes submitted speed source",
+      "actor": "performer1",
+      "method": "DELETE",
+      "route": "/api/switch/attempts/ID",
+      "status": 200,
+      "expected": 200,
+      "ms": 5603,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "deletion removes host playback without fallback",
+      "actor": "host",
+      "method": "GET",
+      "route": "/api/rounds/CAPABILITY",
+      "status": 200,
+      "expected": 200,
+      "ms": 6715,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "delete original source from both rounds",
+      "actor": "performer1",
+      "method": "DELETE",
+      "route": "/api/switch/attempts/ID",
+      "status": 200,
+      "expected": 200,
+      "ms": 6128,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "delete replacement source",
+      "actor": "performer1",
+      "method": "DELETE",
+      "route": "/api/switch/attempts/ID",
+      "status": 200,
+      "expected": 200,
+      "ms": 5264,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    },
+    {
+      "name": "delete second performer source",
+      "actor": "performer2",
+      "method": "DELETE",
+      "route": "/api/switch/attempts/ID",
+      "status": 200,
+      "expected": 200,
+      "ms": 6000,
+      "revision": "09f92c67b6b0db3c0716831ca70064164e960c9b"
+    }
+  ],
+  "limitations": [
+    "Unjudged transport fixture; no tone, transition, speed or score-quality claim.",
+    "HTTP/SQL evidence does not demonstrate real OAuth, physical phone capture or audible OBS playback."
+  ]
+}

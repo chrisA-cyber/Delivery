@@ -1,0 +1,109 @@
+{
+  "label": "speed",
+  "at": "2026-09-06T21:45:33.983Z",
+  "checks": [
+    {
+      "name": "catalog200",
+      "passed": true
+    },
+    {
+      "name": "five identical phrases",
+      "passed": true
+    },
+    {
+      "name": "private upload201",
+      "passed": true
+    },
+    {
+      "name": "same-key upload recovered without duplicate",
+      "passed": true
+    },
+    {
+      "name": "saved cue snapshot preserved",
+      "passed": true
+    },
+    {
+      "name": "actual full-audio score returned",
+      "passed": true
+    },
+    {
+      "name": "separate beta rubric",
+      "passed": true
+    },
+    {
+      "name": "five segment feedback entries",
+      "passed": true
+    },
+    {
+      "name": "heard repeated words",
+      "passed": true
+    },
+    {
+      "name": "cached scoring replay no extra play",
+      "passed": true
+    },
+    {
+      "name": "test take deletion",
+      "passed": true
+    }
+  ],
+  "providerDispatches": 1,
+  "audioSha256": "9c81999bda5a591205a73f4fad9c962691c5ace548a0e88bc7556b3c8bef5c39",
+  "score": {
+    "beta": true,
+    "words": 100,
+    "ranked": false,
+    "overall": 92,
+    "version": "switch-audio-v1-beta",
+    "delivery": 88,
+    "evidence": {
+      "model": "gpt-audio-1.5",
+      "source": "audio",
+      "timing": "approximate",
+      "audioHash": "9c81999bda5a591205a73f4fad9c962691c5ace548a0e88bc7556b3c8bef5c39",
+      "recordingOffsetMs": 0,
+      "timingToleranceMs": 750
+    },
+    "segments": [
+      {
+        "cueId": "speed-not-my-problem-1",
+        "words": 100,
+        "delivery": 85,
+        "feedback": "The normal pace delivery was natural and clear, setting a good baseline."
+      },
+      {
+        "cueId": "speed-not-my-problem-2",
+        "words": 100,
+        "delivery": 80,
+        "feedback": "The slower pace was noticeable, though could have been stretched a bit more for effect."
+      },
+      {
+        "cueId": "speed-not-my-problem-3",
+        "words": 100,
+        "delivery": 90,
+        "feedback": "The super slow pace was well executed with elongated delivery, clearly distinct from the previous speeds."
+      },
+      {
+        "cueId": "speed-not-my-problem-4",
+        "words": 100,
+        "delivery": 95,
+        "feedback": "The fast pace was impressively clear and quick, showing good control."
+      },
+      {
+        "cueId": "speed-not-my-problem-5",
+        "words": 100,
+        "delivery": 90,
+        "feedback": "The turbo pace was distinctly faster, maintaining clarity despite the increased speed."
+      }
+    ],
+    "coachNote": "You handled the speed changes well; next time, try to exaggerate the slower speeds even more to contrast with your great fast delivery.",
+    "transcript": "Not my problem. Not my problem. Not my problem. Not my problem. Not my problem.",
+    "limitations": [
+      "Switch is an unranked beta. Audio judgments are approximate and compare only the same challenge and rubric version."
+    ],
+    "transitions": 90,
+    "rubricVersion": "switch-audio-v1.0",
+    "transitionFeedback": "The transitions between speeds were distinct, with clear shifts from normal to slow, super slow, fast, and turbo."
+  },
+  "judgeStatus": 200
+}

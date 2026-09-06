@@ -14,6 +14,7 @@ const ALLOWED_APP_PATHS = [
   "/profile",
   "/rounds",
   "/say-it-back",
+  "/switch",
   "/settings",
   "/stream",
   "/submit",

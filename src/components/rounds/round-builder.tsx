@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element -- Versioned scene posters are curated media assets. */
 
-import { ArrowRight, Check, Clock3, Clapperboard, LoaderCircle, Mic, Search, ShieldCheck, Users } from "lucide-react";
+import { ArrowRight, Check, Clock3, Clapperboard, LoaderCircle, Mic, Search, ShieldCheck, Shuffle, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -9,17 +9,22 @@ import { ContentControl, CONTENT_LABELS } from "@/components/content/content-con
 import { useApp } from "@/components/providers/app-provider";
 import { ENERGY_MODIFIERS, PACKS, isEnergyCompatible, isRatingAllowed, queryPrompts } from "@/data/content";
 import type { CreateGroupRoundInput, GroupMode, GroupRound } from "@/lib/groups/types";
+import type { SwitchChallenge } from "@/lib/switch/types";
 import type { SayClip } from "@/lib/say-it-back/types";
 import { cn } from "@/lib/utils";
 import { roundApi, roundPost } from "./round-api";
 
-export function RoundBuilder({ community = false, initialMode, initialClipId = "", initialRoleId = "", initialPromptId = "", initialEnergyId = "", previousToken }: {
-  community?: boolean; initialMode?: string; initialClipId?: string; initialRoleId?: string; initialPromptId?: string; initialEnergyId?: string; previousToken?: string;
+export function RoundBuilder({ community = false, initialMode, initialClipId = "", initialRoleId = "", initialPromptId = "", initialEnergyId = "", initialChallengeId = "", previousToken }: {
+  community?: boolean; initialMode?: string; initialClipId?: string; initialRoleId?: string; initialPromptId?: string; initialEnergyId?: string; initialChallengeId?: string; previousToken?: string;
 }) {
   const router = useRouter();
   const { profile, authenticated, contentRating: preference, updatePreferences } = useApp();
   const contentRating = preference === "mature" ? "teen" : preference;
-  const [mode, setMode] = useState<GroupMode>(initialMode === "classic" ? "classic" : "say-it-back");
+  const [mode, setMode] = useState<GroupMode>(initialMode === "classic" || initialMode === "switch" ? initialMode : "say-it-back");
+  const [challenges, setChallenges] = useState<SwitchChallenge[]>([]);
+  const [challengeId, setChallengeId] = useState(initialChallengeId);
+  const [switchCatalogError, setSwitchCatalogError] = useState("");
+  const [switchLoading, setSwitchLoading] = useState(true);
   const [clips, setClips] = useState<SayClip[]>([]);
   const [clipId, setClipId] = useState(initialClipId);
   const [roleId, setRoleId] = useState(initialRoleId);
@@ -52,6 +57,15 @@ export function RoundBuilder({ community = false, initialMode, initialClipId = "
     return () => { active = false; };
   }, [contentRating, reload, community]);
   useEffect(() => {
+    let active = true;
+    setSwitchLoading(true); setSwitchCatalogError("");
+    roundApi<{ challenges: SwitchChallenge[] }>(`/api/switch/catalog?maxRating=${contentRating}`)
+      .then((data) => { if (active) setChallenges(data.challenges); })
+      .catch((cause) => { if (active) setSwitchCatalogError(cause instanceof Error ? cause.message : "Switch challenges could not load."); })
+      .finally(() => { if (active) setSwitchLoading(false); });
+    return () => { active = false; };
+  }, [contentRating, reload]);
+  useEffect(() => {
     if (!previousToken) return;
     let active = true;
     roundApi<{ round: GroupRound }>(`/api/rounds/${encodeURIComponent(previousToken)}?maxRating=${contentRating}`).then(({ round }) => {
@@ -61,16 +75,19 @@ export function RoundBuilder({ community = false, initialMode, initialClipId = "
       initialized.current = true;
       setName(`${round.name.replace(/ · again$/, "")} · again`.slice(0, 60));
       setDisplayName((value) => value || round.members.find((member) => member.isYou)?.displayName || "");
-      if (!initialMode && !initialClipId && !initialPromptId) {
+      if (!initialMode && !initialClipId && !initialPromptId && !initialChallengeId) {
         setMode(round.assignment.mode);
         if (round.assignment.mode === "say-it-back") { setClipId(round.assignment.clip.id); setRoleId(round.assignment.roleId); }
+        else if (round.assignment.mode === "switch") setChallengeId(round.assignment.challenge.id);
         else { setPromptId(round.assignment.promptSlug); setEnergyId(round.assignment.energySlug); }
       }
     }).catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : "The previous round could not load. You can still start a fresh round."); });
     return () => { active = false; };
-  }, [previousToken, contentRating, initialMode, initialClipId, initialPromptId]);
+  }, [previousToken, contentRating, initialMode, initialClipId, initialPromptId, initialChallengeId]);
 
   const prompts = useMemo(() => queryPrompts({ maxRating: contentRating }).filter((item) => item.packIds.every((id) => PACKS.find((pack) => pack.id === id)?.access !== "pro")), [contentRating]);
+  const visibleChallenges = challenges.filter((item) => isRatingAllowed(item.rating, contentRating));
+  const challenge = visibleChallenges.find((item) => item.id === challengeId) ?? (!challengeId ? visibleChallenges[0] : undefined);
   const clip = clips.find((item) => item.id === clipId) ?? (!clipId ? clips[0] : undefined);
   const role = clip?.roles.find((item) => item.id === roleId) ?? clip?.roles[0];
   const prompt = prompts.find((item) => item.id === promptId) ?? (!promptId ? prompts[0] : undefined);
@@ -79,8 +96,9 @@ export function RoundBuilder({ community = false, initialMode, initialClipId = "
   const search = query.trim().toLowerCase();
   const availableClips = clips.filter((item) => !search || `${item.title} ${item.source.title} ${item.tags.join(" ")}`.toLowerCase().includes(search));
   const availablePrompts = prompts.filter((item) => !search || item.line.toLowerCase().includes(search));
+  const availableChallenges = visibleChallenges.filter((item) => !search || `${item.title} ${item.description} ${item.tags.join(" ")}`.toLowerCase().includes(search));
   const visiblePrevious = previousRound && isRatingAllowed(previousRound.assignment.rating, contentRating) ? previousRound : null;
-  const selected = mode === "say-it-back" ? Boolean(clip && role) : Boolean(prompt && energy);
+  const selected = mode === "switch" ? Boolean(challenge) : mode === "say-it-back" ? Boolean(clip && role) : Boolean(prompt && energy);
 
   async function create(event: React.FormEvent) {
     event.preventDefault();
@@ -88,7 +106,7 @@ export function RoundBuilder({ community = false, initialMode, initialClipId = "
     sending.current = true; setCreating(true); setError("");
     const input = {
       community, submissionLimit, audienceVoting, name: name.trim(), displayName: displayName.trim(), mode, closesInHours: hours, maxRating: contentRating,
-      ...(mode === "say-it-back" ? { clipId: clip!.id, clipVersion: clip!.version, roleId: role!.id } : { promptId: prompt!.id, energyId: energy!.id }),
+      ...(mode === "switch" ? { challengeId: challenge!.id, challengeVersion: challenge!.version } : mode === "say-it-back" ? { clipId: clip!.id, clipVersion: clip!.version, roleId: role!.id } : { promptId: prompt!.id, energyId: energy!.id }),
     };
     const key = JSON.stringify(input);
     if (request.current?.key !== key) request.current = { key, id: crypto.randomUUID() };
@@ -106,9 +124,15 @@ export function RoundBuilder({ community = false, initialMode, initialClipId = "
     <form onSubmit={(event) => void create(event)} className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(300px,1fr)]">
       <section className="min-w-0 rounded-2xl border border-white/15 bg-[#20201d] p-4 sm:p-6">
         <p className="mono-label text-hot">01 / Set the assignment</p><h2 className="mt-2 text-2xl font-bold">Give them something to work with.</h2>
-        <div className="mt-5 grid grid-cols-2 gap-2" role="group" aria-label="Game mode">{([{ value: "say-it-back", label: "Say It Back", description: "Your voice in a real scene", icon: Clapperboard }, { value: "classic", label: "Classic", description: "A line. An absurd direction.", icon: Mic }] as const).map((item) => <button type="button" key={item.value} onClick={() => { setMode(item.value); setQuery(""); }} disabled={creating} aria-pressed={mode === item.value} className={cn("rounded-xl border p-4 text-left", mode === item.value ? "border-hot bg-hot/10" : "border-white/15 hover:border-white/40")}><item.icon className="mb-3 size-5 text-hot" /><span className="block text-sm font-bold">{item.label}</span><span className="mt-1 block text-[11px] leading-5 text-white/60">{item.description}</span></button>)}</div>
-        <label className="mt-5 flex min-h-12 items-center gap-3 rounded-xl border border-white/20 px-3"><Search className="size-4 shrink-0 text-white/55" /><span className="sr-only">Search {mode === "classic" ? "lines" : "scenes"}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={mode === "classic" ? "Find a funny line" : "Find a scene"} className="min-w-0 w-full bg-transparent py-3 text-sm outline-none" /></label>
-        {mode === "say-it-back" ? <>
+        <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3" role="group" aria-label="Game mode">{([{ value: "say-it-back", label: "Say It Back", description: "Your voice in a real scene", icon: Clapperboard }, { value: "classic", label: "Classic", description: "A line. An absurd direction.", icon: Mic }, { value: "switch", label: "Switch · Beta", description: "One phrase. Keep switching.", icon: Shuffle }] as const).map((item) => <button type="button" key={item.value} onClick={() => { setMode(item.value); setQuery(""); }} disabled={creating} aria-pressed={mode === item.value} className={cn("rounded-xl border p-4 text-left", mode === item.value ? "border-hot bg-hot/10" : "border-white/15 hover:border-white/40")}><item.icon className="mb-3 size-5 text-hot" /><span className="block text-sm font-bold">{item.label}</span><span className="mt-1 block text-[11px] leading-5 text-white/60">{item.description}</span></button>)}</div>
+        <label className="mt-5 flex min-h-12 items-center gap-3 rounded-xl border border-white/20 px-3"><Search className="size-4 shrink-0 text-white/55" /><span className="sr-only">Search {mode === "classic" ? "lines" : mode === "switch" ? "Switch challenges" : "scenes"}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={mode === "classic" ? "Find a funny line" : mode === "switch" ? "Find a Switch challenge" : "Find a scene"} className="min-w-0 w-full bg-transparent py-3 text-sm outline-none" /></label>
+        {mode === "switch" ? <>
+          <p className="mt-4 text-xs leading-6 text-white/65">One uninterrupted take. Repeat the same short phrase as emoji emotions or speaking speeds change. Everyone gets the same phrase, cue timeline, and beta scoring rules. Casual comparisons stay out of ranked leaderboards.</p>
+          {switchCatalogError && <p role="alert" className="mt-4 text-sm text-orange-200">{switchCatalogError} <button type="button" onClick={() => setReload((value) => value + 1)} className="underline">Retry Switch challenges</button></p>}
+          {switchLoading && !challenges.length ? <p role="status" className="flex items-center gap-2 py-10 text-sm text-white/65"><LoaderCircle className="size-4 animate-spin" />Opening Switch challenges…</p> : <div className="mt-4 grid max-h-[520px] gap-3 overflow-y-auto pr-1" aria-label="Choose a Switch challenge">{availableChallenges.map((item) => <button type="button" key={`${item.id}:${item.version}`} disabled={creating} aria-pressed={challenge?.id === item.id} onClick={() => setChallengeId(item.id)} className={cn("rounded-xl border p-4 text-left", challenge?.id === item.id ? "border-hot bg-hot/10" : "border-white/15 hover:border-white/40")}><span className="flex items-center justify-between gap-3"><span className="text-lg font-bold">{item.title}</span>{challenge?.id === item.id && <Check className="size-4 shrink-0 text-hot" />}</span><span className="mt-2 block text-xs leading-6 text-white/65">{item.description}</span><span className="mt-3 flex flex-wrap gap-2">{item.cues.map((cue) => <span key={cue.id} className="rounded-lg bg-white/5 px-2 py-1 text-[11px] text-white/75">{cue.emoji} {cue.directionLabel}</span>)}</span><span className="mt-3 block text-[10px] text-white/55">{item.kind === "speed" ? "Speaking speed" : "Emotions"} · {CONTENT_LABELS[item.rating]} · {item.duration} sec · {item.difficulty}</span></button>)}</div>}
+          {!switchLoading && !availableChallenges.length && !switchCatalogError && <p className="py-8 text-sm text-white/65">No Switch challenges match. Try another search or content setting.</p>}
+          {challenge && <div className="mt-5 rounded-xl border border-hot/25 bg-hot/5 p-4"><p className="text-xs font-bold text-hot">Repeat this phrase through every cue</p><p className="mt-3 text-lg font-bold leading-7">“{challenge.cues[0]?.text}”</p><ol className="mt-4 space-y-3">{challenge.cues.map((cue) => <li key={cue.id} className="flex items-center gap-3"><span className="text-2xl" aria-hidden="true">{cue.emoji}</span><div><p className="text-sm font-bold text-white/85">{cue.directionLabel}</p><p className="text-xs text-white/55">{cue.start}–{cue.end}s</p></div></li>)}</ol></div>}
+        </> : mode === "say-it-back" ? <>
           {catalogError && <p role="alert" className="mt-4 text-sm text-orange-200">{catalogError} <button type="button" onClick={() => setReload((value) => value + 1)} className="underline">Retry scenes</button></p>}
           {loading && !clips.length ? <p role="status" className="flex items-center gap-2 py-10 text-sm text-white/65"><LoaderCircle className="size-4 animate-spin" />Opening scenes…</p> : <div className="mt-4 grid max-h-[520px] gap-3 overflow-y-auto pr-1 sm:grid-cols-2" aria-label="Choose a scene">{availableClips.map((item) => <button type="button" key={`${item.id}:${item.version}`} disabled={creating} aria-pressed={clip?.id === item.id} onClick={() => { setClipId(item.id); setRoleId(item.roles[0]?.id ?? ""); }} className={cn("overflow-hidden rounded-xl border text-left", clip?.id === item.id ? "border-hot bg-hot/10" : "border-white/15 hover:border-white/40")}><div className="relative aspect-video bg-black"><img src={item.posterUrl} alt="" loading="lazy" className="size-full object-cover" /><span className="absolute bottom-2 right-2 rounded bg-ink/90 px-2 py-1 text-[10px] font-bold">{Math.round(item.duration)} sec · {item.cues.filter((cue) => cue.roleId === item.roles[0]?.id).length} lines</span>{clip?.id === item.id && <span className="absolute left-2 top-2 grid size-7 place-items-center rounded-full bg-hot text-ink"><Check className="size-4" /></span>}</div><div className="p-3"><span className="block text-[10px] text-white/55">{item.source.title}</span><span className="mt-1 block text-sm font-bold">{item.title}</span><span className="mt-2 block text-[10px] text-white/60">{CONTENT_LABELS[item.rating]} · {item.difficulty}</span></div></button>)}</div>}
           {!loading && !availableClips.length && !catalogError && <p className="py-8 text-sm text-white/65">No scenes match. Try another search or content setting.</p>}

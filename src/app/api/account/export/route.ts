@@ -51,6 +51,8 @@ export async function POST(request: Request) {
       subscription,
       sayAttempts,
       sayChallenges,
+      switchAttempts,
+      switchChallenges,
     ] = await Promise.all([
       admin.from("profiles").select("handle,display_name,bio,avatar_path,is_private,is_verified,locale,created_at,updated_at,last_active_at").eq("id", user.id).maybeSingle(),
       admin.from("profile_preferences").select("timezone,autoplay,captions,reduced_motion,email_challenges,email_product_updates,default_delivery_visibility,created_at,updated_at").eq("user_id", user.id).maybeSingle(),
@@ -66,6 +68,8 @@ export async function POST(request: Request) {
       admin.from("subscriptions").select("tier,state,provider,current_period_start,current_period_end,cancel_at_period_end,canceled_at,created_at,updated_at").eq("user_id", user.id).maybeSingle(),
       allRows((from, to) => admin.from("say_attempts").select("id,clip_snapshot,role_id,scoring_version,recording_path,audio_mime,audio_hash,duration_ms,recording_offset_ms,status,score,created_at,challenge_id,shared_with_challenge").eq("user_id", user.id).order("created_at", { ascending: false }).order("id", { ascending: false }).range(from, to)),
       allRows((from, to) => admin.from("say_challenges").select("id,attempt_id,clip_version_id,role_id,scoring_version,revoked_at,expires_at,created_at").eq("created_by", user.id).order("created_at", { ascending: false }).order("id", { ascending: false }).range(from, to)),
+      allRows((from, to) => admin.from("switch_attempts").select("id,challenge_snapshot,scoring_version,recording_path,audio_mime,audio_hash,duration_ms,recording_offset_ms,status,score,created_at,challenge_id,shared_with_challenge").eq("user_id", user.id).order("created_at", { ascending: false }).order("id", { ascending: false }).range(from, to)),
+      allRows((from, to) => admin.from("switch_challenges").select("id,attempt_id,challenge_version_id,challenge_snapshot,scoring_version,revoked_at,expires_at,created_at").eq("created_by", user.id).order("created_at", { ascending: false }).order("id", { ascending: false }).range(from, to)),
     ]);
 
     const results = [profile, preferences, subscription];
@@ -81,7 +85,7 @@ export async function POST(request: Request) {
       scoreRows.push(...(scores.data ?? []));
     }
 
-    const paths = [...deliveryRows, ...sayAttempts].flatMap((delivery) => typeof delivery.recording_path === "string" && isOwnerStoragePath(delivery.recording_path, user.id) ? [delivery.recording_path] : []);
+    const paths = [...deliveryRows, ...sayAttempts, ...switchAttempts].flatMap((delivery) => typeof delivery.recording_path === "string" && isOwnerStoragePath(delivery.recording_path, user.id) ? [delivery.recording_path] : []);
     const signedRows: Array<{ signedUrl?: string | null }> = [];
     for (let index = 0; index < paths.length; index += 100) {
       const batch = paths.slice(index, index + 100);
@@ -110,6 +114,13 @@ export async function POST(request: Request) {
           recordingDownloadUrl: typeof recordingPath === "string" ? audioUrls.get(recordingPath) ?? null : null,
         })),
         challenges: sayChallenges,
+      },
+      switch: {
+        attempts: switchAttempts.map(({ recording_path: recordingPath, ...attempt }) => ({
+          ...attempt,
+          recordingDownloadUrl: typeof recordingPath === "string" ? audioUrls.get(recordingPath) ?? null : null,
+        })),
+        challenges: switchChallenges,
       },
       reactions,
       follows,

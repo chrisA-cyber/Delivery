@@ -1,8 +1,9 @@
 import type { ContentRating } from "@/lib/content/types";
 import type { SayAttempt, SayClip, SayScore } from "@/lib/say-it-back/types";
+import type { SwitchAttempt, SwitchChallenge, SwitchScore } from "@/lib/switch/types";
 import type { DeliveryJudgment } from "@/lib/types";
 
-export type GroupMode = "classic" | "say-it-back";
+export type GroupMode = "classic" | "say-it-back" | "switch";
 export type GroupAssignment = {
   mode: "classic"; promptId: string; promptSlug: string; promptText: string;
   energyId: string; energySlug: string; energy: string; category: string;
@@ -10,14 +11,18 @@ export type GroupAssignment = {
 } | {
   mode: "say-it-back"; clip: SayClip; roleId: string;
   rating: ContentRating; scoringVersion: string;
+} | {
+  mode: "switch"; challenge: SwitchChallenge; rating: ContentRating;
+  scoringVersion: string; rubricVersion: string;
 };
 export interface GroupPerformance {
   takeId: string; memberId: string; mode: GroupMode; audioUrl: string;
   durationMs: number; submittedAt: string | null; canSubmit: boolean;
   sharingStatus: "unreviewed" | "approved" | "pending" | "rejected" | "review";
-  score: DeliveryJudgment | SayScore | null;
-  scoreGroup: "classic" | "full-match" | "words-only" | "unscored";
+  score: DeliveryJudgment | SayScore | SwitchScore | null;
+  scoreGroup: "classic" | "full-match" | "words-only" | "switch-beta" | "unscored";
   sayAttempt?: SayAttempt;
+  switchAttempt?: SwitchAttempt;
 }
 export interface GroupMember {
   id: string; displayName: string; isHost: boolean; isYou: boolean;
@@ -41,7 +46,7 @@ export interface GroupRound {
   viewerMemberId: string | null; isHost: boolean; isGuest: boolean;
   canJoin: boolean; canClaim: boolean; viewerVoteMemberId: string | null;
   previousRoundId: string | null; previousRoundUrl?: string | null;
-  /** Private uploaded Classic takes, or compatible saved Say takes for this viewer. */
+  /** Private Classic takes, or compatible saved Say It Back and Switch takes for this viewer. */
   yourTakes: GroupPerformance[];
 }
 export interface CreateGroupRoundInput {
@@ -50,4 +55,5 @@ export interface CreateGroupRoundInput {
   community?: boolean; submissionLimit?: number; audienceVoting?: boolean;
   clipId?: string; clipVersion?: string; roleId?: string;
   promptId?: string; energyId?: string;
+  challengeId?: string; challengeVersion?: string;
 }

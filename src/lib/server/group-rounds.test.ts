@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createHash } from "node:crypto";
 import type { User } from "@supabase/supabase-js";
 import type { GroupViewer } from "@/lib/server/group-rounds";
+import { SWITCH_CHALLENGES, snapshotSwitchChallenge } from "@/lib/switch/catalog";
+import type { SwitchScore } from "@/lib/switch/types";
 import type { SayScore } from "@/lib/say-it-back/types";
 const state = vi.hoisted(() => ({ tables: {} as Record<string, Record<string, unknown>[]>, signed: vi.fn() }));
 vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: () => ({
@@ -22,7 +24,7 @@ vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: () => ({
   rpc: async (_name: string, input: Record<string, unknown>) => ({ data: state.tables.challenges?.find((row) => row.id === input.p_challenge_id), error: null }),
   storage: { from: () => ({ createSignedUrl: state.signed }) },
 }) }));
-import { getGroupRound, groupAudioResponse, groupScoreGroup, ownsGroupMember, ownsGroupSaySource, validGroupStoragePath } from "@/lib/server/group-rounds";
+import { getGroupRound, groupAudioResponse, groupScoreGroup, ownsGroupMember, ownsGroupSaySource, validGroupStoragePath, matchesGroupSwitchAssignment } from "@/lib/server/group-rounds";
 const token = "a".repeat(43);
 const roundId = "00000000-0000-4000-8000-000000000001";
 const memberId = "00000000-0000-4000-8000-000000000002";
@@ -129,5 +131,59 @@ describe("community broadcast boundaries", () => {
   it("cannot use a display capability to access a private draft", async () => {
     community("showcase");
     await expect(groupAudioResponse(token, { ...audience(), display: true }, new Request("https://delivery.test/audio"), { takeId }, "everyone")).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+
+describe("Switch round snapshots and private replay", () => {
+  const challenge = snapshotSwitchChallenge(SWITCH_CHALLENGES[0]!);
+  const assignment = { mode: "switch" as const, challenge, rating: challenge.rating, scoringVersion: challenge.scoringVersion, rubricVersion: challenge.rubricVersion };
+  const attemptId = "00000000-0000-4000-8000-000000000005";
+  function switchRound() {
+    Object.assign(state.tables.challenges![0]!, { group_mode: "switch", group_assignment: assignment });
+    Object.assign(state.tables.challenge_group_takes![0]!, { mode: "switch", switch_attempt_id: attemptId, score: null });
+    state.tables.switch_attempts = [{
+      id: attemptId, challenge_version_id: `${challenge.id}:${challenge.version}`, challenge_snapshot: challenge,
+      scoring_version: challenge.scoringVersion, user_id: null, guest_owner_hash: "b".repeat(64), owner_key: `guest:${"b".repeat(64)}`,
+      status: "ready", score: null, moderation_state: "pending", duration_ms: 18000, recording_offset_ms: 0,
+      recording_path: `guests/${"b".repeat(64)}/switch/${attemptId}.wav`, expires_at: new Date(Date.now() + 86400000).toISOString(),
+    }];
+  }
+  it("requires matching script, directions, cue timing and rubric, independent of JSON key order", () => {
+    switchRound();
+    const attempt = state.tables.switch_attempts![0]!;
+    expect(matchesGroupSwitchAssignment(attempt, assignment)).toBe(true);
+    expect(matchesGroupSwitchAssignment({ ...attempt, challenge_snapshot: { ...Object.fromEntries(Object.entries(challenge).reverse()) } }, assignment)).toBe(true);
+    for (const altered of [
+      { ...challenge, rubricVersion: "another-rubric" },
+      { ...challenge, cues: challenge.cues.map((cue, i) => i ? cue : { ...cue, end: 7 }) },
+      { ...challenge, cues: challenge.cues.map((cue, i) => i ? cue : { ...cue, text: "A different line" }) },
+      { ...challenge, cues: challenge.cues.map((cue, i) => i ? cue : { ...cue, direction: "Changed direction" }) },
+    ]) expect(matchesGroupSwitchAssignment({ ...attempt, challenge_snapshot: altered }, assignment)).toBe(false);
+    expect(matchesGroupSwitchAssignment({ ...attempt, scoring_version: "other" }, assignment)).toBe(false);
+  });
+  it("exposes synchronized snapshot only for eligible revealed or consented showcase performances", async () => {
+    switchRound();
+    expect((await getGroupRound(token, guest, "https://delivery.test")).members.find((m) => m.id === rivalId)?.performance).toBeNull();
+    state.tables.challenges![0]!.state = "completed";
+    const round = await getGroupRound(token, guest, "https://delivery.test");
+    const performance = round.members.find((m) => m.id === rivalId)?.performance;
+    expect(performance?.switchAttempt?.challenge).toEqual(challenge);
+    expect(performance?.switchAttempt?.audioUrl).toBe(`/api/rounds/${token}/performances/${rivalId}/audio?maxRating=everyone`);
+    expect(performance?.scoreGroup).toBe("unscored");
+    state.tables.switch_attempts![0]!.moderation_state = "rejected";
+    expect((await getGroupRound(token, guest, "https://delivery.test")).members.find((m) => m.id === rivalId)?.performance).toBeNull();
+  });
+  it("denies a foreign or mismatched source when requesting a private Switch draft", async () => {
+    switchRound();
+    await expect(groupAudioResponse(token, guest, new Request("https://delivery.test/audio"), { takeId: attemptId }, "everyone")).rejects.toMatchObject({ status: 404 });
+    state.tables.switch_attempts![0]!.guest_owner_hash = guestHash;
+    state.tables.switch_attempts![0]!.challenge_snapshot = { ...challenge, version: "tampered" };
+    await expect(groupAudioResponse(token, guest, new Request("https://delivery.test/audio"), { takeId: attemptId }, "everyone")).rejects.toMatchObject({ status: 404 });
+    expect(state.signed).not.toHaveBeenCalled();
+  });
+  it("keeps scored Switch takes in their own beta casual comparison group", () => {
+    expect(groupScoreGroup("switch", { overall: 80, beta: true, ranked: false } as SwitchScore)).toBe("switch-beta");
+    expect(groupScoreGroup("switch", null)).toBe("unscored");
   });
 });

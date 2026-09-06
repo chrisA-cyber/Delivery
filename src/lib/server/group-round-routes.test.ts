@@ -5,7 +5,7 @@ vi.mock("@/lib/server/group-rounds", () => ({
   mutateGroupRound: vi.fn(), submitGroupPerformance: vi.fn(),
 }));
 vi.mock("@/lib/server/rate-limit", () => ({ enforceRateLimit: async () => undefined, getClientKey: () => "test" }));
-import { handleGroupRoute } from "@/lib/server/group-round-routes";
+import { createRoundSchema, handleGroupRoute } from "@/lib/server/group-round-routes";
 afterEach(() => { vi.unstubAllEnvs(); vi.clearAllMocks(); });
 describe("round links behind the Railway proxy", () => {
   it("uses the configured public origin for creation and saved round links", async () => {
@@ -20,5 +20,14 @@ describe("round links behind the Railway proxy", () => {
     const readResponse = await handleGroupRoute(new Request(`https://0.0.0.0:3000/api/rounds/${token}`), "read", token);
     expect(readResponse.status).toBe(200);
     expect(mocks.read).toHaveBeenCalledWith(token, mocks.viewer, publicOrigin, "everyone");
+  });
+});
+
+
+describe("Switch round creation input", () => {
+  it("accepts a versioned Switch assignment and rejects injected cue snapshots", () => {
+    const input = { requestId: "b815e840-b2c5-4bb9-80c8-17a4cc6e4ee2", name: "Switch night", displayName: "Guest", mode: "switch", challengeId: "apology-video", challengeVersion: "1", community: true };
+    expect(createRoundSchema.parse(input)).toMatchObject({ mode: "switch", challengeId: "apology-video", challengeVersion: "1" });
+    expect(createRoundSchema.safeParse({ ...input, challenge: { cues: [] } }).success).toBe(false);
   });
 });
