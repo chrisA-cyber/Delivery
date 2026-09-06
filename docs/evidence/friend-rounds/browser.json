@@ -50,5 +50,27 @@
   "limits": [
     "No physical capture, microphone startup timing, phone viewport, or subjective listening evidence.",
     "One cloud context; independent guest cookie jars exercise server isolation separately."
-  ]
+  ],
+  "roundFlow": {
+    "guestHostCreated": true,
+    "invitationCopiedEqualsPublicURL": true,
+    "guestJoinedThirdPlace": true,
+    "groupRecorderOpenedImmutableScene": true,
+    "revealedTwoPerformances": true,
+    "originalTakeComparison": true,
+    "nextPerformance": true,
+    "audienceVoteAndTie": true,
+    "emptyHostCloseAndRematchGuidance": true,
+    "savedDubPlayback": {
+      "allMediaReadyState": 4,
+      "errors": 0,
+      "observedMaximumClockGapSeconds": 0.111,
+      "clockGapAtSixSeconds": 0.06,
+      "completedFullScene": true
+    },
+    "fixtureBoundary": "Engineering reference audio uploaded through real private storage; not live microphone input or artificial scored records",
+    "crossModeRematchCreatedInBrowser": true,
+    "previousResultsLinkUsesPublicOrigin": true,
+    "classicRecorderUsesImmutableAssignment": true
+  }
 }

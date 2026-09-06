@@ -1,38 +1,39 @@
 # Delivery friend-round milestone — September 6, 2026
 
-**Status: implementation complete; integration, live verification, and publication in progress.** This supersedes earlier short-catalog and never-merge guidance. Merging completed work and deployment are owner-authorized.
+**Shipped and merged in [PR #3](https://github.com/chrisA-cyber/Delivery/pull/3).** Railway is the playable pilot. This supersedes historical short-catalog and never-merge guidance.
 
 ## Publication record
 
-| Item | Final evidence |
+| Item | Verified identity |
 | --- | --- |
-| Main / application commits | Pending |
-| Railway deployment identity and deployed revision | Pending |
-| Railway / Netlify branch topology and resulting status | Pending; main alone may not deploy Railway |
-| Required gates / multi-session service and browser checks | Pending actual results/evidence |
+| Application | `ed38bdb591dfc6220e3c3a66f507c5f5547179a3` (initial feature commit `23177da18a46293961a0b83bf855da20250d0a6b`) |
+| Main release merge | `c2f4cfef7e251f71e013c107d8bef79d019ac697`; subsequent handoff/evidence updates change no application code |
+| Railway | **SUCCESS**, deployment `b87c0471-9f1f-472a-b92b-2a78a77662a6`, application `ed38bdb` |
+| Netlify | Production **ready**, deployment `6a9d92bd0c117b00080813d9`, main merge `c2f4cfe`; same application code, backend unavailable |
+| Database | Isolated Delivery project `rcsopyxrotbbfaqikire`; additive migrations `20260906154403` and `20260906160409` applied |
 
-After publication: [Classic](https://delivery-production-0577.up.railway.app/play), [Say It Back](https://delivery-production-0577.up.railway.app/say-it-back), and [create a friend round](https://delivery-production-0577.up.railway.app/rounds). Rounds supply private invitations.
+Play [Classic](https://delivery-production-0577.up.railway.app/play), [Say It Back](https://delivery-production-0577.up.railway.app/say-it-back), or [create a friend round](https://delivery-production-0577.up.railway.app/rounds). The round supplies its functioning private invitation.
 
-## Implemented
+Railway still uses `codex/classic-railway` with an explicit source commit. Updating a Git branch or calling ordinary redeploy did **not** select new code: update the Delivery service’s source commit and commit that staged change, then verify the deployment’s actual commit. Main triggers Netlify. No Railway secrets were copied to Netlify; its gameplay API remains unconfigured. Handoff-only commits do not represent a different application release. Final repository/deployment pointers are also recorded on PR #3.
 
-**Recording:** displayed line windows and media-clock stopping now agree, including when rendering is throttled. Smaller capture blocks and measured saved/full-take waveforms support Listen/Record/Redo, preserved interrupted takes, immediate assembled preview, stale-score rejection, and save/reopen. Speech is not stretched or given arbitrary offsets. The original cloud overrun’s physical-device cause remains unproven; local preview speed does not establish backend judging speed.
+## Shipped
 
-**Content:** seven new immutable scenes bring the catalog to seventeen. Additions run 10.60–17.55 seconds with 2–5 recording lines; four are Clean. Assets include video, poster, measured reference audio, precise cues, and backing audio retaining film replies with short fades. The 20-second limit and historical versions remain unchanged.
+**Recording:** first-click Listen, media-clock line stopping, clear dialogue/capture windows, smaller capture blocks, measured saved waveforms, preserved interrupted retakes, immediate assembled preview, and stale-score rejection. Omissions remain silence; speech is not stretched. Full-scene instructions now match the selected mode.
 
-**Groups:** `/rounds` extends the existing challenge system with one immutable Classic assignment or Say It Back scene/role, up to twelve participants, display-name guest joining, private rehearsals, explicit submission, replacement before closure, progress polling, and host or automatic reveal. Deadlines offer 1/24/72/168 hours. Results center on replay, Original/Take comparison, compatible scores/ties, and a separate funniest vote: one per participant, no self-vote. Rematches retain previous results and provide a new invitation.
+**Content:** seven new immutable scenes, **10.60–17.55 seconds**, 2–5 selected-role lines, four Clean; seventeen scenes total. Historical versions remain intact. Video, posters, measured reference waveforms, precise cues, retained film replies, and short audio fades ship together. The 20-second cap is unchanged.
 
-## Privacy and operation
+**Groups:** one immutable Classic or Say assignment; up to twelve display-name guests; private practice; explicit consented submission/replacement; 1/24/72/168-hour deadlines or early host reveal; progress; private replay and Original/Take comparison; separate compatible score rankings; funniest voting with ties; rematches that retain previous results and can switch modes.
 
-Invitation tokens grant joining access; hosts can revoke new joins. Server/database rules enforce membership, reveal, ownership, idempotency, and closure races. Clean/Spicy gates precede exposure; Mature stays private. Guest cookies preserve access, with eligible account claiming after sign-in. Display names are unverified.
+Invitation tokens grant joining access and can be revoked. Server/database rules enforce ownership, membership, content eligibility, reveal, voting, and closure races. Clean/Spicy preferences apply before exposure; Mature remains private. Eligible account claiming preserves guest group access. Display names are unverified.
 
-Scores are optional. Explicitly consented unscored performances can enter the private group as **unreviewed**; known rejected or review-held recordings cannot. Full matching and words-only results remain separate, and Classic scores never mix with Say It Back. Public-feed moderation is unchanged.
+Scores are optional. Unscored private shares are explicitly **unreviewed**; known rejected/review-held content is blocked. Public-feed moderation is unchanged. Group replay lasts seven days after closure, bounded to fourteen days from creation; submitted guest Say sources are retained through that window. Existing cleanup, private storage, and account deletion cover group media.
 
-Group replay lasts seven days after closure, bounded to fourteen days from creation. Submitted guest Say sources last through that window; ordinary guest Say drafts expire after 24 hours. Existing Supabase/private storage, cleanup, and account erasure cover group assets.
+## Evidence and limits
 
-## Evidence, cost, and remaining acceptance
+[Evidence](evidence/friend-rounds/): **363 application tests**, lint and production build; **579 full SQL assertions/12 upgrade checks**, then **65 focused group assertions** and a real service-role rollback probe. Live verification passed **49 HTTP requests** across three isolated cookie jars plus a cloud-browser guest: replacement, unauthorized access, reveal, range replay, votes, rematch, content gates, and concurrent close/submit. Fixtures contain real reference WAVs and **no invented scores**. Two live defects—helper permission and internal-origin links—were fixed and rechecked.
 
-The publication table must distinguish actual gates/service checks from synthetic fixtures. No new paid provider tests: cumulative conservative spend remains **$1.675 / $5**; the allowance is not reset.
+Rendered builder/recording/reveal pages and browser create/join/copy/replay/vote/rematch were inspected. Listen stopped at 2.478, 5.29, and 5.97 seconds as displayed; the reported overrun was not reproduced. Upload/persistence for three 16.55-second fixtures took 1.074–1.089 seconds; this is not judging or capture latency evidence.
 
-Source provenance and reuse limits are in [SAY_IT_BACK_MEDIA.md](SAY_IT_BACK_MEDIA.md). xQc reuse permission is not independently verified; public-domain findings are US-specific. Mixed soundtracks still lose background audio during replaced dialogue. Physical microphone/listening acceptance remains outstanding; cloud fixtures do not establish device quality or enjoyment. GitHub OAuth remains owner-confirmed; SMTP and Stripe are outside this free-play milestone.
+**No new paid calls: $1.675 / original $5 cumulative cap.** GitHub OAuth remains owner-confirmed; new live account claiming, physical microphone capture, phone layout, and subjective listening remain unverified. SMTP and Stripe remain unavailable/outside this free-gameplay milestone. [Media provenance](SAY_IT_BACK_MEDIA.md) retains unverified xQc reuse permission and US-specific public-domain limits; mixed tracks still lose background sound during replaced dialogue.
 
-**Brief owner session:** on desktop, record two lines, redo one, compare and submit; on phone, join as another guest and submit. Close the round, watch both takes, vote, and open its rematch. Include one same-browser sign-in/return. Report only demonstrated issues with device/browser details.
+**Brief owner session:** desktop—record two lines, redo one, compare and submit; phone—join and submit. Close, listen to both dubs, vote, and rematch. Include one same-browser sign-in/return. Report only demonstrated issues with device/browser details.

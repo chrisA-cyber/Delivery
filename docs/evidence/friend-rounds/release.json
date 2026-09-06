@@ -5,7 +5,7 @@
     "lint": "passed",
     "productionBuild": "passed",
     "applicationTests": {
-      "passed": 362,
+      "passed": 363,
       "skippedPaidEvaluations": 3
     },
     "databaseAssertions": 579,
@@ -18,7 +18,9 @@
         10.6,
         17.55
       ]
-    }
+    },
+    "focusedGroupAssertionsAfterPermissionFix": 65,
+    "deployedNewAssetsHTTP200": 28
   },
   "migration": {
     "project": "rcsopyxrotbbfaqikire",
@@ -36,5 +38,36 @@
     "No physical microphone or phone session; cloud browser has no isolated contexts or microphone device control.",
     "Existing GitHub OAuth is owner-confirmed; new real account claiming requires a login unavailable to this engineering session.",
     "Unscored reference fixture replay does not establish live judging or human performance quality."
-  ]
+  ],
+  "applicationCommit": "ed38bdb591dfc6220e3c3a66f507c5f5547179a3",
+  "catalog": {
+    "uniqueScenes": 17,
+    "storedImmutableVersions": 18,
+    "historicalVersionsPreserved": true
+  },
+  "mainReleaseMerge": "c2f4cfef7e251f71e013c107d8bef79d019ac697",
+  "railway": {
+    "branch": "codex/classic-railway",
+    "pinnedApplicationCommit": "ed38bdb591dfc6220e3c3a66f507c5f5547179a3",
+    "deploymentId": "b87c0471-9f1f-472a-b92b-2a78a77662a6",
+    "status": "SUCCESS",
+    "roundsHTTP": 200,
+    "clipsHTTP": 200
+  },
+  "netlify": {
+    "branch": "main",
+    "commit": "c2f4cfef7e251f71e013c107d8bef79d019ac697",
+    "deploymentId": "6a9d92bd0c117b00080813d9",
+    "status": "ready",
+    "roundsHTTP": 200,
+    "clipsHTTP": 503,
+    "backend": "Unconfigured; no Railway secrets copied"
+  },
+  "liveWorkflow": {
+    "requests": 49,
+    "passed": true,
+    "paidRequests": 0,
+    "actors": "Three isolated HTTP cookie jars plus separately joined cloud browser guest"
+  },
+  "documentationOnlyFollowup": true
 }

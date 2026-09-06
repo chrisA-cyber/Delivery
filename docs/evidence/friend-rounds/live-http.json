@@ -1,13 +1,15 @@
 {
-  "at": "2026-09-06T16:09:09.511Z",
+  "at": "2026-09-06T16:17:35.458Z",
   "origin": "https://delivery-production-0577.up.railway.app",
-  "passed": false,
-  "limitation": "Three isolated HTTP cookie jars; uploaded real reference WAV as explicitly unscored engineering fixture. Not physical microphone/browser capture or live judging evidence.",
+  "passed": true,
+  "resumedAfter": "Canonical public-origin correction; previous Say workflow retained and its saved replay rechecked before continuing Classic rematch.",
+  "limitation": "Three isolated HTTP cookie jars plus a separately joined cloud browser guest; uploaded real reference WAV as explicitly unscored engineering fixture. Not physical microphone/browser capture or live judging evidence.",
   "paidRequests": 0,
-  "error": "Rematch lost authorized previous-results link",
+  "error": null,
   "roundIds": [
     "4aad7793-3123-413b-882d-d98c1e63720e",
-    "2ffb69e4-d18f-444d-a483-7fad82fa6e17"
+    "2ffb69e4-d18f-444d-a483-7fad82fa6e17",
+    "945cba77-18b2-4778-b221-0171961137f5"
   ],
   "events": [
     {
@@ -249,6 +251,167 @@
       "ms": 1297,
       "bytes": 1540,
       "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]",
+      "status": 200,
+      "ms": 8468,
+      "bytes": 16992,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]",
+      "status": 200,
+      "ms": 636,
+      "bytes": 1594,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/join",
+      "status": 200,
+      "ms": 1040,
+      "bytes": 1794,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/takes",
+      "status": 201,
+      "ms": 1313,
+      "bytes": 141,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/submit",
+      "status": 200,
+      "ms": 1202,
+      "bytes": 2604,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]/revoke",
+      "status": 200,
+      "ms": 1031,
+      "bytes": 1791,
+      "error": null
+    },
+    {
+      "actor": "outsider",
+      "action": "/api/rounds/[invitation]/join",
+      "status": 404,
+      "ms": 360,
+      "bytes": 200,
+      "error": "ROUND_NOT_FOUND"
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/takes",
+      "status": 201,
+      "ms": 917,
+      "bytes": 141,
+      "error": null
+    },
+    {
+      "actor": "friend",
+      "action": "/api/rounds/[invitation]/submit",
+      "status": 200,
+      "ms": 1350,
+      "bytes": 3009,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]/close",
+      "status": 200,
+      "ms": 11231,
+      "bytes": 2232,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]",
+      "status": 200,
+      "ms": 7775,
+      "bytes": 2232,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]/performances/dd50971e-00c6-4f81-bc69-304a340ded8c/audio",
+      "status": 200,
+      "ms": 1285,
+      "bytes": 529814,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]/revoke",
+      "status": 200,
+      "ms": 1214,
+      "bytes": 16991,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds",
+      "status": 201,
+      "ms": 709,
+      "bytes": 4175,
+      "error": null
+    },
+    {
+      "actor": "outsider",
+      "action": "/api/rounds/[invitation]",
+      "status": 403,
+      "ms": 293,
+      "bytes": 211,
+      "error": "CONTENT_OPT_IN_REQUIRED"
+    },
+    {
+      "actor": "outsider",
+      "action": "/api/rounds/[invitation]/join",
+      "status": 403,
+      "ms": 298,
+      "bytes": 211,
+      "error": "CONTENT_OPT_IN_REQUIRED"
+    },
+    {
+      "actor": "outsider",
+      "action": "/api/rounds/[invitation]",
+      "status": 200,
+      "ms": 437,
+      "bytes": 4142,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]/close",
+      "status": 200,
+      "ms": 1022,
+      "bytes": 4209,
+      "error": null
+    },
+    {
+      "actor": "host",
+      "action": "/api/rounds/[invitation]/revoke",
+      "status": 200,
+      "ms": 887,
+      "bytes": 4208,
+      "error": null
     }
-  ]
+  ],
+  "finalApplicationCommit": "ed38bdb591dfc6220e3c3a66f507c5f5547179a3",
+  "finalRailwayDeployment": "b87c0471-9f1f-472a-b92b-2a78a77662a6",
+  "fixtureMedia": {
+    "clipId": "hgf-married-again",
+    "clipVersion": "v1-f6f6176be627",
+    "durationMs": 16550,
+    "input": "Shipped reference WAV, explicitly unscored engineering fixture; no claimed microphone capture or live judge score"
+  },
+  "invitationsRevoked": true
 }
