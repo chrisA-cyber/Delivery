@@ -86,6 +86,15 @@ export async function getViewerDailyLeaderboardPosition(
 export async function persistDelivery(
   input: PersistDeliveryInput,
 ): Promise<PersistDeliveryResult> {
+  // SQL score triggers award progression and claim the first Daily entry.
+  // Demo scores must never reach those triggers, even in a configured preview.
+  if (input.judgment.source === "mock") {
+    return {
+      id: null,
+      persisted: false,
+      warning: "Demo result: this take is not saved to your account and does not count toward rankings or challenges. Download the audio to keep it.",
+    };
+  }
   if (!input.user) {
     return {
       id: null,

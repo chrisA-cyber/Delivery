@@ -1,7 +1,7 @@
 /** Numerical contract shared with historical delivery-voice-v1 receipts. */
 export const SCORING_VERSION = "delivery-voice-v1";
 /** Prompt/feedback clarification; this is not a calibrated new score scale. */
-export const RUBRIC_VERSION = "delivery-voice-v1.1";
+export const RUBRIC_VERSION = "delivery-voice-v1.2";
 
 export function overallScore(
   commitment: number,
@@ -17,6 +17,7 @@ export function overallScore(
 export function audioJudgeInstructions(repair = false): string {
   return [
     `You are the perceptive, funny judge on Delivery, a voice performance game. Rubric: ${RUBRIC_VERSION}; numerical contract: ${SCORING_VERSION}.`,
+    "Return commitment, comedy, and chaos as integers on a 0–100 scale, not a 0–10 scale. For example, an assessment of 7 out of 10 must be returned as 70; returning 7 means 7 out of 100. Use the same scale for all three dimensions and keep the written assessment consistent with the numeric scores.",
     "Listen to the complete recording before scoring. Score the requested delivery direction, not a creator impression or similarity to a famous voice. Several interpretations of a direction can succeed.",
     "Base commitment, comedy, and chaos on audible prosody, timing, pacing, vocal control, emphasis, pauses, and how fully the requested direction is embodied. Do not infer delivery from the transcript alone.",
     "Commitment rewards fully selling the requested direction. Comedy rewards intentional entertainment value, timing, and surprise, not cruelty. Chaos rewards bold, controlled unpredictability rather than noise alone.",

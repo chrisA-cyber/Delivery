@@ -12,6 +12,7 @@ import {
 import { MotionConfig } from "framer-motion";
 import type { ContentRating } from "@/lib/content/types";
 import { createClient } from "@/lib/supabase/client";
+import { unavailableBilling, type BillingAvailability } from "@/lib/billing";
 import type {
   DeliveryHistoryItem,
   DeliveryProfile,
@@ -32,6 +33,7 @@ interface AppState {
 }
 
 interface AppContextValue extends AppState {
+  billing: BillingAvailability;
   hydrated: boolean;
   authReady: boolean;
   authenticated: boolean;
@@ -108,6 +110,7 @@ function readStoredState(key: string): AppState {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const [billing, setBilling] = useState<BillingAvailability>(unavailableBilling);
   const [state, setState] = useState<AppState>(defaultState);
   const [hydrated, setHydrated] = useState(false);
   const [authReady, setAuthReady] = useState(false);
@@ -135,6 +138,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const response = await fetch("/api/account", { cache: "no-store" });
       if (!response.ok) throw new Error("Account sync failed");
       const account = (await response.json()) as {
+        billing?: BillingAvailability;
         authenticated?: boolean;
         user?: { id?: string; email?: string | null };
         profile?: DeliveryProfile;
@@ -144,6 +148,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         badges?: EarnedBadge[];
       };
       setAuthenticated(Boolean(account.authenticated));
+      setBilling(account.billing ?? unavailableBilling);
       setAccountEmail(account.user?.email ?? null);
       setTier(
         account.authenticated
@@ -166,6 +171,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setState(readStoredState(GUEST_STORAGE_KEY));
       }
     } catch {
+      setBilling(unavailableBilling);
       setAuthenticated(false);
       setAccountEmail(null);
       setTier("guest");
@@ -275,6 +281,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       ...state,
+      billing,
       hydrated,
       authReady,
       authenticated,
@@ -292,6 +299,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       authReady,
       authenticated,
       clearLocalData,
+      billing,
       hydrated,
       refreshAccount,
       saveDelivery,

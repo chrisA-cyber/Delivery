@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { assertEvaluationConsent, attenuatePcm16Wav, evaluationCoverage, evaluationManifestSchema } from "@/lib/judging/evaluation";
+import { assertEvaluationConsent, attenuatePcm16Wav, evaluationCoverage, evaluationManifestSchema, evaluationRepeatability, evaluationRequestBudget } from "@/lib/judging/evaluation";
 
 const rawManifest = {
   schemaVersion: "delivery-audio-eval-v1",
@@ -33,6 +33,27 @@ describe("consented evaluation preflight", () => {
 
   it("rejects duplicate receipt identities", () => {
     expect(evaluationManifestSchema.safeParse({ ...rawManifest, cases: [...rawManifest.cases, ...rawManifest.cases] }).success).toBe(false);
+  });
+
+  it("requires an explicit request ceiling that covers repairs and optional Scribe", () => {
+    expect(() => evaluationRequestBudget(undefined, 3, false)).toThrow("explicitly approved");
+    expect(() => evaluationRequestBudget("5", 3, false)).toThrow("may use 6 requests");
+    expect(() => evaluationRequestBudget("6", 3, true)).toThrow("may use 9 requests");
+    expect(evaluationRequestBudget("9", 3, true)).toEqual({ maximumRequests: 9, worstCaseRequests: 9 });
+    expect(() => evaluationRequestBudget("Infinity", 3, false)).toThrow("explicitly approved");
+  });
+
+  it("measures only identical-byte repeats and preserves failed attempts in the summary", () => {
+    const base = { id: "quiet", gainDb: 0, audioSha256: "same-bytes" };
+    const judgment = { transcript: "I regret nothing.", scores: { commitment: 80, comedy: 70, accuracy: 100, chaos: 60, overall: 79 }, verdict: "A calm disaster.", coachNote: "Pause before nothing." };
+    const summary = evaluationRepeatability([
+      { ...base, judgment },
+      { ...base, judgment: { ...judgment, scores: { ...judgment.scores, overall: 84 }, coachNote: "Hold nothing longer." } },
+      base,
+      { ...base, gainDb: -6, audioSha256: "different-bytes", judgment },
+    ]);
+    expect(summary).toHaveLength(1);
+    expect(summary[0]).toMatchObject({ attempts: 3, scored: 2, dimensions: { overall: { min: 79, max: 84, range: 5 } }, distinctTranscripts: 1, distinctVerdicts: 1, distinctCoachNotes: 2 });
   });
 });
 

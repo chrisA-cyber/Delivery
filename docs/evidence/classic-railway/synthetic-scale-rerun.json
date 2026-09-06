@@ -1,0 +1,158 @@
+{
+  "attemptId": "79e02695-2b83-419e-ad11-9195f608b6e2",
+  "audio": {
+    "bitsPerSample": 16,
+    "bytes": 163884,
+    "channels": 1,
+    "durationMs": 3413,
+    "engine": "kokoro-onnx 0.4.5; runtime patch sets ONNX speed input to float32",
+    "matchesPriorBytes": false,
+    "sampleRate": 24000,
+    "sha256": "857e19a6a44957a3a91b3a8502465be5fb161792e55ffeff5e2986c55d68a8f9",
+    "text": "I am my own emergency contact. We are both panicking.",
+    "voice": "af_sarah"
+  },
+  "baseUrl": "https://delivery-production-0577.up.railway.app",
+  "billedCostUsd": null,
+  "body": {
+    "delivery": {
+      "id": null,
+      "persisted": false,
+      "warning": "Sign in to save this take to your profile."
+    },
+    "requestId": "6d7fcf73-eba7-475f-ae85-b7c8caef7dfb",
+    "result": {
+      "badge": "MAIN_CHARACTER",
+      "coachNote": "Try inserting a slightly longer pause before 'We are both panicking' to emphasize that uncomfortable shift.",
+      "highlights": [
+        "Even pacing on 'emergency contact'",
+        "A steady tone throughout"
+      ],
+      "id": "63692b16-0a05-4eab-a2ba-1731b852388e",
+      "moment": "Even pacing on 'emergency contact'",
+      "rubricVersion": "delivery-voice-v1.2",
+      "scores": {
+        "accuracy": 100,
+        "chaos": 30,
+        "comedy": 50,
+        "commitment": 80,
+        "overall": 68
+      },
+      "scoringVersion": "delivery-voice-v1",
+      "source": "ai",
+      "title": "MAIN CHARACTER",
+      "transcript": "I am my own emergency contact. We are both panicking.",
+      "verdict": "You kept it straight, letting the line land without a smirk, though a bit more tension before the reveal could heighten the awkward charm.",
+      "xp": 35
+    },
+    "usage": {
+      "limit": 5,
+      "remaining": 4,
+      "replayed": false,
+      "resetAt": "2026-09-07T00:00:00.000Z",
+      "tier": "guest",
+      "tracked": true,
+      "used": 1
+    },
+    "warning": "Sign in to save this take to your profile."
+  },
+  "budgetUsd": 0.1,
+  "codeRevision": "5618fb8040d6ae45aee6548f3ac1953ee364caa4",
+  "comparison": {
+    "identicalAudioBytes": false,
+    "newDurationMs": 3413,
+    "priorCorrectScores": {
+      "accuracy": 100,
+      "chaos": 2,
+      "comedy": 6,
+      "commitment": 7,
+      "overall": 29
+    },
+    "priorDurationMs": 3593,
+    "priorEvidence": "synthetic-live.json",
+    "priorRubricVersion": "delivery-voice-v1.1",
+    "sameTextAndStockVoice": true
+  },
+  "complete": true,
+  "conclusions": [
+    "Live response confirms rubric delivery-voice-v1.2 and the unchanged numerical contract delivery-voice-v1.",
+    "New performance dimensions 80/50/30 are consistent with the explicit 0–100 instructions and more consistent with the written assessment than the prior 7/6/2.",
+    "Overall 68 follows the unchanged weights (67.5 rounded); no historical score was rescaled."
+  ],
+  "concurrentRunReconciliation": {
+    "actualAggregate": {
+      "billedCostUsd": null,
+      "providerDispatchesActual": null,
+      "providerDispatchesLowerBound": 2,
+      "providerDispatchesUpperBound": 4,
+      "uniqueTakes": 2
+    },
+    "approvedAggregate": {
+      "budgetUsd": 0.1,
+      "providerDispatches": 2,
+      "uniqueTakes": 1
+    },
+    "discoveredAfterThisRequest": true,
+    "explanation": "Another runner's receipt and documentation appeared in the shared workspace while this test was running. Both HTTP 200 submissions are corroborated by Railway logs. Combined runs exceed the approved one-take allowance and may exceed the two-dispatch ceiling; exact billing is unavailable. No additional paid request was made after discovery. Neither single-run marker coordinated with the other runner.",
+    "httpLogEvidence": [
+      {
+        "httpStatus": 200,
+        "serverDurationMs": 3783,
+        "timestamp": "2026-09-06T03:59:58.231327731Z"
+      },
+      {
+        "httpStatus": 200,
+        "serverDurationMs": 2499,
+        "timestamp": "2026-09-06T04:00:22.177887573Z"
+      }
+    ],
+    "otherAttemptId": "ca83da4b-3e2b-45f4-8ced-8ab9eb9d42ac",
+    "otherEvidence": "synthetic-scale-v12.json",
+    "otherRequestId": "6698449b-5604-44f8-bdfb-cbbe75053c7e",
+    "otherResult": {
+      "accuracy": 100,
+      "chaos": 30,
+      "comedy": 60,
+      "commitment": 80,
+      "overall": 70
+    }
+  },
+  "costNote": "One private guest HTTP POST, no client retry; deployed judging permits at most two OpenAI dispatches including malformed-scorecard repair. Exact dispatch count, token usage, and billing are not exposed by the route. Planning estimate under $0.10; no additional calls after this test.",
+  "deploymentId": "bb72afad-fed7-4dda-b56c-80a5184e4963",
+  "finishedAt": "2026-09-06T04:00:22.186990+00:00",
+  "httpPostsSent": 1,
+  "httpStatus": 200,
+  "kind": "synthetic-scale-rerun",
+  "latencyMs": 2544,
+  "limitations": [
+    "Regenerated audio uses kokoro-onnx 0.4.5 with a float32 ONNX speed-input patch, versus prior 0.4.7; hashes and duration differ. This is not an identical-audio causal comparison.",
+    "One synthetic take does not establish acting/comedy calibration, fairness, coaching repeatability, or human enjoyment.",
+    "Guest result was unpersisted as expected; signed-in save/history/private playback and browser microphone/replay remain untested."
+  ],
+  "maxProviderDispatches": 2,
+  "maxUniqueTakes": 1,
+  "pricingReference": "https://developers.openai.com/api/docs/models/gpt-audio-1.5",
+  "providerDispatchesActual": null,
+  "providerDispatchesLowerBound": 1,
+  "providerDispatchesUpperBound": 2,
+  "recovery": {
+    "paidDispatchBeforeRecovery": false,
+    "railwayThreadId": "f3455bbf-4a18-417b-815d-95523721ac05",
+    "setupTimedOut": true,
+    "verification": "No WAV, request_metadata.json or result.json existed; deployed HTTP logs contained no /api/judge request after the new deployment. Synthesis was then completed, and the single POST used an exclusive http-dispatch-started.json marker."
+  },
+  "replayed": null,
+  "request": {
+    "attemptId": "79e02695-2b83-419e-ad11-9195f608b6e2",
+    "category": "main-character",
+    "durationMs": "3413",
+    "energy": "Give flat, precise testimony. Pause before the most embarrassing detail; do not wink at the joke.",
+    "isPublic": "false",
+    "line": "I am my own emergency contact. We are both panicking.",
+    "maxRating": "everyone",
+    "mode": "classic",
+    "promptId": "v2-favorite-child"
+  },
+  "startedAt": "2026-09-06T04:00:19.642869+00:00",
+  "voiceGenerationCostUsd": 0
+}

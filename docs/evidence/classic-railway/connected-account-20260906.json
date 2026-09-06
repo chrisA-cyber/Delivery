@@ -1,0 +1,284 @@
+{
+  "runId": "classic-account-01",
+  "at": "2026-09-06T04:39:36.702Z",
+  "hash": "03d573b8f99c92f4bd554c26f16e4bf9ce9df06e1513f195ee1d0087843166fa",
+  "durationMs": 2079,
+  "fixture": "Kokoro synthetic am_michael",
+  "promptId": "v3-ref-this-is-fine",
+  "line": "This is fine.",
+  "energy": "Deliver a wounded hero’s final request. Keep the words clear and make the ending absurdly noble.",
+  "userId": "283b210c-9590-46d5-837c-d62efb787ee5",
+  "setup": "SQL-created disposable verified fixture, real password Auth API + Supabase SSR cookies",
+  "requests": [
+    {
+      "purpose": "one new judged submission",
+      "status": 201,
+      "latencyMs": 13697,
+      "replayed": "false",
+      "body": {
+        "result": {
+          "id": "73b441d9-3d7e-4ae1-b550-df638d3518cf",
+          "scores": {
+            "commitment": 60,
+            "comedy": 20,
+            "accuracy": 100,
+            "chaos": 10,
+            "overall": 50
+          },
+          "verdict": "Your take is calm and clear, but it feels more like a casual shrug than a heroic sendoff.",
+          "title": "NEEDS MORE SAUCE",
+          "moment": "even pacing on 'This is fine'",
+          "transcript": "This is fine.",
+          "coachNote": "Try stretching out the word 'fine' with a touch of gravitas to lean into that noble ending.",
+          "highlights": [
+            "even pacing on 'This is fine'"
+          ],
+          "rubricVersion": "delivery-voice-v1.2",
+          "scoringVersion": "delivery-voice-v1",
+          "badge": "NEEDS_MORE_SAUCE",
+          "xp": 35,
+          "source": "ai"
+        },
+        "delivery": {
+          "id": "73b441d9-3d7e-4ae1-b550-df638d3518cf",
+          "persisted": true
+        },
+        "usage": {
+          "tier": "free",
+          "used": 1,
+          "limit": 5,
+          "remaining": 4,
+          "resetAt": "2026-09-07T00:00:00+00:00",
+          "tracked": true,
+          "replayed": false
+        },
+        "requestId": "2745f0cb-4df1-48ce-a1f3-74cc7a6e69a2"
+      }
+    },
+    {
+      "purpose": "exact cached retry",
+      "status": 201,
+      "latencyMs": 6810,
+      "replayed": "true",
+      "body": {
+        "result": {
+          "id": "73b441d9-3d7e-4ae1-b550-df638d3518cf",
+          "scores": {
+            "commitment": 60,
+            "comedy": 20,
+            "accuracy": 100,
+            "chaos": 10,
+            "overall": 50
+          },
+          "verdict": "Your take is calm and clear, but it feels more like a casual shrug than a heroic sendoff.",
+          "title": "NEEDS MORE SAUCE",
+          "moment": "even pacing on 'This is fine'",
+          "transcript": "This is fine.",
+          "coachNote": "Try stretching out the word 'fine' with a touch of gravitas to lean into that noble ending.",
+          "highlights": [
+            "even pacing on 'This is fine'"
+          ],
+          "rubricVersion": "delivery-voice-v1.2",
+          "scoringVersion": "delivery-voice-v1",
+          "badge": "NEEDS_MORE_SAUCE",
+          "xp": 35,
+          "source": "ai"
+        },
+        "delivery": {
+          "id": "73b441d9-3d7e-4ae1-b550-df638d3518cf",
+          "persisted": true
+        },
+        "usage": {
+          "tier": "free",
+          "used": 1,
+          "limit": 5,
+          "remaining": 4,
+          "resetAt": "2026-09-07T00:00:00+00:00",
+          "tracked": true,
+          "replayed": false
+        },
+        "requestId": "0be1c415-1477-4462-bdfa-7157c4e8f30a"
+      }
+    }
+  ],
+  "freeChecks": [
+    {
+      "purpose": "owner after refresh history",
+      "status": 200,
+      "authenticated": true,
+      "matchingRows": 1,
+      "matchingResult": {
+        "id": "73b441d9-3d7e-4ae1-b550-df638d3518cf",
+        "scores": {
+          "overall": 50,
+          "commitment": 60,
+          "comedy": 20,
+          "accuracy": 100,
+          "chaos": 10
+        },
+        "title": "NEEDS MORE SAUCE",
+        "verdict": "Your take is calm and clear, but it feels more like a casual shrug than a heroic sendoff.",
+        "moment": "even pacing on 'This is fine'",
+        "transcript": "This is fine.",
+        "createdAt": "2026-09-06T04:39:50.059723+00:00",
+        "visibility": "private",
+        "rubricVersion": "delivery-voice-v1.2",
+        "scoringVersion": "delivery-voice-v1",
+        "highlights": [
+          "even pacing on 'This is fine'"
+        ],
+        "coachNote": "Try stretching out the word 'fine' with a touch of gravitas to lean into that noble ending.",
+        "source": "ai",
+        "prompt": {
+          "id": "v3-ref-this-is-fine",
+          "line": "This is fine.",
+          "rating": "everyone",
+          "energy": "Deliver a wounded hero’s final request. Keep the words clear and make the ending absurdly noble.",
+          "energyId": "v2-hero-last-stand",
+          "category": "main character",
+          "difficulty": 1
+        }
+      }
+    },
+    {
+      "purpose": "owner after refresh private playback endpoint",
+      "status": 200,
+      "hasAudioUrl": true
+    },
+    {
+      "purpose": "download owner authorized signed recording",
+      "status": 200,
+      "contentType": "audio/wav",
+      "bytes": 99820,
+      "sha256": "03d573b8f99c92f4bd554c26f16e4bf9ce9df06e1513f195ee1d0087843166fa"
+    },
+    {
+      "purpose": "another account history",
+      "status": 200,
+      "authenticated": true,
+      "matchingRows": 0
+    },
+    {
+      "purpose": "another account private playback endpoint",
+      "status": 404,
+      "error": "DELIVERY_NOT_FOUND",
+      "hasAudioUrl": false
+    },
+    {
+      "purpose": "unauthenticated history",
+      "status": 200,
+      "authenticated": false,
+      "matchingRows": 0
+    },
+    {
+      "purpose": "unauthenticated private playback endpoint",
+      "status": 401,
+      "error": "UNAUTHORIZED",
+      "hasAudioUrl": false
+    },
+    {
+      "purpose": "real refresh token session rotation",
+      "error": null,
+      "sessionReturned": true,
+      "newAccessToken": true
+    },
+    {
+      "purpose": "history after real token refresh",
+      "status": 200,
+      "authenticated": true,
+      "matchingRows": 1
+    },
+    {
+      "purpose": "unauthenticated direct private bucket",
+      "status": 400,
+      "contentType": "application/json; charset=utf-8",
+      "bytes": 88
+    },
+    {
+      "purpose": "another account direct private bucket",
+      "status": 400,
+      "contentType": "application/json; charset=utf-8",
+      "bytes": 88
+    },
+    {
+      "purpose": "sign in from empty cookie jar, reopen history in a new Auth session",
+      "authStatus": 200,
+      "sessionChanged": true,
+      "accountStatus": 200,
+      "authenticated": true,
+      "matchingRows": 1
+    },
+    {
+      "purpose": "actual 300-second signed-link expiry and access-checked recovery",
+      "elapsedSeconds": 310,
+      "expiredLinkStatus": 400,
+      "expiredLinkBytes": 110,
+      "refreshStatus": 200,
+      "urlChanged": true,
+      "freshAudio": {
+        "status": 200,
+        "bytes": 99820,
+        "sha256": "03d573b8f99c92f4bd554c26f16e4bf9ce9df06e1513f195ee1d0087843166fa"
+      }
+    }
+  ],
+  "databaseVerification": {
+    "deliveries": 1,
+    "scores": 1,
+    "judgedPlayClaims": 1,
+    "plays": 1,
+    "aiScores": 1
+  },
+  "providerAccounting": {
+    "newJudgedRequests": 1,
+    "cachedReplays": 1,
+    "minimumDispatches": 1,
+    "maximumDispatches": 2,
+    "estimatedCeilingUSD": 0.5,
+    "exactBillingAvailable": false,
+    "syntheticSynthesisUSD": 0
+  },
+  "authConfiguration": {
+    "email": true,
+    "google": false,
+    "github": false,
+    "signupBlocked": "429 over_email_send_rate_limit",
+    "fixtureSetup": "Two disposable auth.users + auth.identities fixtures inserted with salted password hashes and confirmed email; application Auth settings unchanged.",
+    "liveChecks": "Real password Auth sign-in for both accounts, real refresh-token rotation, signed SSR cookies accepted by deployed application. Email delivery and physical/browser microphone behavior were not verified.",
+    "signupEnabled": true,
+    "emailConfirmationRequired": true,
+    "enabledSocialProviders": [],
+    "smtpConfigurationAccessibleThroughAvailableConnector": false,
+    "emailProviderVariablesPresentInDeliveryRuntime": false,
+    "existingSupabaseDashboardTab": false,
+    "smtpStatus": "Public Auth settings do not expose SMTP configuration. Prior signup429 is consistent with email-send quota exhaustion; custom SMTP status remains unverified.",
+    "ownerAction": "Configure a working custom SMTP sender in this isolated Supabase project Authentication > Email > SMTP Settings, keeping email confirmation enabled; alternatively configure an OAuth provider. Then verify one delivered magic link.",
+    "documentation": "https://supabase.com/docs/guides/auth/auth-smtp"
+  },
+  "postDeployment": {
+    "purpose": "Classic saved result preserved after final shared account and Say It Back deployment",
+    "deploymentId": "3e1ace42-4d1b-49d3-8618-426903405813",
+    "revision": "11ede22b3b6794a40ddacafa933e39964c55f9b0",
+    "checkedAt": "2026-09-06T05:37:38.441Z",
+    "accountStatus": 200,
+    "authenticated": true,
+    "matchingClassicRows": 1,
+    "scores": {
+      "overall": 50,
+      "commitment": 60,
+      "comedy": 20,
+      "accuracy": 100,
+      "chaos": 10
+    },
+    "visibility": "private",
+    "rubricVersion": "delivery-voice-v1.2",
+    "scoringVersion": "delivery-voice-v1",
+    "playbackStatus": 200,
+    "audioStatus": 200,
+    "audioBytes": 99820,
+    "audioSha256": "03d573b8f99c92f4bd554c26f16e4bf9ce9df06e1513f195ee1d0087843166fa",
+    "unchangedAudio": true,
+    "authCookiesReturned": false,
+    "credentialSourceModified": false
+  }
+}

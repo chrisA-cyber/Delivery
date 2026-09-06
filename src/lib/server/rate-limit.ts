@@ -3,7 +3,8 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import { AppError } from "@/lib/server/api-error";
-import { getServerEnv } from "@/lib/server/env";
+import { getServerEnv, isRedisConfigured } from "@/lib/server/env";
+import { redisCommand } from "@/lib/server/redis";
 
 export interface RateLimitPolicy {
   limit: number;
@@ -60,35 +61,24 @@ class MemoryRateLimitAdapter implements RateLimitAdapter {
   }
 }
 
-class UpstashRateLimitAdapter implements RateLimitAdapter {
+class DistributedRateLimitAdapter implements RateLimitAdapter {
   constructor(
-    private readonly url: string,
-    private readonly token: string,
     private readonly fallback: RateLimitAdapter,
   ) {}
 
   async consume(key: string, policy: RateLimitPolicy): Promise<RateLimitResult> {
     try {
-      const response = await fetch(this.url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify([
-          "EVAL",
-          "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('PEXPIRE',KEYS[1],ARGV[1]); end; return {n,redis.call('PTTL',KEYS[1])}",
-          1,
-          `delivery:rate:${key}`,
-          policy.windowMs,
-        ]),
-        cache: "no-store",
-        signal: AbortSignal.timeout(2_500),
-      });
-      if (!response.ok) throw new Error(`Rate-limit service returned ${response.status}.`);
-      const payload = (await response.json()) as { result?: [number, number]; error?: string };
-      if (!payload.result) throw new Error("Rate-limit service returned an invalid response.");
-      const [count, ttl] = payload.result;
+      const result = await redisCommand([
+        "EVAL",
+        "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('PEXPIRE',KEYS[1],ARGV[1]); end; return {n,redis.call('PTTL',KEYS[1])}",
+        1,
+        `delivery:rate:${key}`,
+        policy.windowMs,
+      ]);
+      if (!Array.isArray(result) || result.length !== 2 || !result.every(Number.isFinite)) {
+        throw new Error("Rate-limit service returned an invalid response.");
+      }
+      const [count, ttl] = result as [number, number];
       const now = Date.now();
       const remainingMs = Math.max(1, ttl ?? policy.windowMs);
       return {
@@ -99,7 +89,7 @@ class UpstashRateLimitAdapter implements RateLimitAdapter {
         retryAfterSeconds: Math.max(1, Math.ceil(remainingMs / 1_000)),
       };
     } catch (error) {
-      if (getServerEnv().NODE_ENV === "production") {
+      if (getServerEnv().NODE_ENV === "production" || getServerEnv().REDIS_URL) {
         throw new AppError(
           "RATE_LIMIT_UNAVAILABLE",
           "The stage is briefly unavailable. Try again in a moment.",
@@ -124,7 +114,7 @@ function getAdapter(): RateLimitAdapter {
   const env = getServerEnv();
   if (
     env.NODE_ENV === "production" &&
-    (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN)
+    !isRedisConfigured(env)
   ) {
     throw new AppError(
       "RATE_LIMIT_NOT_CONFIGURED",
@@ -133,12 +123,8 @@ function getAdapter(): RateLimitAdapter {
     );
   }
   adapter =
-    env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
-      ? new UpstashRateLimitAdapter(
-          env.UPSTASH_REDIS_REST_URL,
-          env.UPSTASH_REDIS_REST_TOKEN,
-          memoryAdapter,
-        )
+    isRedisConfigured(env)
+      ? new DistributedRateLimitAdapter(memoryAdapter)
       : memoryAdapter;
   return adapter;
 }

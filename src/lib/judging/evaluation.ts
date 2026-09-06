@@ -2,7 +2,8 @@ import { z } from "zod";
 
 export const EVALUATION_TAGS = [
   "quiet", "loud", "deadpan", "mistake", "interpretation", "spoken-injection",
-  "silence", "noise", "clipping", "corrupt",
+  "silence", "noise", "clipping", "corrupt", "expressive", "flat",
+  "omitted", "substituted", "added", "unintelligible",
 ] as const;
 
 const consentSchema = z.object({
@@ -32,6 +33,8 @@ export const evaluationManifestSchema = z.object({
     // Human-transcribed audible words, including errors and injections.
     referenceTranscript: z.string().max(2_000),
     compareGroup: z.string().regex(/^[a-z0-9-]{1,80}$/).optional(),
+    // Repeat a small paired subset without paying to repeat the entire set.
+    repetitions: z.number().int().min(1).max(3).optional(),
     // Applied only to copies of PCM16 WAV bytes. Nonpositive gain cannot clip.
     gainDb: z.array(z.number().min(-24).max(0)).min(1).max(3).default([0]),
   }).strict()).min(1).max(30),
@@ -53,6 +56,53 @@ export function assertEvaluationConsent(manifest: z.infer<typeof evaluationManif
 export function evaluationCoverage(manifest: z.infer<typeof evaluationManifestSchema>) {
   const tags = new Set(manifest.cases.flatMap((entry) => entry.tags));
   return { covered: [...tags], missing: EVALUATION_TAGS.filter((tag) => !tags.has(tag)) };
+}
+
+export function evaluationRequestBudget(rawCeiling: string | undefined, attempts: number, includeScribe: boolean) {
+  const maximumRequests = Number(rawCeiling);
+  if (!rawCeiling || !Number.isInteger(maximumRequests) || maximumRequests < 1 || maximumRequests > 108) {
+    throw new Error("Set DELIVERY_EVAL_MAX_PROVIDER_REQUESTS to an explicitly approved integer from 1 to 108 before live evaluation.");
+  }
+  const worstCaseRequests = attempts * (includeScribe ? 3 : 2);
+  if (worstCaseRequests > maximumRequests) {
+    throw new Error(`This set may use ${worstCaseRequests} requests including repair; the approved ceiling is ${maximumRequests}. Reduce the set before running.`);
+  }
+  return { maximumRequests, worstCaseRequests };
+}
+
+export interface EvaluationRepeatResult {
+  id: string;
+  gainDb: number;
+  audioSha256: string;
+  judgment?: {
+    transcript: string;
+    scores: { commitment: number; comedy: number; accuracy: number; chaos: number; overall: number };
+    verdict: string;
+    coachNote: string;
+  };
+}
+
+/** Descriptive evidence only: no unvalidated pass/fail tolerance or fairness claim. */
+export function evaluationRepeatability(results: EvaluationRepeatResult[]) {
+  const groups = new Map<string, EvaluationRepeatResult[]>();
+  for (const result of results) {
+    const key = `${result.id}:${result.gainDb}:${result.audioSha256}`;
+    groups.set(key, [...(groups.get(key) ?? []), result]);
+  }
+  return [...groups.values()].filter((entries) => entries.length > 1).map((entries) => {
+    const judgments = entries.flatMap((entry) => entry.judgment ? [entry.judgment] : []);
+    return {
+      id: entries[0]!.id, gainDb: entries[0]!.gainDb, audioSha256: entries[0]!.audioSha256,
+      attempts: entries.length, scored: judgments.length,
+      dimensions: Object.fromEntries((["commitment", "comedy", "accuracy", "chaos", "overall"] as const).map((dimension) => {
+        const scores = judgments.map((judgment) => judgment.scores[dimension]);
+        return [dimension, scores.length ? { min: Math.min(...scores), max: Math.max(...scores), range: Math.max(...scores) - Math.min(...scores) } : null];
+      })),
+      distinctTranscripts: new Set(judgments.map((judgment) => judgment.transcript)).size,
+      distinctVerdicts: new Set(judgments.map((judgment) => judgment.verdict)).size,
+      distinctCoachNotes: new Set(judgments.map((judgment) => judgment.coachNote)).size,
+    };
+  });
 }
 
 /** Gain controls preserve the same delivery timing; they are not new performances. */

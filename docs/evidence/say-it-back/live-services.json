@@ -1,0 +1,1465 @@
+{
+  "purpose": "Real Delivery services with free local stock synthetic voices. No human recordings or credentials are included. Aggregate receipts omit account, attempt, request and capability identifiers.",
+  "applicationRevision": "d2fdce64fba6825ce2e0cfe104a67acdfe58f5bf",
+  "httpResultCounts": {
+    "quota": {
+      "200": 2
+    },
+    "upload": {
+      "201": 19,
+      "200": 1,
+      "422": 1
+    },
+    "audio": {
+      "200": 16,
+      "404": 6,
+      "206": 2
+    },
+    "judge": {
+      "200": 40
+    },
+    "claim": {
+      "200": 4
+    },
+    "challenge": {
+      "403": 1,
+      "201": 4
+    },
+    "get": {
+      "404": 1
+    },
+    "history": {
+      "200": 2
+    },
+    "challenge-get": {
+      "200": 3,
+      "404": 1
+    }
+  },
+  "syntheticScoringRuns": {
+    "jerk-guest": {
+      "clipId": "tos-youre-a-jerk",
+      "clipVersion": "v1-a1664e1509a2",
+      "scoringVersion": "say-match-v1",
+      "durationMs": 2290,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 44,
+        "timing": 20,
+        "overall": 65,
+        "version": "say-match-v1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 1.8600000143051147,
+              "actualStart": 0,
+              "expectedEnd": 2.108,
+              "expectedStart": 0.808
+            }
+          ],
+          "additions": 0,
+          "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+          "omissions": 0,
+          "matchedWords": 4,
+          "expectedWords": 4,
+          "substitutions": 0,
+          "meanStartErrorMs": 808,
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Wait for each caption cue before starting; keep your natural voice.",
+        "transcript": "You're a jerk, Tom.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Matched phrase entries averaged about 0.8 seconds early."
+        ]
+      }
+    },
+    "jerk-v11": {
+      "clipId": "tos-youre-a-jerk",
+      "clipVersion": "v1-a1664e1509a2",
+      "scoringVersion": "say-match-v1.1",
+      "durationMs": 2290,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 91,
+        "timing": 100,
+        "overall": 98,
+        "version": "say-match-v1.1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 1.98,
+              "actualStart": 0.87,
+              "expectedEnd": 2.108,
+              "expectedStart": 0.808
+            }
+          ],
+          "additions": 0,
+          "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+          "omissions": 0,
+          "matchedWords": 4,
+          "expectedWords": 4,
+          "substitutions": 0,
+          "meanStartErrorMs": 62,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0,
+                "measuredSeconds": 0.87
+              },
+              {
+                "edge": "end",
+                "wordIndex": 3,
+                "rawSeconds": 1.8600000143051147,
+                "measuredSeconds": 1.98
+              }
+            ],
+            "thresholdRms": 0.004029522740718016,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+        "transcript": "You're a jerk, Tom.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Your matched phrase entries landed close to the scene cues."
+        ]
+      }
+    },
+    "shift-v11": {
+      "clipId": "tos-youre-a-jerk",
+      "clipVersion": "v1-a1664e1509a2",
+      "scoringVersion": "say-match-v1.1",
+      "durationMs": 3290,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 91,
+        "timing": 0,
+        "overall": 68,
+        "version": "say-match-v1.1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 2.98,
+              "actualStart": 1.87,
+              "expectedEnd": 2.108,
+              "expectedStart": 0.808
+            }
+          ],
+          "additions": 0,
+          "audioHash": "e4055995a04ac95faf74729a5f7846c5214be180c9d41068dbc0734b47e12802",
+          "omissions": 0,
+          "matchedWords": 4,
+          "expectedWords": 4,
+          "substitutions": 0,
+          "meanStartErrorMs": 1062,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 1.440000057220459,
+                "measuredSeconds": 1.87
+              },
+              {
+                "edge": "end",
+                "wordIndex": 3,
+                "rawSeconds": 2.859999895095825,
+                "measuredSeconds": 2.98
+              }
+            ],
+            "thresholdRms": 0.004029522740718016,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Try entering on the caption cue instead of waiting for the line to begin.",
+        "transcript": "You're a jerk, Tom.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Matched phrase entries averaged about 1.1 seconds late."
+        ]
+      }
+    },
+    "changed-v11": {
+      "clipId": "tos-youre-a-jerk",
+      "clipVersion": "v1-a1664e1509a2",
+      "scoringVersion": "say-match-v1.1",
+      "durationMs": 2290,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 75,
+        "rhythm": 63,
+        "timing": 74,
+        "overall": 72,
+        "version": "say-match-v1.1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 1.94,
+              "actualStart": 0.88,
+              "expectedEnd": 2.108,
+              "expectedStart": 0.808
+            }
+          ],
+          "additions": 0,
+          "audioHash": "1e3d50c41bda8c138ad26fbc0cd7475b70b3ee8e44bc70e5769bd39652a7cefa",
+          "omissions": 0,
+          "matchedWords": 3,
+          "expectedWords": 4,
+          "substitutions": 1,
+          "meanStartErrorMs": 72,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0,
+                "measuredSeconds": 0.88
+              },
+              {
+                "edge": "end",
+                "wordIndex": 3,
+                "rawSeconds": 1.8600000143051147,
+                "measuredSeconds": 1.94
+              }
+            ],
+            "thresholdRms": 0.0031210319080636987,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Replay the original with captions, then keep every scripted word and leave out extra commentary.",
+        "transcript": "You're a gem, Tom.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "1 changed, 0 missing and 0 extra word in the transcript.",
+          "Your matched phrase entries landed close to the scene cues."
+        ]
+      }
+    },
+    "reply-v11": {
+      "clipId": "tos-youre-a-jerk",
+      "clipVersion": "v1-a1664e1509a2",
+      "scoringVersion": "say-match-v1.1",
+      "durationMs": 2290,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 91,
+        "timing": 100,
+        "overall": 98,
+        "version": "say-match-v1.1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 1.98,
+              "actualStart": 0.87,
+              "expectedEnd": 2.108,
+              "expectedStart": 0.808
+            }
+          ],
+          "additions": 0,
+          "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+          "omissions": 0,
+          "matchedWords": 4,
+          "expectedWords": 4,
+          "substitutions": 0,
+          "meanStartErrorMs": 62,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0,
+                "measuredSeconds": 0.87
+              },
+              {
+                "edge": "end",
+                "wordIndex": 3,
+                "rawSeconds": 1.8600000143051147,
+                "measuredSeconds": 1.98
+              }
+            ],
+            "thresholdRms": 0.004029522740718016,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+        "transcript": "You're a jerk, Tom.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Your matched phrase entries landed close to the scene cues."
+        ]
+      }
+    },
+    "xqc-six": {
+      "clipId": "xqc-six-consoles",
+      "clipVersion": "v1-d5502ac3ac95",
+      "scoringVersion": "say-match-v1.1",
+      "durationMs": 5650,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 69,
+        "timing": 81,
+        "overall": 88,
+        "version": "say-match-v1.1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 2.3399999141693115,
+              "actualStart": 0.25,
+              "expectedEnd": 2.2,
+              "expectedStart": 0.18
+            },
+            {
+              "cueId": "cue-2",
+              "actualEnd": 3.740000009536743,
+              "actualStart": 2.859999895095825,
+              "expectedEnd": 3.82,
+              "expectedStart": 2.43
+            },
+            {
+              "cueId": "cue-3",
+              "actualEnd": 5.36,
+              "actualStart": 4.5,
+              "expectedEnd": 5.55,
+              "expectedStart": 4.26
+            }
+          ],
+          "additions": 0,
+          "audioHash": "3c16907f147733da471c927f7fb568163e2f39c4ea2b0645b9d0fb57166321dc",
+          "omissions": 0,
+          "matchedWords": 8,
+          "expectedWords": 8,
+          "substitutions": 0,
+          "meanStartErrorMs": 247,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0,
+                "measuredSeconds": 0.25
+              },
+              {
+                "edge": "end",
+                "wordIndex": 7,
+                "rawSeconds": 5.059999942779541,
+                "measuredSeconds": 5.36
+              }
+            ],
+            "thresholdRms": 0.0035332846851777373,
+            "noiseFloorRms": 4.5433170771465427e-05
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Listen once for the length of each phrase and the silence between them; copy that pattern.",
+        "transcript": "A gaming guitar, controllers, six consoles, ten computers.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Matched phrase entries averaged about 0.2 seconds late."
+        ]
+      }
+    },
+    "xqc-delay": {
+      "clipId": "xqc-fifteen-minute-delay",
+      "clipVersion": "v1-954e03856883",
+      "scoringVersion": "say-match-v1.1",
+      "durationMs": 5850,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 83,
+        "timing": 96,
+        "overall": 95,
+        "version": "say-match-v1.1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 1.4600000381469727,
+              "actualStart": 0.35,
+              "expectedEnd": 1.45,
+              "expectedStart": 0.3
+            },
+            {
+              "cueId": "cue-2",
+              "actualEnd": 3,
+              "actualStart": 1.95,
+              "expectedEnd": 3.35,
+              "expectedStart": 1.85
+            },
+            {
+              "cueId": "cue-3",
+              "actualEnd": 5.539999961853027,
+              "actualStart": 4.95,
+              "expectedEnd": 5.72,
+              "expectedStart": 4.92
+            }
+          ],
+          "additions": 0,
+          "audioHash": "dd9cf1de36549ff0d988158610ffdede8393295f4740165a9ea1ac59b8df717d",
+          "omissions": 0,
+          "matchedWords": 8,
+          "expectedWords": 8,
+          "substitutions": 0,
+          "meanStartErrorMs": 60,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0,
+                "measuredSeconds": 0.35
+              },
+              {
+                "edge": "start",
+                "wordIndex": 3,
+                "rawSeconds": 1.5800000429153442,
+                "measuredSeconds": 1.95
+              },
+              {
+                "edge": "start",
+                "wordIndex": 6,
+                "rawSeconds": 4.860000133514404,
+                "measuredSeconds": 4.95
+              }
+            ],
+            "thresholdRms": 0.0036353700728669596,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+        "transcript": "Fifteen-minute delay, and then what? Then what?",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Your matched phrase entries landed close to the scene cues."
+        ]
+      }
+    },
+    "space": {
+      "clipId": "tos-awesome-in-space",
+      "clipVersion": "v1-48e404b004af",
+      "scoringVersion": "say-match-v1.1",
+      "durationMs": 3350,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 92,
+        "rhythm": 60,
+        "timing": 53,
+        "overall": 74,
+        "version": "say-match-v1.1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 1.2400000095367432,
+              "actualStart": null,
+              "expectedEnd": 1.138,
+              "expectedStart": 0.498
+            },
+            {
+              "cueId": "cue-2",
+              "actualEnd": 2.87,
+              "actualStart": 1.5399999618530273,
+              "expectedEnd": 2.918,
+              "expectedStart": 1.318
+            }
+          ],
+          "additions": 0,
+          "audioHash": "d6e84954da3f9e126c3a08756a3fb591b3afadd4becdba8a98401b72b4754f8c",
+          "omissions": 0,
+          "matchedWords": 12,
+          "expectedWords": 13,
+          "substitutions": 1,
+          "meanStartErrorMs": 222,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0.3400000035762787,
+                "measuredSeconds": 0.53
+              },
+              {
+                "edge": "end",
+                "wordIndex": 12,
+                "rawSeconds": 2.799999952316284,
+                "measuredSeconds": 2.87
+              }
+            ],
+            "thresholdRms": 0.002840634097033346,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Try entering on the caption cue instead of waiting for the line to begin.",
+        "transcript": "I have your robotics, and I just want to be awesome in space.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "1 changed, 0 missing and 0 extra word in the transcript.",
+          "Matched phrase entries averaged about 0.2 seconds late."
+        ]
+      }
+    },
+    "claws": {
+      "clipId": "tos-robotic-claws",
+      "clipVersion": "v1-1c7786e28ced",
+      "scoringVersion": "say-match-v1.1",
+      "durationMs": 6670,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 93,
+        "timing": 82,
+        "overall": 93,
+        "version": "say-match-v1.1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 1.0399999618530273,
+              "actualStart": 0.38,
+              "expectedEnd": 0.968,
+              "expectedStart": 0.368
+            },
+            {
+              "cueId": "cue-2",
+              "actualEnd": 2.819999933242798,
+              "actualStart": 1.3600000143051147,
+              "expectedEnd": 2.368,
+              "expectedStart": 1.208
+            },
+            {
+              "cueId": "cue-3",
+              "actualEnd": 4.76,
+              "actualStart": 2.819999933242798,
+              "expectedEnd": 4.468,
+              "expectedStart": 2.368
+            }
+          ],
+          "additions": 0,
+          "audioHash": "78bd5ea73092efa7fcae8d1e936a6bbf395551b161a62f86f36daa84c02fd697",
+          "omissions": 0,
+          "matchedWords": 17,
+          "expectedWords": 17,
+          "substitutions": 0,
+          "meanStartErrorMs": 205,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0,
+                "measuredSeconds": 0.38
+              },
+              {
+                "edge": "end",
+                "wordIndex": 16,
+                "rawSeconds": 4.800000190734863,
+                "measuredSeconds": 4.76
+              }
+            ],
+            "thresholdRms": 0.0034634076542583627,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+        "transcript": "I'm freaked out. I'm having nightmares that I'm being chased by these giant robotic claws of death.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Matched phrase entries averaged about 0.2 seconds late."
+        ]
+      }
+    },
+    "heart": {
+      "clipId": "tos-broken-heart",
+      "clipVersion": "v1-13b20de37e44",
+      "scoringVersion": "say-match-v1.1",
+      "durationMs": 10150,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 87,
+        "timing": 94,
+        "overall": 96,
+        "version": "say-match-v1.1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 2.140000104904175,
+              "actualStart": 0.64,
+              "expectedEnd": 2.148,
+              "expectedStart": 0.548
+            },
+            {
+              "cueId": "cue-3",
+              "actualEnd": 5.739999771118164,
+              "actualStart": 4.539999961853027,
+              "expectedEnd": 5.848,
+              "expectedStart": 4.328
+            },
+            {
+              "cueId": "cue-5",
+              "actualEnd": 9.29,
+              "actualStart": 7.89,
+              "expectedEnd": 9.488,
+              "expectedStart": 7.748
+            }
+          ],
+          "additions": 0,
+          "audioHash": "a36159080511f71a840a66c5a5871d5e5441e9ce32aeb85ac79a85e4c42de6d4",
+          "omissions": 0,
+          "matchedWords": 14,
+          "expectedWords": 14,
+          "substitutions": 0,
+          "meanStartErrorMs": 149,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0,
+                "measuredSeconds": 0.64
+              },
+              {
+                "edge": "end",
+                "wordIndex": 13,
+                "rawSeconds": 9.239999771118164,
+                "measuredSeconds": 9.29
+              },
+              {
+                "edge": "start",
+                "wordIndex": 9,
+                "rawSeconds": 7.78000020980835,
+                "measuredSeconds": 7.89
+              }
+            ],
+            "thresholdRms": 0.005168881957921301,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+        "transcript": "You broke my heart. You forgot me on Earth. I should just crush you.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Your matched phrase entries landed close to the scene cues."
+        ]
+      }
+    },
+    "divorce": {
+      "clipId": "hgf-old-fashioned-divorce",
+      "clipVersion": "v1-e29dd7364548",
+      "scoringVersion": "say-match-v1.1",
+      "durationMs": 4930,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 96,
+        "timing": 95,
+        "overall": 98,
+        "version": "say-match-v1.1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 2.119999885559082,
+              "actualStart": 0.36,
+              "expectedEnd": 2.148,
+              "expectedStart": 0.328
+            },
+            {
+              "cueId": "cue-2",
+              "actualEnd": 3.3399999141693115,
+              "actualStart": 2.119999885559082,
+              "expectedEnd": 3.468,
+              "expectedStart": 2.268
+            },
+            {
+              "cueId": "cue-3",
+              "actualEnd": 4.300000190734863,
+              "actualStart": 3.3399999141693115,
+              "expectedEnd": 4.688,
+              "expectedStart": 3.468
+            }
+          ],
+          "additions": 0,
+          "audioHash": "5e4a9f7c11b670a3205a8c28403dc37d01d749a6f89c5f7f1651f990db47c3f7",
+          "omissions": 0,
+          "matchedWords": 18,
+          "expectedWords": 18,
+          "substitutions": 0,
+          "meanStartErrorMs": 103,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0.41999998688697815,
+                "measuredSeconds": 0.36
+              }
+            ],
+            "thresholdRms": 0.003148019915787674,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+        "transcript": "Nonsense, you've got an old-fashioned idea divorce is something that lasts forever till death do us part",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Your matched phrase entries landed close to the scene cues."
+        ]
+      }
+    },
+    "stinker": {
+      "clipId": "hgf-such-a-stinker",
+      "clipVersion": "v1-ff21eb36f33b",
+      "scoringVersion": "say-match-v1.1",
+      "durationMs": 5290,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 61,
+        "timing": 87,
+        "overall": 88,
+        "version": "say-match-v1.1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 1.2400000095367432,
+              "actualStart": 0.3,
+              "expectedEnd": 1.738,
+              "expectedStart": 0.278
+            },
+            {
+              "cueId": "cue-2",
+              "actualEnd": 4.579999923706055,
+              "actualStart": 3.240000009536743,
+              "expectedEnd": 4.958,
+              "expectedStart": 3.218
+            }
+          ],
+          "additions": 0,
+          "audioHash": "43355ed38caecd90ba267b597b8122aade573f295a363db0016334fa54c1bf22",
+          "omissions": 0,
+          "matchedWords": 15,
+          "expectedWords": 15,
+          "substitutions": 0,
+          "meanStartErrorMs": 22,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0,
+                "measuredSeconds": 0.3
+              }
+            ],
+            "thresholdRms": 0.0030215275005492223,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Listen once for the length of each phrase and the silence between them; copy that pattern.",
+        "transcript": "I am fond of you, you know. I often wish you weren't such a stinker.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Your matched phrase entries landed close to the scene cues."
+        ]
+      }
+    },
+    "talk": {
+      "clipId": "notld-hear-yourself-talk",
+      "clipVersion": "v1-645385255383",
+      "scoringVersion": "say-match-v1.1",
+      "durationMs": 6000,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 97,
+        "timing": 100,
+        "overall": 99,
+        "version": "say-match-v1.1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 5.47,
+              "actualStart": 3.47,
+              "expectedEnd": 5.538,
+              "expectedStart": 3.378
+            }
+          ],
+          "additions": 0,
+          "audioHash": "e56cb1fcebe8ef0f5ec9c7886b952d95e982d46b640eec88a87339acfba7216b",
+          "omissions": 0,
+          "matchedWords": 9,
+          "expectedWords": 9,
+          "substitutions": 0,
+          "meanStartErrorMs": 92,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 3.0199999809265137,
+                "measuredSeconds": 3.47
+              },
+              {
+                "edge": "end",
+                "wordIndex": 8,
+                "rawSeconds": 5.539999961853027,
+                "measuredSeconds": 5.47
+              }
+            ],
+            "thresholdRms": 0.0026393906472816364,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+        "transcript": "I think you complain just to hear yourself talk.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Your matched phrase entries landed close to the scene cues."
+        ]
+      }
+    },
+    "barbara": {
+      "clipId": "notld-coming-to-get-you",
+      "clipVersion": "v1-0f237846a300",
+      "scoringVersion": "say-match-v1.1",
+      "durationMs": 9450,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 45,
+        "rhythm": 0,
+        "timing": 0,
+        "overall": 23,
+        "version": "say-match-v1.1",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": null,
+              "actualStart": null,
+              "expectedEnd": 3.338,
+              "expectedStart": 0.718
+            },
+            {
+              "cueId": "cue-2",
+              "actualEnd": null,
+              "actualStart": null,
+              "expectedEnd": 8.778,
+              "expectedStart": 7.198
+            }
+          ],
+          "additions": 2,
+          "audioHash": "6d769c06bd4c2486ed7eddf91b51034be9a55172c51bf9058d02954cd768b173",
+          "omissions": 0,
+          "matchedWords": 7,
+          "expectedWords": 11,
+          "substitutions": 4,
+          "meanStartErrorMs": null,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0,
+                "measuredSeconds": 0.74
+              },
+              {
+                "edge": "end",
+                "wordIndex": 12,
+                "rawSeconds": 8.859999656677246,
+                "measuredSeconds": 8.93
+              }
+            ],
+            "thresholdRms": 0.003844255296377547,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Replay the original with captions, then keep every scripted word and leave out extra commentary.",
+        "transcript": "They are coming to get you, Barbareth. They are coming for you, Barbareth.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "4 changed, 0 missing and 2 extra words in the transcript.",
+          "No scripted phrase entry could be aligned to this take."
+        ]
+      }
+    },
+    "jerk-v12": {
+      "clipId": "tos-youre-a-jerk",
+      "clipVersion": "v1-a1664e1509a2",
+      "scoringVersion": "say-match-v1.2",
+      "durationMs": 2290,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 91,
+        "timing": 100,
+        "overall": 98,
+        "version": "say-match-v1.2",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 1.98,
+              "actualStart": 0.87,
+              "expectedEnd": 2.108,
+              "expectedStart": 0.808
+            }
+          ],
+          "additions": 0,
+          "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+          "omissions": 0,
+          "matchedWords": 5,
+          "expectedWords": 5,
+          "substitutions": 0,
+          "meanStartErrorMs": 62,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0,
+                "measuredSeconds": 0.87
+              },
+              {
+                "edge": "end",
+                "wordIndex": 3,
+                "rawSeconds": 1.8600000143051147,
+                "measuredSeconds": 1.98
+              }
+            ],
+            "thresholdRms": 0.004029522740718016,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+        "transcript": "You're a jerk, Tom.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Your matched phrase entries landed close to the scene cues."
+        ]
+      }
+    },
+    "reply-v12": {
+      "clipId": "tos-youre-a-jerk",
+      "clipVersion": "v1-a1664e1509a2",
+      "scoringVersion": "say-match-v1.2",
+      "durationMs": 2290,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 91,
+        "timing": 100,
+        "overall": 98,
+        "version": "say-match-v1.2",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 1.98,
+              "actualStart": 0.87,
+              "expectedEnd": 2.108,
+              "expectedStart": 0.808
+            }
+          ],
+          "additions": 0,
+          "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+          "omissions": 0,
+          "matchedWords": 5,
+          "expectedWords": 5,
+          "substitutions": 0,
+          "meanStartErrorMs": 62,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0,
+                "measuredSeconds": 0.87
+              },
+              {
+                "edge": "end",
+                "wordIndex": 3,
+                "rawSeconds": 1.8600000143051147,
+                "measuredSeconds": 1.98
+              }
+            ],
+            "thresholdRms": 0.004029522740718016,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Replay original versus your take, then try the same words and timing with a delivery you enjoy.",
+        "transcript": "You're a jerk, Tom.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Your matched phrase entries landed close to the scene cues."
+        ]
+      }
+    },
+    "barbara-v12": {
+      "clipId": "notld-coming-to-get-you",
+      "clipVersion": "v1-0f237846a300",
+      "scoringVersion": "say-match-v1.2",
+      "durationMs": 9450,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 100,
+        "rhythm": 74,
+        "timing": 90,
+        "overall": 92,
+        "version": "say-match-v1.2",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 2.5999999046325684,
+              "actualStart": 0.84,
+              "expectedEnd": 3.338,
+              "expectedStart": 0.718
+            },
+            {
+              "cueId": "cue-2",
+              "actualEnd": 8.97,
+              "actualStart": 7.33,
+              "expectedEnd": 8.778,
+              "expectedStart": 7.198
+            }
+          ],
+          "additions": 0,
+          "audioHash": "d8076268d6eed3cdeaa7add51cbdd4734836f0060adb7760a967fb46d5822193",
+          "omissions": 0,
+          "matchedWords": 13,
+          "expectedWords": 13,
+          "substitutions": 0,
+          "meanStartErrorMs": 127,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0,
+                "measuredSeconds": 0.84
+              },
+              {
+                "edge": "end",
+                "wordIndex": 10,
+                "rawSeconds": 8.819999694824219,
+                "measuredSeconds": 8.97
+              },
+              {
+                "edge": "start",
+                "wordIndex": 6,
+                "rawSeconds": 7.119999885559082,
+                "measuredSeconds": 7.33
+              }
+            ],
+            "thresholdRms": 0.0032193413569593706,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Listen once for the length of each phrase and the silence between them; copy that pattern.",
+        "transcript": "They're coming to get you, Barbara. They're coming for you, Barbara.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "Every scripted word matched the transcript.",
+          "Your matched phrase entries landed close to the scene cues."
+        ]
+      }
+    },
+    "changed-v12": {
+      "clipId": "tos-youre-a-jerk",
+      "clipVersion": "v1-a1664e1509a2",
+      "scoringVersion": "say-match-v1.2",
+      "durationMs": 2290,
+      "recordingOffsetMs": 0,
+      "score": {
+        "words": 80,
+        "rhythm": 68,
+        "timing": 78,
+        "overall": 77,
+        "version": "say-match-v1.2",
+        "weights": {
+          "words": 50,
+          "rhythm": 20,
+          "timing": 30,
+          "delivery": 0
+        },
+        "delivery": null,
+        "evidence": {
+          "phrases": [
+            {
+              "cueId": "cue-1",
+              "actualEnd": 1.94,
+              "actualStart": 0.88,
+              "expectedEnd": 2.108,
+              "expectedStart": 0.808
+            }
+          ],
+          "additions": 0,
+          "audioHash": "1e3d50c41bda8c138ad26fbc0cd7475b70b3ee8e44bc70e5769bd39652a7cefa",
+          "omissions": 0,
+          "matchedWords": 4,
+          "expectedWords": 5,
+          "substitutions": 1,
+          "meanStartErrorMs": 72,
+          "timingRefinement": {
+            "method": "pcm-energy-v1",
+            "status": "refined",
+            "frameMs": 10,
+            "adjustments": [
+              {
+                "edge": "start",
+                "wordIndex": 0,
+                "rawSeconds": 0,
+                "measuredSeconds": 0.88
+              },
+              {
+                "edge": "end",
+                "wordIndex": 3,
+                "rawSeconds": 1.8600000143051147,
+                "measuredSeconds": 1.94
+              }
+            ],
+            "thresholdRms": 0.0031210319080636987,
+            "noiseFloorRms": 0
+          },
+          "transcriptionModel": "whisper-1"
+        },
+        "coachNote": "Replay the original with captions, then keep every scripted word and leave out extra commentary.",
+        "transcript": "You're a gem, Tom.",
+        "limitations": [
+          "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+          "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
+          "Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched."
+        ],
+        "observations": [
+          "1 changed, 0 missing and 0 extra word in the transcript.",
+          "Your matched phrase entries landed close to the scene cues."
+        ]
+      }
+    }
+  },
+  "checks": {
+    "applicationRevision": "d2fdce64fba6825ce2e0cfe104a67acdfe58f5bf",
+    "fullSuite": {
+      "passed": 288,
+      "skipped": 3,
+      "note": "Explicit live-provider opt-ins skipped; no paid tests in suite"
+    },
+    "finalContentFix": {
+      "focusedTestsPassed": 6,
+      "includesNewRegression": 1,
+      "lint": "passed",
+      "build": "passed"
+    },
+    "catalog": {
+      "visibleClips": 10,
+      "immutableVersions": 11,
+      "validatedMediaMegabytes": 12.2,
+      "note": "New v2-7ed551138939 changes only description of opening-shot voice-over; original assets, cues and old version retained."
+    }
+  },
+  "readiness": {
+    "validatedRevision": "d2fdce64fba6825ce2e0cfe104a67acdfe58f5bf",
+    "paidRequestsFinished": true,
+    "preCleanup": {
+      "disposableUsers": 3,
+      "classicResults": 1,
+      "sayAttempts": 18,
+      "sharedChallenges": 4,
+      "privateAudioObjects": 19,
+      "unclaimedGuestAttempts": 0
+    },
+    "exactV12Comparison": {
+      "audioSha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+      "creator": 98,
+      "recipient": 98
+    },
+    "changedWords": {
+      "wordScore": 80,
+      "overall": 77
+    },
+    "limitations": [
+      "Real physical microphone and mobile device session remains an owner check.",
+      "Hosted email signup hit email-send limit; custom SMTP or an OAuth provider is required for reliable new-account onboarding.",
+      "Synthetic voices and browser playback do not establish human enjoyment or scoring fairness."
+    ]
+  }
+}

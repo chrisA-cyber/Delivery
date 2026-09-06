@@ -1,0 +1,720 @@
+[
+  {
+    "id": "xqc-six-consoles",
+    "title": "Six consoles!",
+    "description": "Turn a shopping list into a full-body performance. Give those consoles the outrage they deserve.",
+    "difficulty": "medium",
+    "rating": "teen",
+    "category": "Twitch",
+    "tags": [
+      "Internet classic",
+      "Rhythm",
+      "Big reaction"
+    ],
+    "version": "v1-d5502ac3ac95",
+    "duration": 5.65,
+    "videoUrl": "/media/say-it-back/xqc-six-consoles/v1-d5502ac3ac95/scene.mp4",
+    "posterUrl": "/media/say-it-back/xqc-six-consoles/v1-d5502ac3ac95/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/xqc-six-consoles/v1-d5502ac3ac95/reference.wav",
+    "roles": [
+      {
+        "id": "xqc",
+        "name": "xQc",
+        "description": "Rattle off the setup, then stretch the two big payoffs.",
+        "muteIntervals": [
+          {
+            "start": 0,
+            "end": 5.65
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/xqc-six-consoles/v1-d5502ac3ac95/backing-xqc.m4a"
+      }
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "xqc",
+        "text": "A gaming guitar, controllers!",
+        "start": 0.18,
+        "end": 2.2
+      },
+      {
+        "id": "cue-2",
+        "roleId": "xqc",
+        "text": "Six consoles!",
+        "start": 2.43,
+        "end": 3.82
+      },
+      {
+        "id": "cue-3",
+        "roleId": "xqc",
+        "text": "Ten computers!",
+        "start": 4.26,
+        "end": 5.55
+      }
+    ],
+    "source": {
+      "title": "xQc’s opinion on professional streaming setups (2019)",
+      "creator": "xQc · Félix Lengyel",
+      "url": "https://clips.twitch.tv/PlumpHelplessSnakeWholeWheat",
+      "license": "Owner-directed inclusion; third-party reuse rights not independently verified",
+      "licenseUrl": "https://clips.twitch.tv/PlumpHelplessSnakeWholeWheat",
+      "attribution": "Original Twitch performance by xQc (Félix Lengyel), 2019. Short excerpt and voice-replacement backing prepared by Delivery.",
+      "reuseNote": "Included at the Delivery owner’s express direction. No independent third-party permission or reusable license is claimed. Public original-footage mirror: https://streamable.com/owlqs ; contemporaneous source record: https://www.reddit.com/r/LivestreamFail/comments/bhg9f1/xqcs_opinion_on_professional_streaming_setups/ . No Choicer Voicer game assets used. Excerpt boundaries refer to this mirror; original speed preserved. The mixed soundtrack is muted completely during your dub because isolated dialogue/background stems are unavailable.",
+      "excerptStart": 8.6,
+      "excerptEnd": 14.25
+    },
+    "assetIntegrity": {
+      "/media/say-it-back/xqc-six-consoles/v1-d5502ac3ac95/backing-xqc.m4a": "536e47d20c31b36ca577ba51887ee6233edd3402fe28bdac7d57ef1f790a2e64",
+      "/media/say-it-back/xqc-six-consoles/v1-d5502ac3ac95/poster.jpg": "362559bc13d9a5a4958c1548ca71b6980526dd20df7d0f67fb2219ba274d55cf",
+      "/media/say-it-back/xqc-six-consoles/v1-d5502ac3ac95/reference.wav": "40a415bc23d533a40d2059b28cadfa737b0f27947b0ea7f830f7b5bd640bf805",
+      "/media/say-it-back/xqc-six-consoles/v1-d5502ac3ac95/scene.mp4": "9a613ad7906e2f9f5bb0cef0affd3cbeea22b224d0d4a8e55f823a05aad71523"
+    }
+  },
+  {
+    "id": "xqc-fifteen-minute-delay",
+    "title": "Fifteen-minute delay",
+    "description": "One reasonable suggestion. Three increasingly unreasonable reactions. Hold the silence, then hit the second “what?”",
+    "difficulty": "easy",
+    "rating": "teen",
+    "category": "Twitch",
+    "tags": [
+      "Internet classic",
+      "Big reaction",
+      "Comic pauses"
+    ],
+    "version": "v1-954e03856883",
+    "duration": 5.85,
+    "videoUrl": "/media/say-it-back/xqc-fifteen-minute-delay/v1-954e03856883/scene.mp4",
+    "posterUrl": "/media/say-it-back/xqc-fifteen-minute-delay/v1-954e03856883/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/xqc-fifteen-minute-delay/v1-954e03856883/reference.wav",
+    "roles": [
+      {
+        "id": "xqc",
+        "name": "xQc",
+        "description": "Build the disbelief. Leave the long pause before the final question.",
+        "muteIntervals": [
+          {
+            "start": 0,
+            "end": 5.85
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/xqc-fifteen-minute-delay/v1-954e03856883/backing-xqc.m4a"
+      }
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "xqc",
+        "text": "Fifteen minute delay.",
+        "start": 0.3,
+        "end": 1.45
+      },
+      {
+        "id": "cue-2",
+        "roleId": "xqc",
+        "text": "And then what?",
+        "start": 1.85,
+        "end": 3.35
+      },
+      {
+        "id": "cue-3",
+        "roleId": "xqc",
+        "text": "Then what?",
+        "start": 4.92,
+        "end": 5.72
+      }
+    ],
+    "source": {
+      "title": "xQc on a 15 minute delay to prevent stream sniping (2019)",
+      "creator": "xQc · Félix Lengyel",
+      "url": "https://clips.twitch.tv/SlipperyOnerousDoveNotATK",
+      "license": "Owner-directed inclusion; third-party reuse rights not independently verified",
+      "licenseUrl": "https://clips.twitch.tv/SlipperyOnerousDoveNotATK",
+      "attribution": "Original Twitch performance by xQc (Félix Lengyel), 2019. Short excerpt and voice-replacement backing prepared by Delivery.",
+      "reuseNote": "Included at the Delivery owner’s express direction. No independent third-party permission or reusable license is claimed. Public original-footage mirror: https://streamable.com/aje2y ; contemporaneous source record: https://livestreamfails.com/clip/L1ezEdegF6-W/xqc-on-a-15-minute-delay-to-prevent-stream-sniping . No Choicer Voicer game assets used. Excerpt boundaries refer to this mirror; original speed preserved. The mixed soundtrack is muted completely during your dub because isolated dialogue/background stems are unavailable.",
+      "excerptStart": 1.8,
+      "excerptEnd": 7.65
+    },
+    "assetIntegrity": {
+      "/media/say-it-back/xqc-fifteen-minute-delay/v1-954e03856883/backing-xqc.m4a": "a29ba9f5673ec12d501d26b6f87de143e073ccca678c5a9d098ca95fae40e135",
+      "/media/say-it-back/xqc-fifteen-minute-delay/v1-954e03856883/poster.jpg": "5de3b10d5fb334ef432e11e64b4cce17a32f9beb789516ad8f0c8c8e3446e6aa",
+      "/media/say-it-back/xqc-fifteen-minute-delay/v1-954e03856883/reference.wav": "ed166f2011f5e9951bf715c84a68ec9de2442b13c2eefd0b9a20de4516b58179",
+      "/media/say-it-back/xqc-fifteen-minute-delay/v1-954e03856883/scene.mp4": "8f781ea4dbd75b7ac71643e67a8b2a39197eb6e485d0eea9382ae80fd1599548"
+    }
+  },
+  {
+    "id": "tos-youre-a-jerk",
+    "title": "You’re a jerk, Thom.",
+    "description": "Four words. One brutally unimpressed delivery over the opening city shot. Your easiest way into the scene.",
+    "difficulty": "easy",
+    "rating": "everyone",
+    "category": "Sci-fi",
+    "tags": [
+      "Quick start",
+      "Deadpan",
+      "YouTube film"
+    ],
+    "version": "v2-7ed551138939",
+    "duration": 2.29,
+    "videoUrl": "/media/say-it-back/tos-youre-a-jerk/v1-a1664e1509a2/scene.mp4",
+    "posterUrl": "/media/say-it-back/tos-youre-a-jerk/v1-a1664e1509a2/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/tos-youre-a-jerk/v1-a1664e1509a2/reference.wav",
+    "roles": [
+      {
+        "id": "celia",
+        "name": "Celia",
+        "description": "Underplay it. Let the words do the work.",
+        "muteIntervals": [
+          {
+            "start": 0.55,
+            "end": 2.29
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/tos-youre-a-jerk/v1-a1664e1509a2/backing-celia.m4a"
+      }
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "celia",
+        "text": "You're a jerk, Thom.",
+        "start": 0.808,
+        "end": 2.108
+      }
+    ],
+    "source": {
+      "title": "Tears of Steel (2012)",
+      "creator": "Blender Foundation · directed by Ian Hubert",
+      "url": "https://www.youtube.com/watch?v=R6MlUcmOul8",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "attribution": "Tears of Steel © Blender Foundation | mango.blender.org. CC BY 3.0. Shortened and adapted for voice replacement by Delivery.",
+      "reuseNote": "Producer license: https://mango.blender.org/sharing/ . Original live-action release downloaded from https://archive.org/download/Tears-of-Steel/tears_of_steel_1080p.webm . Excerpted without speed changes; selected dialogue interval-muted in separate backing tracks.",
+      "excerptStart": 22.08,
+      "excerptEnd": 24.37
+    },
+    "assetIntegrity": {
+      "/media/say-it-back/tos-youre-a-jerk/v1-a1664e1509a2/backing-celia.m4a": "3d1404473ba62ac6479bd833c335fc14c2e408fec4ddf3085ddbff8e24463a62",
+      "/media/say-it-back/tos-youre-a-jerk/v1-a1664e1509a2/poster.jpg": "6be820446560ae4cf4b16a7c4564e900eb70504b848fec320e0779b61e024cca",
+      "/media/say-it-back/tos-youre-a-jerk/v1-a1664e1509a2/reference.wav": "d300eeb0a7cc48fafe197cc1c1f9e7b0a8f697b12c522220964c61a6fd9c7918",
+      "/media/say-it-back/tos-youre-a-jerk/v1-a1664e1509a2/scene.mp4": "1547d202fcc5a38aa7d03225a7a591c2269f63144e059b1163fd8b1db9646c87"
+    }
+  },
+  {
+    "id": "tos-awesome-in-space",
+    "title": "Awesome in space",
+    "description": "A terrible breakup explanation, delivered with absolute confidence. Sell the dream.",
+    "difficulty": "medium",
+    "rating": "everyone",
+    "category": "Sci-fi",
+    "tags": [
+      "Confidence",
+      "Quick line",
+      "YouTube film"
+    ],
+    "version": "v1-48e404b004af",
+    "duration": 3.35,
+    "videoUrl": "/media/say-it-back/tos-awesome-in-space/v1-48e404b004af/scene.mp4",
+    "posterUrl": "/media/say-it-back/tos-awesome-in-space/v1-48e404b004af/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/tos-awesome-in-space/v1-48e404b004af/reference.wav",
+    "roles": [
+      {
+        "id": "thom",
+        "name": "Thom",
+        "description": "Start matter-of-fact; put the payoff on “awesome in space.”",
+        "muteIntervals": [
+          {
+            "start": 0.25,
+            "end": 3.35
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/tos-awesome-in-space/v1-48e404b004af/backing-thom.m4a"
+      }
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "thom",
+        "text": "You have your robotics,",
+        "start": 0.498,
+        "end": 1.138
+      },
+      {
+        "id": "cue-2",
+        "roleId": "thom",
+        "text": "and I just want to be awesome in space.",
+        "start": 1.318,
+        "end": 2.918
+      }
+    ],
+    "source": {
+      "title": "Tears of Steel (2012)",
+      "creator": "Blender Foundation · directed by Ian Hubert",
+      "url": "https://www.youtube.com/watch?v=R6MlUcmOul8",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "attribution": "Tears of Steel © Blender Foundation | mango.blender.org. CC BY 3.0. Shortened and adapted for voice replacement by Delivery.",
+      "reuseNote": "Producer license: https://mango.blender.org/sharing/ . Original live-action release downloaded from https://archive.org/download/Tears-of-Steel/tears_of_steel_1080p.webm . Excerpted without speed changes; selected dialogue interval-muted in separate backing tracks.",
+      "excerptStart": 26.85,
+      "excerptEnd": 30.2
+    },
+    "assetIntegrity": {
+      "/media/say-it-back/tos-awesome-in-space/v1-48e404b004af/backing-thom.m4a": "20aaeed9e14001585008f8573796cbb295f03c4c71af91a47d1bd0432f108958",
+      "/media/say-it-back/tos-awesome-in-space/v1-48e404b004af/poster.jpg": "8da72fd6f424f4d05058cd2c2cc805b755562729db1b97ef1bdb999f02b8dfa3",
+      "/media/say-it-back/tos-awesome-in-space/v1-48e404b004af/reference.wav": "379766af596dc416c8aef6a5d4213d41d67c1090abe57649f8cacab2a14f8444",
+      "/media/say-it-back/tos-awesome-in-space/v1-48e404b004af/scene.mp4": "be046c104083a61551eacb1361769f19905f7d3a7f96d449c87fef96e3095edb"
+    }
+  },
+  {
+    "id": "tos-robotic-claws",
+    "title": "Giant robotic claws of death",
+    "description": "The panic spills out. Keep up with Thom, then let Celia shut the whole argument down.",
+    "difficulty": "hard",
+    "rating": "teen",
+    "category": "Sci-fi",
+    "tags": [
+      "Fast delivery",
+      "Panic",
+      "Exchange"
+    ],
+    "version": "v1-1c7786e28ced",
+    "duration": 6.67,
+    "videoUrl": "/media/say-it-back/tos-robotic-claws/v1-1c7786e28ced/scene.mp4",
+    "posterUrl": "/media/say-it-back/tos-robotic-claws/v1-1c7786e28ced/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/tos-robotic-claws/v1-1c7786e28ced/reference.wav",
+    "roles": [
+      {
+        "id": "thom",
+        "name": "Thom",
+        "description": "Escalate quickly. Celia’s final response stays in the scene.",
+        "muteIntervals": [
+          {
+            "start": 0.15,
+            "end": 4.5
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/tos-robotic-claws/v1-1c7786e28ced/backing-thom.m4a"
+      }
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "thom",
+        "text": "I'm freaked out!",
+        "start": 0.368,
+        "end": 0.968
+      },
+      {
+        "id": "cue-2",
+        "roleId": "thom",
+        "text": "I'm having nightmares that I'm being chased",
+        "start": 1.208,
+        "end": 2.368
+      },
+      {
+        "id": "cue-3",
+        "roleId": "thom",
+        "text": "by these giant robotic claws of death!",
+        "start": 2.368,
+        "end": 4.468
+      }
+    ],
+    "source": {
+      "title": "Tears of Steel (2012)",
+      "creator": "Blender Foundation · directed by Ian Hubert",
+      "url": "https://www.youtube.com/watch?v=R6MlUcmOul8",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "attribution": "Tears of Steel © Blender Foundation | mango.blender.org. CC BY 3.0. Shortened and adapted for voice replacement by Delivery.",
+      "reuseNote": "Producer license: https://mango.blender.org/sharing/ . Original live-action release downloaded from https://archive.org/download/Tears-of-Steel/tears_of_steel_1080p.webm . Excerpted without speed changes; selected dialogue interval-muted in separate backing tracks.",
+      "excerptStart": 38.3,
+      "excerptEnd": 44.97
+    },
+    "assetIntegrity": {
+      "/media/say-it-back/tos-robotic-claws/v1-1c7786e28ced/backing-thom.m4a": "99fa557e1044fafca72270891a757342ccfed98909b18135f1888a3c2a323640",
+      "/media/say-it-back/tos-robotic-claws/v1-1c7786e28ced/poster.jpg": "ed4f00b587cdf4f9c7006c5c1945830403110590be866d083167e03b719a312d",
+      "/media/say-it-back/tos-robotic-claws/v1-1c7786e28ced/reference.wav": "9281448d5e63d57abb26b7fbca527f8714c8d2a97b7cb9e04bb8862d9dbc483b",
+      "/media/say-it-back/tos-robotic-claws/v1-1c7786e28ced/scene.mp4": "b8ffd43853e4666e1f9cd8472d5b2e667e3bbc6cb987874b117bb6ff7a528640"
+    }
+  },
+  {
+    "id": "tos-broken-heart",
+    "title": "You broke my heart",
+    "description": "Take the wounded confrontation or the quiet replies. Leave space for your scene partner.",
+    "difficulty": "medium",
+    "rating": "teen",
+    "category": "Drama",
+    "tags": [
+      "Two roles",
+      "Dramatic",
+      "Measured pauses"
+    ],
+    "version": "v1-13b20de37e44",
+    "duration": 10.15,
+    "videoUrl": "/media/say-it-back/tos-broken-heart/v1-13b20de37e44/scene.mp4",
+    "posterUrl": "/media/say-it-back/tos-broken-heart/v1-13b20de37e44/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/tos-broken-heart/v1-13b20de37e44/reference.wav",
+    "roles": [
+      {
+        "id": "celia",
+        "name": "Celia",
+        "description": "Three accusations. Let each one land.",
+        "muteIntervals": [
+          {
+            "start": 0.25,
+            "end": 2.5
+          },
+          {
+            "start": 4.05,
+            "end": 6.1
+          },
+          {
+            "start": 7.5,
+            "end": 10.15
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/tos-broken-heart/v1-13b20de37e44/backing-celia.m4a"
+      },
+      {
+        "id": "thom",
+        "name": "Thom",
+        "description": "Two quiet replies. Resist the urge to rush the silence.",
+        "muteIntervals": [
+          {
+            "start": 2.95,
+            "end": 4.0
+          },
+          {
+            "start": 6.25,
+            "end": 7.35
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/tos-broken-heart/v1-13b20de37e44/backing-thom.m4a"
+      }
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "celia",
+        "text": "You broke my heart.",
+        "start": 0.548,
+        "end": 2.148
+      },
+      {
+        "id": "cue-2",
+        "roleId": "thom",
+        "text": "I know.",
+        "start": 3.248,
+        "end": 3.848
+      },
+      {
+        "id": "cue-3",
+        "roleId": "celia",
+        "text": "You forgot me on Earth.",
+        "start": 4.328,
+        "end": 5.848
+      },
+      {
+        "id": "cue-4",
+        "roleId": "thom",
+        "text": "I know.",
+        "start": 6.528,
+        "end": 7.108
+      },
+      {
+        "id": "cue-5",
+        "roleId": "celia",
+        "text": "I should just crush you.",
+        "start": 7.748,
+        "end": 9.488
+      }
+    ],
+    "source": {
+      "title": "Tears of Steel (2012)",
+      "creator": "Blender Foundation · directed by Ian Hubert",
+      "url": "https://www.youtube.com/watch?v=R6MlUcmOul8",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "attribution": "Tears of Steel © Blender Foundation | mango.blender.org. CC BY 3.0. Shortened and adapted for voice replacement by Delivery.",
+      "reuseNote": "Producer license: https://mango.blender.org/sharing/ . Original live-action release downloaded from https://archive.org/download/Tears-of-Steel/tears_of_steel_1080p.webm . Excerpted without speed changes; selected dialogue interval-muted in separate backing tracks.",
+      "excerptStart": 382.5,
+      "excerptEnd": 392.65
+    },
+    "assetIntegrity": {
+      "/media/say-it-back/tos-broken-heart/v1-13b20de37e44/backing-celia.m4a": "e1577d924c9982f7fb687a9ab168a5bccafce55b419314dd00c11c0ac126f928",
+      "/media/say-it-back/tos-broken-heart/v1-13b20de37e44/backing-thom.m4a": "cc629b717f92838ef654344502eb25ff4784abfc73dbf115904a8a31474ec614",
+      "/media/say-it-back/tos-broken-heart/v1-13b20de37e44/poster.jpg": "c5d04e7ec7f25d7c464f3cca53912418a86bb8177bc00041fc18706a81dbdfbc",
+      "/media/say-it-back/tos-broken-heart/v1-13b20de37e44/reference.wav": "e1427d09ceac49a84d15c9e0b2f8dd5f9fc57b239769d6a1124bd8a19da580de",
+      "/media/say-it-back/tos-broken-heart/v1-13b20de37e44/scene.mp4": "0e9078bff18dd7426ee8ad266da52712244074c8d48d1c6d60fb8bc21b23ed36"
+    }
+  },
+  {
+    "id": "hgf-old-fashioned-divorce",
+    "title": "An old-fashioned divorce",
+    "description": "Cary Grant turns a ridiculous argument into a sprint. Keep the words crisp and the logic questionable.",
+    "difficulty": "hard",
+    "rating": "everyone",
+    "category": "Classic comedy",
+    "tags": [
+      "Rapid fire",
+      "Screwball",
+      "Movie"
+    ],
+    "version": "v1-e29dd7364548",
+    "duration": 4.93,
+    "videoUrl": "/media/say-it-back/hgf-old-fashioned-divorce/v1-e29dd7364548/scene.mp4",
+    "posterUrl": "/media/say-it-back/hgf-old-fashioned-divorce/v1-e29dd7364548/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/hgf-old-fashioned-divorce/v1-e29dd7364548/reference.wav",
+    "roles": [
+      {
+        "id": "walter",
+        "name": "Walter Burns",
+        "description": "Run straight through the sentence; save the emphasis for the last phrase.",
+        "muteIntervals": [
+          {
+            "start": 0,
+            "end": 4.93
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/hgf-old-fashioned-divorce/v1-e29dd7364548/backing-walter.m4a"
+      }
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "walter",
+        "text": "Nonsense! You've got an old-fashioned idea",
+        "start": 0.328,
+        "end": 2.148
+      },
+      {
+        "id": "cue-2",
+        "roleId": "walter",
+        "text": "divorce is something that lasts forever,",
+        "start": 2.268,
+        "end": 3.468
+      },
+      {
+        "id": "cue-3",
+        "roleId": "walter",
+        "text": "till death do us part.",
+        "start": 3.468,
+        "end": 4.688
+      }
+    ],
+    "source": {
+      "title": "His Girl Friday (1940)",
+      "creator": "Columbia Pictures · directed by Howard Hawks",
+      "url": "https://archive.org/details/his_girl_friday",
+      "license": "Public domain in the United States",
+      "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "attribution": "His Girl Friday (1940), Columbia Pictures; directed by Howard Hawks. Cary Grant and Rosalind Russell. Original monochrome film: US public domain. Excerpt and backing tracks prepared by Delivery.",
+      "reuseNote": "Public-domain source declaration corroborated by Internet Archive: https://blog.archive.org/event/his-girl-friday-public-domain-movie-screening-at-the-internet-archive/ . Original 640x480 monochrome transfer: https://archive.org/download/his_girl_friday/his_girl_friday.mp4 . No later colorization or added material. Territorial copyright may differ outside the US.",
+      "excerptStart": 302.77,
+      "excerptEnd": 307.7
+    },
+    "assetIntegrity": {
+      "/media/say-it-back/hgf-old-fashioned-divorce/v1-e29dd7364548/backing-walter.m4a": "cc8528cffb143d91f6f8011fe373a685ff8489d26c0032f294fa649f1f4066ca",
+      "/media/say-it-back/hgf-old-fashioned-divorce/v1-e29dd7364548/poster.jpg": "2c4d68070dfe04122764ae78edb1c245fb2db2d73828584bf2fecd41d5e7eaef",
+      "/media/say-it-back/hgf-old-fashioned-divorce/v1-e29dd7364548/reference.wav": "0bb2ed20611e856e2e81d64d2056c49d6ad992f460082b48b5f82038a49b6241",
+      "/media/say-it-back/hgf-old-fashioned-divorce/v1-e29dd7364548/scene.mp4": "1b95a3fe65f69db45d36651c76cf474075b0cf2ccdba6969cae59fb76d13695b"
+    }
+  },
+  {
+    "id": "hgf-such-a-stinker",
+    "title": "Such a stinker",
+    "description": "Warm setup. Surgical punchline. Let Walter enjoy the compliment before you take it away.",
+    "difficulty": "medium",
+    "rating": "everyone",
+    "category": "Classic comedy",
+    "tags": [
+      "Deadpan",
+      "Comeback",
+      "Exchange"
+    ],
+    "version": "v1-ff21eb36f33b",
+    "duration": 5.29,
+    "videoUrl": "/media/say-it-back/hgf-such-a-stinker/v1-ff21eb36f33b/scene.mp4",
+    "posterUrl": "/media/say-it-back/hgf-such-a-stinker/v1-ff21eb36f33b/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/hgf-such-a-stinker/v1-ff21eb36f33b/reference.wav",
+    "roles": [
+      {
+        "id": "hildy",
+        "name": "Hildy Johnson",
+        "description": "Sound almost affectionate. Keep the insult wonderfully casual.",
+        "muteIntervals": [
+          {
+            "start": 0,
+            "end": 1.9
+          },
+          {
+            "start": 3.0,
+            "end": 5.29
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/hgf-such-a-stinker/v1-ff21eb36f33b/backing-hildy.m4a"
+      }
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "hildy",
+        "text": "I am fond of you, you know.",
+        "start": 0.278,
+        "end": 1.738
+      },
+      {
+        "id": "cue-2",
+        "roleId": "hildy",
+        "text": "I often wish you weren't such a stinker.",
+        "start": 3.218,
+        "end": 4.958
+      }
+    ],
+    "source": {
+      "title": "His Girl Friday (1940)",
+      "creator": "Columbia Pictures · directed by Howard Hawks",
+      "url": "https://archive.org/details/his_girl_friday",
+      "license": "Public domain in the United States",
+      "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "attribution": "His Girl Friday (1940), Columbia Pictures; directed by Howard Hawks. Cary Grant and Rosalind Russell. Original monochrome film: US public domain. Excerpt and backing tracks prepared by Delivery.",
+      "reuseNote": "Public-domain source declaration corroborated by Internet Archive: https://blog.archive.org/event/his-girl-friday-public-domain-movie-screening-at-the-internet-archive/ . Original 640x480 monochrome transfer: https://archive.org/download/his_girl_friday/his_girl_friday.mp4 . No later colorization or added material. Territorial copyright may differ outside the US.",
+      "excerptStart": 319.3,
+      "excerptEnd": 324.59
+    },
+    "assetIntegrity": {
+      "/media/say-it-back/hgf-such-a-stinker/v1-ff21eb36f33b/backing-hildy.m4a": "9d5a91febc25cc1e86e8a2250a824eee07c064eb958705aa641b159caef2847e",
+      "/media/say-it-back/hgf-such-a-stinker/v1-ff21eb36f33b/poster.jpg": "63f5952414cb9fe5f4c9bd5e3ec2900fe092a05094a6a93e6c0cb4b49382b533",
+      "/media/say-it-back/hgf-such-a-stinker/v1-ff21eb36f33b/reference.wav": "c300a046205032e30a1dcd24cd5c00d990d74b51f640fcb963a935b6146dd3ef",
+      "/media/say-it-back/hgf-such-a-stinker/v1-ff21eb36f33b/scene.mp4": "3daa517f59b05c8cb6ca71b1734ae1d261164138559726dfea4995cd9a66e9fd"
+    }
+  },
+  {
+    "id": "notld-hear-yourself-talk",
+    "title": "You just like complaining",
+    "description": "Johnny has another complaint. Wait for your opening, then deliver the perfectly unimpressed reply.",
+    "difficulty": "easy",
+    "rating": "teen",
+    "category": "Cult movie",
+    "tags": [
+      "Deadpan",
+      "Comeback",
+      "Exchange"
+    ],
+    "version": "v1-645385255383",
+    "duration": 6.0,
+    "videoUrl": "/media/say-it-back/notld-hear-yourself-talk/v1-645385255383/scene.mp4",
+    "posterUrl": "/media/say-it-back/notld-hear-yourself-talk/v1-645385255383/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/notld-hear-yourself-talk/v1-645385255383/reference.wav",
+    "roles": [
+      {
+        "id": "barbra",
+        "name": "Barbra",
+        "description": "Let Johnny finish, then keep your comeback dry.",
+        "muteIntervals": [
+          {
+            "start": 3.2,
+            "end": 6
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/notld-hear-yourself-talk/v1-645385255383/backing-barbra.m4a"
+      }
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "barbra",
+        "text": "I think you complain just to hear yourself talk.",
+        "start": 3.378,
+        "end": 5.538
+      }
+    ],
+    "source": {
+      "title": "Night of the Living Dead (1968)",
+      "creator": "Image Ten · directed by George A. Romero",
+      "url": "https://archive.org/details/NightOfTheLivingDead-MPEG",
+      "license": "Public domain in the United States",
+      "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "attribution": "Night of the Living Dead (1968), Image Ten; directed by George A. Romero. Russell Streiner and Judith O’Dea. Original monochrome film: US public domain. Excerpt and backing tracks prepared by Delivery.",
+      "reuseNote": "Original release omitted the required copyright notice; cancelled registration PA0000046101 documented at https://publicdomainmovie.net/movie/night-of-the-living-dead . Original monochrome transfer: https://archive.org/download/NightOfTheLivingDead-MPEG/NightOfTheLivingDead.mp4 . No later colorization, new score, or added footage. Territorial copyright may differ outside the US.",
+      "excerptStart": 241.4,
+      "excerptEnd": 247.4
+    },
+    "assetIntegrity": {
+      "/media/say-it-back/notld-hear-yourself-talk/v1-645385255383/backing-barbra.m4a": "8863e60488a2632bd48e33c08ffad5c8cdd190ac3a37c8b70a2f1cd6cfca767a",
+      "/media/say-it-back/notld-hear-yourself-talk/v1-645385255383/poster.jpg": "31e0d41192151b8868e6415162bacf6734afa5acc1f9a01ad3aa8dc1e1fc85a2",
+      "/media/say-it-back/notld-hear-yourself-talk/v1-645385255383/reference.wav": "7de0741f4a1fa85b174597aefdbe59c61976c427769b5c93631b18af067bb166",
+      "/media/say-it-back/notld-hear-yourself-talk/v1-645385255383/scene.mp4": "8b76d675a45812a65a0291f6d1246bc953e726f4237fa77d610082a55a33aa80"
+    }
+  },
+  {
+    "id": "notld-coming-to-get-you",
+    "title": "They’re coming to get you",
+    "description": "The cult-horror taunt. Tease out the first warning, then come back a little faster.",
+    "difficulty": "easy",
+    "rating": "teen",
+    "category": "Cult movie",
+    "tags": [
+      "Recognizable line",
+      "Playful menace",
+      "Exchange"
+    ],
+    "version": "v1-0f237846a300",
+    "duration": 9.45,
+    "videoUrl": "/media/say-it-back/notld-coming-to-get-you/v1-0f237846a300/scene.mp4",
+    "posterUrl": "/media/say-it-back/notld-coming-to-get-you/v1-0f237846a300/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/notld-coming-to-get-you/v1-0f237846a300/reference.wav",
+    "roles": [
+      {
+        "id": "johnny",
+        "name": "Johnny",
+        "description": "Enjoy the long first warning. Barbra’s reaction stays in the scene.",
+        "muteIntervals": [
+          {
+            "start": 0.45,
+            "end": 3.55
+          },
+          {
+            "start": 6.95,
+            "end": 9.45
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/notld-coming-to-get-you/v1-0f237846a300/backing-johnny.m4a"
+      }
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "johnny",
+        "text": "They're coming to get you, Barbara.",
+        "start": 0.718,
+        "end": 3.338
+      },
+      {
+        "id": "cue-2",
+        "roleId": "johnny",
+        "text": "They're coming for you, Barbara.",
+        "start": 7.198,
+        "end": 8.778
+      }
+    ],
+    "source": {
+      "title": "Night of the Living Dead (1968)",
+      "creator": "Image Ten · directed by George A. Romero",
+      "url": "https://archive.org/details/NightOfTheLivingDead-MPEG",
+      "license": "Public domain in the United States",
+      "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
+      "attribution": "Night of the Living Dead (1968), Image Ten; directed by George A. Romero. Russell Streiner and Judith O’Dea. Original monochrome film: US public domain. Excerpt and backing tracks prepared by Delivery.",
+      "reuseNote": "Original release omitted the required copyright notice; cancelled registration PA0000046101 documented at https://publicdomainmovie.net/movie/night-of-the-living-dead . Original monochrome transfer: https://archive.org/download/NightOfTheLivingDead-MPEG/NightOfTheLivingDead.mp4 . No later colorization, new score, or added footage. Territorial copyright may differ outside the US.",
+      "excerptStart": 365.6,
+      "excerptEnd": 375.05
+    },
+    "assetIntegrity": {
+      "/media/say-it-back/notld-coming-to-get-you/v1-0f237846a300/backing-johnny.m4a": "57fc32323e70eb4637091c646d5a170b54b02ce2bf64dfbed8f37bfe3fe5f999",
+      "/media/say-it-back/notld-coming-to-get-you/v1-0f237846a300/poster.jpg": "7aaea9ab39b6eafbb2979da117e6fdc8a12402d22eb981a28e7ecf243c1baaa1",
+      "/media/say-it-back/notld-coming-to-get-you/v1-0f237846a300/reference.wav": "b3cb6f743133cd8f8e3dfd704e04c046b8377ae30b82aeab46be89be28b2d1a1",
+      "/media/say-it-back/notld-coming-to-get-you/v1-0f237846a300/scene.mp4": "1503f5ac6064bc6da6e4648323198d5db09566cdc3be28d902b0b8a5fe10cc19"
+    }
+  }
+]

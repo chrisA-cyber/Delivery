@@ -93,7 +93,7 @@ users, upload to Supabase, publish takes, award quota, or change leaderboards.
 2. Copy `docs/evaluation/manifest.example.json` there. It intentionally has
    unapproved consent and placeholder audio paths. Replace them with real consent
    metadata and actual WAV/MP3 takes; do not flip consent flags without approval.
-   Include all ten coverage tags. A `compareGroup` binds alternate interpretations
+   Include the coverage tags reported by the preflight. A `compareGroup` binds alternate interpretations
    or quiet/loud takes of the same line and direction. `referenceTranscript` is
    a human transcription of what was actually spoken, including mistakes and
    injection words, not the target line pasted again.
@@ -116,18 +116,42 @@ users, upload to Supabase, publish takes, award quota, or change leaderboards.
 
 5. After explicit API-use authorization and secure credential setup, run with
    `DELIVERY_AI_MODE=live`, `DELIVERY_AI_ALLOW_MOCK_FALLBACK=false`, and add
-   `DELIVERY_EVAL_LIVE=1` to the command. Export authorized keys securely in the
+   `DELIVERY_EVAL_LIVE=1` and `DELIVERY_EVAL_MAX_PROVIDER_REQUESTS=<approved ceiling>`
+   to the command. Export authorized keys securely in the
    process environment; this runner does not read or print `.env.local` secrets.
-   `repetitions` supports 1–3 and is included in the 36-attempt cap. Each scored
+   `repetitions` supports 1–3 globally or on an individual case and is included in the 36-attempt cap. Each scored
    attempt can invoke Scribe once and OpenAI up to twice for structured repair;
-   this is paid usage. No live run was performed for this implementation.
+   this is paid usage. The ceiling must cover that worst case before any call.
+   The updated example has 16 cases / 20 attempts: at most 40 OpenAI requests,
+   or 60 total requests with Scribe. Those are bounds, **not authorization**;
+   a smaller paired subset is suitable for the first live run. A ceiling may
+   also be supplied to the no-network preflight. A `.live-started` marker prevents
+   accidentally replaying a run after interruption or a lost response. Review the
+   private checkpoint and obtain fresh authorization before a new run; do not
+   remove the marker to silently repeat it. No live OpenAI run was performed.
 6. Inspect the timestamped `manifest.json.report-*.json` file written privately
    beside the recordings with mode `0600`. It includes version/model provenance,
    latency, transcripts, word-match measurements, scores, verdicts, coaching,
-   gain/repetition/group identifiers, and exact failure codes. Retry cases must
+   gain/repetition/group identifiers, waveform hashes, exact failure codes,
+   and per-dimension ranges and distinct feedback counts for identical-byte
+   repetitions. Provider dispatches (including repairs and uncertain responses)
+   are checkpointed before each call; returned OpenAI token usage and Scribe audio
+   durations support a subsequent estimate using current prices. The report leaves
+   monetary cost unknown rather than inventing a rate; reconcile missing usage
+   from failures with provider billing. This is a request ceiling, not a hard
+   dollar ceiling. Retry cases must
    match explicit expected error codes; an upstream outage cannot pass as a
    correctly rejected silent take. Reports contain private speech; delete them
    and all derived audio by the consented deadline.
+
+The template now explicitly pairs an expressive celebration with a flat reading
+of the same assignment, distinguishes omitted/substituted/added words, and
+includes unintelligible speech. Its consent remains unapproved and audio paths
+remain placeholders. Hashes establish repeated bytes, not consent or quality.
+Neither score ranges nor distinct feedback counts establish credible acting
+judgment without listening and blind human review. The 30/25/25/20 formula,
+audio-judge accuracy transcript, and Scribe `usedForAccuracy:false` are unchanged;
+calibration remains unresolved.
 
 Recommended human set:
 

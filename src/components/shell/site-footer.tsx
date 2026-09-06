@@ -6,6 +6,7 @@ const groups: Array<{ title: string; links: Array<[string, string]> }> = [
     title: "Play",
     links: [
       ["Classic", "/play"],
+      ["Say It Back", "/say-it-back"],
       ["Daily", "/daily"],
       ["Impossible", "/impossible"],
       ["Stream mode", "/stream"],

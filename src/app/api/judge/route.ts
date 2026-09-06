@@ -295,7 +295,9 @@ export async function POST(request: Request) {
         let approvedForPublish = false;
         let moderationLabels: string[] = [];
         let publishingWarning: string | undefined;
-        if (fields.isPublic && canonical.rating === "mature") {
+        if (fields.isPublic && judgment.source === "mock") {
+          publishingWarning = "Demo results cannot be published or entered into competitions.";
+        } else if (fields.isPublic && canonical.rating === "mature") {
           publishingWarning =
             "Mature takes stay private while Delivery’s public age and audience policy is finalized.";
         } else if (fields.isPublic && user) {

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getServerEnv, resetEnvCacheForTests } from "@/lib/server/env";
+import { assertProductionConfiguration, getServerEnv, isRedisConfigured, resetEnvCacheForTests } from "@/lib/server/env";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -76,5 +76,56 @@ describe("transcription configuration", () => {
     vi.stubEnv("DELIVERY_TRANSCRIPTION_PROVIDER", "automatic-fallback");
     resetEnvCacheForTests();
     expect(() => getServerEnv()).toThrow("invalid");
+  });
+});
+
+describe("native Redis configuration", () => {
+  function nativeRedis(url: string) {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
+    vi.stubEnv("REDIS_URL", url);
+    resetEnvCacheForTests();
+  }
+
+  it.each([
+    "redis://default:test-password@redis.railway.internal:6379",
+    "redis://127.0.0.1:6379/0",
+    "redis://[::1]:6379",
+    "rediss://default:test-password@redis.example.test:6380/1",
+  ])("accepts private or encrypted Redis: %s", (url) => {
+    nativeRedis(url);
+    expect(isRedisConfigured()).toBe(true);
+  });
+
+  it.each([
+    "redis://default:test-password@redis.example.test:6379",
+    "redis://redis.railway.internal.example.test:6379",
+    "redis://redis.railway.internal:6379?tls=false",
+    "rediss://redis.example.test:6379/not-a-db",
+    "https://redis.example.test",
+    "not-a-url",
+  ])("rejects unsafe or invalid Redis URLs without exposing them: %s", (url) => {
+    nativeRedis(url);
+    expect(() => getServerEnv()).toThrow("The server environment is invalid.");
+  });
+
+  it("rejects ambiguous stores even when the Upstash pair is complete", () => {
+    nativeRedis("redis://redis.railway.internal:6379");
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://redis.upstash.io");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "test-token");
+    expect(() => getServerEnv()).toThrow("invalid");
+  });
+
+  it("accepts native Redis for production readiness without requiring Upstash", () => {
+    nativeRedis("redis://redis.railway.internal:6379");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://delivery.example");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co");
+    for (const key of [
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY", "OPENAI_API_KEY",
+      "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "STRIPE_PRO_MONTHLY_PRICE_ID",
+      "STRIPE_PRO_ANNUAL_PRICE_ID", "DELIVERY_DEVICE_SECRET", "MODERATION_CLEANUP_SECRET",
+    ]) vi.stubEnv(key, "test-configuration-value-at-least-32-chars");
+    expect(() => assertProductionConfiguration()).not.toThrow();
   });
 });

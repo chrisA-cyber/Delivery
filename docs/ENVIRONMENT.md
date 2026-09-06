@@ -10,6 +10,7 @@ This is the configuration contract for Delivery. Copy `.env.example` to `.env.lo
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase features | Yes | Supabase project URL | Public project endpoint; production requires HTTPS |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase features | Yes | Supabase anonymous/public key | User-scoped browser and SSR access protected by RLS |
 | `SUPABASE_SERVICE_ROLE_KEY` | Durable server operations | **No** | None | Privileged server-only database/storage operations |
+| `DELIVERY_AUTH_EMAIL_READY` | Only for email onboarding/recovery | No | `false` | Show email account links and password recovery only after custom SMTP delivery has been verified; OAuth availability follows live Supabase provider settings |
 | `OPENAI_API_KEY` | Live judging | **No** | None | Server-side audio judgment request; requires a paid API project with model access |
 | `OPENAI_AUDIO_JUDGE_MODEL` | No | No | `gpt-audio-1.5` | Audio-capable voice judgment model override |
 | `OPENAI_MODERATION_MODEL` | No | No | `omni-moderation-latest` | User-line text moderation model override |
@@ -77,7 +78,7 @@ Placeholder values are documentation only. Never use them as real credentials.
 | Landing, pricing, policy, component states | Works | Works | Works |
 | Built-in prompt browsing | Works from the bundled catalog | Works from Supabase, with local fallback only when unconfigured | Supabase; database failures surface visibly |
 | Microphone recording and in-memory playback | Works on localhost | Works | Requires HTTPS/secure context |
-| AI result | Deterministic mock, clearly flagged outside end-user UI | Live | Live only |
+| AI result | Deterministic demo, clearly labeled in the player UI | Live when explicitly configured | Live only |
 | Authentication and durable profile | Unavailable/preview | Supabase | Supabase |
 | Storage and public sharing | Unavailable/ephemeral | Supabase | Supabase |
 | Checkout and Portal | Disabled | Stripe sandbox | Stripe live mode |
@@ -104,13 +105,48 @@ Configuration outside the environment file:
 - Configure email templates and an SMTP provider before public launch.
 - Set database backups/PITR according to the chosen plan and recovery objective.
 
+### Pilot authentication
+
+One complete OAuth route is sufficient for new accounts; it requires no Delivery
+password. The login page reads Supabase's public Auth settings on each request and
+shows only enabled Google/GitHub providers. A disabled or unreachable provider list
+does not create placeholder signup buttons. Enable the chosen provider only after
+its client ID/secret and redirect configuration are saved.
+
+For the isolated Railway pilot, the canonical origin is
+`https://delivery-production-0577.up.railway.app`. Its Supabase OAuth provider
+callback is `https://rcsopyxrotbbfaqikire.supabase.co/auth/v1/callback`.
+Set the Supabase Site URL to the canonical Railway origin and allow
+`https://delivery-production-0577.up.railway.app/auth/callback**` for application
+returns (including the encoded `next` query). Verify with a controlled account:
+public signup → provider consent → original scene/challenge → save/claim → sign
+out/in. Do not enable provider buttons by adding frontend-only flags.
+
+Email account creation uses a passwordless sign-in link. Existing password users
+can still sign in when Supabase email authentication is enabled. Keep
+`DELIVERY_AUTH_EMAIL_READY=false` until custom SMTP sends signup, sign-in, and
+password recovery messages successfully to a controlled mailbox. Supabase's
+hosted-mailer enablement alone is not delivery evidence. Until then, email signup,
+magic links, and reset requests are hidden and the UI explains the temporary
+onboarding/recovery limitation; email confirmation stays enabled.
+
+For SMTP verification also allow
+`https://delivery-production-0577.up.railway.app/auth/reset**`. Recovery links
+must use the requested redirect URL, including `next`; the reset screen consumes
+the PKCE code in the requesting browser, requires the SDK's `PASSWORD_RECOVERY`
+event, and reverifies that same authenticated user before changing a password.
+Expired, reused, cross-browser, and normal sign-in codes cannot open the reset
+form. Returning from recovery retains the scene/challenge destination. The app's
+new-account route remains blocked until a provider or custom SMTP has completed
+this real-service verification; prepared code is not a verified onboarding route.
+
 Validation:
 
 - A signed-out browser can read only published safe content.
 - A user cannot read another user's private delivery or subscription using the public API.
 - The service-role key does not appear in built assets, HTML, source maps, or browser network requests.
 - Auth callback rejects external redirect destinations.
-- Signed storage URLs expire and fail after a delivery is made private.
+- Signed storage URLs expire after their stated lifetime. Making a delivery private prevents new non-owner access immediately; an already issued signed URL remains a bearer capability until expiry or object deletion.
 
 ## OpenAI values
 

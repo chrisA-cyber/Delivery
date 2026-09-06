@@ -1,0 +1,125 @@
+{
+  "baseline": "c74baddcc93783490ec636291cc5b03397bdaa7b",
+  "branch": "codex/classic-step-1c",
+  "scope": "engineering checks; not live service or human certification",
+  "providerRequests": {
+    "openai": 0,
+    "elevenlabs": 0
+  },
+  "estimatedProviderCostUsd": 0,
+  "humans": 0,
+  "physicalDevices": 0,
+  "checks": [
+    {
+      "command": "npm ci --no-audit --no-fund",
+      "outcome": "passed"
+    },
+    {
+      "command": "npm test -- --reporter=dot",
+      "outcome": "passed",
+      "tests": 221,
+      "skippedLiveEvaluations": 3,
+      "note": "Root checkpoint; later telemetry/StrictMode changes separately checked by focused suites"
+    },
+    {
+      "command": "npm run lint",
+      "outcome": "passed",
+      "note": "Later files also passed targeted lint"
+    },
+    {
+      "command": "npm run build",
+      "outcome": "passed",
+      "staticPages": 39
+    },
+    {
+      "command": "DELIVERY_HTTP_START_LOCAL=1 DELIVERY_EVIDENCE_DIR=docs/evidence/classic-step-1c node scripts/verify-local-judge.mjs",
+      "outcome": "passed",
+      "checks": 10,
+      "judgeRequests": 7
+    },
+    {
+      "command": "DELIVERY_HTTP_START_LOCAL=1 DELIVERY_HTTP_LIVE_NO_KEY=1 DELIVERY_EVIDENCE_DIR=docs/evidence/classic-step-1c node scripts/verify-local-judge.mjs",
+      "outcome": "passed",
+      "judgeRequests": 1,
+      "expectedStatus": 503
+    },
+    {
+      "command": "DELIVERY_SUPABASE_HTTP_TEST=1 node scripts/verify-supabase-http.mjs",
+      "outcome": "blocked-preflight",
+      "checks": 0
+    },
+    {
+      "command": "Focused existing Playwright selection (exact temporary-runtime command in browser.md)",
+      "outcome": "passed",
+      "tests": 9,
+      "durationSeconds": 49.2,
+      "browser": "Chromium 149.0.7827.0",
+      "responsiveWidths": [
+        320,
+        390,
+        1440
+      ],
+      "fixture": "synthetic microphone; mocked judge and companion transcript",
+      "physicalDevices": 0
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "home-1440.png",
+      "sha256": "6a70532c08d1c4dc9aaf86692a48ce7c73f0e2151437f99bc9e653fbddb53c26"
+    },
+    {
+      "name": "home-390.png",
+      "sha256": "b02aac81f1cd628355e89914c6e2124f371679341137268a824d144da20b80f7"
+    },
+    {
+      "name": "judging-1440.png",
+      "sha256": "e412899998d3812ea388c63d20367cdec79826f6158b6f331af53a00f88a4d21"
+    },
+    {
+      "name": "judging-390.png",
+      "sha256": "c7ff4f6b798621480c73051750969e00a459e2ba27954bf5bfe08f71a4ac0b62"
+    },
+    {
+      "name": "prepare-1440.png",
+      "sha256": "066af644f0d38c4f06826e37e15b089c5442fc48baa2312efffd4c314fa8657a"
+    },
+    {
+      "name": "prepare-390.png",
+      "sha256": "47beb4d443f6ab1852130012ca5ddfec37d020124c044941a015a969c41fd694"
+    },
+    {
+      "name": "recording-1440.png",
+      "sha256": "4e66431d2c3b6c2e7fa87e138f79bac7362a2dae1a826f18dee0fb25871e3ae2"
+    },
+    {
+      "name": "recording-390.png",
+      "sha256": "e47b40d5803ad3b0c0f9e46c314dc7d7d1de6d45fd4eee8857388cbae70d7664"
+    },
+    {
+      "name": "result-1440.png",
+      "sha256": "0cdf9a263fefe509cd71c935816fa3f3ceb3dd4c65d788502790d944952482f2"
+    },
+    {
+      "name": "result-390.png",
+      "sha256": "9c323c4009d71dfa349f17d0d50e51c1ab39a2eb76848a43248691dba0761ab3"
+    },
+    {
+      "name": "review-1440.png",
+      "sha256": "5dc57f01bb3e2d713e8c8c01032a47846a64449bee8bc3f6db9d2f633e1dbbe9"
+    },
+    {
+      "name": "review-390.png",
+      "sha256": "41e319d455af1e82106c9ef7e4dd76a009674c3e7a5380a1cc80920c3de707ba"
+    },
+    {
+      "name": "share-card-1440.png",
+      "sha256": "f9aae010916b5d2c5c29a1b4ce2b02936984544f0c36476dceccec29b8a0b5b0"
+    },
+    {
+      "name": "share-card-390.png",
+      "sha256": "f9aae010916b5d2c5c29a1b4ce2b02936984544f0c36476dceccec29b8a0b5b0"
+    }
+  ],
+  "implementationCommit": "8d2c3c982804866d3efdd0a121635666b7d9154b"
+}

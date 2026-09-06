@@ -1,0 +1,493 @@
+{
+  "assignment": "say-it-back-2026-09-06",
+  "ceilingUsd": 5,
+  "coordinator": "root-only; no competing paid batches",
+  "reservedUpperBoundUsd": 1.675,
+  "actualBilledUsd": null,
+  "reservations": [
+    {
+      "id": "classic-account-01",
+      "owner": "classic_account",
+      "maximumNewJudgeAppRequests": 1,
+      "maximumJudgeProviderDispatches": 2,
+      "maximumAudioSeconds": 10,
+      "upperBoundUsd": 0.5,
+      "state": "completed",
+      "notes": "One new Classic judged take then exact-key cached replay; no other paid calls. Provider SDK retries zero; max one format repair; each output <=900 tokens. Free local synthesis only.",
+      "newJudgeAppRequests": 1,
+      "possibleProviderDispatches": [
+        1,
+        2
+      ],
+      "actualBilledUsd": null,
+      "evidence": "../classic-railway/connected-account-20260906.json"
+    },
+    {
+      "id": "say-live-01",
+      "owner": "root",
+      "maximumNewJudgeAppRequests": 18,
+      "maximumJudgeProviderDispatches": 18,
+      "maximumAudioSecondsPerRequest": 20,
+      "upperBoundUsd": 1.125,
+      "state": "completed",
+      "notes": "18 serial Say It Back judge requests; Whisper SDK retries disabled. All responses received, no unknown outcome retried. Includes all ten clips, exact-hash recipient comparisons, shifted PCM and changed words, plus bounded fixes for observed ASR onset and contraction issues. Audio synthesis and media preparation ran locally for $0. No further metered evaluation calls authorized by this runner reservation.",
+      "newJudgeAppRequests": 18,
+      "actualBilledUsd": null
+    },
+    {
+      "id": "retention-worker-check",
+      "owner": "root",
+      "maximumWorkerInvocations": 1,
+      "timeoutSeconds": 45,
+      "upperBoundUsd": 0.05,
+      "state": "completed",
+      "notes": "One bounded verification of hourly cleanup caller. No transcription, judging or synthesis. Conservative small compute allowance; future scheduled operation is hosting, not paid evaluation.",
+      "workerInvocations": 1,
+      "providerCalls": 0,
+      "outcome": "Authenticated scheduled worker exited zero; exact expired fixture row and private object both absent in independent SQL verification."
+    }
+  ],
+  "requests": [
+    {
+      "reservation": "classic-account-01",
+      "audioSha256": "03d573b8f99c92f4bd554c26f16e4bf9ce9df06e1513f195ee1d0087843166fa",
+      "seconds": 2.079,
+      "result": "201; persisted, cached replay did not consume additional play",
+      "conservativeUpperBoundUsd": 0.5
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "jerk-guest",
+      "audioSha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+      "seconds": 2.29,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "guest",
+        "used": 1,
+        "limit": 5,
+        "remaining": 4,
+        "resetAt": "2026-09-07T00:00:00.000Z",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "jerk-guest",
+      "audioSha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+      "seconds": 2.29,
+      "newJudgeRequest": false,
+      "conservativeUpperBoundUsd": 0,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "true",
+      "usage": {
+        "tier": "guest",
+        "used": 1,
+        "limit": 5,
+        "resetAt": "2026-09-07T00:00:00.000Z",
+        "tracked": true,
+        "replayed": false,
+        "remaining": 4
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "jerk-v11",
+      "audioSha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+      "seconds": 2.29,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "guest",
+        "used": 2,
+        "limit": 5,
+        "remaining": 3,
+        "resetAt": "2026-09-07T00:00:00.000Z",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "shift-v11",
+      "audioSha256": "e4055995a04ac95faf74729a5f7846c5214be180c9d41068dbc0734b47e12802",
+      "seconds": 3.29,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 2,
+        "limit": 5,
+        "remaining": 3,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "changed-v11",
+      "audioSha256": "1e3d50c41bda8c138ad26fbc0cd7475b70b3ee8e44bc70e5769bd39652a7cefa",
+      "seconds": 2.29,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 3,
+        "limit": 5,
+        "remaining": 2,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "reply-v11",
+      "audioSha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+      "seconds": 2.29,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 1,
+        "limit": 5,
+        "remaining": 4,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "xqc-six",
+      "audioSha256": "3c16907f147733da471c927f7fb568163e2f39c4ea2b0645b9d0fb57166321dc",
+      "seconds": 5.65,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 2,
+        "limit": 5,
+        "remaining": 3,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "xqc-delay",
+      "audioSha256": "dd9cf1de36549ff0d988158610ffdede8393295f4740165a9ea1ac59b8df717d",
+      "seconds": 5.85,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 3,
+        "limit": 5,
+        "remaining": 2,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "space",
+      "audioSha256": "d6e84954da3f9e126c3a08756a3fb591b3afadd4becdba8a98401b72b4754f8c",
+      "seconds": 3.35,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 4,
+        "limit": 5,
+        "remaining": 1,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "claws",
+      "audioSha256": "78bd5ea73092efa7fcae8d1e936a6bbf395551b161a62f86f36daa84c02fd697",
+      "seconds": 6.67,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 5,
+        "limit": 5,
+        "remaining": 0,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "heart",
+      "audioSha256": "a36159080511f71a840a66c5a5871d5e5441e9ce32aeb85ac79a85e4c42de6d4",
+      "seconds": 10.15,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 4,
+        "limit": 5,
+        "remaining": 1,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "divorce",
+      "audioSha256": "5e4a9f7c11b670a3205a8c28403dc37d01d749a6f89c5f7f1651f990db47c3f7",
+      "seconds": 4.93,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 5,
+        "limit": 5,
+        "remaining": 0,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "stinker",
+      "audioSha256": "43355ed38caecd90ba267b597b8122aade573f295a363db0016334fa54c1bf22",
+      "seconds": 5.29,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 1,
+        "limit": 5,
+        "remaining": 4,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "talk",
+      "audioSha256": "e56cb1fcebe8ef0f5ec9c7886b952d95e982d46b640eec88a87339acfba7216b",
+      "seconds": 6,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 2,
+        "limit": 5,
+        "remaining": 3,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "barbara",
+      "audioSha256": "6d769c06bd4c2486ed7eddf91b51034be9a55172c51bf9058d02954cd768b173",
+      "seconds": 9.45,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 3,
+        "limit": 5,
+        "remaining": 2,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "jerk-v12",
+      "audioSha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+      "seconds": 2.29,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "guest",
+        "used": 3,
+        "limit": 5,
+        "remaining": 2,
+        "resetAt": "2026-09-07T00:00:00.000Z",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "reply-v12",
+      "audioSha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+      "seconds": 2.29,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 4,
+        "limit": 5,
+        "remaining": 1,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "barbara-v12",
+      "audioSha256": "d8076268d6eed3cdeaa7add51cbdd4734836f0060adb7760a967fb46d5822193",
+      "seconds": 9.45,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "free",
+        "used": 5,
+        "limit": 5,
+        "remaining": 0,
+        "resetAt": "2026-09-07T00:00:00+00:00",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "changed-v12",
+      "audioSha256": "1e3d50c41bda8c138ad26fbc0cd7475b70b3ee8e44bc70e5769bd39652a7cefa",
+      "seconds": 2.29,
+      "newJudgeRequest": true,
+      "conservativeUpperBoundUsd": 0.0625,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "false",
+      "usage": {
+        "tier": "guest",
+        "used": 4,
+        "limit": 5,
+        "remaining": 1,
+        "resetAt": "2026-09-07T00:00:00.000Z",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "reservation": "say-live-01",
+      "label": "jerk-v12",
+      "audioSha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+      "seconds": 2.29,
+      "newJudgeRequest": false,
+      "conservativeUpperBoundUsd": 0,
+      "outcome": "response-received",
+      "status": 200,
+      "error": null,
+      "replayed": "true",
+      "usage": {
+        "tier": "guest",
+        "used": 3,
+        "limit": 5,
+        "resetAt": "2026-09-07T00:00:00.000Z",
+        "tracked": true,
+        "replayed": false,
+        "remaining": 2
+      }
+    }
+  ],
+  "finalSummary": {
+    "classicNewJudgeAppRequests": 1,
+    "sayNewJudgeAppRequests": 18,
+    "sayPossibleProviderDispatches": 18,
+    "classicPossibleProviderDispatches": [
+      1,
+      2
+    ],
+    "conservativeUpperBoundUsd": 1.675,
+    "actualBilledUsd": null,
+    "priceBasis": "Conservative reserved bounds including $0.05 for the single worker verification; no account billing export available. Local synthesis $0; moderation endpoint free.",
+    "paidTestingClosed": true,
+    "retentionWorkerInvocations": 1
+  }
+}

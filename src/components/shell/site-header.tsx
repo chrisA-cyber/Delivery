@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, Settings, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/shell/logo";
@@ -8,6 +8,7 @@ import { useApp } from "@/components/providers/app-provider";
 import { cn } from "@/lib/utils";
 const links = [
   { href: "/play", label: "Classic" },
+  { href: "/say-it-back", label: "Say It Back" },
   { href: "/daily", label: "Daily" },
   { href: "/discover", label: "Packs" },
   { href: "/challenge", label: "Friends" },
@@ -15,6 +16,7 @@ const links = [
 ];
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const { profile, authenticated, authReady } = useApp();
@@ -81,7 +83,13 @@ export function SiteHeader() {
             </Link>
           ) : (
             <Link
-              href="/login"
+              href={`/login?next=${encodeURIComponent(pathname.startsWith("/auth/") || pathname === "/login" ? "/profile" : pathname)}`}
+              onClick={(event) => {
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                const destination = pathname.startsWith("/auth/") || pathname === "/login" ? "/profile" : `${window.location.pathname}${window.location.search}${window.location.hash}`;
+                router.push(`/login?next=${encodeURIComponent(destination)}`);
+              }}
               className="button-secondary shrink-0 whitespace-nowrap px-3"
             >
               Sign in

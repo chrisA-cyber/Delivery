@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { WAVEFORM_BIN_SECONDS, type WaveformPoint } from "@/lib/say-it-back/audio-timeline";
 import { encodeMonoWav, inspectTake, MAX_RECORDING_BYTES, MAX_RECORDING_MS, type TakeQuality } from "@/lib/audio-capture";
 
 export type RecorderStatus = "idle" | "requesting" | "ready" | "recording" | "stopped" | "error";
@@ -13,7 +14,22 @@ type RecorderSession = {
   silentGain: GainNode;
   frames: Float32Array[];
   sampleCount: number;
+  lastFrameAt: number | null;
+  waveform: WaveformPoint[];
+  waveformBinSamples: number;
+  waveformBinPeak: number;
   cleanup: () => void;
+};
+
+type PreservedTake = {
+  blob: Blob | null;
+  url: string | null;
+  durationMs: number;
+  waveform: WaveformPoint[];
+  quality: TakeQuality;
+  qualityMessage: string | null;
+  warning: string | null;
+  stopReason: RecordingStopReason | null;
 };
 
 function audioContextClass() {
@@ -34,6 +50,7 @@ export function useAudioRecorder() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [durationMs, setDurationMs] = useState(0);
   const [level, setLevel] = useState(0);
+  const [waveform, setWaveform] = useState<WaveformPoint[]>([]);
   const [isClipping, setIsClipping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
@@ -44,6 +61,7 @@ export function useAudioRecorder() {
   const sessionRef = useRef<RecorderSession | null>(null);
   const pendingContextRef = useRef<AudioContext | null>(null);
   const audioUrlRef = useRef<string | null>(null);
+  const captureBackupRef = useRef<PreservedTake | null>(null);
   const mountedRef = useRef(true);
   const permissionRequestRef = useRef(0);
   const permissionPromiseRef = useRef<Promise<boolean> | null>(null);
@@ -141,15 +159,25 @@ export function useAudioRecorder() {
     setStopReason(reason);
     setWarning(reason === "interrupted" ? "Your microphone was interrupted. The captured audio is saved here; replay it before submitting." : reason === "hidden" ? "Recording stopped when you left the page. Your captured audio is saved here." : reason === "limit" ? "The 20-second limit is up. Your take is ready to review." : reason === "size-limit" ? "The recording reached its file-size limit. Your take is saved here." : null);
     const checked = inspectTake(session.frames, session.sampleCount, session.context.sampleRate);
+    if (session.sampleCount === 0) {
+      setWarning(null);
+      // A connected graph is not proof that the device delivered any input.
+      // Keep the previous playable take if startup failed before its first frame.
+      if (audioUrlRef.current) {
+        setError(`${checked.message} Your previous take is still here.`);
+        setStatus("stopped");
+      } else {
+        setQuality(checked.quality);
+        setQualityMessage(checked.message);
+        setDurationMs(0);
+        setError(checked.message);
+        setStatus("error");
+      }
+      return;
+    }
     setQuality(checked.quality);
     setQualityMessage(checked.message);
     setDurationMs(Math.round(session.sampleCount / session.context.sampleRate * 1_000));
-    if (session.sampleCount === 0) {
-      setWarning(null);
-      setError(checked.message);
-      setStatus("error");
-      return;
-    }
     try {
       const blob = encodeMonoWav(session.frames, session.sampleCount, session.context.sampleRate);
       const nextUrl = URL.createObjectURL(blob);
@@ -166,10 +194,18 @@ export function useAudioRecorder() {
 
   useEffect(() => { stopRef.current = finish; }, [finish]);
 
-  const start = useCallback(async () => {
+  const commitCapture = useCallback(() => {
+    const backup = captureBackupRef.current;
+    captureBackupRef.current = null;
+    if (backup?.url && backup.url !== audioUrlRef.current) URL.revokeObjectURL(backup.url);
+  }, []);
+
+  const start = useCallback(async (options?: { preservePreviousTake?: boolean }) => {
     // Catch clicks arriving before React rerenders.
     if (startPendingRef.current || sessionRef.current) return false;
     startPendingRef.current = true;
+    commitCapture();
+    if (options?.preservePreviousTake) captureBackupRef.current = { blob: audioBlob, url: audioUrlRef.current, durationMs, waveform, quality, qualityMessage, warning, stopReason };
     const operationToken = ++operationRef.current;
     let context: AudioContext | null = null;
     try {
@@ -179,7 +215,9 @@ export function useAudioRecorder() {
       if (!stream) return false;
       const AudioContextClass = audioContextClass();
       if (!AudioContextClass) throw new Error("AudioContext unavailable");
-      context = new AudioContextClass({ latencyHint: "interactive" });
+      context = pendingContextRef.current?.state !== "closed" && pendingContextRef.current
+        ? pendingContextRef.current
+        : new AudioContextClass({ latencyHint: "interactive" });
       pendingContextRef.current = context;
       await context.resume();
       if (pendingContextRef.current === context) pendingContextRef.current = null;
@@ -192,7 +230,7 @@ export function useAudioRecorder() {
       const processor = context.createScriptProcessor(4096, 1, 1);
       const silentGain = context.createGain();
       silentGain.gain.value = 0;
-      const session: RecorderSession = { context, source, processor, silentGain, frames: [], sampleCount: 0, cleanup: () => undefined };
+      const session: RecorderSession = { context, source, processor, silentGain, frames: [], sampleCount: 0, lastFrameAt: null, waveform: [], waveformBinSamples: 0, waveformBinPeak: 0, cleanup: () => undefined };
       sessionRef.current = session;
       const durationSamples = Math.floor(context.sampleRate * MAX_RECORDING_MS / 1_000);
       const sizeSamples = Math.floor((MAX_RECORDING_BYTES - 44) / 2);
@@ -201,15 +239,36 @@ export function useAudioRecorder() {
         if (sessionRef.current !== session) return;
         const channel = event.inputBuffer.getChannelData(0);
         const copy = new Float32Array(channel.subarray(0, maxSamples - session.sampleCount));
+        if (copy.length === 0) return;
+        if (session.sampleCount === 0) {
+          if (audioUrlRef.current && audioUrlRef.current !== captureBackupRef.current?.url) URL.revokeObjectURL(audioUrlRef.current);
+          audioUrlRef.current = null;
+          setAudioBlob(null);
+          setAudioUrl(null);
+          setQuality("empty");
+          setQualityMessage(null);
+        }
         session.frames.push(copy);
         session.sampleCount += copy.length;
+        session.lastFrameAt = performance.now();
         let squareSum = 0;
         let peak = 0;
+        const waveformBinSize = Math.max(1, Math.round(session.context.sampleRate * WAVEFORM_BIN_SECONDS));
         for (const sample of copy) {
           const amplitude = Number.isFinite(sample) ? Math.min(1, Math.abs(sample)) : 0;
           squareSum += amplitude * amplitude;
           peak = Math.max(peak, amplitude);
+          session.waveformBinPeak = Math.max(session.waveformBinPeak, amplitude);
+          session.waveformBinSamples += 1;
+          if (session.waveformBinSamples === waveformBinSize) {
+            session.waveform.push({ time: session.waveform.length * waveformBinSize / session.context.sampleRate, peak: session.waveformBinPeak });
+            session.waveformBinSamples = 0;
+            session.waveformBinPeak = 0;
+          }
         }
+        setWaveform(session.waveformBinSamples
+          ? [...session.waveform, { time: session.waveform.length * waveformBinSize / session.context.sampleRate, peak: session.waveformBinPeak }]
+          : [...session.waveform]);
         const rms = Math.sqrt(squareSum / Math.max(1, copy.length));
         setLevel(Math.min(1, Math.max(peak, rms * 4.5)));
         setIsClipping(peak >= 0.99);
@@ -252,16 +311,9 @@ export function useAudioRecorder() {
       source.connect(processor);
       processor.connect(silentGain);
       silentGain.connect(context.destination);
-      // Preserve the previous take while permission/startup can still fail.
-      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
-      audioUrlRef.current = null;
-      setAudioBlob(null);
-      setAudioUrl(null);
-      setDurationMs(0);
+      // Discard the previous take only once actual input begins arriving.
       setLevel(0);
       setIsClipping(false);
-      setQuality("empty");
-      setQualityMessage(null);
       setWarning(null);
       setStopReason(null);
       setError(null);
@@ -284,9 +336,34 @@ export function useAudioRecorder() {
     } finally {
       if (operationRef.current === operationToken) startPendingRef.current = false;
     }
-  }, [disposeSession, requestPermission, stopStream]);
+  }, [audioBlob, durationMs, waveform, quality, qualityMessage, warning, stopReason, commitCapture, disposeSession, requestPermission, stopStream]);
 
   const stop = useCallback(() => finish("user"), [finish]);
+  const cancelCapture = useCallback(() => {
+    operationRef.current += 1;
+    permissionRequestRef.current += 1;
+    permissionPromiseRef.current = null;
+    startPendingRef.current = false;
+    disposeSession();
+    closePendingContext();
+    stopStream();
+    const backup = captureBackupRef.current;
+    captureBackupRef.current = null;
+    if (backup) {
+      if (audioUrlRef.current && audioUrlRef.current !== backup.url) URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = backup.url;
+      setAudioBlob(backup.blob);
+      setAudioUrl(backup.url);
+      setDurationMs(backup.durationMs);
+      setWaveform(backup.waveform);
+      setQuality(backup.quality);
+      setQualityMessage(backup.qualityMessage);
+      setWarning(backup.warning);
+      setStopReason(backup.stopReason);
+    }
+    setStatus(audioUrlRef.current ? "stopped" : "idle");
+  }, [closePendingContext, disposeSession, stopStream]);
+
   const reset = useCallback(() => {
     operationRef.current += 1;
     permissionRequestRef.current += 1;
@@ -295,11 +372,13 @@ export function useAudioRecorder() {
     disposeSession();
     closePendingContext();
     stopStream();
+    commitCapture();
     if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
     audioUrlRef.current = null;
     setAudioBlob(null);
     setAudioUrl(null);
     setDurationMs(0);
+    setWaveform([]);
     setLevel(0);
     setIsClipping(false);
     setError(null);
@@ -308,7 +387,7 @@ export function useAudioRecorder() {
     setQualityMessage(null);
     setStopReason(null);
     setStatus("idle");
-  }, [closePendingContext, disposeSession, stopStream]);
+  }, [closePendingContext, commitCapture, disposeSession, stopStream]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -320,10 +399,30 @@ export function useAudioRecorder() {
       disposeSession();
       closePendingContext();
       stopStream();
+      commitCapture();
       if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
     };
-  }, [closePendingContext, disposeSession, stopStream]);
+  }, [closePendingContext, commitCapture, disposeSession, stopStream]);
 
   const canSubmit = Boolean(audioBlob) && (quality === "ready" || quality === "quiet");
-  return { status, audioBlob, audioUrl, durationMs, level, isClipping, error, warning, quality, qualityMessage, canSubmit, stopReason, requestPermission, start, stop, reset };
+  // The capture timeline lets a scene player measure its startup pre-roll. This
+  // never aligns speech or edits performance timing. One input block remains
+  // the browser-dependent precision limit; physical input latency is unmeasured.
+  const getCapturePositionMs = useCallback((): number | null => {
+    const session = sessionRef.current;
+    if (!session || session.lastFrameAt === null) return null;
+    return session.sampleCount / session.context.sampleRate * 1_000
+      + Math.min(100, Math.max(0, performance.now() - session.lastFrameAt));
+  }, []);
+  // Countdown flows call this directly in the user's tap. Safari may require
+  // the context to resume inside that gesture, before an asynchronous countdown.
+  const primeAudioContext = useCallback(() => {
+    const AudioContextClass = audioContextClass();
+    if (!AudioContextClass || sessionRef.current) return;
+    try {
+      if (!pendingContextRef.current || pendingContextRef.current.state === "closed") pendingContextRef.current = new AudioContextClass({ latencyHint: "interactive" });
+      void pendingContextRef.current.resume().catch(() => undefined);
+    } catch { /* start() owns the visible unsupported-device error. */ }
+  }, []);
+  return { status, audioBlob, audioUrl, durationMs, waveform, level, isClipping, error, warning, quality, qualityMessage, canSubmit, stopReason, requestPermission, start, stop, reset, cancelCapture, commitCapture, getCapturePositionMs, primeAudioContext };
 }
