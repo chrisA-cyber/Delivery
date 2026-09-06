@@ -1,3 +1,4 @@
+import { cleanupVideoExports, deleteOwnerVideoExports } from "@/lib/server/video-export-cleanup";
 import { z } from "zod";
 
 import {
@@ -160,7 +161,7 @@ export async function DELETE(request: Request) {
         });
 
         // Remove private mode media before the Auth cascade erases its paths.
-        for (const table of ["say_attempts", "switch_attempts"]) {
+        for (const table of ["say_attempts", "switch_attempts", "classic_video_attempts"]) {
           await deleteAllDeliveryMedia({
             ownerId: user.id,
             loadPage: async (afterId, limit) => {
@@ -179,6 +180,9 @@ export async function DELETE(request: Request) {
         }
 
         await deleteGroupAccountMedia(user.id);
+        // Account containment already revoked jobs; drain derived media before identity cascade.
+        await deleteOwnerVideoExports(user.id);
+        await cleanupVideoExports(100);
 
         const profile = await admin
           .from("profiles")

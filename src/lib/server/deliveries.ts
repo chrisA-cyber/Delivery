@@ -164,6 +164,7 @@ export async function persistDelivery(
     provider: input.judgment.source,
     model: input.judgment.model,
     evidence: {
+      requested_prompt_text: input.promptText,
       requested_energy: input.energy,
       mode: input.mode,
       highlights: input.judgment.highlights,

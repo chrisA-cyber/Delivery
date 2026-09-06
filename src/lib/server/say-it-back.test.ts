@@ -3,7 +3,8 @@ import type { User } from "@supabase/supabase-js";
 import { SAY_SCORING_VERSION, type SayClip, type SayScore } from "@/lib/say-it-back/types";
 
 const state = vi.hoisted(() => ({ rows: [] as Record<string, unknown>[], challenges: [] as Record<string, unknown>[], clips: [] as Record<string, unknown>[], failScoreWrite: false, failInsert: false, cache: new Map<string, unknown>(), selections: [] as { table: string; columns: string }[] }));
-const mocks = vi.hoisted(() => ({ reserve: vi.fn(), release: vi.fn(), transcribe: vi.fn(), sign: vi.fn(), download: vi.fn(), deleteCheck: vi.fn(), upload: vi.fn(), remove: vi.fn(), move: vi.fn(), moderate: vi.fn() }));
+const mocks = vi.hoisted(() => ({ reserve: vi.fn(), release: vi.fn(), transcribe: vi.fn(), sign: vi.fn(), download: vi.fn(), deleteCheck: vi.fn(), upload: vi.fn(), remove: vi.fn(), move: vi.fn(), moderate: vi.fn(), publicAssignment: vi.fn() }));
+vi.mock("@/lib/server/public-assignments", () => ({ getPublicAssignment: mocks.publicAssignment }));
 vi.mock("@/lib/server/moderation", () => ({ moderateLine: mocks.moderate }));
 vi.mock("@/lib/server/account-deletion", () => ({ assertAccountNotDeleting: mocks.deleteCheck, isOwnerStoragePath: (path: string, owner: string) => path.startsWith(`${owner}/`) }));
 vi.mock("@/lib/server/entitlements", () => ({ reserveJudgedPlay: mocks.reserve, releaseJudgedPlay: mocks.release }));
@@ -162,5 +163,17 @@ describe("Say It Back private and recoverable attempts", () => {
     Object.assign(state.rows[0]!, { clip_snapshot: { ...clip, rating: "mature" }, status: "scored", score, moderation_state: "approved" });
     await expect(approveSaySharing(state.rows[0]!)).rejects.toMatchObject({ code: "SAY_MATURE_PRIVATE" });
     expect(mocks.moderate).not.toHaveBeenCalled();
+  });
+});
+
+
+describe("public scene assignment upload", () => {
+  it("rejects a substituted role and mixed private invitation before storing any audio", async () => {
+    mocks.publicAssignment.mockResolvedValue({ mode: "say-it-back", clip, roleId: "actor", rating: clip.rating, scoringVersion: "historical-v1" });
+    const input = { audio: new File([new Uint8Array(1000)], "take.wav", { type: "audio/wav" }), clipId: clip.id, clipVersion: clip.version, roleId: "other", durationMs: 2000, recordingOffsetMs: 0, attemptId: "public-new-attempt", maxRating: "everyone" as const, shareAudio: false, assignmentCode: "abcdef123456" };
+    await expect(createSayAttempt(input, owner)).rejects.toMatchObject({ code: "ASSIGNMENT_MISMATCH" });
+    await expect(createSayAttempt({ ...input, roleId: "actor", challengeToken: "a".repeat(43) }, owner)).rejects.toMatchObject({ code: "ASSIGNMENT_MISMATCH" });
+    expect(mocks.upload).not.toHaveBeenCalled();
+    expect(mocks.transcribe).not.toHaveBeenCalled();
   });
 });

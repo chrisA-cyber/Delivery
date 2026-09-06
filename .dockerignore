@@ -1,0 +1,6 @@
+.git
+.next
+node_modules
+.env*
+docs/evidence
+scripts/local-db/node_modules

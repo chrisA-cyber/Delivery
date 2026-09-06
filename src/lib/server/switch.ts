@@ -6,6 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { SWITCH_SCORING_VERSION, SWITCH_RUBRIC_VERSION, type SwitchAttempt, type SwitchChallenge, type SwitchInvitation, type SwitchScore } from "@/lib/switch/types";
 import { getSwitchChallenge as findCatalogChallenge, snapshotSwitchChallenge } from "@/lib/switch/catalog";
 import { switchChallengeSchema } from "@/lib/switch/schema";
+import { getPublicAssignment } from "@/lib/server/public-assignments";
 import { judgeSwitch } from "@/lib/server/switch-judge";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { assertAccountNotDeleting, isOwnerStoragePath } from "@/lib/server/account-deletion";
@@ -136,14 +137,14 @@ export async function getSwitchHistory(userId: string, maxRating: SwitchRating =
 export interface CreateSwitchAttempt {
   audio: File; challengeId: string; challengeVersion: string; durationMs: number;
   recordingOffsetMs?: number; attemptId: string; maxRating: SwitchRating;
-  challengeToken?: string; roundToken?: string; shareAudio: boolean;
+  challengeToken?: string; roundToken?: string; assignmentCode?: string; shareAudio: boolean;
 }
 
 export async function createSwitchAttempt(input: CreateSwitchAttempt, viewer: SwitchViewer): Promise<{ attempt: SwitchAttempt; replayed: boolean }> {
   if ((input.recordingOffsetMs ?? 0) !== 0) throw new AppError("SWITCH_TIMELINE_INVALID", "Switch cues follow the original recording clock.", 422);
   const admin = createSupabaseAdminClient();
   const audio = await validateAudio(input.audio, input.durationMs);
-  const fingerprint = createRequestFingerprint(audio.contentHash, input.challengeId, input.challengeVersion, String(input.recordingOffsetMs ?? 0), input.challengeToken ?? "", input.roundToken ?? "", String(input.shareAudio), input.maxRating);
+  const fingerprint = createRequestFingerprint(audio.contentHash, input.challengeId, input.challengeVersion, String(input.recordingOffsetMs ?? 0), input.challengeToken ?? "", input.roundToken ?? "", input.assignmentCode ?? "", String(input.shareAudio), input.maxRating);
   const existing = await admin.from("switch_attempts").select("*").eq("owner_key", viewer.ownerKey).eq("attempt_key", input.attemptId).maybeSingle();
   checked(existing.error);
   if (existing.data) {
@@ -151,11 +152,15 @@ export async function createSwitchAttempt(input: CreateSwitchAttempt, viewer: Sw
     if (expired(existing.data)) throw notFound();
     return { attempt: presentSwitchAttempt(existing.data, viewer), replayed: true };
   }
-  if (input.challengeToken && input.roundToken) throw new AppError("SWITCH_INVITATION_INVALID", "Use one invitation for this take.", 422);
+  if ([input.challengeToken, input.roundToken, input.assignmentCode].filter(Boolean).length > 1) throw new AppError("SWITCH_INVITATION_INVALID", "Use one invitation for this take.", 422);
   const result = await runIdempotent("switch-upload", viewer.ownerKey, input.attemptId, fingerprint, 15 * 60_000, async () => {
     let invitation: Row | null = null;
     let challenge: SwitchChallenge | null | undefined;
-    if (input.challengeToken) {
+    if (input.assignmentCode) {
+      const assignment = await getPublicAssignment(input.assignmentCode, input.maxRating);
+      if (assignment.mode !== "switch") throw new AppError("ASSIGNMENT_MISMATCH", "Open the exact Switch assignment before recording.", 409);
+      challenge = assignment.challenge;
+    } else if (input.challengeToken) {
       invitation = await findChallenge(input.challengeToken, viewer);
       challenge = challengeSnapshot(invitation.challenge_snapshot);
     } else if (input.roundToken) {
@@ -321,6 +326,8 @@ export async function deleteSwitchAttempt(id: string, viewer: SwitchViewer): Pro
   const row = await getSwitchAttemptRow(id, viewer);
   if (!owns(row, viewer)) throw notFound();
   const admin = createSupabaseAdminClient();
+  const cancelled = await admin.rpc("cancel_video_exports", { p_source_kind: "switch_attempt", p_attempt_id: id });
+  checked(cancelled.error);
   const removed = await admin.storage.from("delivery-audio").remove([assertRecordingPath(row)]);
   checked(removed.error);
   const deleted = await admin.from("switch_attempts").delete().eq("id", id).eq("owner_key", viewer.ownerKey);

@@ -21,6 +21,7 @@ import {
   createRequestFingerprint,
   runIdempotent,
 } from "@/lib/server/idempotency";
+import { resolvePublicClassicAssignment } from "@/lib/server/public-assignments";
 import { moderateLine } from "@/lib/server/moderation";
 import { judgeDelivery } from "@/lib/server/openai";
 import {
@@ -74,6 +75,7 @@ const formSchema = z.object({
     .max(32)
     .regex(/^[a-z0-9-]+$/i)
     .optional(),
+  assignmentCode: z.string().regex(/^[a-f0-9]{12}$/).optional(),
   roundToken: z.string().regex(/^[A-Za-z0-9_-]{40,80}$/).optional(),
   roundTakeId: z.string().uuid().optional(),
   durationMs: z.coerce.number().int().min(250).max(20_000),
@@ -138,6 +140,7 @@ export async function POST(request: Request) {
       challengeToken: optionalFormString(form, "challengeToken"),
       dailyDate: optionalFormString(form, "dailyDate"),
       dailyMarket: optionalFormString(form, "dailyMarket"),
+      assignmentCode: optionalFormString(form, "assignmentCode"),
       roundToken: optionalFormString(form, "roundToken"),
       roundTakeId: optionalFormString(form, "roundTakeId"),
       durationMs: optionalFormString(form, "durationMs"),
@@ -147,6 +150,7 @@ export async function POST(request: Request) {
     if (Boolean(fields.roundToken) !== Boolean(fields.roundTakeId) || (fields.roundToken && (fields.mode !== "classic" || fields.challengeId || fields.isPublic))) {
       throw new AppError("ROUND_JUDGE_INVALID", "Use the private Classic recorder for this round.", 422);
     }
+    if (fields.assignmentCode && (fields.roundToken || fields.challengeId || fields.challengeToken || fields.mode !== "classic")) throw new AppError("ASSIGNMENT_MISMATCH", "Use the exact public Classic assignment for this take.", 422);
     const validatedAudio = await validateAudio(audio, fields.durationMs);
     if (validatedAudio.durationMs > 20_000)
       throw new AppError(
@@ -218,6 +222,7 @@ export async function POST(request: Request) {
         fields.maxRating,
         fields.roundToken ?? "",
         fields.roundTakeId ?? "",
+        fields.assignmentCode ?? "",
       ),
       15 * 60 * 1_000,
       async () => {
@@ -227,6 +232,7 @@ export async function POST(request: Request) {
         const usageBefore = await preflightJudgingUsage(user);
         const canonical = fields.roundToken && fields.roundTakeId && roundViewer
           ? await authorizeClassicRoundJudge({ token: fields.roundToken, takeId: fields.roundTakeId, audioHash: validatedAudio.contentHash, maxRating: fields.maxRating }, roundViewer)
+          : fields.assignmentCode ? await resolvePublicClassicAssignment(fields.assignmentCode, fields.maxRating, user, usageBefore)
           : await resolveCanonicalDeliveryContent({
           promptId: fields.promptId,
           promptText: fields.promptText,
@@ -241,6 +247,7 @@ export async function POST(request: Request) {
           user,
           usage: usageBefore,
         });
+        if (fields.assignmentCode && (canonical.promptId !== fields.promptId || canonical.promptText !== fields.promptText || canonical.energy !== fields.energy)) throw new AppError("ASSIGNMENT_MISMATCH", "Record the exact line and direction from this assignment.", 409);
         const reservation = await reserveJudgedPlay(
           user,
           idempotencyKey,

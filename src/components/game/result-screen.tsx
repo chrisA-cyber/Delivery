@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "@/components/providers/app-provider";
+import { VideoExport } from "@/components/exports/video-export";
 import {
   ENERGY_MODIFIERS,
   getEnergyModifierById,
@@ -50,6 +51,9 @@ export function ResultScreen({
   nextLoading = false,
   nextError,
   mode = "classic",
+  prepareVideoExport,
+  exportAttemptId,
+  exportReturnPath,
 }: {
   mode?: GameMode;
   prompt: Prompt;
@@ -65,6 +69,9 @@ export function ResultScreen({
   cleanStage?: boolean;
   nextLoading?: boolean;
   nextError?: string;
+  prepareVideoExport?: () => Promise<string>;
+  exportAttemptId?: string | null;
+  exportReturnPath?: string;
 }) {
   const [notice, setNotice] = useState("");
   const [actionError, setActionError] = useState("");
@@ -392,6 +399,7 @@ export function ResultScreen({
           )}
         </div>
       )}
+      {!cleanStage && (delivery?.persisted || prepareVideoExport || exportAttemptId) && <div className="mt-4"><VideoExport mode="classic" attemptId={exportAttemptId ?? (delivery?.persisted ? delivery.id : undefined)} prepareAttempt={prepareVideoExport} hasScore={!fixture && Boolean(delivery?.persisted || exportAttemptId)} reopenPath={exportReturnPath ?? (delivery?.persisted ? "/profile" : undefined)} /></div>}
       {result.coachNote && (
         <div className="mt-4 grid gap-3 rounded-xl bg-electric p-5 text-ink sm:grid-cols-[160px_1fr]">
           <p className="mono-label">

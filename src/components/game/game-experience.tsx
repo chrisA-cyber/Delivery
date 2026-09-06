@@ -25,6 +25,7 @@ import {
 } from "@/components/content/content-control";
 import { JudgingLoader } from "@/components/game/judging-loader";
 import { ResultScreen } from "@/components/game/result-screen";
+import { VideoExport } from "@/components/exports/video-export";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import { dailyGamePrompt, gamePrompt, toGamePrompt } from "@/lib/game-prompts";
 import { createId } from "@/lib/utils";
@@ -108,6 +109,7 @@ export function GameExperience({
   voteDelaySeconds = 5,
   initialContentRating,
   roundContext,
+  assignmentCode,
 }: {
   mode?: GameMode;
   initialPrompt?: Prompt;
@@ -124,6 +126,7 @@ export function GameExperience({
   voteDelaySeconds?: number;
   initialContentRating?: ContentRating;
   roundContext?: { token: string; returnPath: string };
+  assignmentCode?: string;
 }) {
   const router = useRouter();
   const {
@@ -167,6 +170,7 @@ export function GameExperience({
   );
   const [roundSaving, setRoundSaving] = useState(false);
   const roundTakeRef = useRef<{ blob: Blob; id: string } | null>(null);
+  const exportTakeRef = useRef<{ blob: Blob; id?: string; key: string } | null>(null);
   const [prompt, setPrompt] = useState(firstPrompt);
   const [stage, setStage] = useState<GameStage>("prompt");
   const [result, setResult] = useState<JudgeResult | null>(null);
@@ -215,14 +219,14 @@ export function GameExperience({
     [],
   );
   useEffect(() => {
-    if (!recorder.audioBlob || stage === "result") return;
+    if (!recorder.audioBlob || stage === "result" || (exportTakeRef.current?.blob === recorder.audioBlob && exportTakeRef.current.id)) return;
     const beforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
       event.returnValue = "";
     };
     window.addEventListener("beforeunload", beforeUnload);
     return () => window.removeEventListener("beforeunload", beforeUnload);
-  }, [recorder.audioBlob, stage]);
+  }, [recorder.audioBlob, stage, roundSaving]);
 
   useEffect(() => {
     if (
@@ -397,6 +401,7 @@ export function GameExperience({
 
   const continuePlaying = useCallback(() => {
     if (roundContext) { router.push(roundContext.returnPath); return; }
+    if (assignmentCode) { router.push("/play"); return; }
     if (mode === "challenge" && challengeReturnPath) {
       reset();
       window.location.assign(challengeReturnPath);
@@ -408,7 +413,7 @@ export function GameExperience({
       return;
     }
     return nextPrompt();
-  }, [challengeReturnPath, mode, nextPrompt, reset, roundContext, router]);
+  }, [assignmentCode, challengeReturnPath, mode, nextPrompt, reset, roundContext, router]);
 
   const openVote = useCallback(() => {
     if (!allowed || promptLoading) return;
@@ -529,6 +534,33 @@ export function GameExperience({
     return body.data.take.id;
   }
 
+  async function prepareVideoExport(): Promise<string> {
+    if (roundSaving || submissionInFlight.current || !recorder.audioBlob || !recorder.canSubmit) throw new Error("Finish your recording or save, then create your video.");
+    if (deliveryReference?.persisted && deliveryReference.id && !roundContext) return deliveryReference.id;
+    setRoundSaving(true);
+    try {
+      if (roundContext) return await saveRoundTake();
+      if (exportTakeRef.current?.blob !== recorder.audioBlob) exportTakeRef.current = { blob: recorder.audioBlob, key: crypto.randomUUID() };
+      if (exportTakeRef.current.id) return exportTakeRef.current.id;
+      const savedTake = exportTakeRef.current;
+      const form = new FormData();
+      form.set("audio", recorder.audioBlob, "delivery.wav");
+      form.set("durationMs", String(recorder.durationMs)); form.set("attemptId", savedTake.key);
+      form.set("promptId", prompt.id); form.set("promptText", prompt.line); form.set("energy", prompt.energy);
+      form.set("category", prompt.category); form.set("mode", mode); form.set("maxRating", rating);
+      if (assignmentCode) form.set("assignmentCode", assignmentCode);
+      if (mode === "daily" && dailyDate) form.set("dailyDate", dailyDate);
+      if (mode === "daily" && dailyMarket) form.set("dailyMarket", dailyMarket);
+      if (mode === "challenge" && challengeId) form.set("challengeId", challengeId);
+      if (mode === "challenge" && challengeToken) form.set("challengeToken", challengeToken);
+      const response = await fetch("/api/classic/attempts", { method: "POST", body: form });
+      const body = await response.json();
+      if (!response.ok || !body.data?.attempt?.id) throw new Error(body.error?.message ?? "Your take could not be saved. Retry video creation to recover it.");
+      savedTake.id = body.data.attempt.id;
+      return body.data.attempt.id;
+    } finally { setRoundSaving(false); }
+  }
+
   async function chooseRoundTake() {
     if (roundSaving || submissionInFlight.current || !roundContext) return;
     setRoundSaving(true); setSubmitError(null);
@@ -566,6 +598,7 @@ export function GameExperience({
     form.append("attemptId", attemptIdRef.current);
     form.append("isPublic", "false");
     form.append("maxRating", rating);
+    if (assignmentCode) form.append("assignmentCode", assignmentCode);
     if (mode === "daily" && dailyDate) form.append("dailyDate", dailyDate);
     if (mode === "daily" && dailyMarket)
       form.append("dailyMarket", dailyMarket);
@@ -693,6 +726,9 @@ export function GameExperience({
         delivery={roundContext ? null : deliveryReference}
         audioBlob={recorder.audioBlob}
         audioUrl={recorder.audioUrl}
+        prepareVideoExport={prepareVideoExport}
+        exportAttemptId={roundContext ? roundTakeRef.current?.id : undefined}
+        exportReturnPath={roundContext?.returnPath}
         warning={submitWarning}
         onNext={continuePlaying}
         onRetry={retake}
@@ -1116,6 +1152,7 @@ export function GameExperience({
                     ? "Nothing has left your device. You can keep rehearsing."
                     : "Judge this take sends your audio for AI processing. It does not publish it."}
                 </p>
+                {!cleanStage && <div className="mt-5"><VideoExport key={recorder.audioUrl} mode="classic" prepareAttempt={prepareVideoExport} disabled={!recorder.canSubmit || roundSaving} reopenPath={roundContext?.returnPath} /></div>}
               </>
             )}
           </div>
