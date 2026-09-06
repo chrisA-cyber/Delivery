@@ -119,4 +119,37 @@ describe("synchronized scene playback", () => {
     fireEvent.waiting(container.querySelector("video")!);
     expect(interrupted).toHaveBeenCalledOnce();
   });
+
+  it.each([0, 1])("pauses the scene when companion audio %s buffers, then resumes together", async (audioIndex) => {
+    const { container } = render(<DubPlayer clip={clip} role={clip.roles[0]!} takeUrl="/private.wav" recordingOffsetMs={200} />);
+    const video = container.querySelector("video")!;
+    const [voice, background] = container.querySelectorAll("audio");
+    fireEvent.loadedData(video);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play scene" })));
+    video.currentTime = 2;
+    fireEvent.waiting([voice!, background!][audioIndex]!);
+    expect(video.paused).toBe(true);
+    expect(voice!.paused).toBe(true);
+    expect(background!.paused).toBe(true);
+    expect(screen.getByRole("alert")).toHaveTextContent("buffering");
+    fireEvent.canPlay([voice!, background!][audioIndex]!);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play scene" })));
+    expect(video.currentTime).toBe(2);
+    expect(voice!.currentTime).toBeCloseTo(2.2);
+    expect(background!.currentTime).toBe(2);
+    expect(video.paused).toBe(false);
+    expect(voice!.paused).toBe(false);
+  });
+
+  it("does not start expired take audio again when resuming beyond its end", async () => {
+    const { container } = render(<DubPlayer clip={clip} role={clip.roles[0]!} takeUrl="/private.wav" />);
+    const video = container.querySelector("video")!;
+    const voice = container.querySelector("audio")!;
+    Object.defineProperty(voice, "duration", { configurable: true, value: 2 });
+    fireEvent.loadedData(video);
+    fireEvent.change(screen.getByRole("slider"), { target: { value: "4" } });
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play scene" })));
+    expect(video.paused).toBe(false);
+    expect(voice.paused).toBe(true);
+  });
 });

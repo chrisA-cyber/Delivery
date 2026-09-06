@@ -11,19 +11,21 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getOptionalUser, requireUser } from "@/lib/supabase/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/server/env";
+import { getBillingAvailability } from "@/lib/server/billing";
 
 export const dynamic = "force-dynamic";
 
 async function loadAccount() {
+  const billing = getBillingAvailability();
   if (!isSupabaseConfigured()) {
-    return NextResponse.json({ authenticated: false, configured: false }, {
+    return NextResponse.json({ authenticated: false, configured: false, billing }, {
       headers: { "Cache-Control": "private, no-store" },
     });
   }
 
   const user = await getOptionalUser();
   if (!user) {
-    return NextResponse.json({ authenticated: false, configured: true }, {
+    return NextResponse.json({ authenticated: false, configured: true, billing }, {
       headers: { "Cache-Control": "private, no-store" },
     });
   }
@@ -90,6 +92,7 @@ async function loadAccount() {
   return NextResponse.json({
     authenticated: true,
     configured: true,
+    billing,
     user: { id: user.id, email: user.email ?? null },
     profile: {
       handle: String(profile?.handle ?? `player_${user.id.slice(0, 6)}`),

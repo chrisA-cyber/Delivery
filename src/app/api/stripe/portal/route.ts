@@ -6,6 +6,7 @@ import {
   requestIdFrom,
 } from "@/lib/server/api-error";
 import { assertAccountNotDeleting } from "@/lib/server/account-deletion";
+import { requireBillingAvailability } from "@/lib/server/billing";
 import { enforceRateLimit, rateLimitHeaders } from "@/lib/server/rate-limit";
 import { assertSameOrigin } from "@/lib/server/request";
 import { getAppOrigin, getStripe } from "@/lib/server/stripe";
@@ -16,6 +17,7 @@ export async function POST(request: Request) {
   const requestId = requestIdFrom(request);
   try {
     assertSameOrigin(request);
+    requireBillingAvailability("portalAvailable");
     const user = await requireUser();
     await assertAccountNotDeleting(user.id);
     const rateLimit = await enforceRateLimit(`portal:${user.id}`, {

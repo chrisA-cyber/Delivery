@@ -11,6 +11,12 @@ describe("safeInternalAppPath", () => {
     );
   });
 
+  it("returns players to their exact Say It Back clip, saved take, or challenge", () => {
+    for (const path of ["/say-it-back?clip=fixture&role=lead", "/say-it-back?attempt=take&claim=take", "/say-it-back/challenge/friend?rematch=1"]) {
+      expect(safeInternalAppPath(path, origin)).toBe(path);
+    }
+  });
+
   it.each([
     "https://evil.example/steal",
     "//evil.example/steal",

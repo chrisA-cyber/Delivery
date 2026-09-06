@@ -59,6 +59,15 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
     setPlaying(false);
   }, []);
 
+  const companionWaiting = useCallback(() => {
+    if (busy || !isDub || videoRef.current?.paused) return;
+    // Do not let the scene run ahead of a voice/background download. Pausing
+    // all clocks preserves words instead of skipping them on the next sync.
+    pause();
+    setBuffering(true);
+    setError("Dub audio is buffering. Let it load, then tap play to continue from here.");
+  }, [busy, isDub, pause]);
+
   const sync = useCallback((force = false) => {
     const video = videoRef.current;
     if (!video) return;
@@ -97,17 +106,15 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   const playCompanions = useCallback(() => {
     const video = videoRef.current;
     if (!video || video.paused || busy || !isDub) return;
-    sync(true);
     for (const audio of [voiceRef.current, bedRef.current]) {
-      if (audio && !audio.ended && audio.currentTime < audio.duration && (audio !== voiceRef.current || video.currentTime + recordingOffsetMs / 1000 >= 0)) {
-        void audio.play().catch((cause: unknown) => {
-          if (isPlaybackAbort(cause)) return;
-          pause();
-          setError("Your browser paused the dub audio. Tap play to start the scene and your voice together.");
-        });
+      const wanted = video.currentTime + (audio === voiceRef.current ? recordingOffsetMs / 1000 : 0);
+      if (audio && wanted >= 0 && (!Number.isFinite(audio.duration) || wanted < audio.duration) && audio.readyState < 3) {
+        companionWaiting();
+        return;
       }
     }
-  }, [busy, isDub, pause, sync, recordingOffsetMs]);
+    sync(true);
+  }, [busy, isDub, companionWaiting, sync, recordingOffsetMs]);
 
   useEffect(() => {
     let frame = 0;
@@ -171,7 +178,10 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
     try {
       // Start all elements in the same user gesture for Safari's audio policy.
       const requests: Promise<void>[] = [video.play()];
-      if (isDub) for (const audio of [voiceRef.current, bedRef.current]) if (audio && (audio !== voiceRef.current || video.currentTime + recordingOffsetMs / 1000 >= 0)) requests.push(audio.play());
+      if (isDub) for (const audio of [voiceRef.current, bedRef.current]) {
+        const wanted = video.currentTime + (audio === voiceRef.current ? recordingOffsetMs / 1000 : 0);
+        if (audio && wanted >= 0 && (!Number.isFinite(audio.duration) || wanted < audio.duration)) requests.push(audio.play());
+      }
       await Promise.all(requests.map((request) => request.catch((cause: unknown) => {
         if (!isPlaybackAbort(cause)) throw cause;
       })));
@@ -221,8 +231,8 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
           onWaiting={() => { setBuffering(true); voiceRef.current?.pause(); bedRef.current?.pause(); if (recording) onInterruption?.(); }}
           onSeeking={() => { voiceRef.current?.pause(); bedRef.current?.pause(); sync(true); }} onSeeked={() => { sync(true); playCompanions(); }}
           onEnded={() => { pause(); onEnded?.(); }} onError={() => { setError("This scene could not load. Check your connection, then try another scene or reload."); pause(); }} />
-        {takeUrl && <audio ref={voiceRef} src={takeUrl} preload="auto" onError={() => void recoverAudio()} onLoadedMetadata={() => sync(true)} />}
-        {role.dubAudioUrl && <audio ref={bedRef} src={role.dubAudioUrl} preload="auto" onLoadedMetadata={() => sync(true)} onError={() => { pause(); setError("The scene background could not load. Reload before playing the dub."); }} />}
+        {takeUrl && <audio ref={voiceRef} src={takeUrl} preload="auto" onError={() => void recoverAudio()} onLoadedMetadata={() => sync(true)} onWaiting={companionWaiting} onCanPlay={() => setBuffering(false)} />}
+        {role.dubAudioUrl && <audio ref={bedRef} src={role.dubAudioUrl} preload="auto" onLoadedMetadata={() => sync(true)} onWaiting={companionWaiting} onCanPlay={() => setBuffering(false)} onError={() => { pause(); setError("The scene background could not load. Reload before playing the dub."); }} />}
         {(!loaded || buffering) && countdown == null && <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/30"><LoaderCircle aria-label="Loading scene" className="size-8 animate-spin text-paper" /></div>}
         {!playing && !busy && loaded && <button type="button" onClick={() => void togglePlay()} aria-label={isDub ? (takeLabel === "Your take" ? "Play your dubbed scene" : "Play friend’s dubbed scene") : "Watch the original scene"} className="absolute inset-0 grid place-items-center bg-black/10"><span className="grid size-16 place-items-center rounded-full border border-white/50 bg-paper/95 text-ink shadow-xl sm:size-20"><Play className="ml-1 size-7 fill-current" /></span></button>}
         {countdown != null && <div className="absolute inset-0 flex flex-col items-center justify-center bg-ink/70"><span className="mono-label text-paper">Your scene starts in</span><span className="display-type mt-1 text-[5rem] text-acid sm:mt-3 sm:text-[7rem]" aria-live="assertive">{countdown || "Go"}</span>{onCancelCountdown && <button type="button" className="mt-2 min-h-9 px-4 text-xs font-bold underline" onClick={onCancelCountdown}>Cancel</button>}</div>}

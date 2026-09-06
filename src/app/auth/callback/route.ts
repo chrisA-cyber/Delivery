@@ -26,7 +26,8 @@ export async function GET(request: Request) {
   if (code) {
     try {
       const client = await createServerSupabaseClient();
-      const { error } = await client.auth.exchangeCodeForSession(code);
+      const flowId = url.searchParams.get("sb_flow_id");
+      const { error } = await client.auth.exchangeCodeForSession(code, flowId ? { flowId } : undefined);
       if (error) throw error;
     }
     catch { return redirect(failed); }

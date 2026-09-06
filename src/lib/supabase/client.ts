@@ -16,7 +16,9 @@ export function createClient() {
     );
   }
 
-  browserClient ??= createBrowserClient<Database>(url, anonKey);
+  // The server handles ordinary callbacks; the reset form explicitly consumes
+  // recovery codes. An eager global client must not consume either code first.
+  browserClient ??= createBrowserClient<Database>(url, anonKey, { auth: { detectSessionInUrl: false } });
   return browserClient;
 }
 

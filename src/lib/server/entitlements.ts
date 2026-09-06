@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import type { User } from "@supabase/supabase-js";
 
 import { AppError, ExternalServiceError } from "@/lib/server/api-error";
+import { getBillingAvailability } from "@/lib/server/billing";
 import { getServerEnv, isRedisConfigured, isSupabaseAdminConfigured } from "@/lib/server/env";
 import { redisCommand } from "@/lib/server/redis";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -70,11 +71,12 @@ function nextUtcReset(): string {
 }
 
 function limitReached(resetAt: string, playLimit = FREE_DAILY_PLAYS): AppError {
+  const { checkoutAvailable } = getBillingAvailability();
   return new AppError(
     "FREE_PLAY_LIMIT_REACHED",
-    `You used today’s ${playLimit} free judged plays. Go Pro or come back after the UTC reset.`,
+    `You used today’s ${playLimit} free judged plays. ${checkoutAvailable ? "Go Pro or come back after midnight UTC." : "Your free plays reset at midnight UTC. You can still replay your takes."}`,
     402,
-    { limit: playLimit, remaining: 0, resetAt, upgradeCode: "DELIVERY_PRO" },
+    { limit: playLimit, remaining: 0, resetAt, ...(checkoutAvailable ? { upgradeCode: "DELIVERY_PRO" } : {}) },
   );
 }
 

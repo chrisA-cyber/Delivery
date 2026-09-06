@@ -175,6 +175,81 @@ describe("microphone capture lifecycle", () => {
     expect(context.close).toHaveBeenCalledOnce();
   });
 
+  it("keeps the previous take when a retake is interrupted before its first frame", async () => {
+    const { result, context } = await record();
+    act(() => { context.push(48_000); result.current.stop(); });
+    const savedBlob = result.current.audioBlob;
+    stream = new FakeStream();
+    getUserMedia.mockResolvedValue(stream);
+    await act(async () => { expect(await result.current.start()).toBe(true); });
+    act(() => stream.track.dispatchEvent(new Event("ended")));
+    expect(result.current.audioBlob).toBe(savedBlob);
+    expect(result.current.audioUrl).toBe("blob:local-take");
+    expect(result.current.durationMs).toBe(1_000);
+    expect(result.current.canSubmit).toBe(true);
+    expect(result.current.status).toBe("stopped");
+    expect(result.current.error).toContain("previous take is still here");
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+  });
+
+  it("restores the prior take and technical fields after unsynchronized startup already stopped with PCM", async () => {
+    createObjectURL.mockReturnValueOnce("blob:previous").mockReturnValueOnce("blob:startup-partial");
+    const { result, context } = await record();
+    act(() => { context.push(48_000, 0.003); result.current.stop(); });
+    const savedBlob = result.current.audioBlob;
+    const savedMessage = result.current.qualityMessage;
+    stream = new FakeStream();
+    getUserMedia.mockResolvedValue(stream);
+    await act(async () => { expect(await result.current.start({ preservePreviousTake: true })).toBe(true); });
+    act(() => {
+      FakeAudioContext.instances[1]!.push(24_000);
+      stream.track.dispatchEvent(new Event("ended"));
+    });
+    expect(result.current.audioUrl).toBe("blob:startup-partial");
+    expect(revokeObjectURL).not.toHaveBeenCalledWith("blob:previous");
+    act(() => result.current.cancelCapture());
+    expect(result.current.audioBlob).toBe(savedBlob);
+    expect(result.current.audioUrl).toBe("blob:previous");
+    expect(result.current.durationMs).toBe(1_000);
+    expect(result.current.quality).toBe("quiet");
+    expect(result.current.qualityMessage).toBe(savedMessage);
+    expect(result.current.stopReason).toBe("user");
+    expect(result.current.warning).toBeNull();
+    expect(result.current.canSubmit).toBe(true);
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:startup-partial");
+    expect(revokeObjectURL).not.toHaveBeenCalledWith("blob:previous");
+  });
+
+  it("preserves prior state on startup cancel, then keeps normal interrupted audio after sync is committed", async () => {
+    createObjectURL.mockReturnValueOnce("blob:previous").mockReturnValueOnce("blob:committed-partial");
+    const { result, context } = await record();
+    act(() => { context.push(48_000); result.current.stop(); });
+    const savedBlob = result.current.audioBlob;
+    stream = new FakeStream();
+    getUserMedia.mockResolvedValue(stream);
+    await act(async () => { await result.current.start({ preservePreviousTake: true }); });
+    act(() => {
+      FakeAudioContext.instances[1]!.push(4_800);
+      result.current.cancelCapture();
+    });
+    expect(result.current.audioBlob).toBe(savedBlob);
+    expect(result.current.durationMs).toBe(1_000);
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+    stream = new FakeStream();
+    getUserMedia.mockResolvedValue(stream);
+    await act(async () => { await result.current.start({ preservePreviousTake: true }); });
+    act(() => {
+      FakeAudioContext.instances[2]!.push(24_000);
+      result.current.commitCapture();
+      stream.track.dispatchEvent(new Event("ended"));
+    });
+    expect(result.current.audioUrl).toBe("blob:committed-partial");
+    expect(result.current.durationMs).toBe(500);
+    expect(result.current.stopReason).toBe("interrupted");
+    expect(result.current.warning).toContain("interrupted");
+    expect(revokeObjectURL).toHaveBeenCalledExactlyOnceWith("blob:previous");
+  });
+
   it("keeps quiet audible takes submittable and identifies digital silence", async () => {
     const { result, context } = await record();
     act(() => { context.push(48_000, 0.003); result.current.stop(); });

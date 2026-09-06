@@ -14,6 +14,7 @@ import {
   requestIdFrom,
 } from "@/lib/server/api-error";
 import { getServerEnv } from "@/lib/server/env";
+import { requireBillingAvailability } from "@/lib/server/billing";
 import { createRequestFingerprint, runIdempotent } from "@/lib/server/idempotency";
 import { enforceRateLimit, rateLimitHeaders } from "@/lib/server/rate-limit";
 import {
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
     assertSameOrigin(request);
     assertJsonRequest(request);
     assertContentLength(request, 2 * 1024);
+    requireBillingAvailability("checkoutAvailable");
     const user = await requireUser();
     await assertAccountNotDeleting(user.id);
     const rateLimit = await enforceRateLimit(`checkout:${user.id}`, {

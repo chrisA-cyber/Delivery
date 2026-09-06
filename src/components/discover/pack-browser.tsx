@@ -12,7 +12,7 @@ const filters = ["all", "free", "pro", "rotating"] as const;
 const colors = ["#f4f0e7", "#c9b7ef", "#c9edbc", "#ff745c", "#f0caa4", "#d9d9cd"];
 
 export function PackBrowser({ packs }: { packs: readonly ContentPack[]; promptCounts?: Record<string, number> }) {
-  const { tier, contentRating, updatePreferences } = useApp();
+  const { tier, billing, contentRating, updatePreferences } = useApp();
   const [filter, setFilter] = useState<(typeof filters)[number]>("all");
   const [query, setQuery] = useState("");
   const allowed = useMemo(() => queryPrompts({ maxRating: contentRating }), [contentRating]);
@@ -48,7 +48,7 @@ export function PackBrowser({ packs }: { packs: readonly ContentPack[]; promptCo
               <p className="text-sm leading-6 text-white/65">{pack.description}</p>
               <p className="mono-label mt-5 text-white/55">{prompts.length} lines at your setting · {pack.access}</p>
               <div className="mt-5 flex flex-wrap gap-2">
-                {prompts.length > 0 ? <Link href={locked ? `/pricing?pack=${pack.id}` : `/play?pack=${pack.id}`} className="button-primary flex-1 px-4">{locked ? "Unlock pack" : "Play pack"}<ArrowRight className="size-4" /></Link> : <span className="py-3 text-sm text-white/65">Choose a higher intensity to play.</span>}
+                {prompts.length > 0 ? <Link href={locked ? `/pricing?pack=${pack.id}` : `/play?pack=${pack.id}`} className="button-primary flex-1 px-4">{locked ? billing.checkoutAvailable ? "Unlock pack" : "Pro unavailable" : "Play pack"}<ArrowRight className="size-4" /></Link> : <span className="py-3 text-sm text-white/65">Choose a higher intensity to play.</span>}
                 <Link href={`/discover/${pack.id}`} className="button-secondary px-4">Preview</Link>
               </div>
             </div>
