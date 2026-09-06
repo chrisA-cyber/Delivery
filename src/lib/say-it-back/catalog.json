@@ -146,7 +146,7 @@
   {
     "id": "tos-youre-a-jerk",
     "title": "You’re a jerk, Thom.",
-    "description": "Four words. One brutally unimpressed look. Your easiest way into the scene.",
+    "description": "Four words. One brutally unimpressed delivery over the opening city shot. Your easiest way into the scene.",
     "difficulty": "easy",
     "rating": "everyone",
     "category": "Sci-fi",
@@ -155,7 +155,7 @@
       "Deadpan",
       "YouTube film"
     ],
-    "version": "v1-a1664e1509a2",
+    "version": "v2-7ed551138939",
     "duration": 2.29,
     "videoUrl": "/media/say-it-back/tos-youre-a-jerk/v1-a1664e1509a2/scene.mp4",
     "posterUrl": "/media/say-it-back/tos-youre-a-jerk/v1-a1664e1509a2/poster.jpg",
@@ -164,7 +164,7 @@
       {
         "id": "celia",
         "name": "Celia",
-        "description": "Underplay it. The look does half the work.",
+        "description": "Underplay it. Let the words do the work.",
         "muteIntervals": [
           {
             "start": 0.55,

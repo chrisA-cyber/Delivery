@@ -140,7 +140,7 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
           if (!mounted.current) return;
           selectClip(saved.attempt.clip, saved.attempt.roleId); setAttempt(saved.attempt); setOffsetMs(saved.attempt.recordingOffsetMs);
         } else if (challengeToken) {
-          const loaded = await api<{ challenge: SayChallenge }>(`/api/say-it-back/challenges/${encodeURIComponent(challengeToken)}`);
+          const loaded = await api<{ challenge: SayChallenge }>(`/api/say-it-back/challenges/${encodeURIComponent(challengeToken)}?maxRating=${contentRating}`);
           if (!mounted.current) return;
           setChallenge(loaded.challenge); selectClip(loaded.challenge.clip, loaded.challenge.roleId);
           const previous = loaded.challenge.recipientAttempts.find((item) => item.owned && item.status === "scored");
@@ -248,7 +248,7 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
       if (current.status === "scored") {
         setNotice(current.saved ? "Saved privately. Find this exact scene and your take in history." : "Your guest take is ready. Sign in for your personal history.");
         void refreshAccount();
-        if (challenge) void api<{ challenge: SayChallenge }>(`/api/say-it-back/challenges/${encodeURIComponent(challenge.token)}`).then((data) => setChallenge(data.challenge)).catch(() => undefined);
+        if (challenge) void api<{ challenge: SayChallenge }>(`/api/say-it-back/challenges/${encodeURIComponent(challenge.token)}?maxRating=${contentRating}`).then((data) => setChallenge(data.challenge)).catch(() => undefined);
       }
     } catch (cause) { if (mounted.current) setError(cause instanceof Error ? cause.message : "Your take could not be scored. It is still available to replay."); }
     finally { actionInFlight.current = false; if (mounted.current) setBusy(null); }
@@ -287,7 +287,7 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
     if (!challenge || checkingResponses) return;
     setCheckingResponses(true); setResponseError("");
     try {
-      const refreshed = (await api<{ challenge: SayChallenge }>(`/api/say-it-back/challenges/${encodeURIComponent(challenge.token)}`)).challenge;
+      const refreshed = (await api<{ challenge: SayChallenge }>(`/api/say-it-back/challenges/${encodeURIComponent(challenge.token)}?maxRating=${contentRating}`)).challenge;
       setChallenge((current) => current?.id === refreshed.id ? refreshed : current);
     }
     catch (cause) { setResponseError(cause instanceof Error ? cause.message : "Responses could not refresh. Try again."); }
