@@ -66,6 +66,8 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   const wantsPlayback = useRef(false);
   const capturePrepared = useRef(false);
   const previewEnd = useRef<number | null>(null);
+  const previewStart = useRef<{ time: number; requestId: number } | null>(null);
+  const previewStarting = useRef(false);
   const waitingFor = useRef(new Set<HTMLMediaElement>());
   const bufferTimeout = useRef<number | undefined>(undefined);
   const busy = recording || countdown != null;
@@ -76,6 +78,8 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
     wantsPlayback.current = false;
     capturePrepared.current = false;
     previewEnd.current = null;
+    previewStart.current = null;
+    previewStarting.current = false;
     waitingFor.current.clear();
     window.clearTimeout(bufferTimeout.current);
     videoRef.current?.pause();
@@ -245,19 +249,28 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
     },
     async previewRange(startSeconds, endSeconds) {
       const video = videoRef.current;
-      if (!video || video.readyState < 2) throw new Error("The scene is still loading. Let it finish, then listen again.");
+      if (!video) throw new Error("The scene is unavailable. Choose it again, then listen.");
       pause();
       setKind("original");
       setError("");
       const start = Math.min(clip.duration, Math.max(0, startSeconds));
-      video.currentTime = start;
+      const requestId = playbackRequest.current;
+      // Safari cannot reliably seek before metadata exists. Keep the requested
+      // range while queuing play now, inside this first Listen gesture.
+      if (video.readyState > 0) video.currentTime = start;
+      else previewStart.current = { time: start, requestId };
       video.muted = !sound;
       setCurrentTime(start);
+      setBuffering(video.readyState < 2 || video.seeking);
       previewEnd.current = Math.min(clip.duration, Math.max(start, endSeconds));
+      previewStarting.current = true;
       wantsPlayback.current = true;
-      const requestId = playbackRequest.current;
       try { await boundedPlayback(video.play()); }
-      catch (cause) { if (requestId === playbackRequest.current) pause(); throw cause; }
+      catch (cause) {
+        if (requestId !== playbackRequest.current && isPlaybackAbort(cause)) return;
+        if (requestId === playbackRequest.current) pause();
+        throw cause;
+      } finally { if (requestId === playbackRequest.current) previewStarting.current = false; }
     },
     pause,
   }), [pause, clip.duration, sound]);
@@ -331,10 +344,11 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
       </div>
       <div className="relative aspect-video w-full bg-black">
         <video ref={videoRef} src={clip.videoUrl} poster={clip.posterUrl} preload="auto" playsInline aria-label={`${clip.title} scene`} className="h-full w-full object-contain" disablePictureInPicture
+          onLoadedMetadata={(event) => { const pending = previewStart.current; if (pending && pending.requestId === playbackRequest.current) { event.currentTarget.currentTime = pending.time; previewStart.current = null; setCurrentTime(pending.time); } }}
           onLoadedData={() => setLoaded(true)} onCanPlay={(event) => { setLoaded(true); resumeBuffered(event.currentTarget); }}
           onPlay={() => { setPlaying(true); onPlaybackStart?.(); }} onPlaying={(event) => { waitingFor.current.delete(event.currentTarget); if (!waitingFor.current.size) setBuffering(false); playCompanions(); }}
           onPause={() => { setPlaying(false); voiceRef.current?.pause(); bedRef.current?.pause(); }}
-          onWaiting={(event) => { if (recording) { voiceRef.current?.pause(); bedRef.current?.pause(); onInterruption?.(); } else if (!capturePrepared.current && wantsPlayback.current) waitForMedia(event.currentTarget); }}
+          onWaiting={(event) => { if (previewStarting.current) setBuffering(true); else if (recording) { voiceRef.current?.pause(); bedRef.current?.pause(); onInterruption?.(); } else if (!capturePrepared.current && wantsPlayback.current) waitForMedia(event.currentTarget); }}
           onSeeking={() => { voiceRef.current?.pause(); bedRef.current?.pause(); sync(true); }} onSeeked={() => { sync(true); playCompanions(); }}
           onEnded={() => { pause(); onEnded?.(); }} onError={() => { setError("This scene could not load. Check your connection, then try another scene or reload."); pause(); }} />
         {takeUrl && <audio ref={voiceRef} src={takeUrl} preload="auto" onError={() => { if (!busy && !capturePrepared.current) void recoverAudio(); }} onLoadedMetadata={() => sync(true)} onWaiting={(event) => companionWaiting(event.currentTarget)} onCanPlay={(event) => resumeBuffered(event.currentTarget)} onEnded={(event) => resumeBuffered(event.currentTarget)} />}

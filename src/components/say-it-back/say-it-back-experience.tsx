@@ -260,8 +260,14 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
   useEffect(() => {
     if (recording && (recorder.status === "stopped" || recorder.status === "error")) {
       recordingRef.current = false; setRecording(false); playerRef.current?.pause();
+      const pending = pendingLine.current ?? pendingScene.current;
+      if (pending && (recorder.status === "error" || !recorder.audioBlob || recorder.audioBlob === pending.previousBlob)) {
+        rawCaptureKind.current = pending.previousKind;
+        pendingLine.current = null; pendingScene.current = null; setActiveWindow(null);
+        cancelCapture();
+      }
     }
-  }, [recording, recorder.status]);
+  }, [recording, recorder.status, recorder.audioBlob, cancelCapture]);
 
   useEffect(() => {
     if (!audioBlob || attempt) return;
@@ -329,7 +335,7 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
       if (Math.abs(measuredOffset) > 300) throw new Error("The scene took too long to start in sync. Let it load, then record again.");
       const previousKind = rawCaptureKind.current;
       rawCaptureKind.current = window ? "lines" : "scene";
-      if (window) pendingLine.current = { window, offsetMs: measuredOffset, previousBlob: recorder.audioBlob, previousKind };
+      if (window) { pendingScene.current = null; pendingLine.current = { window, offsetMs: measuredOffset, previousBlob: recorder.audioBlob, previousKind }; }
       else { pendingScene.current = { offsetMs: measuredOffset, previousBlob: recorder.audioBlob, previousKind }; pendingLine.current = null; }
       if (takeUrl) setTakeNumber((number) => number + 1);
       setCreatedChallenge(null); setSharing(false); setCountdown(null);

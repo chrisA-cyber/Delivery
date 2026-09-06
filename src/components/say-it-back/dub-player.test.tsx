@@ -261,6 +261,40 @@ describe("synchronized scene playback", () => {
     expect(video.paused).toBe(true);
   });
 
+  it("queues the first Listen before metadata and keeps its range through initial buffering", async () => {
+    const ref = React.createRef<DubPlayerHandle>();
+    const { container } = render(<DubPlayer ref={ref} clip={clip} role={clip.roles[0]!} />);
+    const video = container.querySelector("video")!;
+    let readyState = 0;
+    let currentTime = 0;
+    Object.defineProperty(video, "readyState", { configurable: true, get: () => readyState });
+    Object.defineProperty(video, "currentTime", { configurable: true, get: () => currentTime, set: (value: number) => {
+      if (!readyState) throw new DOMException("Metadata unavailable", "InvalidStateError");
+      currentTime = value;
+    } });
+    let completePlay: () => void = () => undefined;
+    vi.mocked(video.play).mockImplementationOnce(function (this: HTMLMediaElement) {
+      stopped.set(this, false);
+      return new Promise((resolve) => { completePlay = resolve; });
+    });
+    let preview: Promise<void> = Promise.resolve();
+    act(() => { preview = ref.current!.previewRange(3, 4.5); });
+    expect(video.play).toHaveBeenCalledOnce();
+    expect(screen.getByLabelText("Loading scene")).toBeInTheDocument();
+    fireEvent.waiting(video);
+    expect(video.paused).toBe(false);
+    readyState = 1;
+    fireEvent.loadedMetadata(video);
+    expect(video.currentTime).toBe(3);
+    readyState = 4;
+    await act(async () => { fireEvent.canPlay(video); fireEvent.playing(video); completePlay(); await preview; });
+    expect(screen.queryByLabelText("Loading scene")).not.toBeInTheDocument();
+    expect(video.paused).toBe(false);
+    video.currentTime = 4.5;
+    act(() => frame(100));
+    expect(video.paused).toBe(true);
+  });
+
   it("bounds a stalled recording start and releases the player for another attempt", async () => {
     vi.useFakeTimers();
     const ref = React.createRef<DubPlayerHandle>();
