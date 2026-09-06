@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { WAVEFORM_BIN_SECONDS, type WaveformPoint } from "@/lib/say-it-back/audio-timeline";
 import { encodeMonoWav, inspectTake, MAX_RECORDING_BYTES, MAX_RECORDING_MS, type TakeQuality } from "@/lib/audio-capture";
 
 export type RecorderStatus = "idle" | "requesting" | "ready" | "recording" | "stopped" | "error";
@@ -14,6 +15,9 @@ type RecorderSession = {
   frames: Float32Array[];
   sampleCount: number;
   lastFrameAt: number | null;
+  waveform: WaveformPoint[];
+  waveformBinSamples: number;
+  waveformBinPeak: number;
   cleanup: () => void;
 };
 
@@ -21,6 +25,7 @@ type PreservedTake = {
   blob: Blob | null;
   url: string | null;
   durationMs: number;
+  waveform: WaveformPoint[];
   quality: TakeQuality;
   qualityMessage: string | null;
   warning: string | null;
@@ -45,6 +50,7 @@ export function useAudioRecorder() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [durationMs, setDurationMs] = useState(0);
   const [level, setLevel] = useState(0);
+  const [waveform, setWaveform] = useState<WaveformPoint[]>([]);
   const [isClipping, setIsClipping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
@@ -199,7 +205,7 @@ export function useAudioRecorder() {
     if (startPendingRef.current || sessionRef.current) return false;
     startPendingRef.current = true;
     commitCapture();
-    if (options?.preservePreviousTake) captureBackupRef.current = { blob: audioBlob, url: audioUrlRef.current, durationMs, quality, qualityMessage, warning, stopReason };
+    if (options?.preservePreviousTake) captureBackupRef.current = { blob: audioBlob, url: audioUrlRef.current, durationMs, waveform, quality, qualityMessage, warning, stopReason };
     const operationToken = ++operationRef.current;
     let context: AudioContext | null = null;
     try {
@@ -224,7 +230,7 @@ export function useAudioRecorder() {
       const processor = context.createScriptProcessor(4096, 1, 1);
       const silentGain = context.createGain();
       silentGain.gain.value = 0;
-      const session: RecorderSession = { context, source, processor, silentGain, frames: [], sampleCount: 0, lastFrameAt: null, cleanup: () => undefined };
+      const session: RecorderSession = { context, source, processor, silentGain, frames: [], sampleCount: 0, lastFrameAt: null, waveform: [], waveformBinSamples: 0, waveformBinPeak: 0, cleanup: () => undefined };
       sessionRef.current = session;
       const durationSamples = Math.floor(context.sampleRate * MAX_RECORDING_MS / 1_000);
       const sizeSamples = Math.floor((MAX_RECORDING_BYTES - 44) / 2);
@@ -247,11 +253,22 @@ export function useAudioRecorder() {
         session.lastFrameAt = performance.now();
         let squareSum = 0;
         let peak = 0;
+        const waveformBinSize = Math.max(1, Math.round(session.context.sampleRate * WAVEFORM_BIN_SECONDS));
         for (const sample of copy) {
           const amplitude = Number.isFinite(sample) ? Math.min(1, Math.abs(sample)) : 0;
           squareSum += amplitude * amplitude;
           peak = Math.max(peak, amplitude);
+          session.waveformBinPeak = Math.max(session.waveformBinPeak, amplitude);
+          session.waveformBinSamples += 1;
+          if (session.waveformBinSamples === waveformBinSize) {
+            session.waveform.push({ time: session.waveform.length * waveformBinSize / session.context.sampleRate, peak: session.waveformBinPeak });
+            session.waveformBinSamples = 0;
+            session.waveformBinPeak = 0;
+          }
         }
+        setWaveform(session.waveformBinSamples
+          ? [...session.waveform, { time: session.waveform.length * waveformBinSize / session.context.sampleRate, peak: session.waveformBinPeak }]
+          : [...session.waveform]);
         const rms = Math.sqrt(squareSum / Math.max(1, copy.length));
         setLevel(Math.min(1, Math.max(peak, rms * 4.5)));
         setIsClipping(peak >= 0.99);
@@ -319,7 +336,7 @@ export function useAudioRecorder() {
     } finally {
       if (operationRef.current === operationToken) startPendingRef.current = false;
     }
-  }, [audioBlob, durationMs, quality, qualityMessage, warning, stopReason, commitCapture, disposeSession, requestPermission, stopStream]);
+  }, [audioBlob, durationMs, waveform, quality, qualityMessage, warning, stopReason, commitCapture, disposeSession, requestPermission, stopStream]);
 
   const stop = useCallback(() => finish("user"), [finish]);
   const cancelCapture = useCallback(() => {
@@ -338,6 +355,7 @@ export function useAudioRecorder() {
       setAudioBlob(backup.blob);
       setAudioUrl(backup.url);
       setDurationMs(backup.durationMs);
+      setWaveform(backup.waveform);
       setQuality(backup.quality);
       setQualityMessage(backup.qualityMessage);
       setWarning(backup.warning);
@@ -360,6 +378,7 @@ export function useAudioRecorder() {
     setAudioBlob(null);
     setAudioUrl(null);
     setDurationMs(0);
+    setWaveform([]);
     setLevel(0);
     setIsClipping(false);
     setError(null);
@@ -405,5 +424,5 @@ export function useAudioRecorder() {
       void pendingContextRef.current.resume().catch(() => undefined);
     } catch { /* start() owns the visible unsupported-device error. */ }
   }, []);
-  return { status, audioBlob, audioUrl, durationMs, level, isClipping, error, warning, quality, qualityMessage, canSubmit, stopReason, requestPermission, start, stop, reset, cancelCapture, commitCapture, getCapturePositionMs, primeAudioContext };
+  return { status, audioBlob, audioUrl, durationMs, waveform, level, isClipping, error, warning, quality, qualityMessage, canSubmit, stopReason, requestPermission, start, stop, reset, cancelCapture, commitCapture, getCapturePositionMs, primeAudioContext };
 }

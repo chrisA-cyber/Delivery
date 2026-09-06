@@ -2,7 +2,7 @@ import React from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SayClip } from "@/lib/say-it-back/types";
-import { DubPlayer } from "./dub-player";
+import { DubPlayer, type DubPlayerHandle } from "./dub-player";
 
 const clip: SayClip = {
   id: "scene", version: "v1", title: "A scene", description: "A short exchange", duration: 8,
@@ -25,7 +25,7 @@ beforeEach(() => {
   vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(function (this: HTMLMediaElement) { stopped.set(this, true); });
   vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => undefined);
 });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("synchronized scene playback", () => {
   it("keeps the take offset through seek, comparison, and pause without changing playback speed", async () => {
@@ -113,6 +113,19 @@ describe("synchronized scene playback", () => {
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(2));
   });
 
+  it("retains the scene position for a refreshed source but resets a genuinely new take", async () => {
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    const { container, rerender } = render(<DubPlayer clip={clip} role={clip.roles[0]!} takeUrl="/private.wav?token=old" onAudioError={refresh} />);
+    const video = container.querySelector("video")!;
+    const voice = container.querySelector("audio")!;
+    video.currentTime = 3;
+    await act(async () => fireEvent.error(voice));
+    rerender(<DubPlayer clip={clip} role={clip.roles[0]!} takeUrl="/private.wav?token=new" onAudioError={refresh} />);
+    expect(video.currentTime).toBe(3);
+    rerender(<DubPlayer clip={clip} role={clip.roles[0]!} takeUrl="blob:new-take" onAudioError={refresh} />);
+    expect(video.currentTime).toBe(0);
+  });
+
   it("stops a recording when scene buffering would break the timing relationship", () => {
     const interrupted = vi.fn();
     const { container } = render(<DubPlayer clip={clip} role={clip.roles[0]!} recording onInterruption={interrupted} />);
@@ -131,14 +144,157 @@ describe("synchronized scene playback", () => {
     expect(video.paused).toBe(true);
     expect(voice!.paused).toBe(true);
     expect(background!.paused).toBe(true);
-    expect(screen.getByRole("alert")).toHaveTextContent("buffering");
-    fireEvent.canPlay([voice!, background!][audioIndex]!);
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play scene" })));
+    expect(screen.getByLabelText("Loading scene")).toBeInTheDocument();
+    await act(async () => fireEvent.canPlay([voice!, background!][audioIndex]!));
     expect(video.currentTime).toBe(2);
     expect(voice!.currentTime).toBeCloseTo(2.2);
     expect(background!.currentTime).toBe(2);
     expect(video.paused).toBe(false);
     expect(voice!.paused).toBe(false);
+  });
+
+  it("waits for every buffering track without a seek loop, then resumes automatically", async () => {
+    const { container } = render(<DubPlayer clip={clip} role={clip.roles[0]!} takeUrl="/private.wav" />);
+    const video = container.querySelector("video")!;
+    const [voice, background] = container.querySelectorAll("audio");
+    fireEvent.loadedData(video);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play scene" })));
+    video.currentTime = 2;
+    fireEvent.waiting(voice!);
+    fireEvent.waiting(background!);
+    await act(async () => fireEvent.canPlay(voice!));
+    expect(video.paused).toBe(true);
+    expect(screen.getByLabelText("Loading scene")).toBeInTheDocument();
+    await act(async () => fireEvent.canPlay(background!));
+    expect(screen.queryByLabelText("Loading scene")).not.toBeInTheDocument();
+    expect(video.paused).toBe(false);
+    expect(voice!.currentTime).toBe(2);
+    expect(background!.currentTime).toBe(2);
+  });
+
+  it("does not repeatedly seek paused or already-seeking companion media", async () => {
+    const { container } = render(<DubPlayer clip={clip} role={clip.roles[0]!} takeUrl="/private.wav" />);
+    const video = container.querySelector("video")!;
+    const voice = container.querySelector("audio")!;
+    let voiceTime = 0;
+    const seekVoice = vi.fn((value: number) => { voiceTime = value; });
+    Object.defineProperty(voice, "currentTime", { configurable: true, get: () => voiceTime, set: seekVoice });
+    fireEvent.loadedData(video);
+    video.currentTime = 3;
+    act(() => { frame(100); frame(200); });
+    expect(seekVoice).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByRole("slider"), { target: { value: "3.1" } });
+    expect(seekVoice).toHaveBeenCalledOnce();
+    Object.defineProperty(voice, "seeking", { configurable: true, value: true });
+    video.currentTime = 4;
+    fireEvent.seeked(video);
+    act(() => frame(300));
+    expect(seekVoice).toHaveBeenCalledOnce();
+  });
+
+  it("starts playable short audio at readyState 2 instead of freezing for a higher state", async () => {
+    vi.spyOn(HTMLMediaElement.prototype, "readyState", "get").mockReturnValue(2);
+    const { container } = render(<DubPlayer clip={clip} role={clip.roles[0]!} takeUrl="/private.wav" />);
+    const video = container.querySelector("video")!;
+    const voice = container.querySelector("audio")!;
+    fireEvent.loadedData(video);
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Play scene" })); fireEvent.playing(video); });
+    expect(video.paused).toBe(false);
+    expect(voice.paused).toBe(false);
+    expect(screen.queryByLabelText("Loading scene")).not.toBeInTheDocument();
+  });
+
+  it("prepares and starts a later line without a replaced take pausing the new recording", async () => {
+    const ref = React.createRef<DubPlayerHandle>();
+    const { container, rerender } = render(<DubPlayer ref={ref} clip={clip} role={clip.roles[0]!} takeUrl="/previous.wav" />);
+    const video = container.querySelector("video")!;
+    fireEvent.loadedData(video);
+    act(() => ref.current!.prepare(3));
+    expect(video.currentTime).toBe(3);
+    rerender(<DubPlayer ref={ref} clip={clip} role={clip.roles[0]!} takeUrl="/updated-previous.wav" countdown={0} />);
+    let startedAt = 0;
+    await act(async () => { startedAt = await ref.current!.startScene(); });
+    expect(startedAt).toBe(3);
+    expect(video.paused).toBe(false);
+    video.currentTime = 3.2;
+    rerender(<DubPlayer ref={ref} clip={clip} role={clip.roles[0]!} recording />);
+    act(() => frame(100));
+    expect(video.currentTime).toBe(3.2);
+    expect(video.paused).toBe(false);
+    expect(video.muted).toBe(true);
+    act(() => ref.current!.pause());
+    rerender(<DubPlayer ref={ref} clip={clip} role={clip.roles[0]!} takeUrl="/new.wav" />);
+    expect(video.paused).toBe(true);
+    expect(video.currentTime).toBe(0);
+    expect(screen.getByRole("button", { name: "Your take" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("ignores a late playback failure from the old dub after a new recording starts", async () => {
+    const ref = React.createRef<DubPlayerHandle>();
+    const { container } = render(<DubPlayer ref={ref} clip={clip} role={clip.roles[0]!} takeUrl="/previous.wav" />);
+    const video = container.querySelector("video")!;
+    let rejectOldPlay: (cause: Error) => void = () => undefined;
+    vi.mocked(video.play).mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectOldPlay = reject; }));
+    fireEvent.loadedData(video);
+    fireEvent.click(screen.getByRole("button", { name: "Play scene" }));
+    await act(async () => { ref.current!.prepare(3); await ref.current!.startScene(); });
+    await act(async () => rejectOldPlay(new Error("The previous source failed")));
+    expect(video.paused).toBe(false);
+    expect(video.currentTime).toBe(3);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("previews only the requested original line and stops at its end", async () => {
+    const ref = React.createRef<DubPlayerHandle>();
+    const { container } = render(<DubPlayer ref={ref} clip={clip} role={clip.roles[0]!} takeUrl="/private.wav" />);
+    const video = container.querySelector("video")!;
+    const voice = container.querySelector("audio")!;
+    fireEvent.loadedData(video);
+    await act(async () => ref.current!.previewRange(1, 2.5));
+    act(() => frame(100));
+    expect(video.currentTime).toBe(1);
+    expect(video.paused).toBe(false);
+    expect(video.muted).toBe(false);
+    expect(voice.paused).toBe(true);
+    video.currentTime = 2.5;
+    act(() => frame(200));
+    expect(video.paused).toBe(true);
+  });
+
+  it("bounds a stalled recording start and releases the player for another attempt", async () => {
+    vi.useFakeTimers();
+    const ref = React.createRef<DubPlayerHandle>();
+    const { container } = render(<DubPlayer ref={ref} clip={clip} role={clip.roles[0]!} />);
+    const video = container.querySelector("video")!;
+    vi.mocked(video.play).mockImplementationOnce(() => new Promise(() => undefined));
+    let failedStart: Promise<void>;
+    await act(async () => {
+      ref.current!.prepare();
+      failedStart = expect(ref.current!.startScene()).rejects.toThrow("too long");
+      await vi.advanceTimersByTimeAsync(8_000);
+      await failedStart;
+    });
+    expect(video.paused).toBe(true);
+    await act(async () => { ref.current!.prepare(1); await ref.current!.startScene(); });
+    expect(video.currentTime).toBe(1);
+    expect(video.paused).toBe(false);
+  });
+
+  it("clears buffering when ended and offers recovery after a real loading timeout", async () => {
+    vi.useFakeTimers();
+    const { container } = render(<DubPlayer clip={clip} role={clip.roles[0]!} takeUrl="/private.wav" />);
+    const video = container.querySelector("video")!;
+    const voice = container.querySelector("audio")!;
+    fireEvent.loadedData(video);
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play scene" })));
+    fireEvent.waiting(voice);
+    fireEvent.ended(video);
+    expect(screen.queryByLabelText("Loading scene")).not.toBeInTheDocument();
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "Play scene" })));
+    fireEvent.waiting(voice);
+    await act(async () => vi.advanceTimersByTimeAsync(8_000));
+    expect(screen.queryByLabelText("Loading scene")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Tap play to retry");
   });
 
   it("does not start expired take audio again when resuming beyond its end", async () => {

@@ -34,6 +34,12 @@ const nextConfig: NextConfig = {
   },
   headers: async () => [
     {
+      // These media directories include an immutable clip version/hash.
+      // Replays and retakes can reuse the reference without revalidating it.
+      source: "/media/say-it-back/:clip/:version(v[0-9]+-[a-f0-9]{12})/:asset",
+      headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+    },
+    {
       source: "/(.*)",
       headers: [
         { key: "X-Content-Type-Options", value: "nosniff" },

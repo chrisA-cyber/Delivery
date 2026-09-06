@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, AudioLines, Check, CheckCircle2, Clapperboard, Clock3, Copy, ExternalLink, Film, Headphones, Link2, LoaderCircle, LockKeyhole, Mic, RotateCcw, ShieldCheck, Sparkles, Square, Trophy, Users, X } from "lucide-react";
 import { ContentControl, CONTENT_LABELS } from "@/components/content/content-control";
 import { useApp } from "@/components/providers/app-provider";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
+import { lineRecordingWindows, useLineTakes, type LineWindow } from "@/hooks/use-line-takes";
 import { isRatingAllowed } from "@/data/content";
 import { cn } from "@/lib/utils";
 import { SAY_SCORING_VERSION, type SayAttempt, type SayChallenge, type SayClip, type SayScore } from "@/lib/say-it-back/types";
 import { DubPlayer, type DubPlayerHandle } from "./dub-player";
+import { TakeWaveform } from "./take-waveform";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController();
@@ -79,6 +81,7 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
   const [challenge, setChallenge] = useState<SayChallenge | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [recording, setRecording] = useState(false);
+  const [preparing, setPreparing] = useState(false);
   const [offsetMs, setOffsetMs] = useState(0);
   const [time, setTime] = useState(0);
   const [busy, setBusy] = useState<"upload" | "judge" | "share" | "signin" | null>(null);
@@ -93,37 +96,60 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
   const [checkingResponses, setCheckingResponses] = useState(false);
   const [responseError, setResponseError] = useState("");
   const [takeNumber, setTakeNumber] = useState(1);
+  const [recordingMode, setRecordingMode] = useState<"lines" | "scene">("lines");
+  const [selectedLine, setSelectedLine] = useState(0);
+  const [activeWindow, setActiveWindow] = useState<LineWindow | null>(null);
+  const [editing, setEditing] = useState(true);
+  const [matchSeconds, setMatchSeconds] = useState(0);
   const playerRef = useRef<DubPlayerHandle>(null);
   const friendPlayerRef = useRef<DubPlayerHandle>(null);
   const responsePlayerRef = useRef<DubPlayerHandle>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
   const recorder = useAudioRecorder();
+  const lineTakes = useLineTakes();
+  const resetLines = lineTakes.reset;
+  const acceptLine = lineTakes.accept;
   const { reset, stop, start, cancelCapture, commitCapture, requestPermission, getCapturePositionMs, primeAudioContext } = recorder;
   const recordingRef = useRef(false);
   const countdownToken = useRef(0);
   const submissionId = useRef("");
   const actionInFlight = useRef(false);
+  const submissionRun = useRef(0);
+  const pendingLine = useRef<{ window: LineWindow; offsetMs: number; previousBlob: Blob | null; previousKind: "lines" | "scene"; interrupted?: boolean } | null>(null);
+  const pendingScene = useRef<{ offsetMs: number; previousBlob: Blob | null; previousKind: "lines" | "scene"; interrupted?: boolean } | null>(null);
+  const rawCaptureKind = useRef<"lines" | "scene">("scene");
   const initialLoadDone = useRef(false);
   const mounted = useRef(true);
   const role = clip?.roles.find((item) => item.id === roleId) ?? clip?.roles[0];
-  const captureBusy = recording || countdown != null;
+  const ownCues = useMemo(() => clip?.cues.filter((cue) => cue.roleId === role?.id) ?? [], [clip, role]);
+  const lineWindows = useMemo(() => lineRecordingWindows(ownCues, clip?.duration ?? 0), [ownCues, clip]);
+  const captureBusy = preparing || recording || countdown != null || lineTakes.assembling;
   const selectedAllowed = !clip || isRatingAllowed(clip.rating, contentRating);
-  const takeUrl = recorder.audioUrl ?? attempt?.audioUrl;
+  const localTake = lineTakes.take;
+  const audioBlob = localTake?.blob ?? (rawCaptureKind.current === "scene" ? recorder.audioBlob : null);
+  const localAudioUrl = localTake?.audioUrl ?? (rawCaptureKind.current === "scene" ? recorder.audioUrl : null);
+  const localCanSubmit = localTake?.canSubmit ?? recorder.canSubmit;
+  const localDurationMs = localTake?.durationMs ?? recorder.durationMs;
+  const takeUrl = localAudioUrl ?? attempt?.audioUrl;
+  const fullLineTake = lineTakes.lines.length === 0 || lineTakes.lines.length === ownCues.length;
   const currentScore = attempt?.score;
 
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; countdownToken.current += 1; }; }, []);
 
   const selectClip = useCallback((next: SayClip, requestedRole?: string) => {
+    countdownToken.current += 1; submissionRun.current += 1; actionInFlight.current = false; setBusy(null);
     playerRef.current?.pause();
     friendPlayerRef.current?.pause(); responsePlayerRef.current?.pause();
     setOpenResponseId(null); setShowFriend(false); setResponseError("");
-    reset();
+    reset(); resetLines(); pendingLine.current = null; pendingScene.current = null; rawCaptureKind.current = "scene";
+    setPreparing(false); setCountdown(null); setRecording(false); recordingRef.current = false;
+    setSelectedLine(0); setActiveWindow(null); setEditing(true); setRecordingMode("lines");
     setClip(next);
     setRoleId(next.roles.some((item) => item.id === requestedRole) ? requestedRole! : next.roles[0]?.id ?? "");
     setAttempt(null); setOffsetMs(0); setTime(0); setError(""); setLoadError(""); setNotice(""); setTakeNumber(1); setSharing(false); setCreatedChallenge(null);
     initialLoadDone.current = true;
     submissionId.current = "";
-  }, [reset]);
+  }, [reset, resetLines]);
 
   const loadCatalog = useCallback(async () => {
     setCatalogLoading(true); setLoadError("");
@@ -139,14 +165,14 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
           const claimed = await api<{ attempt: SayAttempt }>(authenticated ? `${path}/claim` : path, authenticated ? { method: "POST" } : undefined);
           if (!mounted.current) return;
           restored = claimed.attempt;
-          selectClip(restored.clip, restored.roleId); setAttempt(restored); setOffsetMs(restored.recordingOffsetMs);
+          selectClip(restored.clip, restored.roleId); setAttempt(restored); setOffsetMs(restored.recordingOffsetMs); setEditing(false);
           setNotice(authenticated ? "Your guest take is now saved privately to your account." : "Your guest take is still here. Sign in on this browser within 24 hours to keep it.");
           if (authenticated) void refreshAccount();
         } else if (initialAttemptId) {
           const saved = await api<{ attempt: SayAttempt }>(`/api/say-it-back/attempts/${encodeURIComponent(initialAttemptId)}`);
           if (!mounted.current) return;
           restored = saved.attempt;
-          selectClip(restored.clip, restored.roleId); setAttempt(restored); setOffsetMs(restored.recordingOffsetMs);
+          selectClip(restored.clip, restored.roleId); setAttempt(restored); setOffsetMs(restored.recordingOffsetMs); setEditing(false);
         }
         if (challengeToken) {
           const loaded = await api<{ challenge: SayChallenge }>(`/api/say-it-back/challenges/${encodeURIComponent(challengeToken)}?maxRating=${contentRating}`);
@@ -187,6 +213,50 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
     recordingRef.current = false; stop(); playerRef.current?.pause(); setRecording(false);
   }, [stop]);
 
+  const updateSceneTime = useCallback((seconds: number) => {
+    setTime(seconds);
+    const pending = pendingLine.current;
+    if (recordingRef.current && pending && seconds >= pending.window.end) finishRecording();
+  }, [finishRecording]);
+
+  useEffect(() => {
+    const pending = pendingLine.current;
+    if (!pending || !clip || recorder.status !== "stopped" || !recorder.audioBlob || recorder.audioBlob === pending.previousBlob) return;
+    pendingLine.current = null;
+    if (!recorder.canSubmit || pending.interrupted || recorder.stopReason === "interrupted" || recorder.stopReason === "hidden") {
+      setActiveWindow(null);
+      rawCaptureKind.current = pending.previousKind;
+      cancelCapture();
+      setError(!recorder.canSubmit ? recorder.qualityMessage || "No usable audio arrived. Try this line again." : "That line was interrupted. Your other lines are unchanged; try this line again.");
+      return;
+    }
+    const token = countdownToken.current;
+    void acceptLine({ cueId: pending.window.cue.id, blob: recorder.audioBlob, sceneStart: pending.window.start, sceneEnd: pending.window.end, recordingOffsetMs: pending.offsetMs }, clip.duration).then((accepted) => {
+      if (!accepted || !mounted.current || token !== countdownToken.current) return;
+      commitCapture();
+      setAttempt(null); setOffsetMs(0); setCreatedChallenge(null); setSharing(false);
+      submissionId.current = crypto.randomUUID();
+      const index = lineWindows.findIndex((window) => window.cue.id === pending.window.cue.id);
+      setSelectedLine(Math.min(lineWindows.length - 1, index + 1));
+      setActiveWindow(null);
+      setNotice(`Line ${index + 1} kept. ${index + 1 < lineWindows.length ? "Start the next line when you’re ready, or redo any line." : "Replay your dub, or redo any line below."}`);
+    }).catch(() => { if (mounted.current && token === countdownToken.current) { rawCaptureKind.current = pending.previousKind; cancelCapture(); setError("That line could not be added. Your previous lines are still here; try again."); } });
+  }, [recorder.status, recorder.audioBlob, recorder.canSubmit, recorder.qualityMessage, recorder.stopReason, clip, acceptLine, lineWindows, commitCapture, cancelCapture]);
+
+  useEffect(() => {
+    const pending = pendingScene.current;
+    if (!pending || recorder.status !== "stopped" || !recorder.audioBlob || recorder.audioBlob === pending.previousBlob) return;
+    pendingScene.current = null;
+    if (!recorder.canSubmit || pending.interrupted || recorder.stopReason === "interrupted" || recorder.stopReason === "hidden") {
+      rawCaptureKind.current = pending.previousKind;
+      cancelCapture();
+      setError("That recording was interrupted or unusable. Your previous take is unchanged; record again when ready.");
+      return;
+    }
+    commitCapture(); resetLines(); rawCaptureKind.current = "scene";
+    setOffsetMs(pending.offsetMs); setAttempt(null); setEditing(false);
+  }, [recorder.status, recorder.audioBlob, recorder.canSubmit, recorder.stopReason, cancelCapture, commitCapture, resetLines]);
+
   useEffect(() => {
     if (recording && (recorder.status === "stopped" || recorder.status === "error")) {
       recordingRef.current = false; setRecording(false); playerRef.current?.pause();
@@ -194,25 +264,49 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
   }, [recording, recorder.status]);
 
   useEffect(() => {
-    if (!recorder.audioBlob || attempt) return;
+    if (!audioBlob || attempt) return;
     const beforeUnload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", beforeUnload);
     return () => window.removeEventListener("beforeunload", beforeUnload);
-  }, [recorder.audioBlob, attempt]);
+  }, [audioBlob, attempt]);
+
+  useEffect(() => {
+    if (busy !== "judge") { setMatchSeconds(0); return; }
+    const start = Date.now();
+    const timer = setInterval(() => setMatchSeconds(Math.floor((Date.now() - start) / 1000)), 1000);
+    return () => clearInterval(timer);
+  }, [busy]);
 
   const cancelCountdown = () => {
-    countdownToken.current += 1; setCountdown(null); cancelCapture(); playerRef.current?.pause(); setNotice(takeUrl ? "Countdown cancelled. Your previous take is unchanged." : "Countdown cancelled. Start again when you’re ready.");
+    countdownToken.current += 1; pendingLine.current = null; pendingScene.current = null; setPreparing(false); setActiveWindow(null); setCountdown(null); cancelCapture(); playerRef.current?.pause(); actionInFlight.current = false; setNotice(takeUrl ? "Countdown cancelled. Your previous take is unchanged." : "Countdown cancelled. Start again when you’re ready.");
   };
 
-  const beginRecording = async () => {
+  const beginRecording = async (window?: LineWindow) => {
+    if (busy === "judge") { submissionRun.current += 1; actionInFlight.current = false; setBusy(null); }
     if (!clip || !role || actionInFlight.current || captureBusy) return;
-    actionInFlight.current = true; setError(""); setNotice(""); setShowFriend(false);
+    actionInFlight.current = true; setPreparing(true); setError(""); setNotice(""); setShowFriend(false);
     friendPlayerRef.current?.pause(); responsePlayerRef.current?.pause(); setOpenResponseId(null);
     const token = ++countdownToken.current;
     try {
       primeAudioContext();
       if (!await requestPermission()) { cancelCapture(); return; }
-      playerRef.current?.prepare();
+      if (token !== countdownToken.current || !mounted.current) { cancelCapture(); return; }
+      if (window && lineTakes.lines.length === 0 && takeUrl) {
+        // Re-editing a saved full take keeps the other lines too. The original
+        // private playback endpoint still authorizes this download.
+        let base = audioBlob;
+        if (!base) {
+          setNotice("Opening your previous lines so only this line changes…");
+          const response = await fetch(takeUrl, { signal: AbortSignal.timeout(12_000), cache: "no-store" });
+          if (!response.ok) throw new Error("Your previous take could not load. Retry before replacing a line.");
+          base = await response.blob();
+        }
+        if (token !== countdownToken.current || !mounted.current) { cancelCapture(); return; }
+        lineTakes.seed(base, lineWindows, attempt && !localAudioUrl ? attempt.recordingOffsetMs : offsetMs);
+        setNotice("");
+      }
+      playerRef.current?.prepare(window?.start ?? 0);
+      setActiveWindow(window ?? null);
       sceneRef.current?.scrollIntoView({ block: "start", behavior: "instant" });
       for (let count = 3; count > 0; count -= 1) {
         if (token !== countdownToken.current || !mounted.current) return;
@@ -221,55 +315,58 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
       }
       if (token !== countdownToken.current || !mounted.current) return;
       setCountdown(0);
-      if (!await start({ preservePreviousTake: true })) { cancelCapture(); setCountdown(null); return; }
+      if (!await start({ preservePreviousTake: true })) { cancelCapture(); playerRef.current?.pause(); setActiveWindow(null); setCountdown(null); return; }
       // Let the first input block establish the PCM origin, then measure only
       // the small technical pre-roll at scene playback startup.
       const deadline = performance.now() + 250;
       while (getCapturePositionMs() == null && performance.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 10));
-      if (token !== countdownToken.current || !mounted.current) { cancelCapture(); return; }
+      if (token !== countdownToken.current || !mounted.current) { cancelCapture(); playerRef.current?.pause(); return; }
       const sceneTime = await playerRef.current?.startScene();
       if (token !== countdownToken.current || !mounted.current) { cancelCapture(); playerRef.current?.pause(); return; }
       const capturePosition = getCapturePositionMs();
       if (sceneTime == null || capturePosition == null) throw new Error("The microphone could not synchronize with the scene. Please try recording again.");
-      const measuredOffset = Math.round(capturePosition - sceneTime * 1000);
+      const measuredOffset = Math.round(capturePosition - (sceneTime - (window?.start ?? 0)) * 1000);
       if (Math.abs(measuredOffset) > 300) throw new Error("The scene took too long to start in sync. Let it load, then record again.");
-      commitCapture();
+      const previousKind = rawCaptureKind.current;
+      rawCaptureKind.current = window ? "lines" : "scene";
+      if (window) pendingLine.current = { window, offsetMs: measuredOffset, previousBlob: recorder.audioBlob, previousKind };
+      else { pendingScene.current = { offsetMs: measuredOffset, previousBlob: recorder.audioBlob, previousKind }; pendingLine.current = null; }
       if (takeUrl) setTakeNumber((number) => number + 1);
-      setOffsetMs(measuredOffset); setAttempt(null); setCreatedChallenge(null); setSharing(false); setCountdown(null);
+      setCreatedChallenge(null); setSharing(false); setCountdown(null);
       setChallengeConsent(false);
       submissionId.current = crypto.randomUUID(); recordingRef.current = true; setRecording(true);
     } catch (cause) {
-      cancelCapture(); playerRef.current?.pause(); setCountdown(null); recordingRef.current = false; setRecording(false);
+      pendingLine.current = null; pendingScene.current = null; setActiveWindow(null); cancelCapture(); playerRef.current?.pause(); setCountdown(null); recordingRef.current = false; setRecording(false);
       setError(cause instanceof Error ? cause.message : "Recording could not start. Please try again.");
-    } finally { actionInFlight.current = false; }
+    } finally { if (token === countdownToken.current) { actionInFlight.current = false; setPreparing(false); } }
   };
 
   const refreshPlayback = useCallback(async () => {
     if (!attempt) throw new Error("No saved take");
     const next = await api<{ attempt: SayAttempt }>(`/api/say-it-back/attempts/${encodeURIComponent(attempt.id)}`);
-    setAttempt(next.attempt);
+    setAttempt((current) => current?.id === next.attempt.id ? next.attempt : current);
   }, [attempt]);
 
   const uploadTake = useCallback(async () => {
     if (attempt) return attempt;
-    if (!clip || !role || !recorder.audioBlob || !recorder.canSubmit) throw new Error("Record a usable take before saving it.");
+    if (!clip || !role || !audioBlob || !localCanSubmit) throw new Error("Record a usable take before saving it.");
     if (challenge && !challengeConsent) throw new Error("Choose the sharing checkbox below before saving this challenge response. Your take is still here.");
     const form = new FormData();
-    form.set("audio", recorder.audioBlob, "say-it-back.wav");
+    form.set("audio", audioBlob, "say-it-back.wav");
     form.set("clipId", clip.id); form.set("clipVersion", clip.version); form.set("roleId", role.id);
-    form.set("durationMs", String(recorder.durationMs)); form.set("recordingOffsetMs", String(offsetMs));
+    form.set("durationMs", String(localDurationMs)); form.set("recordingOffsetMs", String(offsetMs));
     form.set("attemptId", submissionId.current || (submissionId.current = crypto.randomUUID())); form.set("maxRating", contentRating);
     if (challenge) { form.set("challengeToken", challenge.token); form.set("shareAudio", "true"); }
     const uploaded = (await api<{ attempt: SayAttempt }>("/api/say-it-back/attempts", { method: "POST", body: form })).attempt;
     if (mounted.current) setAttempt(uploaded);
     return uploaded;
-  }, [attempt, clip, role, recorder.audioBlob, recorder.canSubmit, recorder.durationMs, offsetMs, contentRating, challenge, challengeConsent]);
+  }, [attempt, clip, role, audioBlob, localCanSubmit, localDurationMs, offsetMs, contentRating, challenge, challengeConsent]);
 
   const signInAndKeepTake = useCallback(async () => {
     if (actionInFlight.current || captureBusy) return;
     actionInFlight.current = true; setBusy("signin"); setError("");
     try {
-      const retained = attempt ?? (recorder.audioBlob ? await uploadTake() : null);
+      const retained = attempt ?? (audioBlob ? await uploadTake() : null);
       const destination = new URLSearchParams();
       if (retained) destination.set(retained.saved ? "attempt" : "claim", retained.id);
       else if (clip && role) { destination.set("clip", clip.id); destination.set("role", role.id); }
@@ -277,7 +374,7 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
       router.push(`/login?next=${encodeURIComponent(`/say-it-back${destination.size ? `?${destination}` : ""}`)}`);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Your take could not be kept yet. Please try again before signing in."); }
     finally { actionInFlight.current = false; if (mounted.current) setBusy(null); }
-  }, [attempt, recorder.audioBlob, uploadTake, captureBusy, clip, role, challenge, router]);
+  }, [attempt, audioBlob, uploadTake, captureBusy, clip, role, challenge, router]);
 
   const saveWithoutScoring = async () => {
     if (actionInFlight.current || captureBusy) return;
@@ -309,36 +406,54 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
   }, [authenticated, clip, captureBusy, signInAndKeepTake]);
 
   const submit = async () => {
-    if (!clip || !role || actionInFlight.current || (!attempt && (!recorder.audioBlob || !recorder.canSubmit))) return;
+    if (!clip || !role || actionInFlight.current || captureBusy || !fullLineTake || (!attempt && (!audioBlob || !localCanSubmit))) return;
     if (challenge && !challengeConsent && !attempt) { setError("Choose whether to share this challenge take before submitting."); return; }
     actionInFlight.current = true; setError(""); setNotice("");
+    const run = ++submissionRun.current;
     try {
       let current = attempt;
       if (!current) {
         setBusy("upload");
         current = await uploadTake();
-        if (!mounted.current) return;
+        if (!mounted.current || run !== submissionRun.current) return;
         setAttempt(current);
       }
       if (current.status !== "scored") {
         setBusy("judge");
         const judged = await api<{ attempt: SayAttempt; usage?: { remaining: number | null } }>(`/api/say-it-back/attempts/${encodeURIComponent(current.id)}/judge`, { method: "POST" });
         current = judged.attempt;
-        if (!mounted.current) return;
+        if (!mounted.current || run !== submissionRun.current) return;
         setAttempt(current);
         if (judged.usage) setRemainingMatches(judged.usage.remaining);
       }
       if (current.status === "scored") {
+        setEditing(false);
         setNotice(current.saved ? "Saved privately. Find this exact scene and your take in history." : "Your guest take is ready. Sign in for your personal history.");
         void refreshAccount();
         if (challenge) void api<{ challenge: SayChallenge }>(`/api/say-it-back/challenges/${encodeURIComponent(challenge.token)}?maxRating=${contentRating}`).then((data) => setChallenge(data.challenge)).catch(() => undefined);
       }
-    } catch (cause) { if (mounted.current) setError(cause instanceof Error ? cause.message : "Your take could not be scored. It is still available to replay."); }
-    finally { actionInFlight.current = false; if (mounted.current) setBusy(null); }
+    } catch (cause) { if (mounted.current && run === submissionRun.current) setError(cause instanceof Error ? cause.message : "Your take could not be scored. It is still available to replay."); }
+    finally { if (run === submissionRun.current) { actionInFlight.current = false; if (mounted.current) setBusy(null); } }
   };
 
   const retake = () => {
-    void beginRecording();
+    if (captureBusy || (busy && busy !== "judge")) return;
+    // A slow score belongs to its submitted take. It must neither lock the
+    // recorder nor overwrite a newer performance when its response arrives.
+    submissionRun.current += 1; actionInFlight.current = false; setBusy(null);
+    playerRef.current?.pause();
+    setEditing(true); setError(""); setSharing(false); setCreatedChallenge(null);
+    setSelectedLine(0);
+    setNotice("Choose a line to redo, or record the full scene. Your previous take stays here until a replacement is ready.");
+    sceneRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  };
+
+  const previewLine = async (window: LineWindow) => {
+    if (captureBusy) return;
+    friendPlayerRef.current?.pause(); responsePlayerRef.current?.pause();
+    setError("");
+    try { await playerRef.current?.previewRange(window.start, window.end); }
+    catch { setError("That line is still loading. Tap Listen again when the scene is ready."); }
   };
 
   const createChallenge = async () => {
@@ -363,7 +478,8 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
   };
 
   const backToScenes = () => {
-    playerRef.current?.pause(); friendPlayerRef.current?.pause(); responsePlayerRef.current?.pause(); reset(); setClip(null); setAttempt(null); setChallenge(null); setError(""); setNotice(""); setCreatedChallenge(null); setSharing(false); setOpenResponseId(null);
+    submissionRun.current += 1; countdownToken.current += 1; actionInFlight.current = false; setBusy(null);
+    playerRef.current?.pause(); friendPlayerRef.current?.pause(); responsePlayerRef.current?.pause(); reset(); resetLines(); pendingLine.current = null; rawCaptureKind.current = "scene"; setClip(null); setAttempt(null); setChallenge(null); setError(""); setNotice(""); setCreatedChallenge(null); setSharing(false); setOpenResponseId(null);
     setLoadError(""); initialLoadDone.current = true;
   };
 
@@ -384,22 +500,20 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
       <div><p className="max-w-lg text-lg leading-7 text-white/75">Watch a real scene. Step into a role. Hear your voice take over the screen.</p><div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs font-bold text-white/55"><span className="flex items-center gap-1.5"><Mic className="size-4 text-acid" />Mic only. No camera.</span><span className="flex items-center gap-1.5"><Users className="size-4 text-electric" />Solo or against a friend.</span></div></div>
     </header>
     <div className="mb-8 grid grid-cols-3 overflow-hidden rounded-xl border border-white/15 bg-[#20201d]">
-      {([{ icon: Film, label: "Watch the scene", sub: "Catch the words and timing" }, { icon: Mic, label: "Make it yours", sub: "Record while the scene plays" }, { icon: Headphones, label: "Watch your dub", sub: "Get a match. Go again." }]).map((step, index) => <div key={step.label} className={cn("flex min-w-0 flex-col gap-2 px-3 py-4 sm:flex-row sm:items-center sm:gap-3 sm:p-5", index > 0 && "border-l border-white/15")}><step.icon className="size-5 shrink-0 text-hot" /><div><p className="text-xs font-bold sm:text-sm">{step.label}</p><p className="mt-1 hidden text-xs text-white/50 sm:block">{step.sub}</p></div></div>)}
+      {([{ icon: Film, label: "Watch the scene", sub: "Catch the words and timing" }, { icon: Mic, label: "Make it yours", sub: "Record and redo each line" }, { icon: Headphones, label: "Watch your dub", sub: "Get a match. Go again." }]).map((step, index) => <div key={step.label} className={cn("flex min-w-0 flex-col gap-2 px-3 py-4 sm:flex-row sm:items-center sm:gap-3 sm:p-5", index > 0 && "border-l border-white/15")}><step.icon className="size-5 shrink-0 text-hot" /><div><p className="text-xs font-bold sm:text-sm">{step.label}</p><p className="mt-1 hidden text-xs text-white/50 sm:block">{step.sub}</p></div></div>)}
     </div>
     <p className="mb-6 text-xs leading-6 text-white/60">{tier === "pro" ? "Record, replay, and match your scenes with your Pro allowance." : "5 scored plays per day, shared with Classic. Recording and replaying are free. Resets at midnight UTC."}{!authenticated && " Start as a guest; sign in to keep a take in your history or create a challenge."}</p>
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-xl font-bold tracking-tight">Choose your scene</h2><p className="mt-1 text-xs leading-5 text-white/55">Short scenes. Big main-character energy.</p></div><ContentControl compact value={contentRating} onChange={(rating) => updatePreferences({ contentRating: rating })} /></div>
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-xl font-bold tracking-tight">Choose your scene</h2><p className="mt-1 text-xs leading-5 text-white/55">Longer scenes first. Record their dialogue one line at a time.</p></div><ContentControl compact value={contentRating} onChange={(rating) => updatePreferences({ contentRating: rating })} /></div>
     {loadError && <div className="game-error mb-6" role="alert">{loadError}{initialClaimId && !authenticated && <Link className="ml-3 underline" href={`/login?next=${encodeURIComponent(`/say-it-back?claim=${initialClaimId}`)}`}>Sign in</Link>}<button type="button" onClick={() => void loadCatalog()} className="ml-3 underline">Try again</button></div>}
-    {catalogLoading && clips.length === 0 ? <div role="status" className="flex min-h-56 items-center justify-center gap-3 text-sm text-white/60"><LoaderCircle className="size-5 animate-spin" />Opening the scene collection…</div> : clips.length === 0 ? <div className="panel p-8 text-center"><p className="font-bold">No scenes are available with this filter yet.</p><p className="mt-2 text-sm text-white/60">Try another content setting or check back when the collection is ready.</p></div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{clips.map((item, index) => <ClipCard key={`${item.id}:${item.version}`} clip={item} index={index} onSelect={() => selectClip(item)} />)}</div>}
+    {catalogLoading && clips.length === 0 ? <div role="status" className="flex min-h-56 items-center justify-center gap-3 text-sm text-white/60"><LoaderCircle className="size-5 animate-spin" />Opening the scene collection…</div> : clips.length === 0 ? <div className="panel p-8 text-center"><p className="font-bold">No scenes are available with this filter yet.</p><p className="mt-2 text-sm text-white/60">Try another content setting or check back when the collection is ready.</p></div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{[...clips].sort((a, b) => b.duration - a.duration).map((item, index) => <ClipCard key={`${item.id}:${item.version}`} clip={item} index={index} onSelect={() => selectClip(item)} />)}</div>}
     <p className="mt-8 flex items-start gap-2 text-xs leading-6 text-white/50"><ShieldCheck className="mt-1 size-4 shrink-0" />Curated real footage with source credits in every scene. Your recordings stay private unless you choose to share a challenge.</p>
   </div></main>;
 
-  const ownCues = clip.cues.filter((cue) => cue.roleId === role.id);
   const friendScore = challenge?.challengerAttempt.score;
   const challengeOwner = Boolean(challenge?.challengerAttempt.owned);
   const friendResponses = challengeOwner ? (challenge?.recipientAttempts ?? []).filter((response) => !response.owned && response.status === "scored" && response.score != null && response.score.version === challenge?.scoringVersion && response.score.timing != null && response.score.rhythm != null) : [];
   const comparableChallenge = currentScore && friendScore && currentScore.timing != null && currentScore.rhythm != null && friendScore.timing != null && friendScore.rhythm != null && currentScore.version === friendScore.version;
-  const recordingReady = recorder.status === "ready";
-  const canTryAgain = !busy && !captureBusy;
+  const canTryAgain = (!busy || busy === "judge") && !captureBusy;
 
   return <main className="min-h-screen px-4 pb-16 pt-[96px] sm:px-8 sm:pt-28"><div className="mx-auto max-w-[1184px]">
     <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><button type="button" className="button-ghost -ml-3 px-3" disabled={!canTryAgain} onClick={backToScenes}><ArrowLeft className="size-4" />All scenes</button><div className="flex items-center gap-3"><Link href="/play" className="text-xs text-white/55 hover:text-white">Classic</Link><span className="h-4 w-px bg-white/20" /><span className="mono-label text-hot">Say It Back</span></div></div>
@@ -428,28 +542,47 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3"><div><p className="mono-label mb-2 text-white/50">{clip.source.title}</p><h1 className="text-[clamp(1.7rem,4vw,2.7rem)] font-bold leading-tight tracking-tight">{clip.title}</h1></div><div className="flex flex-wrap items-center gap-2 text-xs text-white/65"><span className="rounded-md border border-white/15 px-2.5 py-1.5">{durationLabel(clip.duration)}</span><span className="rounded-md border border-white/15 px-2.5 py-1.5">{difficultyLabels[clip.difficulty]}</span><span className="rounded-md border border-white/15 px-2.5 py-1.5">{CONTENT_LABELS[clip.rating]}</span></div></div>
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(285px,1fr)]">
         <div ref={sceneRef} className="min-w-0 scroll-mt-24 space-y-5">
-          {!takeUrl && !captureBusy && <div className="rounded-xl border border-hot/25 bg-hot/[0.07] px-4 py-3 text-sm leading-6"><p className="font-bold">You’re playing {role.name}.</p><p className="mt-1 text-white/65">Watch once to hear your lines. Then record after the countdown, speaking when your captions appear. Other roles stay in the scene; only say your lines.</p></div>}
-          <DubPlayer key={`${clip.id}:${clip.version}:${role.id}`} ref={playerRef} clip={clip} role={role} takeUrl={takeUrl} recordingOffsetMs={attempt && !recorder.audioUrl ? attempt.recordingOffsetMs : offsetMs} recording={recording} countdown={countdown} onCancelCountdown={cancelCountdown} onEnded={finishRecording} onTime={setTime} onPlaybackStart={() => { friendPlayerRef.current?.pause(); responsePlayerRef.current?.pause(); }} onAudioError={refreshPlayback} onInterruption={() => { finishRecording(); setError("Scene playback was interrupted, so recording stopped to preserve timing. Replay your partial take, or let the scene load and retake."); }} />
-          {takeUrl && <section className="rounded-xl border border-electric/25 bg-electric/[0.07] px-5 py-4"><div className="flex items-start gap-3"><Headphones className="mt-0.5 size-5 shrink-0 text-electric" /><div><h2 className="font-bold">Your dub is ready.</h2><p className="mt-1 text-sm leading-6 text-white/65">Tap play above. Switch between Original and Your take to hear the difference.{busy === "judge" ? " Keep watching while we check your match." : ""}</p></div></div></section>}
+          {!takeUrl && !captureBusy && <div className="rounded-xl border border-hot/25 bg-hot/[0.07] px-4 py-3 text-sm leading-6"><p className="font-bold">You’re playing {role.name}.</p><p className="mt-1 text-white/65">Listen to the scene, then record one line at a time. Each line waits for you. You can redo a line without starting over.</p></div>}
+          <DubPlayer key={`${clip.id}:${clip.version}:${role.id}`} ref={playerRef} clip={clip} role={role} takeUrl={takeUrl} recordingOffsetMs={attempt && !localAudioUrl ? attempt.recordingOffsetMs : offsetMs} recording={recording} countdown={countdown} onCancelCountdown={cancelCountdown} onEnded={finishRecording} onTime={updateSceneTime} onPlaybackStart={() => { friendPlayerRef.current?.pause(); responsePlayerRef.current?.pause(); }} onAudioError={refreshPlayback} onInterruption={() => { if (pendingLine.current) pendingLine.current.interrupted = true; if (pendingScene.current) pendingScene.current.interrupted = true; finishRecording(); setError("Scene playback was interrupted, so recording stopped to preserve timing. Replay your partial take, or let the scene load and retake."); }} />
+          <section className="rounded-2xl border border-white/15 bg-[#20201d] p-4 sm:p-5" aria-label="Recording controls">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div><p className="mono-label text-white/50">Your recording · take {takeNumber}</p><h2 className="mt-1 text-lg font-bold">{captureBusy ? activeWindow ? `Recording line ${lineWindows.findIndex((item) => item.cue.id === activeWindow.cue.id) + 1}` : "Recording the scene" : editing ? "Take your time. One line at a time." : "Ready for another go?"}</h2></div>
+              {!captureBusy && <div className="flex rounded-lg border border-white/15 p-1" role="group" aria-label="Recording approach">{(["lines", "scene"] as const).map((mode) => <button key={mode} type="button" aria-pressed={recordingMode === mode} disabled={Boolean(busy && busy !== "judge")} onClick={() => { setRecordingMode(mode); setEditing(true); }} className={cn("min-h-10 rounded-md px-3 text-xs font-bold", recordingMode === mode ? "bg-paper text-ink" : "text-white/60")}>{mode === "lines" ? "Line by line" : "Full scene"}</button>)}</div>}
+            </div>
+            {(editing || captureBusy) && <>
+              <TakeWaveform referenceUrl={clip.referenceAudioUrl} duration={clip.duration} rangeStart={recordingMode === "lines" ? (activeWindow ?? lineWindows[selectedLine])?.start : 0} rangeEnd={recordingMode === "lines" ? (activeWindow ?? lineWindows[selectedLine])?.end : clip.duration} playhead={time} takeWaveform={localTake?.waveform ?? (recorder.waveform ?? []).map((point) => ({ ...point, time: point.time - offsetMs / 1000 }))} liveWaveform={recorder.waveform} liveStart={(activeWindow?.start ?? 0) - (pendingLine.current?.offsetMs ?? pendingScene.current?.offsetMs ?? offsetMs) / 1000} recording={recording} />
+              {recordingMode === "lines" && <div className="mb-4 mt-4 space-y-2" aria-label="Record individual lines">{lineWindows.map((window, index) => {
+                if (captureBusy && activeWindow && activeWindow.cue.id !== window.cue.id) return null;
+                const kept = lineTakes.lines.some((item) => item.cueId === window.cue.id);
+                const selected = (activeWindow?.cue.id ?? lineWindows[selectedLine]?.cue.id) === window.cue.id;
+                return <div key={window.cue.id} className={cn("rounded-xl border p-3", selected ? "border-acid/60 bg-acid/5" : "border-white/10 bg-black/10")}>
+                  <button type="button" disabled={captureBusy} onClick={() => setSelectedLine(index)} className="w-full text-left"><span className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wide text-white/50"><span>Line {index + 1} · {window.cue.start.toFixed(1)}s</span>{kept && <span className="flex items-center gap-1 text-acid"><Check className="size-3" />Kept</span>}</span><span className="mt-1 block text-sm font-bold leading-6">{window.cue.text}</span></button>
+                  <div className="mt-2 flex flex-wrap gap-2"><button type="button" className="button-secondary min-h-10 px-3 py-2 text-xs" disabled={captureBusy} onClick={() => { setSelectedLine(index); void previewLine(window); }} aria-label={`Listen to original line ${index + 1}`}><Headphones className="size-3.5" />Listen</button><button type="button" className="button-primary min-h-10 px-3 py-2 text-xs" disabled={captureBusy || Boolean(busy && busy !== "judge") || recorder.status === "requesting"} onClick={() => { setSelectedLine(index); void beginRecording(window); }} aria-label={`${kept ? "Redo" : "Record"} line ${index + 1}`}><Mic className="size-3.5" />{kept ? "Redo line" : "Record line"}</button></div>
+                </div>;
+              })}</div>}
+              {recorder.isClipping && <p className="mt-2 text-xs text-acid" role="status">Your input is clipping. Move a little farther from the microphone.</p>}
+              {captureBusy ? <div className="mt-4">{lineTakes.assembling ? <p role="status" className="flex items-center gap-2 text-sm"><LoaderCircle className="size-4 animate-spin" />Preparing your local preview…</p> : (countdown != null || preparing) ? <button type="button" className="button-secondary w-full" onClick={cancelCountdown}><X className="size-4" />Cancel countdown</button> : <button type="button" className="button-primary w-full" onClick={finishRecording}><Square className="size-4 fill-current" />{activeWindow ? "Finish this line" : "Stop recording"}</button>}</div> : recordingMode === "scene" ? <button type="button" className="button-primary mt-4 min-h-12 w-full" disabled={Boolean(busy && busy !== "judge") || recorder.status === "requesting"} onClick={() => void beginRecording()}><Mic className="size-4" />{recorder.status === "requesting" ? "Opening microphone…" : "Record full scene"}</button> : <p className="mt-3 text-xs leading-5 text-white/60">{lineTakes.lines.length > 0 ? `${lineTakes.lines.length} of ${ownCues.length} lines kept. ` : ""}Press Record for any line. You get a 3-second countdown, and we wait for you before the next line. Redo only what you want to change.</p>}
+              <p className="mt-3 text-[11px] leading-5 text-white/45">Scene audio is muted during capture. Follow the original waveform and captions; your voice is never sped up or aligned to improve the match.</p>
+            </>}
+            {takeUrl && !captureBusy && <div className="mt-4 border-t border-white/10 pt-4">
+              {!currentScore && <>{challenge && !attempt && <label className="mb-4 flex cursor-pointer gap-2.5 text-xs leading-5 text-white/75"><input type="checkbox" checked={challengeConsent} onChange={(event) => setChallengeConsent(event.target.checked)} className="mt-1 size-4 shrink-0 accent-acid" />Share this take with the friend who created this challenge so we can compare our dubs.</label>}<button type="button" className="button-primary min-h-12 w-full" disabled={Boolean(busy) || !fullLineTake || (!attempt && !localCanSubmit) || Boolean(challenge && !attempt && !challengeConsent)} onClick={() => void submit()}>{busy ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{busy === "upload" ? "Saving your take…" : busy === "judge" ? `Checking your match… ${matchSeconds}s` : !fullLineTake ? "Record the remaining lines to match" : attempt?.status === "failed" || error ? "Retry this take" : challenge ? "Score & share my take" : "Get my match"}</button><p className="mt-2 text-xs leading-5 text-white/55">{busy === "judge" ? "Your dub is ready to play now. You can also start another take while this result finishes." : attempt ? "This take is already uploaded. Retrying uses the same submission." : "Your voice plays from this device without an upload wait. Getting a match uses one scored play."}</p></>}
+              <button type="button" className="button-secondary mt-3 w-full" onClick={retake} disabled={!canTryAgain}><RotateCcw className="size-4" />Record another take</button>
+              {currentScore && <><button type="button" className="button-primary mt-3 w-full" disabled={!canTryAgain || currentScore.timing == null || currentScore.rhythm == null} onClick={() => { setSharing(!sharing); setShareConsent(false); }}><Users className="size-4" />Challenge a friend</button>{(currentScore.timing == null || currentScore.rhythm == null) && <p className="mt-2 text-xs leading-5 text-white/60">A words-only result cannot enter a matching challenge. Record again for a complete match.</p>}<button type="button" className="button-ghost mt-2 w-full" disabled={!canTryAgain} onClick={() => { const next = clips.findIndex((item) => item.id === clip.id); const nextClip = clips[(next + 1) % clips.length]; if (nextClip) { setChallenge(null); selectClip(nextClip); } else backToScenes(); }}>Next scene<ArrowRight className="size-3.5" /></button></>}
+            </div>}
+            {recorder.status === "requesting" && <p role="status" className="mt-3 flex items-center gap-2 text-xs"><LoaderCircle className="size-4 animate-spin" />Opening microphone… Allow access in your browser.</p>}
+            {recorder.error && <p className="mt-3 text-xs leading-5 text-[#ffbcaa]" role="alert">{recorder.error}</p>}{recorder.warning && <p className="mt-3 text-xs leading-5 text-[#ffd4a3]" role="status">{recorder.warning}</p>}{audioBlob && !localCanSubmit && <p className="mt-3 text-xs leading-5 text-[#ffbcaa]" role="alert">{localTake?.qualityMessage ?? recorder.qualityMessage} Record another take to get a match.</p>}
+          </section>
+          {takeUrl && <section className="rounded-xl border border-electric/25 bg-electric/[0.07] px-5 py-4"><div className="flex items-start gap-3"><Headphones className="mt-0.5 size-5 shrink-0 text-electric" /><div><h2 className="font-bold">{fullLineTake ? "Your dub is ready." : `Preview your dub · ${lineTakes.lines.length}/${ownCues.length} lines`}</h2><p className="mt-1 text-sm leading-6 text-white/65">Tap play above. Switch between Original and Your take to hear the difference. Your recorded lines keep their original timing.{busy === "judge" ? " Keep watching while we check your match." : ""}</p></div></div></section>}
           {currentScore && <ScorePanel score={currentScore} previousBest={attempt?.previousBest} />}
           {comparableChallenge && <section className="rounded-2xl border border-hot/40 bg-hot/10 p-6"><p className="mono-label text-hot">Head to head</p><h2 className="mt-2 text-2xl font-bold">{currentScore.overall > friendScore.overall ? "You took the scene." : currentScore.overall === friendScore.overall ? "A scene-stealing tie." : "They’ve got you. For now."}</h2><div className="mt-5 grid grid-cols-2 gap-4"><div className="rounded-xl bg-paper p-4 text-ink"><p className="text-xs font-bold">You</p><p className="mt-1 text-4xl font-bold">{Math.round(currentScore.overall)}</p></div><div className="rounded-xl border border-white/20 p-4"><p className="text-xs font-bold">{challenge?.challengerName}</p><p className="mt-1 text-4xl font-bold">{Math.round(friendScore.overall)}</p></div></div><button type="button" className="button-secondary mt-5" disabled={!canTryAgain} onClick={retake}><RotateCcw className="size-4" />Rematch this scene</button></section>}
           <details className="rounded-xl border border-white/15 px-5 py-4 text-xs leading-6 text-white/60"><summary className="cursor-pointer font-bold text-white/70">Scene credits & playback notes</summary><p className="mt-3">{clip.source.attribution}</p><p className="mt-2">{clip.source.reuseNote}</p><p className="mt-2">{role.dubAudioUrl ? "This role has a prepared scene track with its original dialogue removed. Other dialogue and scene sound remain where available." : "The original soundtrack is muted over this role’s dialogue, then returns between lines. Background sound drops during those intervals."}</p><p className="mt-2">The recording starts just before the scene. We preserve your spoken timing and only account for that measured startup offset. Your device’s microphone latency is not separately calibrated.</p><div className="mt-3 flex flex-wrap gap-4"><a href={clip.source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline">Original source <ExternalLink className="size-3" /></a><a href={clip.source.licenseUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline">{clip.source.license} <ExternalLink className="size-3" /></a></div><p className="mt-3 break-all text-[10px] text-white/45">Scene {clip.id} · {clip.version} · {attempt?.scoringVersion ?? challenge?.scoringVersion ?? SAY_SCORING_VERSION}</p></details>
         </div>
         <aside className="min-w-0 space-y-4">
-          <section className="overflow-hidden rounded-2xl bg-paper text-ink"><div className="border-b border-ink/15 bg-hot px-5 py-4"><p className="mono-label text-ink/60">Your role</p>{clip.roles.length > 1 && !challenge && !attempt && !recorder.audioBlob ? <label className="mt-1 block"><span className="sr-only">Choose your role</span><select value={role.id} disabled={captureBusy || Boolean(busy)} onChange={(event) => { reset(); setRoleId(event.target.value); setTime(0); }} className="w-full rounded-lg border border-ink/20 bg-transparent py-2 pr-8 text-xl font-bold text-ink [color-scheme:light]">{clip.roles.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : <h2 className="mt-1 text-xl font-bold">{role.name}</h2>}<p className="mt-1 text-xs leading-5 text-ink/65">{role.description}</p></div>
-            <div className="px-5 py-4"><p className="mono-label mb-3 text-ink/50">Your lines · follow the scene</p><div className="space-y-3">{ownCues.map((cue) => <div key={cue.id} className={cn("rounded-lg border-l-[3px] py-1 pl-3 transition-colors", time >= cue.start - 0.3 && time <= cue.end + 0.12 ? "border-acid bg-acid/10" : "border-ink/15")}><p className="text-[10px] font-bold tabular-nums text-ink/45">{cue.start.toFixed(1)}s</p><p className="mt-1 text-base font-bold leading-snug">{cue.text}</p></div>)}</div></div>
-          </section>
-          <section className="rounded-2xl border border-white/15 bg-[#20201d] p-5" aria-label="Recording controls">
-            <div className="mb-4 flex items-center justify-between gap-2"><p className="mono-label text-white/55">Take {takeNumber}</p><span className={cn("flex items-center gap-1.5 text-[11px] font-bold", recording ? "text-acid" : recordingReady ? "text-electric" : "text-white/50")}>{recording ? <><span className="size-2 animate-pulse rounded-full bg-acid" />Recording</> : recordingReady ? <><Check className="size-3.5" />Mic ready</> : takeUrl ? <><Headphones className="size-3.5" />Ready to replay</> : <><Mic className="size-3.5" />Mic only</>}</span></div>
-            {captureBusy ? <><div className="mb-4 flex h-12 items-center justify-center gap-1 overflow-hidden" aria-label="Microphone level">{Array.from({ length: 27 }, (_, index) => <i key={index} className={cn("block w-1.5 rounded-full transition-[height] duration-75", recorder.isClipping ? "bg-acid" : "bg-electric")} style={{ height: recording ? `${Math.max(5, recorder.level * (14 + (index * 17 % 31)))}px` : "5px" }} />)}</div><div className="mb-4 flex justify-between text-xs tabular-nums text-white/55"><span>{Math.min(time, clip.duration).toFixed(1)}s</span><span>{durationLabel(clip.duration)}</span></div>{countdown != null ? <button type="button" className="button-secondary w-full" onClick={cancelCountdown}><X className="size-4" />Cancel countdown</button> : <button type="button" className="button-primary w-full" onClick={finishRecording}><Square className="size-4 fill-current" />Stop recording</button>}<p className="mt-3 text-xs leading-5 text-white/60">Say your lines when they appear. The scene will stop automatically.</p></> : !takeUrl ? <><button type="button" className="button-primary min-h-14 w-full text-sm" disabled={Boolean(busy) || recorder.status === "requesting"} onClick={() => void beginRecording()}>{recorder.status === "requesting" ? <LoaderCircle className="size-5 animate-spin" /> : <Mic className="size-5" />}{recorder.status === "requesting" ? "Opening microphone…" : "Record my take"}</button><p className="mt-3 text-xs leading-5 text-white/60">You get a 3-second countdown. Scene audio stays off during recording so the original voice won’t leak into your take.</p>{recorder.status === "error" && <button type="button" onClick={() => void requestPermission()} className="button-secondary mt-3 w-full">Try microphone again</button>}</> : <>
-              {!currentScore && <>{challenge && !attempt && <label className="mb-4 flex cursor-pointer gap-2.5 text-xs leading-5 text-white/75"><input type="checkbox" checked={challengeConsent} onChange={(event) => setChallengeConsent(event.target.checked)} className="mt-1 size-4 shrink-0 accent-acid" />Share this take with the friend who created this challenge so we can compare our dubs.</label>}<button type="button" className="button-primary min-h-14 w-full" disabled={Boolean(busy) || (!attempt && !recorder.canSubmit) || Boolean(challenge && !attempt && !challengeConsent)} onClick={() => void submit()}>{busy ? <LoaderCircle className="size-5 animate-spin" /> : <Sparkles className="size-5" />}{busy === "upload" ? "Saving your take…" : busy === "judge" ? "Checking your match…" : attempt?.status === "failed" || error ? "Retry this take" : challenge ? "Score & share my take" : "Get my match"}</button><p className="mt-3 text-xs leading-5 text-white/55">{busy === "judge" ? "Your dub stays playable while the match is checked." : attempt ? "This take is already uploaded. Retrying uses the same submission." : authenticated ? "Your recording and result will save privately to your history." : "Getting a match uses one scored play. Replaying this dub is free."}</p></>}
-              <button type="button" className="button-secondary mt-3 w-full" onClick={retake} disabled={!canTryAgain}><RotateCcw className="size-4" />{currentScore ? "Record another take" : "Retake"}</button>
-              {currentScore && <><button type="button" className="button-primary mt-3 w-full" disabled={!canTryAgain || currentScore.timing == null || currentScore.rhythm == null} onClick={() => { setSharing(!sharing); setShareConsent(false); }}><Users className="size-4" />Challenge a friend</button>{(currentScore.timing == null || currentScore.rhythm == null) && <p className="mt-2 text-xs leading-5 text-white/60">A words-only result cannot enter a matching challenge. Record again for a complete match.</p>}<button type="button" className="button-ghost mt-2 w-full" disabled={!canTryAgain} onClick={() => { const next = clips.findIndex((item) => item.id === clip.id); const nextClip = clips[(next + 1) % clips.length]; if (nextClip) { setChallenge(null); selectClip(nextClip); } else backToScenes(); }}>Next scene<ArrowRight className="size-4" /></button></>}
-            </>}
-            {recorder.error && <p className="mt-3 text-xs leading-5 text-[#ffbcaa]" role="alert">{recorder.error}</p>}{recorder.warning && <p className="mt-3 text-xs leading-5 text-[#ffd4a3]" role="status">{recorder.warning}</p>}{recorder.audioBlob && !recorder.canSubmit && <p className="mt-3 text-xs leading-5 text-[#ffbcaa]" role="alert">{recorder.qualityMessage} Record another take to get a match.</p>}
+          <section className="overflow-hidden rounded-2xl bg-paper text-ink"><div className="border-b border-ink/15 bg-hot px-5 py-4"><p className="mono-label text-ink/60">Your role</p>{clip.roles.length > 1 && !challenge && !attempt && !audioBlob ? <label className="mt-1 block"><span className="sr-only">Choose your role</span><select value={role.id} disabled={captureBusy || Boolean(busy)} onChange={(event) => { reset(); setRoleId(event.target.value); setTime(0); }} className="w-full rounded-lg border border-ink/20 bg-transparent py-2 pr-8 text-xl font-bold text-ink [color-scheme:light]">{clip.roles.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : <h2 className="mt-1 text-xl font-bold">{role.name}</h2>}<p className="mt-1 text-xs leading-5 text-ink/65">{role.description}</p></div>
+            <div className="px-5 py-4"><p className="mono-label mb-3 text-ink/50">Your dialogue</p><div className="space-y-3">{ownCues.map((cue) => <div key={cue.id} className={cn("rounded-lg border-l-[3px] py-1 pl-3 transition-colors", time >= cue.start - 0.3 && time <= cue.end + 0.12 ? "border-acid bg-acid/10" : "border-ink/15")}><p className="text-[10px] font-bold tabular-nums text-ink/45">{cue.start.toFixed(1)}s</p><p className="mt-1 text-base font-bold leading-snug">{cue.text}</p></div>)}</div></div>
           </section>
           <p className="px-1 text-xs leading-5 text-white/55">{tier === "pro" ? "Scored plays use your Pro allowance." : remainingMatches == null ? "5 scored plays per day, shared with Classic. Resets at midnight UTC." : `${remainingMatches} scored ${remainingMatches === 1 ? "play" : "plays"} left today, shared with Classic. Resets at midnight UTC.`} Recording, replay, and saving do not use a scored play.</p>
-          {takeUrl && !attempt?.saved && <section className="rounded-xl border border-electric/25 bg-electric/5 p-5" aria-label="Keep your take"><h2 className="flex items-center gap-2 text-sm font-bold"><LockKeyhole className="size-4 text-electric" />Keep this take</h2><p className="mt-2 text-xs leading-5 text-white/65">{authenticated ? "Save your dub to history, even before getting a match." : "Sign in on this browser to keep this take in your personal history. We’ll bring you back here with your recording."}</p><button type="button" className="button-secondary mt-4 w-full" disabled={Boolean(busy) || captureBusy || (!attempt && !recorder.canSubmit)} onClick={() => void (authenticated ? saveWithoutScoring() : signInAndKeepTake())}>{busy === "signin" || busy === "upload" ? <LoaderCircle className="size-4 animate-spin" /> : <LockKeyhole className="size-4" />}{busy === "signin" || busy === "upload" ? "Keeping your take…" : authenticated ? "Save without scoring" : "Sign in & keep this take"}</button></section>}
+          {takeUrl && !attempt?.saved && <section className="rounded-xl border border-electric/25 bg-electric/5 p-5" aria-label="Keep your take"><h2 className="flex items-center gap-2 text-sm font-bold"><LockKeyhole className="size-4 text-electric" />Keep this take</h2><p className="mt-2 text-xs leading-5 text-white/65">{authenticated ? "Save your dub to history, even before getting a match." : "Sign in on this browser to keep this take in your personal history. We’ll bring you back here with your recording."}</p><button type="button" className="button-secondary mt-4 w-full" disabled={Boolean(busy) || captureBusy || (!attempt && !localCanSubmit)} onClick={() => void (authenticated ? saveWithoutScoring() : signInAndKeepTake())}>{busy === "signin" || busy === "upload" ? <LoaderCircle className="size-4 animate-spin" /> : <LockKeyhole className="size-4" />}{busy === "signin" || busy === "upload" ? "Keeping your take…" : authenticated ? "Save without scoring" : "Sign in & keep this take"}</button></section>}
           {attempt?.warning && <p role="status" className="game-note">{attempt.warning}</p>}{error && <div role="alert" className="game-error">{error}{takeUrl && <p className="mt-2">Your dub is still available above.</p>}</div>}
           {notice && <p role="status" className="flex gap-2 rounded-xl border border-electric/25 bg-electric/5 p-4 text-xs leading-5 text-electric"><CheckCircle2 className="mt-0.5 size-4 shrink-0" />{notice}</p>}
           {attempt?.saved && <Link href="/profile" className="flex min-h-11 items-center justify-center gap-2 text-xs font-bold text-white/65"><LockKeyhole className="size-3.5" />Saved in your history<ArrowRight className="size-3.5" /></Link>}

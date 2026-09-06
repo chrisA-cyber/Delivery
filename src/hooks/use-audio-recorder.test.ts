@@ -278,10 +278,30 @@ describe("microphone capture lifecycle", () => {
     expect(result.current.isClipping).toBe(false);
   });
 
+  it("exposes bounded live PCM peaks and restores them when a line redo is canceled", async () => {
+    const { result, context } = await record();
+    act(() => { context.push(2_400, 0.1); context.push(2_400, 0.5); });
+    expect(result.current.waveform.map((point) => point.time)).toEqual([0, 0.025, 0.05, 0.075]);
+    expect(result.current.waveform[0]!.peak).toBeCloseTo(0.1);
+    expect(result.current.waveform[2]!.peak).toBeCloseTo(0.5);
+    act(() => result.current.stop());
+    const previous = result.current.waveform;
+    stream = new FakeStream();
+    getUserMedia.mockResolvedValue(stream);
+    await act(async () => { await result.current.start({ preservePreviousTake: true }); });
+    act(() => FakeAudioContext.instances[1]!.push(1_200, 0.3));
+    expect(result.current.waveform).toHaveLength(1);
+    act(() => result.current.cancelCapture());
+    expect(result.current.waveform).toEqual(previous);
+    act(() => result.current.reset());
+    expect(result.current.waveform).toEqual([]);
+  });
+
   it("trims a crossing audio block to exactly 20 seconds without a UI timer", async () => {
     const { result, context } = await record();
     act(() => context.push(48_000 * 21));
     expect(result.current.durationMs).toBe(MAX_RECORDING_MS);
+    expect(result.current.waveform).toHaveLength(800);
     expect(result.current.audioBlob?.size).toBe(44 + 48_000 * 20 * 2);
     expect(result.current.stopReason).toBe("limit");
     expect(result.current.status).toBe("stopped");

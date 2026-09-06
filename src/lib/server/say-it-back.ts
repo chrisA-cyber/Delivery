@@ -122,6 +122,10 @@ export async function getSayAttempt(id: string, viewer: SayViewer, challengeToke
   const row = await getSayAttemptRow(id, viewer, challengeToken);
   const attempt = presentAttempt(row, viewer, challengeToken);
   if (owns(row, viewer)) {
+    attempt.previousBest = null;
+    // An unjudged upload has no comparable result yet. Keep save/replay off
+    // the history-query round trip; load comparisons after matching finishes.
+    if (!attempt.score) return attempt;
     const previous = await createSupabaseAdminClient().from("say_attempts").select("score").eq("owner_key", viewer.ownerKey).eq("clip_version_id", String(row.clip_version_id)).eq("role_id", String(row.role_id)).eq("scoring_version", String(row.scoring_version)).eq("status", "scored").lt("created_at", String(row.created_at)).limit(100);
     checked(previous.error);
     const currentScore = attempt.score;

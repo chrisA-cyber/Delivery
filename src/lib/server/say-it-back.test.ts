@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 import { SAY_SCORING_VERSION, type SayClip, type SayScore } from "@/lib/say-it-back/types";
 
-const state = vi.hoisted(() => ({ rows: [] as Record<string, unknown>[], challenges: [] as Record<string, unknown>[], clips: [] as Record<string, unknown>[], failScoreWrite: false, failInsert: false, cache: new Map<string, unknown>() }));
+const state = vi.hoisted(() => ({ rows: [] as Record<string, unknown>[], challenges: [] as Record<string, unknown>[], clips: [] as Record<string, unknown>[], failScoreWrite: false, failInsert: false, cache: new Map<string, unknown>(), selections: [] as { table: string; columns: string }[] }));
 const mocks = vi.hoisted(() => ({ reserve: vi.fn(), release: vi.fn(), transcribe: vi.fn(), sign: vi.fn(), download: vi.fn(), deleteCheck: vi.fn(), upload: vi.fn(), remove: vi.fn(), move: vi.fn(), moderate: vi.fn() }));
 vi.mock("@/lib/server/moderation", () => ({ moderateLine: mocks.moderate }));
 vi.mock("@/lib/server/account-deletion", () => ({ assertAccountNotDeleting: mocks.deleteCheck, isOwnerStoragePath: (path: string, owner: string) => path.startsWith(`${owner}/`) }));
@@ -28,7 +28,7 @@ vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: () => ({
       return { data: rows, error: null };
     };
     const query = {
-      select: () => query, eq: (key: string, value: unknown) => { filters.push([key, value]); return query; },
+      select: (columns: string) => { state.selections.push({ table, columns }); return query; }, eq: (key: string, value: unknown) => { filters.push([key, value]); return query; },
       update: (value: Record<string, unknown>) => { update = value; return query; },
       insert: () => { inserting = true; return query; },
       in: () => query, or: () => query, order: () => query, limit: () => query, lt: () => query,
@@ -55,7 +55,7 @@ const stranger: SayViewer = { user: { id: "user-two" } as User, guest: null, own
 const anonymous: SayViewer = { user: null, guest: { scope: "guest.scope", idempotencyScope: "guest" }, ownerKey: "guest:guest" };
 function row() { return { id: "attempt-one", user_id: "user-one", owner_key: owner.ownerKey, clip_snapshot: clip, role_id: "actor", clip_version_id: "test-scene:v1", scoring_version: SAY_SCORING_VERSION, audio_hash: "abc", audio_mime: "audio/wav", recording_path: "user-one/say/attempt.wav", duration_ms: 2000, recording_offset_ms: 0, status: "ready", score: null, judge_calls: 0, created_at: "2026-09-06T12:00:00.000Z", expires_at: null }; }
 beforeEach(() => {
-  vi.clearAllMocks(); state.rows = [row()]; state.challenges = []; state.clips = [{ id: "test-scene:v1", manifest: clip, enabled: true }]; state.failScoreWrite = false; state.failInsert = false; state.cache.clear();
+  vi.clearAllMocks(); state.rows = [row()]; state.challenges = []; state.clips = [{ id: "test-scene:v1", manifest: clip, enabled: true }]; state.failScoreWrite = false; state.failInsert = false; state.cache.clear(); state.selections = [];
   mocks.deleteCheck.mockResolvedValue(undefined);
   mocks.reserve.mockResolvedValue({ replayed: false, usage: { tier: "free", used: 1, remaining: 4, limit: 5, tracked: true, resetAt: null }, claimId: "claim", kind: "supabase" });
   mocks.download.mockResolvedValue({ data: new Blob([new Uint8Array(1000)], { type: "audio/wav" }), error: null });
@@ -75,6 +75,18 @@ describe("Say It Back private and recoverable attempts", () => {
     expect(attempt.clip).toEqual(clip);
     expect(attempt.audioUrl).toBe("/api/say-it-back/attempts/attempt-one/audio");
     expect(attempt.owned).toBe(true);
+  });
+  it("does not wait on score history before returning an unjudged take for replay", async () => {
+    const attempt = await getSayAttempt("attempt-one", owner);
+    expect(attempt.previousBest).toBeNull();
+    expect(attempt.audioUrl).toContain("/audio");
+    expect(state.selections).not.toContainEqual({ table: "say_attempts", columns: "score" });
+  });
+  it("still loads compatible previous scores after matching completes", async () => {
+    const score = scoreSayAttempt({ clip, roleId: "actor", transcript: "Hello there", words: [], recordingOffsetMs: 0, audioHash: "abc" });
+    Object.assign(state.rows[0]!, { status: "scored", score });
+    await getSayAttempt("attempt-one", owner);
+    expect(state.selections).toContainEqual({ table: "say_attempts", columns: "score" });
   });
   it("keeps the saved dub when transcription fails and releases the play", async () => {
     mocks.transcribe.mockRejectedValueOnce(new Error("provider down"));
