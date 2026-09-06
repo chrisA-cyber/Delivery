@@ -17,6 +17,20 @@ const booleanString = z
   .optional()
   .transform((value) => value === "true");
 
+function isAllowedRedisUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    const local = ["localhost", "127.0.0.1", "::1", "[::1]"].includes(url.hostname);
+    const railwayPrivate = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.railway\.internal$/i.test(url.hostname);
+    return Boolean(
+      (url.protocol === "rediss:" || (url.protocol === "redis:" && (local || railwayPrivate))) &&
+      url.hostname && !url.search && !url.hash && /^(?:\/\d*)?$/.test(url.pathname),
+    );
+  } catch {
+    return false;
+  }
+}
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   NEXT_PUBLIC_APP_URL: optionalUrl,
@@ -37,10 +51,25 @@ const envSchema = z.object({
   STRIPE_PRO_ANNUAL_PRICE_ID: optionalString,
   STRIPE_ENABLE_AUTOMATIC_TAX: booleanString,
   DELIVERY_DEVICE_SECRET: optionalString,
+  REDIS_URL: optionalUrl,
   UPSTASH_REDIS_REST_URL: optionalUrl,
   UPSTASH_REDIS_REST_TOKEN: optionalString,
   MODERATION_CLEANUP_SECRET: optionalString,
 }).superRefine((env, context) => {
+  if (env.REDIS_URL && (env.UPSTASH_REDIS_REST_URL || env.UPSTASH_REDIS_REST_TOKEN)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["REDIS_URL"],
+      message: "Configure either REDIS_URL or the Upstash REST pair, not both.",
+    });
+  }
+  if (env.REDIS_URL && !isAllowedRedisUrl(env.REDIS_URL)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["REDIS_URL"],
+      message: "Use TLS for remote Redis, or redis:// on loopback or Railway's private network.",
+    });
+  }
   if (Boolean(env.UPSTASH_REDIS_REST_URL) !== Boolean(env.UPSTASH_REDIS_REST_TOKEN)) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
@@ -153,6 +182,10 @@ export function isSupabaseAdminConfigured(): boolean {
   return Boolean(env.NEXT_PUBLIC_SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
+export function isRedisConfigured(env = getServerEnv()): boolean {
+  return Boolean(env.REDIS_URL || (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN));
+}
+
 function isCanonicalHttpsOrigin(value: string): boolean {
   try {
     const url = new URL(value);
@@ -191,11 +224,12 @@ export function assertProductionConfiguration(): void {
     "STRIPE_PRO_MONTHLY_PRICE_ID",
     "STRIPE_PRO_ANNUAL_PRICE_ID",
     "DELIVERY_DEVICE_SECRET",
-    "UPSTASH_REDIS_REST_URL",
-    "UPSTASH_REDIS_REST_TOKEN",
     "MODERATION_CLEANUP_SECRET",
   ];
   const missing = required.filter((key) => !env[key]).map(String);
+  if (!isRedisConfigured(env)) {
+    missing.push("REDIS_URL or UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN");
+  }
 
   if (
     env.NEXT_PUBLIC_APP_URL &&

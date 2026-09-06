@@ -6,6 +6,10 @@ Current implementation baseline: `chrisA-cyber/Delivery`, `main`, commit `c74bad
 
 Step 1B completed the content/UI implementation: 86 active lines, 36 directions, six packs, historical identity preservation, a separate Scribe companion transcript, and a ready human-playtest kit. Its recorded evidence includes 517 database assertions in PostgreSQL WASM and 11 live synthetic Scribe requests; neither establishes full Supabase HTTP integration or live OpenAI judging. Human enjoyment, judging calibration, and real-device behavior remain unvalidated. Do not repeat the catalog redesign or treat those external gates as passed.
 
+Step 1D fetched main and draft PR #1 on September 6: main remains `c74badd`, and the Step 1C branch remains `a335034`. Its existing Netlify preview opens, but `/api/health` returns `503 SERVER_NOT_CONFIGURED`. No disposable Supabase runtime, configured local provider key, approved evaluation budget, or consented samples were available. No new mocked tests or paid calls were run. The [Step 1D handoff](CLASSIC_STEP_1D_HANDOFF.md) records the working preview, exact setup commands, and a **blocked** decision pending live judging, connected persistence/access, and the first owner session. Do not begin Say It Back or repeat completed audits to substitute for those observations.
+
+Subsequent environment setup created the approved $0/month `delivery-classic-test` Supabase project and applied/verified all 17 existing migrations plus seed. The owner then authorized moving the isolated preview to Railway. Native Redis support and a dedicated Railway project are prepared; Railway requires dashboard two-factor verification before applying staged changes, and protected provider credentials cannot be exported from Netlify. Resume from [CLASSIC_RAILWAY_HANDOFF.md](CLASSIC_RAILWAY_HANDOFF.md). Human playtesting remains a launch limitation and does not by itself prohibit next-mode development; assess demonstrated shared-flow failures separately.
+
 Product context: [shared Delivery conversation](https://chatgpt.com/share/6a9ac69e-3ad4-83ea-93b3-c584a64e1d66). Earlier feature lists, completion percentages, infrastructure estimates, and model comparisons are discussion context, not verified engineering results or commitments.
 
 **Product goal**
@@ -241,7 +245,7 @@ Review outcomes are: accepted with evidence; a specific correction is needed; or
 
 **Current prompt queue — supersedes the original sequence**
 
-1. Review the Step 1C handoff and complete its named external validation: bounded consented OpenAI judging, actual isolated Supabase HTTP integration, observed human play, and real devices. Step 1B has been received and reviewed. Resolve material Classic failures before advancing; do not repeat completed content work or claim pending tests passed.
+1. Resume from the Step 1D setup handoff once an existing suitable validation machine or explicitly designated disposable environment is available. Complete bounded consented OpenAI judging, actual isolated Supabase HTTP integration, and the first owner microphone/playback session; record the real device/browser. Resolve material Classic failures before advancing; do not repeat completed content work or claim pending tests passed.
 2. Write the next bounded implementation prompt for Say It Back after the Classic gate review. No later mode is implemented in Step 1C.
 3. Expand friend challenges and streamer participation around Classic and Say It Back.
 4. Add Switch afterward, then revisit the later phases using actual play evidence.

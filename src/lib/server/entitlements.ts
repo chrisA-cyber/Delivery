@@ -5,7 +5,8 @@ import { createHash } from "node:crypto";
 import type { User } from "@supabase/supabase-js";
 
 import { AppError, ExternalServiceError } from "@/lib/server/api-error";
-import { getServerEnv, isSupabaseAdminConfigured } from "@/lib/server/env";
+import { getServerEnv, isRedisConfigured, isSupabaseAdminConfigured } from "@/lib/server/env";
+import { redisCommand } from "@/lib/server/redis";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const FREE_DAILY_PLAYS = 5;
@@ -142,27 +143,6 @@ function releaseGuestMemory(claimId: string): boolean {
   return true;
 }
 
-async function upstash(command: unknown[]): Promise<unknown> {
-  const env = getServerEnv();
-  if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) {
-    throw new Error("Upstash is not configured.");
-  }
-  const response = await fetch(env.UPSTASH_REDIS_REST_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${env.UPSTASH_REDIS_REST_TOKEN}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(command),
-    cache: "no-store",
-    signal: AbortSignal.timeout(2_500),
-  });
-  if (!response.ok) throw new Error(`Guest quota returned ${response.status}.`);
-  const payload = (await response.json()) as { result?: unknown; error?: string };
-  if (payload.error || payload.result === undefined) throw new Error("Invalid guest quota response.");
-  return payload.result;
-}
-
 async function reserveGuestDistributed(
   scope: string,
   attemptKey: string,
@@ -188,7 +168,7 @@ async function reserveGuestDistributed(
     "redis.call('SET',KEYS[1],'reserved','PX',ARGV[2])",
     "return {1,used,0}",
   ].join("; ");
-  const result = (await upstash([
+  const result = (await redisCommand([
     "EVAL",
     script,
     1 + counterKeys.length,
@@ -224,7 +204,7 @@ async function releaseGuestDistributed(claimId: string, scope: string): Promise<
     "return 1",
   ].join("; ");
   return Number(
-    await upstash([
+    await redisCommand([
       "EVAL",
       script,
       1 + counterKeys.length,
@@ -236,11 +216,11 @@ async function releaseGuestDistributed(claimId: string, scope: string): Promise<
 
 async function reserveGuest(scope: string, attemptKey: string): Promise<GuestReserveResult> {
   const env = getServerEnv();
-  if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
+  if (isRedisConfigured(env)) {
     try {
       return await reserveGuestDistributed(scope, attemptKey);
     } catch (error) {
-      if (env.NODE_ENV === "production") {
+      if (env.NODE_ENV === "production" || env.REDIS_URL) {
         throw new ExternalServiceError("Guest quota", { cause: error });
       }
       console.warn("Distributed guest quota unavailable; using process-local quota.", {
@@ -392,10 +372,12 @@ export async function releaseJudgedPlay(
 
   const env = getServerEnv();
   const scope = user ? `local-user:${user.id}` : guestScope;
-  if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
+  if (isRedisConfigured(env)) {
     try {
-      if (await releaseGuestDistributed(reservation.claimId, scope)) return true;
+      const released = await releaseGuestDistributed(reservation.claimId, scope);
+      if (released || env.REDIS_URL) return released;
     } catch (error) {
+      if (env.REDIS_URL) throw new ExternalServiceError("Guest quota", { cause: error });
       console.warn("Distributed guest quota release failed; trying process-local release.", {
         error: error instanceof Error ? error.name : "unknown",
       });

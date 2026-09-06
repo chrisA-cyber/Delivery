@@ -3,7 +3,8 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 
 import { AppError } from "@/lib/server/api-error";
-import { getServerEnv } from "@/lib/server/env";
+import { getServerEnv, isRedisConfigured } from "@/lib/server/env";
+import { redisCommand } from "@/lib/server/redis";
 
 interface Entry<T> {
   expiresAt: number;
@@ -50,35 +51,11 @@ function conflict(): AppError {
   );
 }
 
-async function upstash(command: unknown[]): Promise<unknown> {
+async function distributedCommand(command: Array<string | number>): Promise<unknown> {
   try {
-    const env = getServerEnv();
-    if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) {
-      throw new Error("Distributed idempotency is not configured.");
-    }
-    const response = await fetch(env.UPSTASH_REDIS_REST_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.UPSTASH_REDIS_REST_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(command),
-      cache: "no-store",
-      signal: AbortSignal.timeout(2_500),
-    });
-    if (!response.ok) {
-      throw new Error(`Idempotency store returned ${response.status}.`);
-    }
-    const payload = (await response.json()) as { result?: unknown; error?: string };
-    if (payload.error || payload.result === undefined) {
-      throw new Error("Idempotency store returned an invalid response.");
-    }
-    return payload.result;
+    return await redisCommand(command);
   } catch (error) {
-    if (error instanceof IdempotencyStoreError) throw error;
-    throw new IdempotencyStoreError("Distributed idempotency failed.", {
-      cause: error,
-    });
+    throw new IdempotencyStoreError("Distributed idempotency failed.", { cause: error });
   }
 }
 
@@ -101,7 +78,7 @@ async function claimDistributed(
     "if string.sub(lock,1,64)~=ARGV[1] then return {-1,''} end",
     "return {0,''}",
   ].join("; ");
-  const raw = (await upstash([
+  const raw = (await distributedCommand([
     "EVAL",
     script,
     2,
@@ -138,7 +115,7 @@ async function finishDistributed(
   ].join("; ");
   try {
     const finished = Number(
-      await upstash([
+      await distributedCommand([
         "EVAL",
         script,
         2,
@@ -168,7 +145,7 @@ async function releaseDistributed(
 ): Promise<void> {
   const script =
     "if redis.call('GET',KEYS[1])==ARGV[1]..':'..ARGV[2] then return redis.call('DEL',KEYS[1]) end return 0";
-  await upstash([
+  await distributedCommand([
     "EVAL",
     script,
     1,
@@ -277,8 +254,8 @@ async function runMemory<T>(
 
 /**
  * Coalesces concurrent retries and replays successful results for the TTL.
- * Production uses the required Upstash store so a retry can recover a result
- * from another server instance. Development and tests stay process-local.
+ * Production uses the configured Redis store so a retry can recover a result
+ * from another server instance. Development can run without a distributed store.
  */
 export async function runIdempotent<T>(
   namespace: string,
@@ -293,7 +270,7 @@ export async function runIdempotent<T>(
     ? fingerprint.toLowerCase()
     : createHash("sha256").update(fingerprint).digest("hex");
   const env = getServerEnv();
-  if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
+  if (isRedisConfigured(env)) {
     try {
       return await runDistributed(digest, stableFingerprint, ttlMs, operation);
     } catch (error) {
@@ -307,7 +284,7 @@ export async function runIdempotent<T>(
           { cause: error },
         );
       }
-      if (env.NODE_ENV === "production") {
+      if (env.NODE_ENV === "production" || env.REDIS_URL) {
         throw new AppError(
           "IDEMPOTENCY_UNAVAILABLE",
           "The stage is briefly unavailable. Try again in a moment.",
