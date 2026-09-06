@@ -94,3 +94,40 @@ describe("stable participant claims and stored recordings", () => {
     expect(groupScoreGroup("classic", null)).toBe("unscored");
   });
 });
+
+describe("community broadcast boundaries", () => {
+  const audience = () => ({ ...guest, guest: { ...guest.guest, idempotencyScope: "d".repeat(64) } });
+  function community(phase = "review") {
+    Object.assign(state.tables.challenges![0]!, { community: true, community_phase: phase, community_limit: 25, community_voting: true, community_code: "ABC12345", state: "completed" });
+    Object.assign(state.tables.challenge_group_takes![0]!, { broadcast_consent_at: new Date().toISOString() });
+  }
+  it("never exposes private queue identities or media on the audience surface", async () => {
+    community();
+    const round = await getGroupRound(token, audience(), "https://delivery.test");
+    expect(round.members).toEqual([]);
+    expect(round.community?.displayUrl).toBeUndefined();
+    expect(JSON.stringify(round)).not.toContain(takeId);
+    await expect(groupAudioResponse(token, audience(), new Request("https://delivery.test/audio"), { memberId: rivalId }, "everyone")).rejects.toMatchObject({ status: 404 });
+  });
+  it("shows only selected consented entries after showcase starts", async () => {
+    community("showcase");
+    state.tables.challenge_group_members![1]!.showcased = true;
+    const round = await getGroupRound(token, audience(), "https://delivery.test");
+    expect(round.members.map((m) => m.id)).toEqual([rivalId]);
+    expect(round.members[0]!.performance?.takeId).toBe(takeId);
+    state.tables.challenge_group_takes![0]!.broadcast_consent_at = null;
+    const withdrawn = await getGroupRound(token, audience(), "https://delivery.test");
+    expect(withdrawn.members[0]!.performance).toBeNull();
+    await expect(groupAudioResponse(token, audience(), new Request("https://delivery.test/audio"), { memberId: rivalId }, "everyone")).rejects.toMatchObject({ status: 404 });
+  });
+  it("immediately removes hidden media access even after results", async () => {
+    community("results");
+    state.tables.challenge_group_members![1]!.showcased = false;
+    await expect(groupAudioResponse(token, audience(), new Request("https://delivery.test/audio"), { memberId: rivalId }, "everyone")).rejects.toMatchObject({ status: 404 });
+    expect(state.signed).not.toHaveBeenCalled();
+  });
+  it("cannot use a display capability to access a private draft", async () => {
+    community("showcase");
+    await expect(groupAudioResponse(token, { ...audience(), display: true }, new Request("https://delivery.test/audio"), { takeId }, "everyone")).rejects.toMatchObject({ status: 404 });
+  });
+});

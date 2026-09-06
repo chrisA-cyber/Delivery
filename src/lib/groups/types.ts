@@ -24,7 +24,15 @@ export interface GroupMember {
   submitted: boolean; joinedAt: string; votes: number;
   performance: GroupPerformance | null;
 }
+export interface CommunityState {
+  phase: "submissions" | "review" | "showcase" | "voting" | "results";
+  code: string; submissionLimit: number; votingEnabled: boolean;
+  selectedIds: string[]; displayUrl?: string; displayRevoked: boolean;
+  currentMemberId: string | null; command: "play" | "pause" | "replay"; revision: number;
+  participantCount: number; nextRoundUrl: string | null;
+}
 export interface GroupRound {
+  community?: CommunityState | null;
   id: string; token: string; name: string; url: string;
   state: "open" | "revealed" | "expired";
   assignment: GroupAssignment; createdAt: string; closesAt: string;
@@ -39,6 +47,7 @@ export interface GroupRound {
 export interface CreateGroupRoundInput {
   requestId: string; name: string; displayName: string; mode: GroupMode;
   closesInHours: 1 | 24 | 72 | 168; maxRating: ContentRating;
+  community?: boolean; submissionLimit?: number; audienceVoting?: boolean;
   clipId?: string; clipVersion?: string; roleId?: string;
   promptId?: string; energyId?: string;
 }

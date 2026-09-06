@@ -21,7 +21,7 @@ export function MobileDock() {
     pathname.startsWith("/daily") ||
     pathname.startsWith("/endless") ||
     pathname.startsWith("/impossible") ||
-    pathname.startsWith("/stream/stage") ||
+    (pathname.startsWith("/stream/stage") || pathname.startsWith("/broadcast/")) ||
     pathname.startsWith("/challenge/") ||
     (pathname.startsWith("/rounds/") && pathname.endsWith("/record"));
   if (activeGame) return null;

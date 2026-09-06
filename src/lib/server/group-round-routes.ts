@@ -13,13 +13,14 @@ export const createRoundSchema = z.object({
   requestId: z.string().uuid(), name: z.string().trim().min(1).max(60), displayName,
   mode: z.enum(["classic", "say-it-back"]), closesInHours: z.union([z.literal(1), z.literal(24), z.literal(72), z.literal(168)]).default(24),
   maxRating: groupRatingSchema.default("everyone"),
+  community: z.boolean().optional(), submissionLimit: z.number().int().min(10).max(50).optional(), audienceVoting: z.boolean().optional(),
   clipId: z.string().regex(/^[a-z0-9-]{1,80}$/).optional(), clipVersion: z.string().regex(/^[a-z0-9-]{1,80}$/).optional(), roleId: z.string().regex(/^[a-z0-9-]{1,80}$/).optional(),
   promptId: z.string().min(1).max(100).optional(), energyId: z.string().min(1).max(100).optional(),
 }).strict();
-const payloadSchema = z.object({ maxRating: groupRatingSchema.default("everyone"), displayName: displayName.optional(), memberId: z.string().uuid().optional(), takeId: z.string().uuid().optional(), sayAttemptId: z.string().uuid().optional(), consent: z.literal(true).optional() }).strict();
+const payloadSchema = z.object({ maxRating: groupRatingSchema.default("everyone"), displayName: displayName.optional(), memberId: z.string().uuid().optional(), takeId: z.string().uuid().optional(), sayAttemptId: z.string().uuid().optional(), consent: z.literal(true).optional(), broadcastConsent: z.literal(true).optional(), command: z.enum(["play","pause","replay"]).optional(), revision: z.number().int().min(0).optional() }).strict();
 export const groupHeaders = (cookie?: string) => ({ "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer", ...(cookie ? { "Set-Cookie": cookie } : {}) });
 
-type GroupRouteAction = "create" | "read" | "join" | "submit" | "close" | "revoke" | "vote" | "claim" | "rematch";
+type GroupRouteAction = "create" | "read" | "join" | "submit" | "close" | "revoke" | "vote" | "claim" | "rematch" | "select" | "hide" | "showcase" | "start-voting" | "end-voting" | "display" | "revoke-display";
 export async function handleGroupRoute(request: Request, action: GroupRouteAction, rawToken?: string) {
   const requestId = requestIdFrom(request);
   let cookie: string | undefined;
@@ -45,7 +46,7 @@ export async function handleGroupRoute(request: Request, action: GroupRouteActio
       } else {
         if (action === "join" && !payload.displayName) throw new AppError("ROUND_NAME_REQUIRED", "Choose a display name for this round.", 422);
         if (action === "vote" && !payload.memberId) throw new AppError("ROUND_VOTE_INVALID", "Choose another player's performance.", 422);
-        round = await mutateGroupRound(token!, viewer, origin, action as "join" | "close" | "revoke" | "vote" | "claim", payload, payload.maxRating);
+        round = await mutateGroupRound(token!, viewer, origin, action as Parameters<typeof mutateGroupRound>[3], payload, payload.maxRating);
       }
     }
     return jsonOk({ round }, requestId, { status: action === "create" || action === "rematch" ? 201 : 200, headers: groupHeaders(cookie) });

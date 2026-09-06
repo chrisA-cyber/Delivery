@@ -31,7 +31,7 @@ export function SiteHeader() {
     return () => window.removeEventListener("keydown", close);
   }, [open]);
   useEffect(() => setOpen(false), [pathname]);
-  if (pathname.startsWith("/stream/stage")) return null;
+  if ((pathname.startsWith("/stream/stage") || pathname.startsWith("/broadcast/"))) return null;
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/15 bg-ink/95 backdrop-blur-lg">
       <div className="mx-auto flex h-[72px] max-w-[1248px] items-center justify-between gap-3 px-4 sm:px-8">
