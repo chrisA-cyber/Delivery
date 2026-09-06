@@ -1,0 +1,8 @@
+# Railway is the backend-connected Delivery application. Keep the public
+# Netlify address usable without creating a second account/cookie origin.
+# Match only production; deploy previews remain available for review.
+[[redirects]]
+from = "https://deliverygame.netlify.app/*"
+to = "https://delivery-production-0577.up.railway.app/:splat"
+status = 302
+force = true
