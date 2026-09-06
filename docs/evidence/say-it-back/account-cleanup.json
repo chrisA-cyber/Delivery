@@ -1,0 +1,45 @@
+{
+  "purpose": "Delete only the three explicitly provisioned disposable identities through the actual application account-erasure flow",
+  "requests": [
+    {
+      "status": 200,
+      "deleted": true,
+      "reconciliationPending": false
+    },
+    {
+      "status": 200,
+      "deleted": true,
+      "reconciliationPending": false
+    },
+    {
+      "status": 200,
+      "deleted": true,
+      "reconciliationPending": false
+    }
+  ],
+  "databaseVerification": {
+    "fixtureUsers": 0,
+    "profiles": 0,
+    "classicResults": 0,
+    "sayAttempts": 0,
+    "sayChallenges": 0,
+    "privateAudioObjects": 0,
+    "completedErasureReceipts": 3
+  },
+  "scope": "Only the three named disposable accounts and their 19 recordings; original production and unrelated data preserved.",
+  "retentionWorker": {
+    "scheduleUtc": "0 * * * *",
+    "timeoutSeconds": 45,
+    "automaticRetries": 0,
+    "publicDomain": false,
+    "authentication": "Generated secret shared using Railway variable reference; no values exported",
+    "verification": "One additional real unjudged guest upload; only its receipt was explicitly expired for verification, then one worker invocation removed the row and private object.",
+    "remainingRows": 0,
+    "remainingStorageObjects": 0,
+    "providerCalls": 0
+  },
+  "revokedPlayback": {
+    "expiredGuestAudioStatus": 404,
+    "deletedCreatorChallengeStatus": 404
+  }
+}

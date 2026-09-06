@@ -1,14 +1,14 @@
 {
   "checkedAt": "2026-09-06",
   "environment": "https://delivery-production-0577.up.railway.app",
-  "revision": "ee3063bde6e167500d44d61bc97872b2a3a49d31",
+  "revision": "d2fdce64fba6825ce2e0cfe104a67acdfe58f5bf",
   "method": "Advertised cloud Chrome browser runtime; actual deployed pages, DOM controls, media element state and rendered screenshot. No fake microphone, injected credentials, uploads or provider calls.",
   "completed": {
     "savedSharedDub": "Anonymous challenge recipient opens creator voice from authorized private audio proxy.",
     "endedReplay": "2.29-second saved dub completed three times and restarted from end twice; all three media elements resumed at zero without error.",
-    "sync": "Observed video versus voice/background separation 0\u201379 milliseconds during playback; all element errors null.",
+    "sync": "Observed video versus voice/background separation 0–79 milliseconds during playback; all element errors null.",
     "seek": "Keyboard scene slider from Home to PageUp set video, voice and background to exactly 0.23 seconds while paused.",
-    "comparison": "Original mode played video unmuted with both companion audio elements paused and muted; Friend\u2019s take showed the distinct label and muted the original video.",
+    "comparison": "Original mode played video unmuted with both companion audio elements paused and muted; Friend’s take showed the distinct label and muted the original video.",
     "layout": {
       "viewportCssPixels": [
         1363,
@@ -16,20 +16,35 @@
       ],
       "documentScrollWidth": 1348,
       "horizontalOverflow": false,
-      "screenshotInspected": "delivery-say-shared-final-20260906.jpg"
+      "screenshotInspected": "delivery-say-shared-final-20260906.jpg",
+      "finalScreenshotInspected": "delivery-say-barbara-final-20260906.jpg"
+    },
+    "longScene": {
+      "scene": "notld-coming-to-get-you / v1-0f237846a300 / Johnny / say-match-v1.2",
+      "play": "Saved shared voice and backing played with original scene muted; observed video .804892s, voice .767823s, backing .767381s.",
+      "pause": "Pause stopped video, voice and backing together at 3.068754s, 3.063612s and 3.042049s respectively.",
+      "seek": "Keyboard slider seek aligned video, voice and backing to exactly 1.900000s while paused.",
+      "resume": "Resume advanced to video 2.100817s, voice 2.065593s and backing 2.065596s.",
+      "comparison": "Original played video unmuted while voice/backing were paused and muted. Switching back restored Friend’s take.",
+      "refresh": "Full page reload reopened the challenge and saved voice; resumed video .022418s, voice .034271s, backing .032355s.",
+      "errors": "No HTMLMediaElement errors or in-app error alerts during these media checks."
+    },
+    "contentGate": {
+      "clean": "Selected Clean, navigated to the same Spicy challenge: explicit content error and zero media elements mounted.",
+      "spicy": "Clicked Spicy in the actual page: same challenge opened with no errors; another full refresh retained the preference and opened again."
     }
   },
-  "defectFixedPendingDeployment": {
-    "problem": "Spicy challenge links were rejected even when Spicy was selected because frontend challenge reads omitted maxRating and server safely defaulted to everyone.",
-    "fix": "Pass the current content preference in all three challenge reads; keep the server content gate.",
-    "regression": "New component test proves Clean cannot mount the Spicy scene, then clicking Spicy retries with teen and opens the challenge. Six focused tests and edited-file lint passed."
-  },
-  "pending": [
-    "Reopen long Spicy shared scene after preference fix deployment; verify pause, seek, refresh and final screenshot."
-  ],
   "limitations": [
     "No physical microphone or input device is attached to cloud Chrome. This is browser media playback verification, not real-device microphone or acting testing.",
     "Browser runtime advertises no viewport resize capability; a narrow/mobile screenshot was not available."
   ],
-  "paidRequests": 0
+  "paidRequests": 0,
+  "defectFixedAndVerified": {
+    "problem": "Spicy challenge links were rejected even when Spicy was selected because frontend challenge reads omitted maxRating and server safely defaulted to everyone.",
+    "fix": "Pass the current content preference in all three challenge reads; keep the server content gate.",
+    "regression": "New component test proves Clean cannot mount the Spicy scene, then clicking Spicy retries with teen and opens the challenge. Six focused tests and edited-file lint passed.",
+    "liveResult": "Verified on final deployment: Clean blocks media; explicit Spicy choice opens the same link and survives refresh."
+  },
+  "browserControlLimitations": "Two browser-control protocol timeouts occurred on a click and scroll; inspecting state then using the supported controls resumed verification. No app or media error was observed from these runtime timeouts.",
+  "fixturesReleasedForCleanup": true
 }
