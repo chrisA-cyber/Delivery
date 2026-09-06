@@ -3,9 +3,10 @@ import "server-only";
 import OpenAI from "openai";
 import { z } from "zod";
 
-import type { SayWord } from "@/lib/say-it-back/types";
+import type { SayTimingEvidence, SayWord } from "@/lib/say-it-back/types";
 import { AppError, ExternalServiceError } from "@/lib/server/api-error";
 import { EnvironmentError, getServerEnv } from "@/lib/server/env";
+import { refineSayWordTiming } from "@/lib/server/say-it-back-timing";
 
 const TRANSCRIPTION_TIMEOUT_MS = 45_000;
 const responseSchema = z.object({
@@ -31,7 +32,7 @@ let client: OpenAI | undefined;
  * Temperature 0 is requested, but provider fallback can still vary its transcript.
  * The persisted transcript, timestamps and audio hash are the scoring evidence.
  */
-export async function transcribeSayAudio(audio: File): Promise<{ text: string; words: SayWord[] }> {
+export async function transcribeSayAudio(audio: File): Promise<{ text: string; words: SayWord[]; rawWords: SayWord[]; timing: SayTimingEvidence }> {
   const { OPENAI_API_KEY } = getServerEnv();
   if (!OPENAI_API_KEY) throw new EnvironmentError("OPENAI_API_KEY is required for Say It Back transcription.", ["OPENAI_API_KEY"]);
   if (!audio.size || audio.size > 12 * 1024 * 1024) {
@@ -64,11 +65,15 @@ export async function transcribeSayAudio(audio: File): Promise<{ text: string; w
       word.end >= word.start && word.end <= value.duration + 0.5 &&
       (index === 0 || word.start >= words[index - 1]!.start),
     );
-    // Preserve valid text if timestamp extraction fails. The scorer visibly
-    // marks temporal components unavailable; it never invents cue alignment.
+    // Keep the ASR receipt unchanged, and verify boundaries against this capture
+    // before scoring. Reference dialogue/timings never enter this measurement.
+    const rawWords = validTimestamps ? words.map((word) => ({ text: word.word.trim(), start: word.start, end: word.end })) : [];
+    const measured = refineSayWordTiming(new Uint8Array(await audio.arrayBuffer()), rawWords);
     return {
       text: value.text,
-      words: validTimestamps ? words.map((word) => ({ text: word.word.trim(), start: word.start, end: word.end })) : [],
+      words: measured.words,
+      rawWords,
+      timing: measured.timing,
     };
   } catch (error) {
     if (error instanceof AppError) throw error;

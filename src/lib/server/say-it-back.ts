@@ -114,7 +114,7 @@ function presentAttempt(row: Row, viewer: SayViewer, challengeToken?: string): S
     audioExpiresAt: new Date(Date.now() + 5 * 60_000).toISOString(), durationMs: Number(row.duration_ms), recordingOffsetMs: Number(row.recording_offset_ms),
     scoringVersion: String(row.scoring_version), createdAt: String(row.created_at), saved: Boolean(row.user_id), owned: owns(row, viewer), challengeId: row.challenge_id ? String(row.challenge_id) : null,
     ...(row.status === "failed" ? { warning: "Your dub is safe. Matching was unavailable; retry scoring when you’re ready." } : {}),
-    ...(!row.user_id ? { warning: "Guest takes stay on this browser for 24 hours. Sign in before recording to keep future takes in your history." } : {}),
+    ...(!row.user_id ? { warning: "Guest takes stay on this browser for 24 hours. Sign in to keep this take in your history." } : {}),
   };
 }
 
@@ -234,7 +234,7 @@ export async function judgeSayAttempt(id: string, viewer: SayViewer): Promise<{ 
       const started = await admin.from("say_attempts").update({ status: "judging", judge_calls: Number(row.judge_calls) + 1, judge_started_at: new Date().toISOString(), failure_code: null }).eq("id", id);
       checked(started.error);
       const transcription = await transcribeSayAudio(audio);
-      const score = scoreSayAttempt({ clip: sayClipSchema.parse(row.clip_snapshot), roleId: String(row.role_id), transcript: transcription.text, words: transcription.words, recordingOffsetMs: Number(row.recording_offset_ms), audioHash: String(row.audio_hash) });
+      const score = scoreSayAttempt({ clip: sayClipSchema.parse(row.clip_snapshot), roleId: String(row.role_id), transcript: transcription.text, words: transcription.words, recordingOffsetMs: Number(row.recording_offset_ms), audioHash: String(row.audio_hash), timingEvidence: transcription.timing });
       // Commit the paid computation to the existing 24-hour Redis receipt
       // before the database update. A failed database write can then be retried
       // using this exact result, with no second provider call or play charge.
@@ -249,17 +249,27 @@ export async function judgeSayAttempt(id: string, viewer: SayViewer): Promise<{ 
   const completed = await createSupabaseAdminClient().from("say_attempts").update({ status: "scored", score, transcription, judging_usage: usage, failure_code: null }).eq("id", id).eq("owner_key", viewer.ownerKey);
   checked(completed.error);
   if (initial.shared_with_challenge) {
-    try { await approveSharing({ ...initial, status: "scored", score }); } catch { /* A sharing failure never removes the private result. */ }
+    try { await approveSaySharing({ ...initial, status: "scored", score }); } catch { /* A sharing failure never removes the private result. */ }
   }
   return { attempt: await getSayAttempt(id, viewer), usage, replayed: operation.replayed };
 }
 
-async function approveSharing(row: Row): Promise<void> {
-  if (row.moderation_state === "approved") return;
+export async function approveSaySharing(row: Row): Promise<void> {
   const score = row.score as SayScore | null;
   if (row.status !== "scored" || !score) throw new AppError("SAY_SCORE_REQUIRED", "Finish matching this take before sharing it.", 409);
   const clip = sayClipSchema.parse(row.clip_snapshot);
   if (clip.rating === "mature") throw new AppError("SAY_MATURE_PRIVATE", "Mature scenes stay private. Choose another scene for a friend challenge.", 403);
+  if (row.moderation_state === "approved") return;
+  // This snapshot was loaded from the trusted immutable catalog at admission.
+  // An exact normalized performance inherits that script's editorial rating;
+  // it is not reclassified as harassment for saying an approved fictional line.
+  // Any added, substituted or omitted dialogue still receives live moderation.
+  const exactScript = score.words === 100 && score.evidence.expectedWords > 0 && score.evidence.matchedWords === score.evidence.expectedWords && score.evidence.additions === 0 && score.evidence.substitutions === 0 && score.evidence.omissions === 0;
+  if (exactScript) {
+    const approved = await createSupabaseAdminClient().from("say_attempts").update({ moderation_state: "approved", moderation_labels: ["say-curated-script-exact"] }).eq("id", String(row.id));
+    checked(approved.error);
+    return;
+  }
   const result = await moderateLine(score.transcript);
   const update = await createSupabaseAdminClient().from("say_attempts").update({ moderation_state: result.decision, moderation_labels: result.categories }).eq("id", String(row.id));
   checked(update.error);
@@ -272,8 +282,9 @@ export async function createSayChallenge(attemptId: string, viewer: SayViewer, o
   if (!owns(row, viewer)) throw notFound();
   const score = row.score as SayScore | null;
   if (!score || score.timing === null || score.rhythm === null) throw new AppError("SAY_FULL_MATCH_REQUIRED", "Challenges need a complete timing and rhythm match. This take’s words and replay are still available.", 409);
+  if (row.scoring_version !== SAY_SCORING_VERSION) throw new AppError("SAY_CHALLENGE_VERSION_UNAVAILABLE", "This take uses an older matching version. Record a fresh take to start a challenge; your saved replay remains available.", 409);
   await assertParticipantAvailable(viewer.user.id);
-  await approveSharing(row);
+  await approveSaySharing(row);
   const operation = await runIdempotent("say-challenge", viewer.ownerKey, attemptId, String(row.audio_hash), 24 * 60 * 60_000, async () => {
     const token = randomBytes(32).toString("base64url");
     const result = await createSupabaseAdminClient().from("say_challenges").insert({ created_by: viewer.user!.id, attempt_id: attemptId, token_hash: digest(token), clip_version_id: row.clip_version_id, role_id: row.role_id, scoring_version: row.scoring_version }).select("id").single();

@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
-import type { SayClip, SayScore } from "@/lib/say-it-back/types";
+import { SAY_SCORING_VERSION, type SayClip, type SayScore } from "@/lib/say-it-back/types";
 
 const state = vi.hoisted(() => ({ rows: [] as Record<string, unknown>[], challenges: [] as Record<string, unknown>[], clips: [] as Record<string, unknown>[], failScoreWrite: false, failInsert: false, cache: new Map<string, unknown>() }));
-const mocks = vi.hoisted(() => ({ reserve: vi.fn(), release: vi.fn(), transcribe: vi.fn(), sign: vi.fn(), download: vi.fn(), deleteCheck: vi.fn(), upload: vi.fn(), remove: vi.fn(), move: vi.fn() }));
+const mocks = vi.hoisted(() => ({ reserve: vi.fn(), release: vi.fn(), transcribe: vi.fn(), sign: vi.fn(), download: vi.fn(), deleteCheck: vi.fn(), upload: vi.fn(), remove: vi.fn(), move: vi.fn(), moderate: vi.fn() }));
+vi.mock("@/lib/server/moderation", () => ({ moderateLine: mocks.moderate }));
 vi.mock("@/lib/server/account-deletion", () => ({ assertAccountNotDeleting: mocks.deleteCheck, isOwnerStoragePath: (path: string, owner: string) => path.startsWith(`${owner}/`) }));
 vi.mock("@/lib/server/entitlements", () => ({ reserveJudgedPlay: mocks.reserve, releaseJudgedPlay: mocks.release }));
 vi.mock("@/lib/server/say-it-back-transcription", () => ({ transcribeSayAudio: mocks.transcribe }));
@@ -39,7 +40,8 @@ vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: () => ({
   storage: { from: () => ({ createSignedUrl: mocks.sign, download: mocks.download, upload: mocks.upload, remove: mocks.remove, move: mocks.move }) },
 }) }));
 
-import { claimSayAttempt, createSayAttempt, getSayAttempt, getSayAttemptRow, judgeSayAttempt, type SayViewer } from "@/lib/server/say-it-back";
+import { approveSaySharing, claimSayAttempt, createSayAttempt, getSayAttempt, getSayAttemptRow, judgeSayAttempt, type SayViewer } from "@/lib/server/say-it-back";
+import { scoreSayAttempt } from "@/lib/say-it-back/scoring";
 import { getGuestIdentity } from "@/lib/server/guest";
 const clip: SayClip = {
   id: "test-scene", version: "v1", title: "The scene", description: "A scene for focused verification.", duration: 2, difficulty: "easy", rating: "everyone", category: "movie", tags: [],
@@ -51,7 +53,7 @@ const clip: SayClip = {
 const owner: SayViewer = { user: { id: "user-one" } as User, guest: null, ownerKey: "user:user-one" };
 const stranger: SayViewer = { user: { id: "user-two" } as User, guest: null, ownerKey: "user:user-two" };
 const anonymous: SayViewer = { user: null, guest: { scope: "guest.scope", idempotencyScope: "guest" }, ownerKey: "guest:guest" };
-function row() { return { id: "attempt-one", user_id: "user-one", owner_key: owner.ownerKey, clip_snapshot: clip, role_id: "actor", clip_version_id: "test-scene:v1", scoring_version: "say-match-v1", audio_hash: "abc", audio_mime: "audio/wav", recording_path: "user-one/say/attempt.wav", duration_ms: 2000, recording_offset_ms: 0, status: "ready", score: null, judge_calls: 0, created_at: "2026-09-06T12:00:00.000Z", expires_at: null }; }
+function row() { return { id: "attempt-one", user_id: "user-one", owner_key: owner.ownerKey, clip_snapshot: clip, role_id: "actor", clip_version_id: "test-scene:v1", scoring_version: SAY_SCORING_VERSION, audio_hash: "abc", audio_mime: "audio/wav", recording_path: "user-one/say/attempt.wav", duration_ms: 2000, recording_offset_ms: 0, status: "ready", score: null, judge_calls: 0, created_at: "2026-09-06T12:00:00.000Z", expires_at: null }; }
 beforeEach(() => {
   vi.clearAllMocks(); state.rows = [row()]; state.challenges = []; state.clips = [{ id: "test-scene:v1", manifest: clip, enabled: true }]; state.failScoreWrite = false; state.failInsert = false; state.cache.clear();
   mocks.deleteCheck.mockResolvedValue(undefined);
@@ -60,6 +62,7 @@ beforeEach(() => {
   mocks.transcribe.mockResolvedValue({ text: "Hello there", words: [{ text: "Hello", start: 0.2, end: 0.8 }, { text: "there", start: 0.9, end: 1.8 }] });
   mocks.upload.mockResolvedValue({ error: null }); mocks.remove.mockResolvedValue({ error: null });
   mocks.move.mockResolvedValue({ error: null });
+  mocks.moderate.mockResolvedValue({ decision: "rejected", categories: ["harassment"] });
 });
 describe("Say It Back private and recoverable attempts", () => {
   it("denies another account and an anonymous visitor before creating playback capability", async () => {
@@ -126,5 +129,26 @@ describe("Say It Back private and recoverable attempts", () => {
     Object.assign(state.rows[0]!, { user_id: null, guest_owner_hash: "a".repeat(64), owner_key: `guest:${"a".repeat(64)}`, expires_at: "2099-01-01T00:00:00Z" });
     await expect(claimSayAttempt("attempt-one", new Request("http://localhost/api/say/claim"), owner)).rejects.toMatchObject({ status: 404 });
     expect(mocks.move).not.toHaveBeenCalled();
+  });
+  it("approves an exact curated fictional insult without reclassifying the approved script", async () => {
+    const scene = { ...clip, cues: [{ id: "one", roleId: "actor", text: "You're a jerk, Thom.", start: 0.2, end: 1.8 }] };
+    const score = scoreSayAttempt({ clip: scene, roleId: "actor", transcript: "You're a jerk, Tom.", words: [], recordingOffsetMs: 0, audioHash: "abc" });
+    Object.assign(state.rows[0]!, { clip_snapshot: scene, status: "scored", score, moderation_state: "rejected" });
+    await approveSaySharing(state.rows[0]!);
+    expect(mocks.moderate).not.toHaveBeenCalled();
+    expect(state.rows[0]).toMatchObject({ moderation_state: "approved", moderation_labels: ["say-curated-script-exact"] });
+  });
+  it("still moderates and rejects abusive deviations from a curated script", async () => {
+    const score = scoreSayAttempt({ clip, roleId: "actor", transcript: "Hello there. You are worthless", words: [], recordingOffsetMs: 0, audioHash: "abc" });
+    Object.assign(state.rows[0]!, { status: "scored", score });
+    await expect(approveSaySharing(state.rows[0]!)).rejects.toMatchObject({ code: "SAY_SHARE_REVIEW" });
+    expect(mocks.moderate).toHaveBeenCalledWith("Hello there. You are worthless");
+    expect(state.rows[0]!.moderation_state).toBe("rejected");
+  });
+  it("keeps mature scenes private even if exact or previously approved", async () => {
+    const score = scoreSayAttempt({ clip, roleId: "actor", transcript: "Hello there", words: [], recordingOffsetMs: 0, audioHash: "abc" });
+    Object.assign(state.rows[0]!, { clip_snapshot: { ...clip, rating: "mature" }, status: "scored", score, moderation_state: "approved" });
+    await expect(approveSaySharing(state.rows[0]!)).rejects.toMatchObject({ code: "SAY_MATURE_PRIVATE" });
+    expect(mocks.moderate).not.toHaveBeenCalled();
   });
 });

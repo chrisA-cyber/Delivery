@@ -1,4 +1,4 @@
-import { SAY_SCORING_VERSION, type SayClip, type SayScore, type SayWord } from "@/lib/say-it-back/types";
+import { SAY_SCORING_VERSION, type SayClip, type SayScore, type SayTimingEvidence, type SayWord } from "@/lib/say-it-back/types";
 
 /** V1 measures lexical and temporal matching, never voice identity or acting.
  * Words: 50%, timing: 30%, rhythm: 20%. Word error rate includes additions.
@@ -16,6 +16,7 @@ export interface ScoreSayAttemptInput {
   /** Audio time at scene zero, measured during capture; never fitted to the take. */
   recordingOffsetMs: number;
   audioHash: string;
+  timingEvidence?: SayTimingEvidence;
 }
 
 // Normalize written forms that ASR may choose for the same spoken word. Keep
@@ -158,6 +159,8 @@ export function scoreSayAttempt(input: ScoreSayAttemptInput): SayScore {
     "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable.",
   ];
   if (!timestamps) limitations.unshift("Reliable word timestamps were unavailable. This result scores words only; timing and rhythm are unscored.");
+  if (input.timingEvidence?.reason) limitations.push(input.timingEvidence.reason);
+  if (input.timingEvidence && input.timingEvidence.status !== "unavailable") limitations.push("Acoustic energy refines quiet word edges in the recording; background sounds can still affect approximate timing. The audio itself is never shifted or stretched.");
   const observations = [wordScore === 100
     ? "Every scripted word matched the transcript."
     : `${alignment.substitutions} changed, ${alignment.omissions} missing and ${alignment.additions} extra ${errors === 1 ? "word" : "words"} in the transcript.`];
@@ -203,6 +206,7 @@ export function scoreSayAttempt(input: ScoreSayAttemptInput): SayScore {
       phrases: evidence,
       transcriptionModel: "whisper-1",
       audioHash: input.audioHash,
+      ...(input.timingEvidence ? { timingRefinement: input.timingEvidence } : {}),
     },
   };
 }

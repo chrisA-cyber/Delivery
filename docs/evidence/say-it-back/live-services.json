@@ -18,6 +18,591 @@
       "used": 0,
       "freeRemaining": 5,
       "error": null
+    },
+    {
+      "action": "upload",
+      "label": "jerk-guest",
+      "account": "guest",
+      "at": "2026-09-06T05:19:36.571Z",
+      "status": 201,
+      "latencyMs": 11156,
+      "replayed": "false",
+      "requestId": "c0a034eb-2b4b-48da-bf56-c0305805f729",
+      "error": null,
+      "attempt": {
+        "id": "d58bc196-c213-4740-ac94-09441c686ca4",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "ready",
+        "saved": false,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true,
+        "warning": "Guest takes stay on this browser for 24 hours. Sign in before recording to keep future takes in your history."
+      }
+    },
+    {
+      "action": "audio",
+      "label": "jerk-guest",
+      "account": "guest",
+      "at": "2026-09-06T05:20:02.649Z",
+      "status": 200,
+      "latencyMs": 9447,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 109964,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0"
+    },
+    {
+      "action": "judge",
+      "label": "jerk-guest",
+      "account": "guest",
+      "at": "2026-09-06T05:20:23.873Z",
+      "status": 200,
+      "latencyMs": 10386,
+      "replayed": null,
+      "requestId": "91413adc-a33b-4c9d-9851-1e38ef23cafa",
+      "error": null,
+      "attempt": {
+        "id": "d58bc196-c213-4740-ac94-09441c686ca4",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "ready",
+        "saved": false,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1",
+        "score": null,
+        "previousBest": null,
+        "hasProtectedAudio": true,
+        "warning": "Guest takes stay on this browser for 24 hours. Sign in before recording to keep future takes in your history."
+      }
+    },
+    {
+      "action": "judge",
+      "label": "jerk-guest",
+      "account": "guest",
+      "at": "2026-09-06T05:20:36.527Z",
+      "status": 200,
+      "latencyMs": 12638,
+      "replayed": "false",
+      "requestId": "606f1ce9-6f90-4928-bdd5-7153275ae825",
+      "error": null,
+      "attempt": {
+        "id": "d58bc196-c213-4740-ac94-09441c686ca4",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "scored",
+        "saved": false,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1",
+        "score": {
+          "words": 100,
+          "rhythm": 44,
+          "timing": 20,
+          "overall": 65,
+          "version": "say-match-v1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 1.8600000143051147,
+                "actualStart": 0,
+                "expectedEnd": 2.108,
+                "expectedStart": 0.808
+              }
+            ],
+            "additions": 0,
+            "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+            "omissions": 0,
+            "matchedWords": 4,
+            "expectedWords": 4,
+            "substitutions": 0,
+            "meanStartErrorMs": 808,
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Wait for each caption cue before starting; keep your natural voice.",
+          "transcript": "You're a jerk, Tom.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Matched phrase entries averaged about 0.8 seconds early."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true,
+        "warning": "Guest takes stay on this browser for 24 hours. Sign in before recording to keep future takes in your history."
+      },
+      "usage": {
+        "tier": "guest",
+        "used": 1,
+        "limit": 5,
+        "remaining": 4,
+        "resetAt": "2026-09-07T00:00:00.000Z",
+        "tracked": true,
+        "replayed": false
+      }
+    },
+    {
+      "action": "upload",
+      "label": "jerk-guest",
+      "account": "guest",
+      "at": "2026-09-06T05:22:02.669Z",
+      "status": 200,
+      "latencyMs": 8598,
+      "replayed": "true",
+      "requestId": "8ff74bd3-7ee2-4bd5-8325-a0ef72aebd4f",
+      "error": null,
+      "attempt": {
+        "id": "d58bc196-c213-4740-ac94-09441c686ca4",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "scored",
+        "saved": false,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1",
+        "score": {
+          "words": 100,
+          "rhythm": 44,
+          "timing": 20,
+          "overall": 65,
+          "version": "say-match-v1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 1.8600000143051147,
+                "actualStart": 0,
+                "expectedEnd": 2.108,
+                "expectedStart": 0.808
+              }
+            ],
+            "additions": 0,
+            "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+            "omissions": 0,
+            "matchedWords": 4,
+            "expectedWords": 4,
+            "substitutions": 0,
+            "meanStartErrorMs": 808,
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Wait for each caption cue before starting; keep your natural voice.",
+          "transcript": "You're a jerk, Tom.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Matched phrase entries averaged about 0.8 seconds early."
+          ]
+        },
+        "hasProtectedAudio": true,
+        "warning": "Guest takes stay on this browser for 24 hours. Sign in before recording to keep future takes in your history."
+      }
+    },
+    {
+      "action": "claim",
+      "label": "jerk-guest",
+      "account": "0",
+      "at": "2026-09-06T05:23:19.933Z",
+      "status": 200,
+      "latencyMs": 10422,
+      "replayed": null,
+      "requestId": "84b367f8-3960-449a-a44d-107d144d03eb",
+      "error": null,
+      "attempt": {
+        "id": "d58bc196-c213-4740-ac94-09441c686ca4",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1",
+        "score": {
+          "words": 100,
+          "rhythm": 44,
+          "timing": 20,
+          "overall": 65,
+          "version": "say-match-v1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 1.8600000143051147,
+                "actualStart": 0,
+                "expectedEnd": 2.108,
+                "expectedStart": 0.808
+              }
+            ],
+            "additions": 0,
+            "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+            "omissions": 0,
+            "matchedWords": 4,
+            "expectedWords": 4,
+            "substitutions": 0,
+            "meanStartErrorMs": 808,
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Wait for each caption cue before starting; keep your natural voice.",
+          "transcript": "You're a jerk, Tom.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Matched phrase entries averaged about 0.8 seconds early."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "challenge",
+      "label": "jerk-guest",
+      "account": "0",
+      "at": "2026-09-06T05:23:56.806Z",
+      "status": 403,
+      "latencyMs": 13483,
+      "replayed": null,
+      "requestId": "5a4420fe-7b9d-4b69-ae84-ccabd86d7ae8",
+      "error": "SAY_SHARE_REVIEW"
+    },
+    {
+      "action": "get",
+      "label": "jerk-guest",
+      "account": "1",
+      "at": "2026-09-06T05:24:39.689Z",
+      "status": 404,
+      "latencyMs": 23160,
+      "replayed": null,
+      "requestId": "7a7a801e-5b8a-4200-981f-1ae267ca452d",
+      "error": "SAY_ATTEMPT_NOT_FOUND"
+    },
+    {
+      "action": "audio",
+      "label": "jerk-guest",
+      "account": "guest",
+      "at": "2026-09-06T05:24:51.199Z",
+      "status": 404,
+      "latencyMs": 11328,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 204,
+      "contentType": "application/json",
+      "contentRange": null,
+      "sha256": null
+    },
+    {
+      "action": "audio",
+      "label": "jerk-guest",
+      "account": "anon",
+      "at": "2026-09-06T05:24:59.417Z",
+      "status": 404,
+      "latencyMs": 7990,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 204,
+      "contentType": "application/json",
+      "contentRange": null,
+      "sha256": null
+    },
+    {
+      "action": "audio",
+      "label": "jerk-guest",
+      "account": "0",
+      "at": "2026-09-06T05:25:09.421Z",
+      "status": 206,
+      "latencyMs": 9804,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 100,
+      "contentType": "audio/wav",
+      "contentRange": "bytes 0-99/109964",
+      "sha256": "6322cd1d2a0f4e1f092737950b543b5c6386245222df13e7343df6d0b0d00e9c"
+    },
+    {
+      "action": "history",
+      "label": null,
+      "account": "0",
+      "at": "2026-09-06T05:25:17.429Z",
+      "status": 200,
+      "latencyMs": 7779,
+      "replayed": null,
+      "requestId": "478e0156-364a-4cc8-b142-3eb98d7a6346",
+      "error": null,
+      "attempts": [
+        {
+          "id": "d58bc196-c213-4740-ac94-09441c686ca4",
+          "clipId": "tos-youre-a-jerk",
+          "clipVersion": "v1-a1664e1509a2",
+          "roleId": "celia",
+          "status": "scored",
+          "saved": true,
+          "owned": true,
+          "durationMs": 2290,
+          "recordingOffsetMs": 0,
+          "scoringVersion": "say-match-v1",
+          "score": {
+            "words": 100,
+            "rhythm": 44,
+            "timing": 20,
+            "overall": 65,
+            "version": "say-match-v1",
+            "weights": {
+              "words": 50,
+              "rhythm": 20,
+              "timing": 30,
+              "delivery": 0
+            },
+            "delivery": null,
+            "evidence": {
+              "phrases": [
+                {
+                  "cueId": "cue-1",
+                  "actualEnd": 1.8600000143051147,
+                  "actualStart": 0,
+                  "expectedEnd": 2.108,
+                  "expectedStart": 0.808
+                }
+              ],
+              "additions": 0,
+              "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+              "omissions": 0,
+              "matchedWords": 4,
+              "expectedWords": 4,
+              "substitutions": 0,
+              "meanStartErrorMs": 808,
+              "transcriptionModel": "whisper-1"
+            },
+            "coachNote": "Wait for each caption cue before starting; keep your natural voice.",
+            "transcript": "You're a jerk, Tom.",
+            "limitations": [
+              "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+              "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable."
+            ],
+            "observations": [
+              "Every scripted word matched the transcript.",
+              "Matched phrase entries averaged about 0.8 seconds early."
+            ]
+          },
+          "hasProtectedAudio": true
+        }
+      ]
+    },
+    {
+      "action": "upload",
+      "label": "silence",
+      "account": "guest",
+      "at": "2026-09-06T05:26:40.936Z",
+      "status": 422,
+      "latencyMs": 10266,
+      "replayed": null,
+      "requestId": "928606f4-1c9f-425d-8543-b4977fc2fbae",
+      "error": "NO_SPEECH_DETECTED"
+    },
+    {
+      "action": "judge",
+      "label": "jerk-guest",
+      "account": "0",
+      "at": "2026-09-06T05:28:35.070Z",
+      "status": 200,
+      "latencyMs": 14216,
+      "replayed": null,
+      "requestId": "74e0b755-a4fe-4344-8c06-9c3ff0f7f666",
+      "error": null,
+      "attempt": {
+        "id": "d58bc196-c213-4740-ac94-09441c686ca4",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1",
+        "score": {
+          "words": 100,
+          "rhythm": 44,
+          "timing": 20,
+          "overall": 65,
+          "version": "say-match-v1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 1.8600000143051147,
+                "actualStart": 0,
+                "expectedEnd": 2.108,
+                "expectedStart": 0.808
+              }
+            ],
+            "additions": 0,
+            "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+            "omissions": 0,
+            "matchedWords": 4,
+            "expectedWords": 4,
+            "substitutions": 0,
+            "meanStartErrorMs": 808,
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Wait for each caption cue before starting; keep your natural voice.",
+          "transcript": "You're a jerk, Tom.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Matched phrase entries averaged about 0.8 seconds early."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      }
+    },
+    {
+      "action": "judge",
+      "label": "jerk-guest",
+      "account": "0",
+      "at": "2026-09-06T05:28:45.451Z",
+      "status": 200,
+      "latencyMs": 10331,
+      "replayed": "true",
+      "requestId": "ad18ff93-fc54-43cc-b58a-9dfe94f4287b",
+      "error": null,
+      "attempt": {
+        "id": "d58bc196-c213-4740-ac94-09441c686ca4",
+        "clipId": "tos-youre-a-jerk",
+        "clipVersion": "v1-a1664e1509a2",
+        "roleId": "celia",
+        "status": "scored",
+        "saved": true,
+        "owned": true,
+        "durationMs": 2290,
+        "recordingOffsetMs": 0,
+        "scoringVersion": "say-match-v1",
+        "score": {
+          "words": 100,
+          "rhythm": 44,
+          "timing": 20,
+          "overall": 65,
+          "version": "say-match-v1",
+          "weights": {
+            "words": 50,
+            "rhythm": 20,
+            "timing": 30,
+            "delivery": 0
+          },
+          "delivery": null,
+          "evidence": {
+            "phrases": [
+              {
+                "cueId": "cue-1",
+                "actualEnd": 1.8600000143051147,
+                "actualStart": 0,
+                "expectedEnd": 2.108,
+                "expectedStart": 0.808
+              }
+            ],
+            "additions": 0,
+            "audioHash": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0",
+            "omissions": 0,
+            "matchedWords": 4,
+            "expectedWords": 4,
+            "substitutions": 0,
+            "meanStartErrorMs": 808,
+            "transcriptionModel": "whisper-1"
+          },
+          "coachNote": "Wait for each caption cue before starting; keep your natural voice.",
+          "transcript": "You're a jerk, Tom.",
+          "limitations": [
+            "Words and approximate timing come from automatic transcription, which can mishear speech or background voices.",
+            "Intonation, emotion, voice identity and volume are not scored. Rhythm measures phrase lengths and pauses, not every syllable."
+          ],
+          "observations": [
+            "Every scripted word matched the transcript.",
+            "Matched phrase entries averaged about 0.8 seconds early."
+          ]
+        },
+        "previousBest": null,
+        "hasProtectedAudio": true
+      },
+      "usage": {
+        "tier": "guest",
+        "used": 1,
+        "limit": 5,
+        "resetAt": "2026-09-07T00:00:00.000Z",
+        "tracked": true,
+        "replayed": false,
+        "remaining": 4
+      }
+    },
+    {
+      "action": "audio",
+      "label": "jerk-guest",
+      "account": "0",
+      "at": "2026-09-06T05:30:01.445Z",
+      "status": 200,
+      "latencyMs": 11066,
+      "replayed": null,
+      "requestId": null,
+      "bytes": 109964,
+      "contentType": "audio/wav",
+      "contentRange": null,
+      "sha256": "a011e16d04024532f0a2bf6a2018d26c6f1e2752e855158e81d2233eb75edaa0"
     }
   ]
 }

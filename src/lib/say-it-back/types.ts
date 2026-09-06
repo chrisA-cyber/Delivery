@@ -1,4 +1,4 @@
-export const SAY_SCORING_VERSION = "say-match-v1" as const;
+export const SAY_SCORING_VERSION = "say-match-v1.1" as const;
 
 export interface SayCue { id: string; roleId: string; text: string; start: number; end: number }
 export interface SayRole {
@@ -33,6 +33,15 @@ export interface SayClip {
   };
 }
 export interface SayWord { text: string; start: number; end: number }
+export interface SayTimingEvidence {
+  method: "pcm-energy-v1";
+  status: "refined" | "verified" | "unavailable";
+  frameMs: number;
+  noiseFloorRms?: number;
+  thresholdRms?: number;
+  adjustments: { wordIndex: number; edge: "start" | "end"; rawSeconds: number; measuredSeconds: number }[];
+  reason?: string;
+}
 export interface SayScore {
   version: string;
   overall: number;
@@ -50,6 +59,7 @@ export interface SayScore {
     matchedWords: number; meanStartErrorMs: number | null;
     phrases: { cueId: string; expectedStart: number; actualStart: number | null; expectedEnd: number; actualEnd: number | null }[];
     transcriptionModel: string; audioHash: string;
+    timingRefinement?: SayTimingEvidence;
   };
 }
 export interface SayAttempt {

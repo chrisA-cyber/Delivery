@@ -282,6 +282,36 @@ function assertAudibleWav(bytes: Uint8Array, wav: WavInfo): void {
   }
 }
 
+/** AC energy of PCM frames, shared by timing measurement without changing audio.
+ * Returns null for compressed/unsupported data; never trusts a MIME extension.
+ */
+export function getWavEnergyFrames(bytes: Uint8Array): { rms: number[]; frameSeconds: number; durationSeconds: number } | null {
+  if (bytes.length < 44 || ascii(bytes, 0, 4) !== "RIFF" || ascii(bytes, 8, 4) !== "WAVE") return null;
+  const wav = parseWav(bytes);
+  if (!wav || !((wav.audioFormat === 1 && [8, 16, 24, 32].includes(wav.bitsPerSample)) || (wav.audioFormat === 3 && [32, 64].includes(wav.bitsPerSample))) || wav.channels < 1 || wav.channels > 8 || wav.sampleRate < 8000 || wav.sampleRate > 192000 || wav.blockAlign !== wav.channels * wav.bitsPerSample / 8 || wav.dataSize % wav.blockAlign !== 0) return null;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const totalFrames = wav.dataSize / wav.blockAlign;
+  const windowFrames = Math.max(1, Math.round(wav.sampleRate * 0.01));
+  const rms: number[] = [];
+  for (let first = 0; first < totalFrames; first += windowFrames) {
+    const count = Math.min(windowFrames, totalFrames - first);
+    let channelEnergy = 0;
+    for (let channel = 0; channel < wav.channels; channel++) {
+      let sum = 0, squareSum = 0;
+      for (let frame = first; frame < first + count; frame++) {
+        const sample = wavSample(view, wav.dataOffset + frame * wav.blockAlign + channel * wav.bitsPerSample / 8, wav);
+        if (!Number.isFinite(sample)) return null;
+        sum += sample; squareSum += sample * sample;
+      }
+      // Removing each frame's DC offset prevents steady recorder bias from
+      // being mistaken for an audible onset. Channel maximum avoids cancellation.
+      channelEnergy = Math.max(channelEnergy, Math.sqrt(Math.max(0, squareSum / count - (sum / count) ** 2)));
+    }
+    rms.push(channelEnergy);
+  }
+  return { rms, frameSeconds: windowFrames / wav.sampleRate, durationSeconds: totalFrames / wav.sampleRate };
+}
+
 export async function validateAudio(
   file: File,
   claimedDurationMs: number,
