@@ -1,0 +1,23 @@
+{
+  "purpose": "Real Delivery services with local synthetic audio; not real-device or acting/fairness validation",
+  "requests": [
+    {
+      "action": "quota",
+      "account": "0",
+      "at": "2026-09-06T05:05:06.397Z",
+      "status": 200,
+      "used": 1,
+      "freeRemaining": 4,
+      "error": null
+    },
+    {
+      "action": "quota",
+      "account": "1",
+      "at": "2026-09-06T05:05:12.316Z",
+      "status": 200,
+      "used": 0,
+      "freeRemaining": 5,
+      "error": null
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # Delivery 2.0 — product goal, roadmap, and implementation workflow
 
+Current execution — September 6, 2026: Classic connected-account validation now passes real sessions, saved history, private playback, expired-link recovery and exact-key quota preservation. Say It Back is implemented with real scene media, synchronized dubs, independent matching, private history and friend challenges; release verification is underway on the isolated Railway environment. See [the current handoff](SAY_IT_BACK_HANDOFF.md). This owner-authorized assignment supersedes the historical phase gates below; groups, streamer expansion and Switch remain later work.
+
 Working draft, updated September 6, 2026. The sequence is Classic validation → Say It Back → groups and streamer participation → Switch. Camera-free participation remains central. This document records proposals for planning; it does not authorize implementation or deployment by itself. Update it as product decisions and implementation evidence arrive.
 
 Current implementation baseline: `chrisA-cyber/Delivery`, `main`, commit `c74baddcc93783490ec636291cc5b03397bdaa7b`, fetched September 6, 2026. Step 1B is committed and its [handoff](CLASSIC_STEP_1B_HANDOFF.md), [independent review](CLASSIC_STEP_1B_REVIEW.md), and recorded evidence have been read. Step 1C changes and validation boundaries are recorded in [CLASSIC_STEP_1C_HANDOFF.md](CLASSIC_STEP_1C_HANDOFF.md). Later tasks must fetch the current branch rather than assume this snapshot remains current.

@@ -18,6 +18,8 @@ export async function updateSession(request: NextRequest) {
         for (const { name, value, options } of cookiesToSet) {
           response.cookies.set(name, value, options);
         }
+        // A refreshed session response must never become another player's cache hit.
+        if (cookiesToSet.length) response.headers.set("Cache-Control", "private, no-store");
       },
     },
   });

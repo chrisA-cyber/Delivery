@@ -284,6 +284,20 @@ describe("microphone capture lifecycle", () => {
     expect(getUserMedia).toHaveBeenCalledTimes(2);
   });
 
+  it("reuses a context unlocked by the initial gesture after a scene countdown", async () => {
+    const { result } = renderHook(() => useAudioRecorder());
+    await act(async () => { result.current.primeAudioContext(); });
+    const primed = FakeAudioContext.instances[0]!;
+    expect(primed.state).toBe("running");
+    await act(async () => { vi.advanceTimersByTime(3_000); expect(await result.current.start()).toBe(true); });
+    expect(FakeAudioContext.instances).toHaveLength(1);
+    expect(result.current.getCapturePositionMs()).toBeNull();
+    act(() => primed.push(4_096));
+    expect(result.current.getCapturePositionMs()).toBeCloseTo(4_096 / 48);
+    act(() => result.current.reset());
+    expect(primed.state).toBe("closed");
+  });
+
   it("revokes discarded playback URLs and removes interruption listeners", async () => {
     const { result, context, unmount } = await record();
     act(() => { context.push(48_000); result.current.stop(); result.current.reset(); });

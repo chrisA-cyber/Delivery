@@ -1,0 +1,47 @@
+{
+  "assignment": "say-it-back-2026-09-06",
+  "ceilingUsd": 5,
+  "coordinator": "root-only; no competing paid batches",
+  "reservedUpperBoundUsd": 1.5,
+  "actualBilledUsd": null,
+  "reservations": [
+    {
+      "id": "classic-account-01",
+      "owner": "classic_account",
+      "maximumNewJudgeAppRequests": 1,
+      "maximumJudgeProviderDispatches": 2,
+      "maximumAudioSeconds": 10,
+      "upperBoundUsd": 0.5,
+      "state": "completed",
+      "notes": "One new Classic judged take then exact-key cached replay; no other paid calls. Provider SDK retries zero; max one format repair; each output <=900 tokens. Free local synthesis only.",
+      "newJudgeAppRequests": 1,
+      "possibleProviderDispatches": [
+        1,
+        2
+      ],
+      "actualBilledUsd": null,
+      "evidence": "../classic-railway/connected-account-20260906.json"
+    },
+    {
+      "id": "say-live-01",
+      "owner": "root",
+      "maximumNewJudgeAppRequests": 16,
+      "maximumJudgeProviderDispatches": 16,
+      "maximumAudioSecondsPerRequest": 20,
+      "upperBoundUsd": 1.0,
+      "state": "reserved",
+      "notes": "Serial app requests only; whisper-1 SDK retries disabled. Includes all clips, changed words, shifted identical waveform, recipient challenge. Reserve before dispatch; no unknown-outcome resubmission. Free local synthesis."
+    }
+  ],
+  "requests": [
+    {
+      "reservation": "classic-account-01",
+      "requestId": "2745f0cb-4df1-48ce-a1f3-74cc7a6e69a2",
+      "resultId": "73b441d9-3d7e-4ae1-b550-df638d3518cf",
+      "audioSha256": "03d573b8f99c92f4bd554c26f16e4bf9ce9df06e1513f195ee1d0087843166fa",
+      "seconds": 2.079,
+      "result": "201; persisted, cached replay did not consume additional play",
+      "conservativeUpperBoundUsd": 0.5
+    }
+  ]
+}

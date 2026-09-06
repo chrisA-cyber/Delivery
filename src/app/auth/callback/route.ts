@@ -17,13 +17,19 @@ export async function GET(request: Request) {
   const code = url.searchParams.get("code");
   const requested = url.searchParams.get("next") ?? "/profile";
   const next = safeInternalAppPath(requested, origin);
+  function redirect(path: string) {
+    const response = NextResponse.redirect(new URL(path, origin));
+    response.headers.set("Cache-Control", "private, no-store");
+    return response;
+  }
+  const failed = `/login?error=callback&next=${encodeURIComponent(next)}`;
   if (code) {
     try {
       const client = await createServerSupabaseClient();
       const { error } = await client.auth.exchangeCodeForSession(code);
       if (error) throw error;
     }
-    catch { return NextResponse.redirect(new URL("/login?error=callback", origin)); }
-  } else return NextResponse.redirect(new URL("/login?error=callback", origin));
-  return NextResponse.redirect(new URL(next, origin));
+    catch { return redirect(failed); }
+  } else return redirect(failed);
+  return redirect(next);
 }

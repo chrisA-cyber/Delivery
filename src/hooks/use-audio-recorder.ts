@@ -13,6 +13,7 @@ type RecorderSession = {
   silentGain: GainNode;
   frames: Float32Array[];
   sampleCount: number;
+  lastFrameAt: number | null;
   cleanup: () => void;
 };
 
@@ -179,7 +180,9 @@ export function useAudioRecorder() {
       if (!stream) return false;
       const AudioContextClass = audioContextClass();
       if (!AudioContextClass) throw new Error("AudioContext unavailable");
-      context = new AudioContextClass({ latencyHint: "interactive" });
+      context = pendingContextRef.current?.state !== "closed" && pendingContextRef.current
+        ? pendingContextRef.current
+        : new AudioContextClass({ latencyHint: "interactive" });
       pendingContextRef.current = context;
       await context.resume();
       if (pendingContextRef.current === context) pendingContextRef.current = null;
@@ -192,7 +195,7 @@ export function useAudioRecorder() {
       const processor = context.createScriptProcessor(4096, 1, 1);
       const silentGain = context.createGain();
       silentGain.gain.value = 0;
-      const session: RecorderSession = { context, source, processor, silentGain, frames: [], sampleCount: 0, cleanup: () => undefined };
+      const session: RecorderSession = { context, source, processor, silentGain, frames: [], sampleCount: 0, lastFrameAt: null, cleanup: () => undefined };
       sessionRef.current = session;
       const durationSamples = Math.floor(context.sampleRate * MAX_RECORDING_MS / 1_000);
       const sizeSamples = Math.floor((MAX_RECORDING_BYTES - 44) / 2);
@@ -203,6 +206,7 @@ export function useAudioRecorder() {
         const copy = new Float32Array(channel.subarray(0, maxSamples - session.sampleCount));
         session.frames.push(copy);
         session.sampleCount += copy.length;
+        session.lastFrameAt = performance.now();
         let squareSum = 0;
         let peak = 0;
         for (const sample of copy) {
@@ -325,5 +329,24 @@ export function useAudioRecorder() {
   }, [closePendingContext, disposeSession, stopStream]);
 
   const canSubmit = Boolean(audioBlob) && (quality === "ready" || quality === "quiet");
-  return { status, audioBlob, audioUrl, durationMs, level, isClipping, error, warning, quality, qualityMessage, canSubmit, stopReason, requestPermission, start, stop, reset };
+  // The capture timeline lets a scene player measure its startup pre-roll. This
+  // never aligns speech or edits performance timing. One input block remains
+  // the browser-dependent precision limit; physical input latency is unmeasured.
+  const getCapturePositionMs = useCallback((): number | null => {
+    const session = sessionRef.current;
+    if (!session || session.lastFrameAt === null) return null;
+    return session.sampleCount / session.context.sampleRate * 1_000
+      + Math.min(100, Math.max(0, performance.now() - session.lastFrameAt));
+  }, []);
+  // Countdown flows call this directly in the user's tap. Safari may require
+  // the context to resume inside that gesture, before an asynchronous countdown.
+  const primeAudioContext = useCallback(() => {
+    const AudioContextClass = audioContextClass();
+    if (!AudioContextClass || sessionRef.current) return;
+    try {
+      if (!pendingContextRef.current || pendingContextRef.current.state === "closed") pendingContextRef.current = new AudioContextClass({ latencyHint: "interactive" });
+      void pendingContextRef.current.resume().catch(() => undefined);
+    } catch { /* start() owns the visible unsupported-device error. */ }
+  }, []);
+  return { status, audioBlob, audioUrl, durationMs, level, isClipping, error, warning, quality, qualityMessage, canSubmit, stopReason, requestPermission, start, stop, reset, getCapturePositionMs, primeAudioContext };
 }

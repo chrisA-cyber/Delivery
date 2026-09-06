@@ -8,6 +8,7 @@ import { useApp } from "@/components/providers/app-provider";
 import { cn } from "@/lib/utils";
 const links = [
   { href: "/play", label: "Classic" },
+  { href: "/say-it-back", label: "Say It Back" },
   { href: "/daily", label: "Daily" },
   { href: "/discover", label: "Packs" },
   { href: "/challenge", label: "Friends" },

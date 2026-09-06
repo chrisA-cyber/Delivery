@@ -61,11 +61,17 @@ export default function HomePage() {
                 Get a ridiculous line. Sell the delivery. Face the verdict. Your
                 voice is the whole show.
               </p>
-              <Link href="/play" className="button-primary mt-7 min-h-14 px-7">
+              <div className="mt-7 flex flex-wrap gap-3">
+              <Link href="/play" className="button-primary min-h-14 px-7">
                 <AudioLines className="size-5" />
                 Play Classic
                 <ArrowRight className="size-4" />
               </Link>
+              <Link href="/say-it-back" className="button-secondary min-h-14">
+                Say It Back
+                <ArrowRight className="size-4" />
+              </Link>
+              </div>
               <p className="mt-4 text-xs leading-6 text-white/60">
                 No account needed. Retakes encouraged. Private until you share.
               </p>
