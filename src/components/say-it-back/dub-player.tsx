@@ -33,6 +33,7 @@ function playbackSource(url: string) {
 
 /** The video is the only playback clock. The take keeps its recorded timing. */
 export const DubPlayer = forwardRef<DubPlayerHandle, {
+  externalCommand?: { revision: number; command: "play" | "pause" | "replay" };
   clip: SayClip;
   role: SayRole;
   takeUrl?: string | null;
@@ -46,7 +47,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   onPlaybackStart?: () => void;
   onCancelCountdown?: () => void;
   takeLabel?: string;
-}> (function DubPlayer({ clip, role, takeUrl, recordingOffsetMs = 0, recording = false, countdown, onEnded, onTime, onAudioError, onInterruption, onPlaybackStart, onCancelCountdown, takeLabel = "Your take" }, forwardedRef) {
+}> (function DubPlayer({ externalCommand, clip, role, takeUrl, recordingOffsetMs = 0, recording = false, countdown, onEnded, onTime, onAudioError, onInterruption, onPlaybackStart, onCancelCountdown, takeLabel = "Your take" }, forwardedRef) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const voiceRef = useRef<HTMLAudioElement>(null);
   const bedRef = useRef<HTMLAudioElement>(null);
@@ -339,6 +340,17 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
       setError("Playback could not start. Check your connection and tap play again.");
     }
   };
+
+  const commandHandler = useRef<() => void>(() => {});
+  commandHandler.current = () => {
+    if (!externalCommand) return;
+    if (externalCommand.command === "pause") { pause(); return; }
+    if (externalCommand.command === "replay" && videoRef.current) videoRef.current.currentTime = 0;
+    if (videoRef.current?.paused) void togglePlay();
+  };
+  useEffect(() => {
+    if (loaded) commandHandler.current();
+  }, [externalCommand?.revision, externalCommand?.command, loaded]);
 
   const seek = (time: number) => {
     if (!videoRef.current || busy) return;

@@ -22,7 +22,7 @@ import { moderateLine } from "@/lib/server/moderation";
 import { approveSaySharing } from "@/lib/server/say-it-back";
 
 type Row = Record<string, unknown>;
-export interface GroupViewer { user: User | null; guest: GuestIdentity; setCookie?: string }
+export interface GroupViewer { user: User | null; guest: GuestIdentity; setCookie?: string; display?: boolean }
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 const notFound = () => new AppError("ROUND_NOT_FOUND", "This invitation is unavailable or has been revoked. Ask your friend for a new round link.", 404);
 const now = () => new Date().toISOString();
@@ -31,6 +31,10 @@ function checked(error: unknown): void {
   if (!error) return;
   const message = typeof error === "object" && error && "message" in error ? String(error.message) : "";
   const errors: Record<string, [string, number]> = {
+    ROUND_SIGN_IN_REQUIRED: ["This browser’s participation is linked to an account. Sign in to that account to return.", 403],
+    ROUND_NEXT_EXISTS: ["The next round already exists. Refresh to open it.", 409],
+    ROUND_SHOWCASE_FULL: ["Choose up to 12 performances for the showcase.", 409],
+    ROUND_BROADCAST_CONSENT: ["Confirm that the host may preview and broadcast this exact take. Streams may be recorded externally.", 422],
     ROUND_TAKE_SUPERSEDED: ["That take was replaced. Choose a fresh performance; the latest submission is safe.", 409],
     ROUND_TAKE_LIMIT: ["You have saved 20 takes for this round. Choose one of them or start a rematch.", 429],
     ROUND_INVITE_REVOKED: ["This invitation was revoked. Existing players can still finish the round.", 404],
@@ -39,7 +43,7 @@ function checked(error: unknown): void {
     ROUND_ASSIGNMENT_IMMUTABLE: ["A round's assignment cannot change. Start a rematch instead.", 409],
     ROUND_ACTION_INVALID: ["That action is unavailable for this round.", 422],
     ROUND_CLOSED: ["This round has closed. Your private take is still available; start a rematch.", 409],
-    ROUND_FULL: ["This round already has 12 players. Ask your host to start another round.", 409],
+    ROUND_FULL: ["This round has reached its participation or submission limit. You can still watch the showcase.", 409],
     ROUND_FORBIDDEN: ["Only the host can do that.", 403],
     ROUND_NOT_FOUND: ["This invitation is unavailable or has been revoked.", 404],
     ROUND_NOT_MEMBER: ["Join this round before submitting or watching performances.", 403],
@@ -79,6 +83,21 @@ async function participantAvailable(userId: string | null, viewer: GroupViewer):
   return !deletion.data?.length && !blocks.data?.length && !challengeHasActiveProfileContainment((restrictions.data ?? []) as { user_id: string; kind: string; starts_at: string; ends_at: string | null }[], [userId]);
 }
 
+async function unavailableGroupUsers(userIds: string[], viewer: GroupViewer): Promise<Set<string>> {
+  if (!userIds.length) return new Set();
+  const admin = createSupabaseAdminClient();
+  const [deletions, restrictions, blocks] = await Promise.all([
+    admin.from("account_deletion_jobs").select("user_id").in("user_id", userIds),
+    admin.from("account_restrictions").select("user_id,kind,starts_at,ends_at").in("user_id", userIds).in("kind", ["profile-limit", "profile-remove"]),
+    viewer.user ? admin.from("blocks").select("blocker_id,blocked_id").or(`blocker_id.eq.${viewer.user.id},blocked_id.eq.${viewer.user.id}`) : Promise.resolve({ data: [], error: null }),
+  ]);
+  checked(deletions.error); checked(restrictions.error); checked(blocks.error);
+  const unavailable = new Set<string>((deletions.data ?? []).map((r) => String(r.user_id)));
+  for (const id of userIds) if (challengeHasActiveProfileContainment((restrictions.data ?? []) as { user_id: string; kind: string; starts_at: string; ends_at: string | null }[], [id])) unavailable.add(id);
+  for (const block of blocks.data ?? []) unavailable.add(String(block.blocker_id === viewer.user?.id ? block.blocked_id : block.blocker_id));
+  return unavailable;
+}
+
 async function assertViewerAvailable(viewer: GroupViewer) {
   if (viewer.user && !(await participantAvailable(viewer.user.id, viewer))) throw notFound();
 }
@@ -108,9 +127,10 @@ async function loadRound(token: string, viewer: GroupViewer, maxRating: ContentR
   checked(result.error);
   const members = result.data ?? [];
   const member = (viewer.user ? members.find((candidate) => candidate.user_id === viewer.user!.id) : null) ?? members.find((candidate) => ownsGroupMember(candidate, viewer)) ?? null;
-  if (found.data.group_invite_revoked_at && !member) throw notFound();
+  if (found.data.group_invite_revoked_at && !member && !viewer.display) throw notFound();
   const hostId = found.data.group_host_member_id;
   const host = members.find((candidate) => candidate.id === hostId);
+  if (found.data.community && !host) throw notFound();
   if (host && !(await participantAvailable(host.user_id ? String(host.user_id) : null, viewer))) throw notFound();
   const row = await rpcAction(found.data, viewer, "refresh");
   return { row, members, member };
@@ -127,6 +147,7 @@ async function assignmentFor(input: CreateGroupRoundInput, viewer: GroupViewer):
     if (!found.data?.enabled) throw new AppError("SAY_CLIP_NOT_FOUND", "Choose an available scene.", 404);
     const clip = sayClipSchema.parse(found.data.manifest);
     assertContentRating(clip.rating, input.maxRating);
+    if (input.community && !["CC BY 3.0", "Public domain in the United States"].includes(clip.source.license)) throw new AppError("ROUND_BROADCAST_SOURCE", "This scene has no verified broadcast reuse permission. Choose another scene for a community round.", 403);
     if (clip.rating === "mature") throw new AppError("GROUP_MATURE_PRIVATE", "Mature scenes stay private. Choose a Clean or Spicy scene for friends.", 403);
     if (!clip.roles.some((role) => role.id === input.roleId)) throw new AppError("SAY_ROLE_INVALID", "Choose a role in this scene.", 422);
     return { mode: "say-it-back", clip, roleId: input.roleId!, rating: clip.rating, scoringVersion: SAY_SCORING_VERSION };
@@ -145,6 +166,7 @@ export async function createGroupRound(input: CreateGroupRoundInput, viewer: Gro
   if (previousToken) {
     const previous = await loadRound(previousToken, viewer, input.maxRating);
     if (!previous.member) throw new AppError("ROUND_NOT_MEMBER", "Join the group before creating its rematch.", 403);
+    if (previous.row.community && (previous.member.id !== previous.row.group_host_member_id || !input.community)) throw new AppError("ROUND_FORBIDDEN", "Only the host can start the next community round.", 403);
     previousId = String(previous.row.id);
   }
   const assignment = await assignmentFor(input, viewer);
@@ -159,6 +181,8 @@ export async function createGroupRound(input: CreateGroupRoundInput, viewer: Gro
     p_token_hash: hash(token), p_name: input.name, p_assignment: assignment,
     p_closes_at: new Date(Date.now() + input.closesInHours * 3600_000).toISOString(),
     p_previous_id: previousId, p_request_id: input.requestId, p_host_name: input.displayName,
+    p_community: input.community ?? false, p_limit: input.submissionLimit ?? 25, p_voting: input.audienceVoting ?? true,
+    p_display_hash: hash(createHmac("sha256", secret).update(`delivery:display:${hash(input.requestId)}`).digest("base64url")),
   });
   checked(created.error);
   return getGroupRound(token, viewer, origin, input.maxRating);
@@ -172,7 +196,7 @@ export function groupScoreGroup(mode: "classic" | "say-it-back", score: Delivery
 }
 
 export function ownsGroupSaySource(member: Row, attempt: Row): boolean {
-  return attempt.user_id ? attempt.user_id === member.user_id : Boolean(member.guest_owner_hash && attempt.guest_owner_hash === member.guest_owner_hash);
+  return attempt.user_id ? attempt.user_id === member.user_id : Boolean(member.guest_owner_hash && attempt.guest_owner_hash === member?.guest_owner_hash);
 }
 
 function sayPerformance(attempt: Row, memberId: string, audioUrl: string, submittedAt: string | null = null): GroupPerformance {
@@ -219,25 +243,35 @@ async function listPrivateTakes(row: Row, member: Row, viewer: GroupViewer, toke
 export async function getGroupRound(token: string, viewer: GroupViewer, origin: string, maxRating: ContentRating = "everyone"): Promise<GroupRound> {
   const { row, members, member } = await loadRound(token, viewer, maxRating);
   const expired = isExpired(row.group_replay_until);
-  const revealed = row.state === "completed";
+  const community = Boolean(row.community);
+  const isHost = member?.id === row.group_host_member_id;
+  const revealed = row.state === "completed" && (!community || ["showcase", "voting", "results"].includes(String(row.community_phase)));
   const admin = createSupabaseAdminClient();
   const visibleMembers: GroupMember[] = [];
   let voteRows: Row[] = [];
-  if (member && revealed && !expired) {
+  if ((member || community) && revealed && !expired) {
     const votes = await admin.from("challenge_group_votes").select("voter_member_id,target_member_id").eq("challenge_id", String(row.id));
     checked(votes.error); voteRows = votes.data ?? [];
   }
-  for (const candidate of members) {
-    const available = await participantAvailable(candidate.user_id ? String(candidate.user_id) : null, viewer);
+  const takeIds = members.flatMap((candidate) => candidate.submitted_take_id ? [String(candidate.submitted_take_id)] : []);
+  const submitted = takeIds.length ? await admin.from("challenge_group_takes").select("*").in("id", takeIds).eq("challenge_id", String(row.id)) : { data: [], error: null };
+  checked(submitted.error);
+  const sayIds = (submitted.data ?? []).flatMap((take) => take.say_attempt_id ? [String(take.say_attempt_id)] : []);
+  const sources = sayIds.length ? await admin.from("say_attempts").select("*").in("id", sayIds) : { data: [], error: null };
+  checked(sources.error);
+  const visibleCandidates = community && !isHost ? members.filter((candidate) => candidate.id === member?.id || (revealed && candidate.showcased)) : members;
+  const unavailable = await unavailableGroupUsers([...new Set(visibleCandidates.flatMap((m) => m.user_id ? [String(m.user_id)] : []))], viewer);
+  for (const candidate of visibleCandidates) {
+    const available = !candidate.user_id || !unavailable.has(String(candidate.user_id));
     let performance: GroupPerformance | null = null;
-    if (available && member && !expired && candidate.submitted_take_id && (revealed || candidate.id === member.id)) {
-      const take = await admin.from("challenge_group_takes").select("*").eq("id", String(candidate.submitted_take_id)).eq("challenge_id", String(row.id)).eq("member_id", String(candidate.id)).maybeSingle();
+    if (available && (member || community) && !expired && candidate.submitted_take_id && (candidate.id === member?.id || (community ? (isHost || (revealed && candidate.showcased)) : revealed))) {
+      const take = { data: submitted.data?.find((take) => take.id === candidate.submitted_take_id && take.member_id === candidate.id), error: null };
       checked(take.error);
-      if (take.data && ["approved", "unreviewed"].includes(String(take.data.moderation_state)) && !isExpired(take.data.expires_at)) {
+      if (take.data && (!community || candidate.id === member?.id || take.data.broadcast_consent_at) && ["approved", "unreviewed"].includes(String(take.data.moderation_state)) && !isExpired(take.data.expires_at)) {
         const audioUrl = `/api/rounds/${token}/performances/${candidate.id}/audio?maxRating=${maxRating}`;
         if (take.data.mode === "classic") performance = classicPerformance(take.data, audioUrl);
         else if (take.data.say_attempt_id) {
-          const attempt = await admin.from("say_attempts").select("*").eq("id", take.data.say_attempt_id).maybeSingle();
+          const attempt = { data: sources.data?.find((source) => source.id === take.data!.say_attempt_id), error: null };
           checked(attempt.error);
           if (attempt.data && ownsGroupSaySource(candidate, attempt.data) && !["rejected", "review"].includes(String(attempt.data.moderation_state)) && (attempt.data.moderation_state === "approved" || !attempt.data.score) && !isExpired(attempt.data.expires_at)) {
             performance = sayPerformance(attempt.data, String(candidate.id), audioUrl, String(take.data.submitted_at));
@@ -265,22 +299,35 @@ export async function getGroupRound(token: string, viewer: GroupViewer, origin: 
   }
   return {
     id: String(row.id), token, name: String(row.group_name), url: `${origin}/rounds/${token}`,
-    state: expired ? "expired" : revealed ? "revealed" : "open", assignment: row.group_assignment as GroupAssignment,
+    state: expired ? "expired" : row.state === "completed" ? "revealed" : "open", assignment: row.group_assignment as GroupAssignment,
     createdAt: String(row.created_at), closesAt: String(row.group_closes_at), closedAt: row.completed_at ? String(row.completed_at) : null,
-    replayUntil: String(row.group_replay_until), inviteRevoked: Boolean(row.group_invite_revoked_at), maxMembers: 12,
-    members: visibleMembers, submittedCount: visibleMembers.filter((entry) => entry.submitted).length,
+    replayUntil: String(row.group_replay_until), inviteRevoked: Boolean(row.group_invite_revoked_at), maxMembers: community ? 500 : 12,
+    members: visibleMembers, submittedCount: community ? members.filter((entry) => entry.submitted_take_id).length : visibleMembers.filter((entry) => entry.submitted).length,
     viewerMemberId: member ? String(member.id) : null, isHost: member?.id === row.group_host_member_id, isGuest: !viewer.user,
-    canJoin: !member && !revealed && !expired && !row.group_invite_revoked_at && members.length < 12,
+    canJoin: !member && !members.some((m) => m.user_id && m.guest_owner_hash === viewer.guest.idempotencyScope) && (community ? row.community_phase !== "results" : !revealed) && !expired && !row.group_invite_revoked_at && members.length < (community ? 500 : 12),
     canClaim: Boolean(viewer.user && member && !member.user_id && !viewer.guest.setCookie),
     viewerVoteMemberId: voteRows.find((vote) => vote.voter_member_id === member?.id)?.target_member_id as string ?? null,
     previousRoundId: row.group_previous_id ? String(row.group_previous_id) : null, previousRoundUrl,
+    community: community ? {
+      phase: String(row.community_phase) as NonNullable<GroupRound["community"]>["phase"], code: String(row.community_code),
+      submissionLimit: Number(row.community_limit), votingEnabled: Boolean(row.community_voting),
+      selectedIds: visibleMembers.filter((entry) => entry.performance && members.find((m) => m.id === entry.id)?.showcased).map((entry) => entry.id),
+      ...(isHost ? { displayUrl: `${origin}/broadcast/${displayToken(row)}` } : {}), displayRevoked: Boolean(row.display_revoked_at),
+      currentMemberId: row.display_member_id ? String(row.display_member_id) : null,
+      command: String(row.display_command) as "play" | "pause" | "replay", revision: Number(row.display_revision),
+      participantCount: members.length, nextRoundUrl: await nextCommunityUrl(row, origin),
+    } : null,
     yourTakes: member && !expired ? await listPrivateTakes(row, member, viewer, token, maxRating) : [],
   };
 }
 
-export async function mutateGroupRound(token: string, viewer: GroupViewer, origin: string, action: "join" | "close" | "revoke" | "vote" | "claim", payload: Row, maxRating: ContentRating): Promise<GroupRound> {
+export async function mutateGroupRound(token: string, viewer: GroupViewer, origin: string, action: "join" | "close" | "revoke" | "vote" | "claim" | "select" | "hide" | "showcase" | "start-voting" | "end-voting" | "display" | "revoke-display", payload: Row, maxRating: ContentRating): Promise<GroupRound> {
   const { row } = await loadRound(token, viewer, maxRating);
   if (action === "claim" && (!viewer.user || viewer.guest.setCookie)) throw new AppError("ROUND_CLAIM_REQUIRED", "Sign in from the same browser that joined this round.", 403);
+  if (action === "select" || action === "display") {
+    const current = await getGroupRound(token, viewer, origin, maxRating);
+    if (!current.isHost || !current.members.find((entry) => entry.id === payload.memberId)?.performance) throw new AppError("ROUND_TAKE_INVALID", "Choose an available, consented submission.", 409);
+  }
   if (action === "vote") {
     const visible = await getGroupRound(token, viewer, origin, maxRating);
     const target = visible.members.find((entry) => entry.id === payload.memberId);
@@ -352,7 +399,7 @@ export async function attachClassicRoundJudge(input: { token: string; takeId: st
   } catch { /* Submit offers a safe moderation retry without rejudging. */ }
 }
 
-export async function submitGroupPerformance(token: string, viewer: GroupViewer, origin: string, input: { takeId?: string; sayAttemptId?: string; consent: true; maxRating: ContentRating }): Promise<GroupRound> {
+export async function submitGroupPerformance(token: string, viewer: GroupViewer, origin: string, input: { takeId?: string; sayAttemptId?: string; consent: true; broadcastConsent?: true; maxRating: ContentRating }): Promise<GroupRound> {
   const { row, member } = await loadRound(token, viewer, input.maxRating);
   if (!member) throw new AppError("ROUND_NOT_MEMBER", "Join this round first.", 403);
   if (input.consent !== true) throw new AppError("GROUP_CONSENT_REQUIRED", "Confirm that you want to share this performance with the group after reveal.", 422);
@@ -364,7 +411,7 @@ export async function submitGroupPerformance(token: string, viewer: GroupViewer,
     const result = await admin.from("say_attempts").select("*").eq("id", input.sayAttemptId).maybeSingle();
     checked(result.error);
     const attempt = result.data;
-    if (!attempt || isExpired(attempt.expires_at) || !(attempt.user_id ? attempt.user_id === viewer.user?.id : attempt.guest_owner_hash === member.guest_owner_hash)) throw notFound();
+    if (!attempt || isExpired(attempt.expires_at) || !(attempt.user_id ? attempt.user_id === viewer.user?.id : attempt.guest_owner_hash === member?.guest_owner_hash)) throw notFound();
     if (attempt.clip_version_id !== `${assignment.clip.id}:${assignment.clip.version}` || attempt.role_id !== assignment.roleId || attempt.scoring_version !== assignment.scoringVersion) throw new AppError("ROUND_TAKE_INVALID", "Choose the exact scene, role, and scoring version for this round.", 409);
     if (["rejected", "review"].includes(String(attempt.moderation_state))) throw new AppError("ROUND_TAKE_INVALID", "This take cannot be shared because it needs a safety review. Record another take.", 403);
     if (attempt.score) await approveSaySharing(attempt);
@@ -397,7 +444,7 @@ export async function submitGroupPerformance(token: string, viewer: GroupViewer,
       await attachClassicRoundJudge({ token, takeId, score }, viewer);
     }
   }
-  await rpcAction(row, viewer, "submit", { takeId, consent: true });
+  await rpcAction(row, viewer, "submit", { takeId, consent: true, broadcastConsent: input.broadcastConsent === true });
   return getGroupRound(token, viewer, origin, input.maxRating);
 }
 
@@ -421,17 +468,22 @@ async function streamAudio(path: string, mime: string, request: Request): Promis
 
 export async function groupAudioResponse(token: string, viewer: GroupViewer, request: Request, selector: { takeId?: string; memberId?: string }, maxRating: ContentRating): Promise<Response> {
   const { row, members, member } = await loadRound(token, viewer, maxRating);
-  if (!member || isExpired(row.group_replay_until)) throw notFound();
+  if ((!member && !row.community) || isExpired(row.group_replay_until)) throw notFound();
   const target = selector.memberId ? members.find((entry) => entry.id === selector.memberId) : member;
   if (!target || !(await participantAvailable(target.user_id ? String(target.user_id) : null, viewer))) throw notFound();
-  if (selector.memberId && target.id !== member.id && row.state !== "completed") throw notFound();
+  if (!selector.memberId && !member) throw notFound();
+  if (selector.memberId && target.id !== member?.id) {
+    if (row.community) {
+      if (member?.id !== row.group_host_member_id && !(target.showcased && ["showcase", "voting", "results"].includes(String(row.community_phase)))) throw notFound();
+    } else if (row.state !== "completed") throw notFound();
+  }
   const admin = createSupabaseAdminClient();
   const assignment = row.group_assignment as GroupAssignment;
   if (assignment.mode === "say-it-back" && selector.takeId) {
     const result = await admin.from("say_attempts").select("*").eq("id", selector.takeId).maybeSingle();
     checked(result.error);
     const attempt = result.data;
-    if (!attempt || isExpired(attempt.expires_at) || !(attempt.user_id ? attempt.user_id === viewer.user?.id : attempt.guest_owner_hash === member.guest_owner_hash) || attempt.clip_version_id !== `${assignment.clip.id}:${assignment.clip.version}` || attempt.role_id !== assignment.roleId) throw notFound();
+    if (!attempt || isExpired(attempt.expires_at) || !(attempt.user_id ? attempt.user_id === viewer.user?.id : attempt.guest_owner_hash === member?.guest_owner_hash) || attempt.clip_version_id !== `${assignment.clip.id}:${assignment.clip.version}` || attempt.role_id !== assignment.roleId) throw notFound();
     return streamSayRow(attempt, request);
   }
   const id = selector.memberId ? target.submitted_take_id : selector.takeId;
@@ -439,7 +491,7 @@ export async function groupAudioResponse(token: string, viewer: GroupViewer, req
   const result = await admin.from("challenge_group_takes").select("*").eq("id", id).eq("challenge_id", String(row.id)).eq("member_id", String(target.id)).maybeSingle();
   checked(result.error);
   const take = result.data;
-  if (!take || isExpired(take.expires_at) || (selector.memberId && !["approved", "unreviewed"].includes(String(take.moderation_state)))) throw notFound();
+  if (!take || (row.community && selector.memberId && target.id !== member?.id && !take.broadcast_consent_at) || isExpired(take.expires_at) || (selector.memberId && !["approved", "unreviewed"].includes(String(take.moderation_state)))) throw notFound();
   if (take.mode === "classic") {
     if (!validGroupStoragePath(String(take.recording_path), target, String(row.id))) throw notFound();
     return streamAudio(String(take.recording_path), String(take.audio_mime), request);
@@ -506,4 +558,53 @@ export async function deleteGroupAccountMedia(userId: string): Promise<void> {
     afterId = String(memberships.data.at(-1)!.id);
     if (memberships.data.length < 100) break;
   }
+}
+
+function displayToken(row: Row): string {
+  return createHmac("sha256", getServerEnv().DELIVERY_DEVICE_SECRET!).update(`delivery:display:${row.group_request_hash}`).digest("base64url");
+}
+function invitationToken(row: Row): string {
+  const token = createHmac("sha256", getServerEnv().DELIVERY_DEVICE_SECRET!).update(`delivery:round:${row.group_request_hash}`).digest("base64url");
+  if (hash(token) !== row.group_token_hash) throw notFound();
+  return token;
+}
+async function nextCommunityUrl(row: Row, origin: string): Promise<string | null> {
+  if (!row.community_next_id) return null;
+  const result = await createSupabaseAdminClient().from("challenges").select("*").eq("id", String(row.community_next_id)).maybeSingle();
+  checked(result.error);
+  if (!result.data || result.data.group_invite_revoked_at || isExpired(result.data.group_replay_until)) return null;
+  return `${origin}/rounds/${invitationToken(result.data)}`;
+}
+export async function resolveCommunityCode(code: string): Promise<string> {
+  if (!/^[A-F0-9]{8}$/.test(code)) throw notFound();
+  const result = await createSupabaseAdminClient().from("challenges").select("*").eq("community_code", code).eq("community", true).maybeSingle();
+  checked(result.error);
+  if (!result.data || result.data.group_invite_revoked_at || isExpired(result.data.group_replay_until)) throw notFound();
+  return invitationToken(result.data);
+}
+export async function resolveBroadcast(token: string): Promise<string> {
+  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw notFound();
+  const result = await createSupabaseAdminClient().from("challenges").select("*").eq("display_token_hash", hash(token)).eq("community", true).maybeSingle();
+  checked(result.error);
+  if (!result.data || result.data.display_revoked_at || isExpired(result.data.group_replay_until)) throw notFound();
+  return invitationToken(result.data);
+}
+export const broadcastViewer = (): GroupViewer => ({ user: null, guest: { idempotencyScope: "display", scope: "display" }, display: true });
+export async function getBroadcast(token: string, origin: string, maxRating: ContentRating): Promise<GroupRound> {
+  const round = await getGroupRound(await resolveBroadcast(token), broadcastViewer(), origin, maxRating);
+  // The display receives neither participant identity nor the private invitation.
+  round.token = token; round.url = `${origin}/join?code=${round.community!.code}`;
+  if (round.community?.nextRoundUrl) {
+    const nextToken = round.community.nextRoundUrl.split("/").pop()!;
+    const next = await createSupabaseAdminClient().from("challenges").select("*").eq("group_token_hash", hash(nextToken)).maybeSingle();
+    checked(next.error);
+    round.community.nextRoundUrl = next.data && !next.data.display_revoked_at ? `${origin}/broadcast/${displayToken(next.data)}` : null;
+  }
+  round.previousRoundUrl = null; round.previousRoundId = null;
+  round.members = round.members.filter((m) => round.community!.selectedIds.includes(m.id));
+  for (const member of round.members) if (member.performance) {
+    member.performance.audioUrl = `/api/broadcast/${token}/audio/${member.id}?maxRating=${maxRating}`;
+    if (member.performance.sayAttempt) member.performance.sayAttempt.audioUrl = member.performance.audioUrl;
+  }
+  return round;
 }

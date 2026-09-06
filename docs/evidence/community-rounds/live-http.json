@@ -1,0 +1,649 @@
+{
+  "date": "2026-09-06",
+  "applicationRevision": "7de38772216f23a6a2ad438ccf2c07960504bc82",
+  "boundary": "Real deployed HTTP with six independent guest cookie sessions. Audio fixtures reuse an existing reference WAV; no microphone or paid scoring. No OAuth tokens or identity-provider login simulated. Timings include the agent network proxy.",
+  "passed": true,
+  "checks": [
+    {
+      "actor": "host",
+      "route": "/api/say-it-back/clips",
+      "status": 200,
+      "ms": 9892
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds",
+      "status": 201,
+      "ms": 9398
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds",
+      "status": 201,
+      "ms": 6760
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/rounds/lookup",
+      "status": 200,
+      "ms": 9036
+    },
+    {
+      "actor": "host",
+      "route": "/api/broadcast/DISPLAY",
+      "status": 200,
+      "ms": 7004
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/join",
+      "status": 200,
+      "ms": 6671
+    },
+    {
+      "actor": "b",
+      "route": "/api/rounds/ROUND/join",
+      "status": 200,
+      "ms": 12155
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND",
+      "status": 200,
+      "ms": 8825
+    },
+    {
+      "actor": "b",
+      "route": "/api/rounds/ROUND",
+      "status": 200,
+      "ms": 10231
+    },
+    {
+      "actor": "a",
+      "route": "/api/say-it-back/attempts",
+      "status": 201,
+      "ms": 6939
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/submit",
+      "status": 422,
+      "ms": 7800
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/submit",
+      "status": 200,
+      "ms": 7424
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/select",
+      "status": 200,
+      "ms": 7258
+    },
+    {
+      "actor": "a",
+      "route": "/api/say-it-back/attempts",
+      "status": 201,
+      "ms": 6941
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/submit",
+      "status": 200,
+      "ms": 9329
+    },
+    {
+      "actor": "b",
+      "route": "/api/say-it-back/attempts",
+      "status": 201,
+      "ms": 6889
+    },
+    {
+      "actor": "b",
+      "route": "/api/rounds/ROUND/submit",
+      "status": 200,
+      "ms": 8569
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/close",
+      "status": 403,
+      "ms": 8656
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/rounds/ROUND/claim",
+      "status": 403,
+      "ms": 6548
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/rounds/ROUND/performances/4d5286bc-ea30-4707-868e-4bd320f44172/audio",
+      "status": 404,
+      "ms": 6027
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/performances/4d5286bc-ea30-4707-868e-4bd320f44172/audio",
+      "status": 206,
+      "ms": 7718
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND",
+      "status": 200,
+      "ms": 10110
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/select",
+      "status": 200,
+      "ms": 10168
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/select",
+      "status": 200,
+      "ms": 7934
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/close",
+      "status": 200,
+      "ms": 6584
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/close",
+      "status": 200,
+      "ms": 6606
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY",
+      "status": 200,
+      "ms": 8256
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND",
+      "status": 200,
+      "ms": 10385
+    },
+    {
+      "actor": "audience",
+      "route": "/api/rounds/ROUND/join",
+      "status": 200,
+      "ms": 8627
+    },
+    {
+      "actor": "audience2",
+      "route": "/api/rounds/ROUND/join",
+      "status": 200,
+      "ms": 7042
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/hide",
+      "status": 200,
+      "ms": 6692
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/showcase",
+      "status": 200,
+      "ms": 6864
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY",
+      "status": 200,
+      "ms": 12205
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY/audio/faf6375a-4f25-45e9-b9a0-771ec5500b23",
+      "status": 404,
+      "ms": 7916
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND",
+      "status": 200,
+      "ms": 10337
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/display",
+      "status": 200,
+      "ms": 9864
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY/audio/4d5286bc-ea30-4707-868e-4bd320f44172",
+      "status": 206,
+      "ms": 10323
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/start-voting",
+      "status": 200,
+      "ms": 10097
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/vote",
+      "status": 409,
+      "ms": 12560
+    },
+    {
+      "actor": "audience",
+      "route": "/api/rounds/ROUND/vote",
+      "status": 409,
+      "ms": 10154
+    },
+    {
+      "actor": "audience",
+      "route": "/api/rounds/ROUND/vote",
+      "status": 200,
+      "ms": 15180
+    },
+    {
+      "actor": "audience",
+      "route": "/api/rounds/ROUND/vote",
+      "status": 200,
+      "ms": 9839
+    },
+    {
+      "actor": "audience2",
+      "route": "/api/rounds/ROUND/vote",
+      "status": 200,
+      "ms": 9575
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/end-voting",
+      "status": 200,
+      "ms": 9181
+    },
+    {
+      "actor": "audience",
+      "route": "/api/rounds/ROUND/vote",
+      "status": 409,
+      "ms": 8756
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY",
+      "status": 200,
+      "ms": 9939
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND",
+      "status": 200,
+      "ms": 7919
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/rematch",
+      "status": 201,
+      "ms": 7030
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/rematch",
+      "status": 201,
+      "ms": 7838
+    },
+    {
+      "actor": "audience",
+      "route": "/api/rounds/ROUND",
+      "status": 200,
+      "ms": 6799
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY",
+      "status": 200,
+      "ms": 7842
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/revoke-display",
+      "status": 200,
+      "ms": 8464
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY",
+      "status": 404,
+      "ms": 7870
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/revoke",
+      "status": 200,
+      "ms": 6922
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/rounds/lookup",
+      "status": 404,
+      "ms": 5869
+    },
+    {
+      "actor": "host",
+      "route": "/api/say-it-back/clips",
+      "status": 200,
+      "ms": 7106
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds",
+      "status": 201,
+      "ms": 8726
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds",
+      "status": 201,
+      "ms": 7015
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/rounds/lookup",
+      "status": 200,
+      "ms": 6662
+    },
+    {
+      "actor": "host",
+      "route": "/api/broadcast/DISPLAY",
+      "status": 200,
+      "ms": 6424
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/join",
+      "status": 200,
+      "ms": 6877
+    },
+    {
+      "actor": "b",
+      "route": "/api/rounds/ROUND/join",
+      "status": 200,
+      "ms": 7613
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND",
+      "status": 200,
+      "ms": 11868
+    },
+    {
+      "actor": "b",
+      "route": "/api/rounds/ROUND",
+      "status": 200,
+      "ms": 7294
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/takes",
+      "status": 201,
+      "ms": 8227
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/submit",
+      "status": 422,
+      "ms": 7510
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/submit",
+      "status": 200,
+      "ms": 8197
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/select",
+      "status": 200,
+      "ms": 7253
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/takes",
+      "status": 201,
+      "ms": 7865
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/submit",
+      "status": 200,
+      "ms": 7298
+    },
+    {
+      "actor": "b",
+      "route": "/api/rounds/ROUND/takes",
+      "status": 201,
+      "ms": 8643
+    },
+    {
+      "actor": "b",
+      "route": "/api/rounds/ROUND/submit",
+      "status": 200,
+      "ms": 7232
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/close",
+      "status": 403,
+      "ms": 8608
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/rounds/ROUND/claim",
+      "status": 403,
+      "ms": 6505
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/rounds/ROUND/performances/52d186ea-2455-4db4-941e-ae0cb95305bd/audio",
+      "status": 404,
+      "ms": 7601
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/performances/52d186ea-2455-4db4-941e-ae0cb95305bd/audio",
+      "status": 206,
+      "ms": 9894
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND",
+      "status": 200,
+      "ms": 6232
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/select",
+      "status": 200,
+      "ms": 7927
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/select",
+      "status": 200,
+      "ms": 7708
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/close",
+      "status": 200,
+      "ms": 7877
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/close",
+      "status": 200,
+      "ms": 7128
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY",
+      "status": 200,
+      "ms": 8520
+    },
+    {
+      "actor": "audience",
+      "route": "/api/rounds/ROUND/join",
+      "status": 200,
+      "ms": 8295
+    },
+    {
+      "actor": "audience2",
+      "route": "/api/rounds/ROUND/join",
+      "status": 200,
+      "ms": 8061
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/hide",
+      "status": 200,
+      "ms": 7896
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/showcase",
+      "status": 200,
+      "ms": 7705
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY",
+      "status": 200,
+      "ms": 7353
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY/audio/efd4364d-6670-4c5e-9d50-28f35caf58a2",
+      "status": 404,
+      "ms": 6846
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/display",
+      "status": 200,
+      "ms": 7129
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY/audio/52d186ea-2455-4db4-941e-ae0cb95305bd",
+      "status": 206,
+      "ms": 7902
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/start-voting",
+      "status": 200,
+      "ms": 7537
+    },
+    {
+      "actor": "a",
+      "route": "/api/rounds/ROUND/vote",
+      "status": 409,
+      "ms": 7893
+    },
+    {
+      "actor": "audience",
+      "route": "/api/rounds/ROUND/vote",
+      "status": 409,
+      "ms": 7027
+    },
+    {
+      "actor": "audience",
+      "route": "/api/rounds/ROUND/vote",
+      "status": 200,
+      "ms": 10071
+    },
+    {
+      "actor": "audience",
+      "route": "/api/rounds/ROUND/vote",
+      "status": 200,
+      "ms": 7283
+    },
+    {
+      "actor": "audience2",
+      "route": "/api/rounds/ROUND/vote",
+      "status": 200,
+      "ms": 9411
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/end-voting",
+      "status": 200,
+      "ms": 6734
+    },
+    {
+      "actor": "audience",
+      "route": "/api/rounds/ROUND/vote",
+      "status": 409,
+      "ms": 7556
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY",
+      "status": 200,
+      "ms": 8249
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/rematch",
+      "status": 201,
+      "ms": 7356
+    },
+    {
+      "actor": "audience",
+      "route": "/api/rounds/ROUND",
+      "status": 200,
+      "ms": 7020
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY",
+      "status": 200,
+      "ms": 8287
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/revoke-display",
+      "status": 200,
+      "ms": 7855
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/broadcast/DISPLAY",
+      "status": 404,
+      "ms": 7599
+    },
+    {
+      "actor": "host",
+      "route": "/api/rounds/ROUND/revoke",
+      "status": 200,
+      "ms": 8395
+    },
+    {
+      "actor": "stranger",
+      "route": "/api/rounds/lookup",
+      "status": 404,
+      "ms": 8514
+    }
+  ],
+  "count": 106,
+  "latencyMs": {
+    "median": 7868,
+    "max": 15180
+  }
+}

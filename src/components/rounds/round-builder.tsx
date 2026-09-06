@@ -13,8 +13,8 @@ import type { SayClip } from "@/lib/say-it-back/types";
 import { cn } from "@/lib/utils";
 import { roundApi, roundPost } from "./round-api";
 
-export function RoundBuilder({ initialMode, initialClipId = "", initialRoleId = "", initialPromptId = "", initialEnergyId = "", previousToken }: {
-  initialMode?: string; initialClipId?: string; initialRoleId?: string; initialPromptId?: string; initialEnergyId?: string; previousToken?: string;
+export function RoundBuilder({ community = false, initialMode, initialClipId = "", initialRoleId = "", initialPromptId = "", initialEnergyId = "", previousToken }: {
+  community?: boolean; initialMode?: string; initialClipId?: string; initialRoleId?: string; initialPromptId?: string; initialEnergyId?: string; previousToken?: string;
 }) {
   const router = useRouter();
   const { profile, authenticated, contentRating: preference, updatePreferences } = useApp();
@@ -28,6 +28,8 @@ export function RoundBuilder({ initialMode, initialClipId = "", initialRoleId = 
   const [name, setName] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [hours, setHours] = useState<1 | 24 | 72 | 168>(24);
+  const [submissionLimit, setSubmissionLimit] = useState(25);
+  const [audienceVoting, setAudienceVoting] = useState(true);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -44,11 +46,11 @@ export function RoundBuilder({ initialMode, initialClipId = "", initialRoleId = 
     let active = true;
     setLoading(true); setCatalogError("");
     roundApi<{ clips: SayClip[] }>(`/api/say-it-back/clips?maxRating=${contentRating}`)
-      .then((data) => { if (active) setClips([...data.clips].sort((a, b) => b.duration - a.duration)); })
+      .then((data) => { if (active) setClips([...data.clips].filter((item) => !community || ["CC BY 3.0", "Public domain in the United States"].includes(item.source.license)).sort((a, b) => b.duration - a.duration)); })
       .catch((cause) => { if (active) setCatalogError(cause instanceof Error ? cause.message : "Scenes could not load."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [contentRating, reload]);
+  }, [contentRating, reload, community]);
   useEffect(() => {
     if (!previousToken) return;
     let active = true;
@@ -85,7 +87,7 @@ export function RoundBuilder({ initialMode, initialClipId = "", initialRoleId = 
     if (sending.current || !selected) return;
     sending.current = true; setCreating(true); setError("");
     const input = {
-      name: name.trim(), displayName: displayName.trim(), mode, closesInHours: hours, maxRating: contentRating,
+      community, submissionLimit, audienceVoting, name: name.trim(), displayName: displayName.trim(), mode, closesInHours: hours, maxRating: contentRating,
       ...(mode === "say-it-back" ? { clipId: clip!.id, clipVersion: clip!.version, roleId: role!.id } : { promptId: prompt!.id, energyId: energy!.id }),
     };
     const key = JSON.stringify(input);
@@ -99,7 +101,7 @@ export function RoundBuilder({ initialMode, initialClipId = "", initialRoleId = 
 
   return <div>
     {visiblePrevious && <p className="mb-5 rounded-xl border border-electric/25 bg-electric/5 px-4 py-3 text-sm text-white/75">Playing again from <Link href={`/rounds/${encodeURIComponent(previousToken!)}`} className="font-bold text-electric underline">{visiblePrevious.name}</Link>. Everyone follows the new link; previous performances stay in the previous round.</p>}
-    <div className="mb-7 grid grid-cols-3 overflow-hidden rounded-xl border border-white/15 bg-[#20201d]">{[{ icon: Users, title: "Send one link", detail: "Up to 12 friends" }, { icon: Mic, title: "Record anytime", detail: "Private takes. No camera." }, { icon: Clapperboard, title: "Reveal together", detail: "Watch. Compare. Go again." }].map((step, index) => <div key={step.title} className={cn("p-3 sm:p-5", index > 0 && "border-l border-white/15")}><step.icon className="mb-3 size-5 text-hot" /><p className="text-xs font-bold sm:text-sm">{step.title}</p><p className="mt-1 text-[11px] leading-5 text-white/55 sm:text-xs">{step.detail}</p></div>)}</div>
+    <div className="mb-7 grid grid-cols-3 overflow-hidden rounded-xl border border-white/15 bg-[#20201d]">{[{ icon: Users, title: "Send one link", detail: community ? "Code + QR for your audience" : "Up to 12 friends" }, { icon: Mic, title: "Record anytime", detail: "Private takes. No camera." }, { icon: Clapperboard, title: community ? "Host the showcase" : "Reveal together", detail: "Watch. Vote. Go again." }].map((step, index) => <div key={step.title} className={cn("p-3 sm:p-5", index > 0 && "border-l border-white/15")}><step.icon className="mb-3 size-5 text-hot" /><p className="text-xs font-bold sm:text-sm">{step.title}</p><p className="mt-1 text-[11px] leading-5 text-white/55 sm:text-xs">{step.detail}</p></div>)}</div>
     <div className="mb-6"><ContentControl allowMature={false} value={contentRating} onChange={(rating) => updatePreferences({ contentRating: rating })} disabled={creating} /><p className="mt-2 text-xs leading-5 text-white/50">Friend rounds support Clean and Spicy assignments. Mature performances stay private.</p></div>
     <form onSubmit={(event) => void create(event)} className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(300px,1fr)]">
       <section className="min-w-0 rounded-2xl border border-white/15 bg-[#20201d] p-4 sm:p-6">
@@ -115,16 +117,21 @@ export function RoundBuilder({ initialMode, initialClipId = "", initialRoleId = 
         {!selected && !loading && <p className="mt-4 text-sm leading-6 text-orange-200">The requested assignment is outside this filter or no longer available. Choose one above, or adjust your content setting.</p>}
       </section>
       <aside className="min-w-0 space-y-4 lg:sticky lg:top-24">
-        <section className="rounded-2xl bg-paper p-5 text-ink sm:p-6"><p className="mono-label text-ink/55">02 / Make it a round</p><h2 className="mt-2 text-2xl font-bold">Invite the group chat.</h2>
+        <section className="rounded-2xl bg-paper p-5 text-ink sm:p-6"><p className="mono-label text-ink/55">02 / Make it a round</p><h2 className="mt-2 text-2xl font-bold">{community ? "Bring your community." : "Invite the group chat."}</h2>
           <label htmlFor="round-name" className="mt-6 block text-xs font-bold">Round name</label><input id="round-name" required minLength={2} maxLength={60} value={name} onChange={(event) => setName(event.target.value)} disabled={creating} placeholder="Friday mic club" className="mt-2 min-h-12 w-full rounded-xl border border-ink/25 bg-transparent px-3 text-sm placeholder:text-ink/45" />
           <label htmlFor="host-name" className="mt-4 block text-xs font-bold">Your display name</label><input id="host-name" required minLength={1} maxLength={32} autoComplete="nickname" value={displayName} onChange={(event) => setDisplayName(event.target.value)} disabled={creating} placeholder="What your friends call you" className="mt-2 min-h-12 w-full rounded-xl border border-ink/25 bg-transparent px-3 text-sm placeholder:text-ink/45" />
-          <label htmlFor="round-close" className="mt-4 block text-xs font-bold">Automatic reveal</label><select id="round-close" value={hours} onChange={(event) => setHours(Number(event.target.value) as typeof hours)} disabled={creating} className="mt-2 min-h-12 w-full rounded-xl border border-ink/25 bg-paper px-3 text-sm [color-scheme:light]"><option value={1}>In 1 hour · a quick round</option><option value={24}>In 24 hours · tomorrow’s premiere</option><option value={72}>In 3 days · no rush</option><option value={168}>In 7 days · whenever works</option></select>
-          <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-ink/65"><Clock3 className="mt-0.5 size-4 shrink-0" />You can close and reveal sooner. If you’re away, the deadline reveals the round automatically.</p>
-          <div className="my-5 border-y border-ink/15 py-4 text-xs leading-6 text-ink/75"><p><strong>Private until reveal.</strong> Each friend explicitly submits one take and can replace it before closure.</p><p className="mt-2">{mode === "say-it-back" ? "Matching compares words, phrase timing, and rhythm. Words-only results stay separate." : "The judge compares delivery on the same line and direction."} Unscored takes can still join the private show and the audience vote.</p><p className="mt-2">After reveal, the group can replay for 7 days and vote for the funniest performance.</p></div>
-          <button type="submit" disabled={creating || !selected || !name.trim() || !displayName.trim()} className="button-primary w-full">{creating ? <LoaderCircle className="size-4 animate-spin" /> : <Users className="size-4" />}{creating ? "Creating your round…" : visiblePrevious ? "Create the next round" : "Create friend round"}<ArrowRight className="size-4" /></button>
+          <label htmlFor="round-close" className="mt-4 block text-xs font-bold">{community ? "Submission deadline" : "Automatic reveal"}</label><select id="round-close" value={hours} onChange={(event) => setHours(Number(event.target.value) as typeof hours)} disabled={creating} className="mt-2 min-h-12 w-full rounded-xl border border-ink/25 bg-paper px-3 text-sm [color-scheme:light]"><option value={1}>In 1 hour · a quick round</option><option value={24}>In 24 hours · tomorrow’s premiere</option><option value={72}>In 3 days · no rush</option><option value={168}>In 7 days · whenever works</option></select>
+          <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-ink/65"><Clock3 className="mt-0.5 size-4 shrink-0" />{community ? "The deadline closes submissions into your private review queue. You choose when the show starts." : "You can close and reveal sooner. If you’re away, the deadline reveals the round automatically."}</p>
+          {community ? <div className="my-5 space-y-4 border-y border-ink/15 py-4 text-xs leading-6">
+            <label className="block font-bold">Maximum submissions<select className="mt-2 block min-h-12 w-full rounded-xl border border-ink/25 bg-paper px-3" value={submissionLimit} onChange={(e) => setSubmissionLimit(Number(e.target.value))}>{[10,25,50].map((n) => <option key={n} value={n}>{n} performances</option>)}</select></label>
+            <label className="flex items-start gap-3"><input type="checkbox" checked={audienceVoting} onChange={(e) => setAudienceVoting(e.target.checked)} className="mt-1 size-4" />Let the audience vote for their favorite</label>
+            <p><strong>Host preview, then a selected showcase.</strong> Viewers explicitly consent before submitting. Choose up to 12 entries to show. Drafts remain private.</p>
+            <p>Streams may be recorded externally. In-app deletion cannot retract an external broadcast. Replay lasts 7 days after submissions close.</p>
+          </div> : <div className="my-5 border-y border-ink/15 py-4 text-xs leading-6 text-ink/75"><p><strong>Private until reveal.</strong> Each friend submits one take and can replace it before closure.</p><p>Unscored takes can join the show. Words-only scores stay separate. The group can replay and vote for 7 days after reveal.</p></div>}
+          <button type="submit" disabled={creating || !selected || !name.trim() || !displayName.trim()} className="button-primary w-full">{creating ? <LoaderCircle className="size-4 animate-spin" /> : <Users className="size-4" />}{creating ? "Creating your round…" : visiblePrevious ? "Create the next round" : community ? "Host a community round" : "Create friend round"}<ArrowRight className="size-4" /></button>
           {error && <p role="alert" className="mt-4 rounded-xl bg-red-900/10 p-3 text-sm leading-6 text-red-950">{error}</p>}
         </section>
-        <p className="flex items-start gap-2 px-1 text-xs leading-6 text-white/60"><ShieldCheck className="mt-1 size-4 shrink-0 text-electric" />The link lets people join this private group. Share it only with your friends. You can stop new joins at any time.</p>
+        <p className="flex items-start gap-2 px-1 text-xs leading-6 text-white/60"><ShieldCheck className="mt-1 size-4 shrink-0 text-electric" />{community ? "Share your code or QR on stream. Up to 500 people can join to watch and vote without a microphone." : "The link lets people join this private group. Share it only with your friends. You can stop new joins at any time."}</p>
         {!authenticated && <p className="px-1 text-xs leading-6 text-white/60">No account needed. Keep this browser’s cookies to retain your host access. Sign in from your round to keep access across devices.</p>}
       </aside>
     </form>

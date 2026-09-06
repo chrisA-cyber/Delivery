@@ -13,10 +13,15 @@ export function useRound(token: string, poll = true) {
   const [busy, setBusy] = useState("");
   const sequence = useRef(0);
   const mutation = useRef(false);
+  const readsInFlight = useRef(0);
+  const claimAttempted = useRef("");
   const path = `/api/rounds/${encodeURIComponent(token)}`;
   const roundState = round?.state;
   const hasRound = Boolean(round);
+  const communityPhase = round?.community?.phase;
   const refresh = useCallback(async (quiet = false) => {
+    if (quiet && (readsInFlight.current > 0 || mutation.current)) return;
+    readsInFlight.current += 1;
     const run = ++sequence.current;
     if (!quiet) setLoading(true);
     try {
@@ -24,7 +29,7 @@ export function useRound(token: string, poll = true) {
       if (run === sequence.current) { setRound(data.round); setError(null); }
     } catch (cause) {
       if (run === sequence.current) setError(cause instanceof RoundApiError ? cause : new RoundApiError("Your round could not reconnect. Please retry.", 0));
-    } finally { if (run === sequence.current) setLoading(false); }
+    } finally { readsInFlight.current -= 1; if (run === sequence.current) setLoading(false); }
   }, [path, contentRating]);
 
   useEffect(() => {
@@ -35,9 +40,9 @@ export function useRound(token: string, poll = true) {
   }, [hydrated, authReady, authenticated, refresh]);
   useEffect(() => {
     if (!poll || !hasRound || roundState === "expired") return;
-    const timer = setInterval(() => { if (document.visibilityState === "visible" && !mutation.current) void refresh(true); }, 15_000);
+    const timer = setInterval(() => { if (document.visibilityState === "visible" && !mutation.current) void refresh(true); }, communityPhase && ["showcase", "voting"].includes(communityPhase) ? 4000 : 15000);
     return () => clearInterval(timer);
-  }, [roundState, hasRound, poll, refresh]);
+  }, [roundState, communityPhase, hasRound, poll, refresh]);
 
   async function act(action: string, body: Record<string, unknown> = {}) {
     if (mutation.current) return null;
@@ -54,6 +59,15 @@ export function useRound(token: string, poll = true) {
       return null;
     } finally { mutation.current = false; setBusy(""); }
   }
+
+  // Authenticated API verifies the original signed device cookie.
+  useEffect(() => {
+    if (!authenticated || !round?.canClaim || mutation.current) return;
+    const key = `${token}:${round.viewerMemberId}`;
+    if (claimAttempted.current === key) return;
+    claimAttempted.current = key;
+    void act("claim");
+  });
 
   // Route transitions can reuse this hook before its loading effect runs.
   // Never render one group's private data under another invitation token.
