@@ -1,0 +1,67 @@
+{
+  "origin": "https://delivery-production-0577.up.railway.app",
+  "revision": "0eec933901c41bbf22826faa5aa7f92983d903ff",
+  "passed": true,
+  "checks": [
+    "Guest preferred avatar recovers",
+    "Upload returns a bounded normalized raster",
+    "classic: preferred avatar initializes editor",
+    "classic: saved edit recovery",
+    "classic: matching source and settings reuse export",
+    "classic: ready",
+    "classic: trimmed 1080x1920 H264/AAC",
+    "classic: original duration and unscored take preserved",
+    "Classic: changed settings create distinct version",
+    "classic:changed-version: ready",
+    "switch: preferred avatar initializes editor",
+    "switch: saved edit recovery",
+    "switch: matching source and settings reuse export",
+    "switch: ready",
+    "switch: trimmed 1080x1920 H264/AAC",
+    "switch: original duration and unscored take preserved",
+    "say-it-back: preferred avatar initializes editor",
+    "say-it-back: saved edit recovery",
+    "say-it-back: matching source and settings reuse export",
+    "say-it-back: ready",
+    "say-it-back: trimmed 1080x1920 H264/AAC",
+    "say-it-back: original duration and unscored take preserved"
+  ],
+  "samples": [
+    {
+      "mode": "classic",
+      "duration": 3.7,
+      "trimStart": 0.25,
+      "trimEnd": 3.945,
+      "width": 1080,
+      "height": 1920,
+      "file": "/tmp/delivery-clip-editor-live/classic.mp4",
+      "exportId": "1184a8ab-5d41-4d6b-b92a-3b473154fd7f",
+      "assignmentUrl": "https://deliverygame.netlify.app/a/78345b7f4932"
+    },
+    {
+      "mode": "switch",
+      "duration": 8.166667,
+      "trimStart": 4.15,
+      "trimEnd": 12.3,
+      "width": 1080,
+      "height": 1920,
+      "file": "/tmp/delivery-clip-editor-live/switch.mp4",
+      "exportId": "e3158eb3-6813-45e9-811c-78e3c63a7fdc",
+      "assignmentUrl": "https://deliverygame.netlify.app/a/3d84aa76b139"
+    },
+    {
+      "mode": "say-it-back",
+      "duration": 8.7,
+      "trimStart": 3.2,
+      "trimEnd": 11.9,
+      "width": 1080,
+      "height": 1920,
+      "file": "/tmp/delivery-clip-editor-live/say-it-back.mp4",
+      "exportId": "af323637-33ae-484c-921d-09e6f840b745",
+      "assignmentUrl": "https://deliverygame.netlify.app/a/589a9907bdbe"
+    }
+  ],
+  "paidCalls": 0,
+  "physicalPhoneChecked": false,
+  "cleanedAt": "2026-09-07T20:48:28.828Z"
+}

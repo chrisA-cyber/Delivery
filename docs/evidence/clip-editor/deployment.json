@@ -1,0 +1,32 @@
+{
+  "applicationCommit": "0eec933901c41bbf22826faa5aa7f92983d903ff",
+  "testedTree": "1ef7622b096270ecfd442d8ec60e888dea70c407",
+  "deploymentId": "dc0df35d-35ad-4f52-ba50-226b2b3b6e23",
+  "status": "SUCCESS",
+  "successfulAt": "2026-09-07T20:39:05.828Z",
+  "origin": "https://delivery-production-0577.up.railway.app",
+  "projectId": "321c764e-38fe-4ecb-98f2-39c8654d0956",
+  "environmentId": "8470f7d3-49f4-41bc-b39e-65fc1e5a1e22",
+  "serviceId": "34d3b855-25f3-4eea-9438-c43974cef738",
+  "source": {
+    "repo": "chrisA-cyber/Delivery",
+    "branch": "main",
+    "commitSha": "0eec933901c41bbf22826faa5aa7f92983d903ff"
+  },
+  "deploymentMethod": "Existing service source revision explicitly updated and deployed; main push alone does not deploy, and ordinary redeploy repeats the pinned revision. GitHub publication tree matches tested local tree exactly. Source persistence confirmed with Railway service inspection after deployment.",
+  "preserved": [
+    "Dockerfile and npm run build",
+    "Existing Next start command and serial FFmpeg worker",
+    "/play healthcheck, 120 seconds",
+    "Production domain, variables, sfo single replica, existing storage and ownership",
+    "Clipping and other services"
+  ],
+  "localProductionBuildPassed": true,
+  "railwayProductionBuildPassed": true,
+  "physicalPhoneChecked": false,
+  "browserChecks": [
+    "Deployed Settings shows all six custom portraits; guest selection saved, then original Fox selection restored.",
+    "Classic recording entry exposes the performance avatar selector after identity loads.",
+    "Exported Classic invitation traverses the existing Netlify redirect and opens the exact original line and delivery instruction."
+  ]
+}

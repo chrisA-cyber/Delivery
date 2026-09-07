@@ -1,0 +1,141 @@
+{
+  "revision": "0eec933901c41bbf22826faa5aa7f92983d903ff",
+  "origin": "https://delivery-production-0577.up.railway.app",
+  "scope": "Inspection of downloaded MP4s from the deployed serial Railway worker; local file reads only. Shared SVG comparisons exclude Say scene pixels to isolate avatar/caption layout from source frame resampling.",
+  "results": [
+    {
+      "mode": "classic",
+      "sha256": "5a071a9f66edbbaeea7cdb3af749934bf4897d45b80d6895f94786ba28cd8031",
+      "bytes": 305230,
+      "duration": 3.7,
+      "trimStart": 0.25,
+      "trimEnd": 3.945,
+      "layout": "spotlight",
+      "avatarKind": "upload",
+      "width": 1080,
+      "height": 1920,
+      "codecs": [
+        "h264",
+        "aac"
+      ],
+      "observations": [
+        "Uploaded normalized yellow/blue image remains centered with the selected circular crop and exact half-and-half split.",
+        "Full challenge line and delivery style are legible; name and score are hidden.",
+        "Actual speech/silence frames preserve the uploaded image and visibly change ring/bars."
+      ],
+      "sharedSvgFrameComparisons": [
+        {
+          "frame": 0,
+          "sourceTime": 0.25,
+          "level": 0,
+          "meanRgbError": 1.3379208461934156
+        },
+        {
+          "frame": 15,
+          "sourceTime": 0.75,
+          "level": 0,
+          "meanRgbError": 1.33203125
+        },
+        {
+          "frame": 45,
+          "sourceTime": 1.75,
+          "level": 1,
+          "meanRgbError": 1.500971579218107
+        }
+      ]
+    },
+    {
+      "mode": "switch",
+      "sha256": "32e0a450024415a9c961eab8f459079694223e026fad7e46282b99ad802a31a9",
+      "bytes": 302729,
+      "duration": 8.166667,
+      "trimStart": 4.15,
+      "trimEnd": 12.3,
+      "layout": "spotlight",
+      "avatarKind": "builtin",
+      "width": 1080,
+      "height": 1920,
+      "codecs": [
+        "h264",
+        "aac"
+      ],
+      "observations": [
+        "Complete fox portrait including ears is visible.",
+        "Trim starts inside Angry at source4.15s, keeps2/5 progression and Next: Sad.",
+        "Decoded frames115/116 change from Angry to Sad across original8.0s boundary, after trim."
+      ],
+      "sharedSvgFrameComparisons": [
+        {
+          "frame": 0,
+          "sourceTime": 4.15,
+          "level": 0,
+          "meanRgbError": 1.3525935570987655
+        },
+        {
+          "frame": 115,
+          "sourceTime": 7.983333333333334,
+          "level": 0,
+          "meanRgbError": 1.357524916409465
+        },
+        {
+          "frame": 116,
+          "sourceTime": 8.016666666666667,
+          "level": 0,
+          "meanRgbError": 1.385048225308642
+        }
+      ]
+    },
+    {
+      "mode": "say-it-back",
+      "sha256": "79a5da8c93060bb4cb5132222d4f24e6a0b2cc26280cca37ee0c811d2e6b1180",
+      "bytes": 2166234,
+      "duration": 8.7,
+      "trimStart": 3.2,
+      "trimEnd": 11.9,
+      "layout": "duet",
+      "avatarKind": "builtin",
+      "width": 1080,
+      "height": 1920,
+      "codecs": [
+        "h264",
+        "aac"
+      ],
+      "observations": [
+        "Corrected fixture uses actual Companion preset coordinates(.205,.665,.25).",
+        "Full original4:3 scene framing is retained with fox companion at lower left.",
+        "Stored dialogue is readable beside the avatar and labeled SCENE SCRIPT; no overlap.",
+        "At output2.0s/source5.2s, visible Walter dialogue matches the stored4.8\u20136.28s cue."
+      ],
+      "sharedSvgFrameComparisons": [
+        {
+          "frame": 0,
+          "sourceTime": 3.2,
+          "level": 0,
+          "meanRgbError": 1.1095457284634496
+        },
+        {
+          "frame": 47,
+          "sourceTime": 4.766666666666667,
+          "level": 0,
+          "meanRgbError": 1.105811679260893
+        },
+        {
+          "frame": 48,
+          "sourceTime": 4.800000000000001,
+          "level": 0,
+          "meanRgbError": 1.154795758295486
+        },
+        {
+          "frame": 60,
+          "sourceTime": 5.2,
+          "level": 0.2857142857142857,
+          "meanRgbError": 1.1833027290272067
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "No physical-phone microphone or native sharing verification is inferred.",
+    "Say fixture initial manual avatar coordinates were corrected to the real editor Companion preset and re-exported from the same unchanged take before final inspection."
+  ]
+}

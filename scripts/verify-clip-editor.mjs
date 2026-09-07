@@ -18,6 +18,7 @@ fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
 const checkpoint = path.join(dir, 'checkpoint.json');
 const state = fs.existsSync(checkpoint) ? JSON.parse(fs.readFileSync(checkpoint, 'utf8')) : { origin, revision, createdAt: new Date().toISOString(), saved: {}, checks: [], samples: [], calls: 0 };
 assert.equal(state.origin, origin);
+assert.equal(state.revision, revision, "Use a fresh CLIP_VERIFY_DIR for a different deployed revision");
 const persist = () => fs.writeFileSync(checkpoint, JSON.stringify(state), { mode: 0o600 });
 const check = (label, value) => { assert.ok(value, label); if (!state.checks.includes(label)) state.checks.push(label); persist(); };
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -94,7 +95,7 @@ try {
     const editor = call(mode + ':editor', `/api/exports/editor?${query}`);
     check(mode + ': preferred avatar initializes editor', editor.settings.avatar.id === preferred.id);
     call(mode + ':outsider-editor', `/api/exports/editor?${query}`, { outsider: true, expect: [404] });
-    const settings = { ...editor.settings, layout: mode === 'say-it-back' ? 'duet' : 'spotlight', ...(mode === 'classic' ? {avatar:uploadedAvatar} : {}), avatarVisible: true, captions: true, includeName: false, includeScore: false, trimStart: sample.start, trimEnd: sample.end || Math.max(sample.start + .5, duration - .15) };
+    const settings = { ...editor.settings, layout: mode === 'say-it-back' ? 'duet' : 'spotlight', ...(mode === 'classic' ? {avatar:uploadedAvatar} : mode === 'say-it-back' ? {avatarX: .205, avatarY: .665, avatarSize: .25} : {}), avatarVisible: true, captions: true, includeName: false, includeScore: false, trimStart: sample.start, trimEnd: sample.end || Math.max(sample.start + .5, duration - .15) };
     const body = { mode, attemptId: attempt.id, maxRating: 'everyone', settings };
     call(mode + ':save-edits', '/api/exports/editor', { method: 'PUT', body });
     const reopened = call(mode + ':reopen', `/api/exports/editor?${query}`);
