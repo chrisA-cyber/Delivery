@@ -1,0 +1,769 @@
+{
+  "applicationCommit": "a765772dd9999bdf19d65598f6f08b32959e0e26",
+  "railwayDeploymentId": "8e767a8f-348c-4e8e-9b64-0d8c7b42f5e7",
+  "checks": [
+    {
+      "name": "Existing deployed application and live worker are available",
+      "passed": true
+    },
+    {
+      "name": "Ordinary account cannot become public moderator",
+      "passed": true
+    },
+    {
+      "name": "Signed-in host creates exactly one private live room",
+      "passed": true
+    },
+    {
+      "name": "A joins through the room API",
+      "passed": true
+    },
+    {
+      "name": "B joins through the room API",
+      "passed": true
+    },
+    {
+      "name": "C joins through the room API",
+      "passed": true
+    },
+    {
+      "name": "Guest joins through the room API",
+      "passed": true
+    },
+    {
+      "name": "Five independent native RTC clients connect with app-issued tokens",
+      "passed": true
+    },
+    {
+      "name": "Receive-only guest entry prepares no microphone or camera",
+      "passed": true
+    },
+    {
+      "name": "Spectator cannot control the host's room",
+      "passed": true
+    },
+    {
+      "name": "A receives an explicit bounded offer",
+      "passed": true
+    },
+    {
+      "name": "Queued participant cannot publish an unauthorized microphone",
+      "passed": true
+    },
+    {
+      "name": "Unaccepted challenger is skipped after the bounded window",
+      "passed": true
+    },
+    {
+      "name": "B receives an explicit bounded offer",
+      "passed": true
+    },
+    {
+      "name": "Both real media connections start the server countdown and first turn",
+      "passed": true
+    },
+    {
+      "name": "A fresh authenticated HTTP read restores the same live battle and deadline",
+      "passed": true
+    },
+    {
+      "name": "Guest audience chat appears in authoritative room state",
+      "passed": true
+    },
+    {
+      "name": "Guest audience reaction appears in authoritative room state",
+      "passed": true
+    },
+    {
+      "name": "Actual RTC reconnect returns within the 12-second grace",
+      "passed": true
+    },
+    {
+      "detail": {
+        "observedTurnIndexes": [
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      "name": "Server advances four alternating real 30-second turns",
+      "passed": true
+    },
+    {
+      "name": "Audience hears decoded audio from both performers",
+      "passed": true
+    },
+    {
+      "name": "Audience receives the opted-in generated camera",
+      "passed": true
+    },
+    {
+      "name": "Performer self-voting is rejected",
+      "passed": true
+    },
+    {
+      "name": "Eligible guest changes one effective vote while open",
+      "passed": true
+    },
+    {
+      "name": "One effective guest vote selects A consistently",
+      "passed": true
+    },
+    {
+      "name": "Host and audience see identical persisted result totals",
+      "passed": true
+    },
+    {
+      "name": "Server rejects a vote after the audience deadline",
+      "passed": true
+    },
+    {
+      "name": "Winner stays and next challenger is offered the open seat",
+      "passed": true
+    },
+    {
+      "name": "C receives an explicit bounded offer",
+      "passed": true
+    },
+    {
+      "name": "Accepted next challenger actually publishes opted-in live video",
+      "passed": true
+    },
+    {
+      "name": "Host removes the active challenger and records the explicit forfeit",
+      "passed": true
+    },
+    {
+      "name": "SFU confirms the removed publisher is absent",
+      "passed": true
+    },
+    {
+      "name": "Removed member cannot obtain another media token",
+      "passed": true
+    },
+    {
+      "name": "Revoked private invitation cannot admit a new viewer",
+      "passed": true
+    }
+  ],
+  "cleanup": {
+    "mediaRoomReleased": true,
+    "remainingFixtureUserIds": [],
+    "roomClosed": true,
+    "usersCreated": 4,
+    "usersDeleted": 4
+  },
+  "connection": {
+    "maxMs": 179,
+    "medianMs": 104,
+    "minMs": 96,
+    "p95Ms": 179,
+    "samples": 5
+  },
+  "elapsedMs": 193738,
+  "endedAt": "2026-09-07T01:53:44.716Z",
+  "estimatedParticipantMinutes": 15.96,
+  "firstResult": {
+    "endedAt": 1788746006808,
+    "id": "95418bb3-c5e7-438d-a9da-f40d7ef985c3",
+    "kind": "completed",
+    "performerIds": [
+      "1fd2b062-3625-40b3-a7a2-e2ef6894383f",
+      "b4152192-5e51-459a-b330-c0204fa65658"
+    ],
+    "performerNames": [
+      "Roast verify B",
+      "Roast verify A"
+    ],
+    "reason": "The audience chose the winner.",
+    "streak": 1,
+    "votes": [
+      0,
+      1
+    ],
+    "winnerId": "b4152192-5e51-459a-b330-c0204fa65658"
+  },
+  "httpCalls": {
+    "application": 306,
+    "auth": 12,
+    "providerRead": 2
+  },
+  "limitations": [
+    "Native RTC and HTTP sessions are not independent browsers.",
+    "HTTP state restoration is not a browser refresh test.",
+    "No physical microphone, camera, phone audio, browser autoplay or human enjoyment was verified."
+  ],
+  "limits": {
+    "hardMinutesIncludingCleanup": 8,
+    "mainMinutes": 6,
+    "maxHttpCalls": 400,
+    "maxNativeClients": 5,
+    "maxParticipantMinutes": 40
+  },
+  "mediaDelay": {
+    "maxMs": 160,
+    "medianMs": 149,
+    "method": "Generated pulse source to native receiver decoded PCM, same process clock; includes encoder, SFU, decode and source buffering; excludes browser/speaker playback.",
+    "minMs": 140,
+    "p95Ms": 160,
+    "samples": 57
+  },
+  "method": "Real application HTTP, ordinary Supabase password-auth cookie jars, native LiveKit RTC with generated audio/video; no browser or physical capture.",
+  "phases": [
+    {
+      "activeSpeakerId": null,
+      "battleId": null,
+      "deadline": null,
+      "observedAt": 1788745850451,
+      "phase": "waiting",
+      "turnIndex": null
+    },
+    {
+      "activeSpeakerId": null,
+      "battleId": "95418bb3-c5e7-438d-a9da-f40d7ef985c3",
+      "deadline": 1788745865462,
+      "observedAt": 1788745862484,
+      "phase": "intro",
+      "turnIndex": 0
+    },
+    {
+      "activeSpeakerId": "1fd2b062-3625-40b3-a7a2-e2ef6894383f",
+      "battleId": "95418bb3-c5e7-438d-a9da-f40d7ef985c3",
+      "deadline": 1788745895628,
+      "observedAt": 1788745867597,
+      "phase": "turn",
+      "turnIndex": 0
+    },
+    {
+      "activeSpeakerId": "b4152192-5e51-459a-b330-c0204fa65658",
+      "battleId": "95418bb3-c5e7-438d-a9da-f40d7ef985c3",
+      "deadline": 1788745925659,
+      "observedAt": 1788745895851,
+      "phase": "turn",
+      "turnIndex": 1
+    },
+    {
+      "activeSpeakerId": "1fd2b062-3625-40b3-a7a2-e2ef6894383f",
+      "battleId": "95418bb3-c5e7-438d-a9da-f40d7ef985c3",
+      "deadline": 1788745956458,
+      "observedAt": 1788745928871,
+      "phase": "turn",
+      "turnIndex": 2
+    },
+    {
+      "activeSpeakerId": "b4152192-5e51-459a-b330-c0204fa65658",
+      "battleId": "95418bb3-c5e7-438d-a9da-f40d7ef985c3",
+      "deadline": 1788745987140,
+      "observedAt": 1788745958532,
+      "phase": "turn",
+      "turnIndex": 3
+    },
+    {
+      "activeSpeakerId": null,
+      "battleId": "95418bb3-c5e7-438d-a9da-f40d7ef985c3",
+      "deadline": 1788745990908,
+      "observedAt": 1788745988536,
+      "phase": "buffer",
+      "turnIndex": 3
+    },
+    {
+      "activeSpeakerId": null,
+      "battleId": "95418bb3-c5e7-438d-a9da-f40d7ef985c3",
+      "deadline": 1788746006059,
+      "observedAt": 1788745993508,
+      "phase": "voting",
+      "turnIndex": 3
+    },
+    {
+      "activeSpeakerId": null,
+      "battleId": "95418bb3-c5e7-438d-a9da-f40d7ef985c3",
+      "deadline": 1788746012821,
+      "observedAt": 1788746008752,
+      "phase": "results",
+      "turnIndex": 3
+    },
+    {
+      "activeSpeakerId": null,
+      "battleId": null,
+      "deadline": null,
+      "observedAt": 1788746014105,
+      "phase": "waiting",
+      "turnIndex": null
+    },
+    {
+      "activeSpeakerId": null,
+      "battleId": "b8d00362-a480-464d-84f3-699f62e91bbd",
+      "deadline": 1788746017807,
+      "observedAt": 1788746014895,
+      "phase": "intro",
+      "turnIndex": 0
+    },
+    {
+      "activeSpeakerId": "b4152192-5e51-459a-b330-c0204fa65658",
+      "battleId": "b8d00362-a480-464d-84f3-699f62e91bbd",
+      "deadline": 1788746047945,
+      "observedAt": 1788746019883,
+      "phase": "turn",
+      "turnIndex": 0
+    }
+  ],
+  "reconnect": {
+    "beganAt": 1788745867888,
+    "elapsedMs": 1094,
+    "method": "Native SDK signal reconnect over actual SFU connection"
+  },
+  "roomId": "a0e464bf-6c27-45e9-88af-1c892ac1a201",
+  "rtc": [
+    {
+      "connectMs": 132,
+      "disconnectedReason": null,
+      "eventErrors": [],
+      "identity": "beef690f-2f33-4e56-8481-eb16a45e9298",
+      "label": "Host",
+      "publishRejected": 0,
+      "reconnectMs": [],
+      "remote": {
+        "1fd2b062-3625-40b3-a7a2-e2ef6894383f": {
+          "audibleFrames": 348,
+          "audioFrames": 5551,
+          "audioTrackSids": [],
+          "firstAudioAt": 1788745867989,
+          "firstVideoAt": null,
+          "lastAudioAt": 1788745957128,
+          "lastVideoAt": null,
+          "pulseDelaysMs": [
+            160,
+            159,
+            159,
+            148,
+            150,
+            153,
+            149,
+            153,
+            149,
+            149,
+            149,
+            148,
+            148,
+            149,
+            150,
+            148,
+            149,
+            149,
+            149,
+            148,
+            149,
+            149,
+            148,
+            150,
+            149,
+            149,
+            148
+          ],
+          "videoFrames": 0,
+          "videoTrackSids": []
+        },
+        "b4152192-5e51-459a-b330-c0204fa65658": {
+          "audibleFrames": 389,
+          "audioFrames": 5985,
+          "audioTrackSids": [],
+          "firstAudioAt": 1788745896059,
+          "firstVideoAt": 1788745850862,
+          "lastAudioAt": 1788746020408,
+          "lastVideoAt": 1788746022415,
+          "pulseDelaysMs": [
+            160,
+            141,
+            141,
+            141,
+            141,
+            140,
+            141,
+            141,
+            142,
+            141,
+            140,
+            141,
+            141,
+            141,
+            141,
+            141,
+            151,
+            152,
+            151,
+            150,
+            152,
+            150,
+            152,
+            148,
+            151,
+            151,
+            151,
+            151,
+            151,
+            151
+          ],
+          "videoFrames": 1579,
+          "videoTrackSids": [
+            "TR_VCMq8C9giRWQDx"
+          ]
+        },
+        "d72d3b8f-f09f-4a1b-9be2-83c95b138029": {
+          "audibleFrames": 0,
+          "audioFrames": 0,
+          "audioTrackSids": [],
+          "firstAudioAt": null,
+          "firstVideoAt": 1788746015683,
+          "lastAudioAt": null,
+          "lastVideoAt": 1788746020255,
+          "pulseDelaysMs": [],
+          "videoFrames": 69,
+          "videoTrackSids": []
+        }
+      },
+      "unpublishedWithoutPayload": 0
+    },
+    {
+      "connectMs": 96,
+      "disconnectedReason": null,
+      "eventErrors": [],
+      "identity": "b4152192-5e51-459a-b330-c0204fa65658",
+      "label": "A",
+      "publishRejected": 0,
+      "reconnectMs": [
+        1092,
+        162
+      ],
+      "remote": {
+        "1fd2b062-3625-40b3-a7a2-e2ef6894383f": {
+          "audibleFrames": 261,
+          "audioFrames": 5552,
+          "audioTrackSids": [],
+          "firstAudioAt": 1788745867989,
+          "firstVideoAt": null,
+          "lastAudioAt": 1788745957128,
+          "lastVideoAt": null,
+          "pulseDelaysMs": [
+            159,
+            149,
+            149,
+            148,
+            149,
+            149,
+            149,
+            149,
+            148,
+            149,
+            149,
+            149,
+            148,
+            149,
+            149,
+            148,
+            150,
+            149,
+            149,
+            148
+          ],
+          "videoFrames": 0,
+          "videoTrackSids": []
+        },
+        "d72d3b8f-f09f-4a1b-9be2-83c95b138029": {
+          "audibleFrames": 0,
+          "audioFrames": 0,
+          "audioTrackSids": [],
+          "firstAudioAt": null,
+          "firstVideoAt": 1788746015213,
+          "lastAudioAt": null,
+          "lastVideoAt": 1788746020320,
+          "pulseDelaysMs": [],
+          "videoFrames": 78,
+          "videoTrackSids": []
+        }
+      },
+      "unpublishedWithoutPayload": 2
+    },
+    {
+      "connectMs": 104,
+      "disconnectedReason": null,
+      "eventErrors": [],
+      "identity": "1fd2b062-3625-40b3-a7a2-e2ef6894383f",
+      "label": "B",
+      "publishRejected": 0,
+      "reconnectMs": [],
+      "remote": {
+        "b4152192-5e51-459a-b330-c0204fa65658": {
+          "audibleFrames": 389,
+          "audioFrames": 5984,
+          "audioTrackSids": [],
+          "firstAudioAt": 1788745896068,
+          "firstVideoAt": 1788745850862,
+          "lastAudioAt": 1788746020408,
+          "lastVideoAt": 1788746022416,
+          "pulseDelaysMs": [
+            160,
+            141,
+            141,
+            141,
+            141,
+            140,
+            141,
+            141,
+            142,
+            141,
+            140,
+            141,
+            141,
+            141,
+            141,
+            141,
+            151,
+            152,
+            151,
+            150,
+            152,
+            150,
+            152,
+            148,
+            151,
+            151,
+            151,
+            151,
+            151,
+            151
+          ],
+          "videoFrames": 1929,
+          "videoTrackSids": [
+            "TR_VCMq8C9giRWQDx"
+          ]
+        },
+        "d72d3b8f-f09f-4a1b-9be2-83c95b138029": {
+          "audibleFrames": 0,
+          "audioFrames": 0,
+          "audioTrackSids": [],
+          "firstAudioAt": null,
+          "firstVideoAt": 1788746015683,
+          "lastAudioAt": null,
+          "lastVideoAt": 1788746017972,
+          "pulseDelaysMs": [],
+          "videoFrames": 35,
+          "videoTrackSids": []
+        }
+      },
+      "unpublishedWithoutPayload": 2
+    },
+    {
+      "connectMs": 179,
+      "disconnectedReason": "PARTICIPANT_REMOVED",
+      "eventErrors": [],
+      "identity": "d72d3b8f-f09f-4a1b-9be2-83c95b138029",
+      "label": "C",
+      "publishRejected": 1,
+      "reconnectMs": [],
+      "remote": {
+        "1fd2b062-3625-40b3-a7a2-e2ef6894383f": {
+          "audibleFrames": 344,
+          "audioFrames": 5551,
+          "audioTrackSids": [],
+          "firstAudioAt": 1788745867988,
+          "firstVideoAt": null,
+          "lastAudioAt": 1788745957128,
+          "lastVideoAt": null,
+          "pulseDelaysMs": [
+            160,
+            159,
+            159,
+            159,
+            160,
+            159,
+            158,
+            159,
+            159,
+            159,
+            149,
+            148,
+            148,
+            149,
+            149,
+            148,
+            149,
+            149,
+            149,
+            148,
+            149,
+            149,
+            148,
+            150,
+            149,
+            149,
+            148
+          ],
+          "videoFrames": 0,
+          "videoTrackSids": []
+        },
+        "b4152192-5e51-459a-b330-c0204fa65658": {
+          "audibleFrames": 389,
+          "audioFrames": 5982,
+          "audioTrackSids": [
+            "TR_AMRZ3pe9WbUcUy"
+          ],
+          "firstAudioAt": 1788745896058,
+          "firstVideoAt": 1788745853015,
+          "lastAudioAt": 1788746020378,
+          "lastVideoAt": 1788746017983,
+          "pulseDelaysMs": [
+            160,
+            141,
+            141,
+            141,
+            141,
+            140,
+            141,
+            141,
+            142,
+            141,
+            140,
+            141,
+            141,
+            141,
+            141,
+            141,
+            150,
+            152,
+            151,
+            150,
+            152,
+            150,
+            152,
+            148,
+            150,
+            151,
+            151,
+            151,
+            151,
+            151
+          ],
+          "videoFrames": 1690,
+          "videoTrackSids": [
+            "TR_VCMq8C9giRWQDx"
+          ]
+        }
+      },
+      "unpublishedWithoutPayload": 0
+    },
+    {
+      "connectMs": 100,
+      "disconnectedReason": null,
+      "eventErrors": [],
+      "identity": "00e802c1-0a26-40ba-9ea9-ea747896b9b4",
+      "label": "Guest",
+      "publishRejected": 0,
+      "reconnectMs": [],
+      "remote": {
+        "1fd2b062-3625-40b3-a7a2-e2ef6894383f": {
+          "audibleFrames": 349,
+          "audioFrames": 5551,
+          "audioTrackSids": [],
+          "firstAudioAt": 1788745867989,
+          "firstVideoAt": null,
+          "lastAudioAt": 1788745957128,
+          "lastVideoAt": null,
+          "pulseDelaysMs": [
+            160,
+            159,
+            159,
+            159,
+            160,
+            153,
+            149,
+            153,
+            149,
+            149,
+            149,
+            148,
+            149,
+            149,
+            149,
+            148,
+            149,
+            149,
+            149,
+            148,
+            149,
+            149,
+            148,
+            150,
+            149,
+            149,
+            148
+          ],
+          "videoFrames": 0,
+          "videoTrackSids": []
+        },
+        "b4152192-5e51-459a-b330-c0204fa65658": {
+          "audibleFrames": 389,
+          "audioFrames": 5985,
+          "audioTrackSids": [],
+          "firstAudioAt": 1788745896058,
+          "firstVideoAt": 1788745850861,
+          "lastAudioAt": 1788746020408,
+          "lastVideoAt": 1788746020939,
+          "pulseDelaysMs": [
+            160,
+            141,
+            141,
+            141,
+            141,
+            140,
+            141,
+            141,
+            142,
+            141,
+            140,
+            141,
+            141,
+            141,
+            141,
+            141,
+            150,
+            152,
+            151,
+            150,
+            152,
+            150,
+            152,
+            148,
+            150,
+            151,
+            151,
+            151,
+            151,
+            151
+          ],
+          "videoFrames": 1746,
+          "videoTrackSids": [
+            "TR_VCMq8C9giRWQDx"
+          ]
+        },
+        "d72d3b8f-f09f-4a1b-9be2-83c95b138029": {
+          "audibleFrames": 0,
+          "audioFrames": 0,
+          "audioTrackSids": [],
+          "firstAudioAt": null,
+          "firstVideoAt": 1788746015681,
+          "lastAudioAt": null,
+          "lastVideoAt": 1788746020378,
+          "pulseDelaysMs": [],
+          "videoFrames": 71,
+          "videoTrackSids": []
+        }
+      },
+      "unpublishedWithoutPayload": 0
+    }
+  ],
+  "runId": "6018c9ee-40c9-4eec-8551-610e177d4a3d",
+  "startedAt": "2026-09-07T01:50:30.978Z",
+  "success": true,
+  "totalHttpCalls": 320
+}

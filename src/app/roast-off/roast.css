@@ -1,0 +1,28 @@
+.roast-wrap{max-width:1248px;margin:0 auto;padding:108px 24px 64px}
+.roast-hero{position:relative;overflow:hidden;border:1px solid rgba(255,116,92,.3);border-radius:24px;background:radial-gradient(ellipse at 90% 0%,rgba(255,116,92,.14),transparent 65%),#20201d}
+.roast-tag{display:inline-flex;align-items:center;gap:7px;min-height:28px;border-radius:6px;padding:5px 8px;font-family:monospace;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.roast-input{width:100%;min-height:46px;border:1px solid rgba(255,255,255,.2);border-radius:9px;background:#171715;padding:10px 12px;color:#f4f0e7;font-size:14px}
+.roast-check{display:flex;align-items:flex-start;gap:10px;font-size:13px;line-height:1.7;color:rgba(244,240,231,.8)}
+.roast-check input{margin-top:5px;width:17px;height:17px;flex-shrink:0;accent-color:#ff745c}
+.roast-panel{min-width:0;border:1px solid rgba(244,240,231,.16);border-radius:16px;background:#20201d}
+.roast-stage{background:radial-gradient(ellipse at 50% 20%,rgba(255,116,92,.08),transparent 70%),#1b1b18;border:1px solid rgba(244,240,231,.16);border-radius:18px;overflow:hidden}
+.roast-chat{height:360px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#53534b transparent}
+.roast-chat-message{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);overflow-wrap:anywhere}
+.roast-mini-button{display:inline-flex;min-height:36px;align-items:center;justify-content:center;gap:6px;border-radius:7px;padding:6px 9px;font-size:11px;font-weight:700;border:1px solid rgba(255,255,255,.17)}
+.roast-mini-button:hover{background:rgba(255,255,255,.08)}
+.roast-reaction{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:50px;min-height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.12);font-size:20px;background:rgba(255,255,255,.03)}
+.roast-reaction:active{background:rgba(255,116,92,.2)}
+.roast-vote{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;border:1px solid rgba(255,255,255,.23);border-radius:10px;padding:13px 15px;text-align:left;font-size:14px;font-weight:700;background:rgba(255,255,255,.03)}
+.roast-vote[aria-pressed=true]{border-color:#ff745c;background:rgba(255,116,92,.13)}
+.roast-member-menu summary{list-style:none;cursor:pointer;min-width:36px;min-height:36px;display:grid;place-items:center;border-radius:8px}
+.roast-member-menu summary::-webkit-details-marker{display:none}
+.roast-member-menu[open]>div{position:absolute;right:0;z-index:20;width:180px;border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:6px;background:#292924;box-shadow:0 12px 30px #0008}
+.roast-member-menu button{display:block;min-height:38px;width:100%;padding:8px;text-align:left;font-size:12px;border-radius:5px}
+.roast-member-menu button:hover{background:rgba(255,255,255,.08)}
+.roast-empty-seat{display:flex;aspect-ratio:4/3;min-height:170px;flex-direction:column;align-items:center;justify-content:center;gap:13px;border:1px dashed rgba(255,255,255,.2);border-radius:13px;background:#171715;color:rgba(255,255,255,.5)}
+.roast-live-dot{height:7px;width:7px;flex-shrink:0;border-radius:100%;background:currentColor}
+@media(max-width:1023px){.roast-room-grid{display:flex;flex-direction:column;gap:20px}.roast-main-column,.roast-crowd{display:contents}.roast-main-column>*,.roast-crowd>*{margin-top:0!important;order:5}.roast-main-column>.roast-stage{order:0}.roast-main-column>.roast-performer-controls{order:1}.roast-main-column>.roast-device-check{order:2}.roast-crowd>.roast-chat-panel{order:3}.roast-main-column>.roast-queue-panel{order:4}}
+@media(min-width:1024px){.roast-room-grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;align-items:start}.roast-chat{height:400px}}
+@media(max-width:640px){.roast-wrap{padding:94px 14px 28px}.roast-chat{height:250px}.roast-empty-seat{aspect-ratio:3/4;min-height:170px}.roast-hero{border-radius:17px}}
+@media(prefers-reduced-motion:reduce){.roast-wrap *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+html[data-reduced-motion=true] .roast-wrap *{scroll-behavior:auto!important;animation:none!important;transition:none!important}

@@ -34,6 +34,7 @@ const targetActionLabels = {
   profile: { limit: "Make private", remove: "Clear profile" },
   prompt: { limit: "Quarantine prompt", remove: "Archive prompt" },
   submission: { limit: "Return to review", remove: "Reject submission" },
+  roast: { limit: "Mark reviewed", remove: "" },
 } as const;
 
 export function ModerationQueue() {
@@ -102,7 +103,7 @@ export function ModerationQueue() {
   function beginReview(item: ModerationQueueItem, decision: ModerationDecision, trigger: HTMLButtonElement) {
     reviewTriggerRef.current = trigger;
     setReviewing({ item, decision });
-    setReason(decision === "allow" ? "Reviewed against the community guidelines; no action required." : "Reviewed against the community guidelines.");
+    setReason(decision === "allow" ? "Reviewed against the community guidelines; no action required." : item.target.kind === "roast" ? "Live room report reviewed. Any removal or ban is handled in the room by its host." : "Reviewed against the community guidelines.");
     setInternalNote("");
     setError("");
   }
@@ -120,7 +121,7 @@ export function ModerationQueue() {
       const body = await response.json() as ApiResponse<unknown>;
       if (!response.ok || !body.ok) throw new Error(body.ok ? "Decision could not be saved." : body.error.message);
       setItems((current) => current.filter((item) => item.id !== reviewing.item.id));
-      setNotice(reviewing.decision === "allow" ? "Report dismissed with an audit record." : reviewing.decision === "remove" ? "Content removed and decision recorded." : "Visibility limited and decision recorded.");
+      setNotice(reviewing.decision === "allow" ? "Report dismissed with an audit record." : reviewing.item.target.kind === "roast" ? "Report marked reviewed with an audit record. The room host handles removal and bans." : reviewing.decision === "remove" ? "Content removed and decision recorded." : "Visibility limited and decision recorded.");
       setReviewing(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Decision could not be saved.");
@@ -140,7 +141,7 @@ export function ModerationQueue() {
         return <article key={item.id} className={`panel-solid overflow-hidden border ${urgent ? "border-hot/30" : "border-white/10"}`}>
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4"><div className="flex flex-wrap items-center gap-2">{urgent && <span className="mono-label inline-flex items-center gap-1 rounded-full bg-hot px-2.5 py-1 text-black"><AlertTriangle className="size-3" /> Priority</span>}<span className="mono-label rounded-full bg-white/[0.07] px-2.5 py-1 text-white/55">{reasonLabels[item.reason]}</span><span className="mono-label text-white/25">{item.target.kind}</span></div><span className="flex items-center gap-1.5 text-xs font-bold text-white/30"><Clock3 className="size-3.5" /> {formatDateTime(item.createdAt)}</span></div>
           <div className="grid gap-5 p-5 md:grid-cols-[1fr_220px]"><div><p className="mono-label text-electric">Reported target</p><h2 className="mt-2 text-xl font-black leading-7">{item.target.title}</h2>{item.target.context && <p className="mt-3 max-w-2xl rounded-xl bg-black/25 p-3 text-sm leading-6 text-white/50">{item.target.context}</p>}{item.target.owner && <p className="mt-3 flex items-center gap-2 text-xs font-bold text-white/35"><UserRound className="size-3.5" /> {item.target.owner.displayName} · @{item.target.owner.handle}</p>}{item.target.state && <p className="mono-label mt-3 text-white/25">Current: {item.target.state}</p>}{item.target.moderationLabels?.length ? <div className="mt-3 flex flex-wrap gap-1.5">{item.target.moderationLabels.map((label) => <span key={label} className="rounded-full bg-white/[0.05] px-2 py-1 font-mono text-[9px] text-white/35">{label}</span>)}</div> : null}</div><aside className="rounded-2xl border border-white/10 bg-white/[0.025] p-4"><p className="mono-label text-white/30">Reporter note</p><p className="mt-3 text-sm font-bold leading-6 text-white/60">{item.details ?? "No additional detail."}</p><p className="mt-3 text-xs text-white/25">{item.reporter ? `@${item.reporter.handle}` : "Anonymous report"}</p>{item.target.href && <Link href={item.target.href} target="_blank" rel="noreferrer" className="button-ghost mt-3 min-h-9 px-0">Inspect target <ArrowUpRight className="size-3.5" /></Link>}</aside></div>
-           {(state === "open" || state === "triaged") && <div className="grid gap-2 border-t border-white/10 bg-black/15 p-4 sm:grid-cols-3"><button onClick={(event) => beginReview(item, "allow", event.currentTarget)} className="button-secondary"><Check className="size-4" /> Dismiss</button><button onClick={(event) => beginReview(item, "limit", event.currentTarget)} className="button-secondary"><EyeOff className="size-4" /> {targetActionLabels[item.target.kind].limit}</button><button onClick={(event) => beginReview(item, "remove", event.currentTarget)} className="button-danger"><Trash2 className="size-4" /> {targetActionLabels[item.target.kind].remove}</button></div>}
+           {(state === "open" || state === "triaged") && <div className="grid gap-2 border-t border-white/10 bg-black/15 p-4 sm:grid-cols-3"><button onClick={(event) => beginReview(item, "allow", event.currentTarget)} className="button-secondary"><Check className="size-4" /> Dismiss</button>{!(item.target.kind === "roast" && state === "triaged") && <button onClick={(event) => beginReview(item, "limit", event.currentTarget)} className="button-secondary"><EyeOff className="size-4" /> {targetActionLabels[item.target.kind].limit}</button>}{item.target.kind !== "roast" && <button onClick={(event) => beginReview(item, "remove", event.currentTarget)} className="button-danger"><Trash2 className="size-4" /> {targetActionLabels[item.target.kind].remove}</button>}</div>}
         </article>;
       })}</div>}
     </div>

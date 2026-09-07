@@ -11,7 +11,7 @@ export type ModerationQueueItem = {
   updatedAt: string;
   reporter: { handle: string; displayName: string } | null;
   target: {
-    kind: "delivery" | "profile" | "prompt" | "submission";
+    kind: "delivery" | "profile" | "prompt" | "submission" | "roast";
     id: string;
     title: string;
     owner?: { handle: string; displayName: string } | null;

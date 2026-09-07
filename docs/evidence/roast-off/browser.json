@@ -1,0 +1,37 @@
+{
+  "applicationCommit": "a765772dd9999bdf19d65598f6f08b32959e0e26",
+  "baseUrl": "https://delivery-production-0577.up.railway.app",
+  "browser": "Advertised cloud browser through control-browser skill",
+  "viewport": {
+    "width": 1348,
+    "mobileEmulationAvailable": false
+  },
+  "checks": [
+    {
+      "name": "Homepage has prominent Roast Off entry",
+      "passed": true
+    },
+    {
+      "name": "Public lobby has honest offline state",
+      "passed": true
+    },
+    {
+      "name": "Desktop lobby has no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "Private setup includes styling and header spacing",
+      "passed": true
+    },
+    {
+      "name": "Signed-out private setup links to sign-in with /roast-off/new return path",
+      "passed": true
+    }
+  ],
+  "limitations": [
+    "No authenticated independent browser contexts or temporary private invitation were available to this browser surface.",
+    "No browser performer, receive-only media playback, autoplay, camera/microphone device or browser refresh/reconnect acceptance was performed.",
+    "Phone viewport emulation was not advertised; no physical phone was used."
+  ],
+  "privacy": "No room was created or joined through the browser; no device access requested in reviewed entry pages."
+}
