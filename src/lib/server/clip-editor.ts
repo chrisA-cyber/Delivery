@@ -3,7 +3,7 @@ import "server-only";
 // @ts-expect-error Upstream package export map; runtime import is supported.
 import sharp from "sharp";
 import { z } from "zod";
-import { clipEditSettingsSchema, clipAvatarSchema, defaultClipEditSettings, type ClipAvatar, type ClipEditSettings } from "@/lib/video-composition";
+import { clipEditSettingsSchema, clipAvatarSchema, defaultClipEditSettings, migrateClipEditSettings, type ClipAvatar, type ClipEditSettings } from "@/lib/video-composition";
 import type { ContentRating } from "@/lib/content/types";
 import type { SwitchViewer } from "@/lib/server/switch";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -90,7 +90,7 @@ export function sourceDuration(source: ExportSource): number {
 }
 
 export async function validateClipSettings(value: unknown, source: ExportSource): Promise<ClipEditSettings> {
-  const settings = clipEditSettingsSchema.parse(value);
+  const settings = migrateClipEditSettings(source.input.assignment.mode, clipEditSettingsSchema.parse(value));
   await validateClipAvatar(settings.avatar);
   const duration = sourceDuration(source), end = settings.trimEnd ?? duration;
   if (settings.trimStart < 0 || end > duration + 0.05 || end - settings.trimStart < minClipLength(duration) || settings.trimStart >= duration) {
@@ -103,7 +103,7 @@ export async function loadClipSettings(source: ExportSource, avatar: ClipAvatar)
   const result = await createSupabaseAdminClient().from("performance_clip_edits").select("settings").eq("source_kind", source.kind).eq("attempt_id", String(source.row.id)).eq("owner_key", source.ownerKey).maybeSingle();
   checkedExport(result.error);
   const saved = clipEditSettingsSchema.safeParse(result.data?.settings);
-  return saved.success ? saved.data : { ...defaultClipEditSettings(source.input.assignment.mode), avatar };
+  return saved.success ? migrateClipEditSettings(source.input.assignment.mode, saved.data) : { ...defaultClipEditSettings(source.input.assignment.mode), avatar };
 }
 
 export async function saveClipSettings(source: ExportSource, value: unknown): Promise<ClipEditSettings> {

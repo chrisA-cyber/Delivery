@@ -22,7 +22,7 @@ export const clipAvatarSchema = z.discriminatedUnion("kind", [
 ]);
 export type ClipAvatar = z.infer<typeof clipAvatarSchema>;
 export const clipEditSettingsSchema = z.object({
-  version: z.literal(1), layout: z.enum(["spotlight", "duet"]), avatar: clipAvatarSchema,
+  version: z.literal(1), layoutRevision: z.literal(3).optional(), layout: z.enum(["spotlight", "duet"]), avatar: clipAvatarSchema,
   reducedMotion: z.boolean().default(false), avatarVisible: z.boolean(), avatarX: z.number().finite().min(0).max(1), avatarY: z.number().finite().min(0).max(1),
   avatarSize: z.number().finite().min(0.14).max(0.7), captions: z.boolean(), includeName: z.boolean(), includeScore: z.boolean(),
   trimStart: z.number().finite().min(0).max(45), trimEnd: z.number().finite().min(0).max(45).nullable(),
@@ -30,15 +30,22 @@ export const clipEditSettingsSchema = z.object({
 export type ClipEditSettings = z.infer<typeof clipEditSettingsSchema>;
 export type CompositionMode = "classic" | "switch" | "say-it-back";
 export function defaultClipEditSettings(mode: CompositionMode): ClipEditSettings {
-  return { version: 1, layout: "spotlight", avatar: { kind: "builtin", id: "fox" }, reducedMotion: false, avatarVisible: true,
-    avatarX: mode === "say-it-back" ? 0.79 : 0.5, avatarY: mode === "say-it-back" ? 0.60 : mode === "switch" ? 0.34 : 0.35,
-    avatarSize: mode === "say-it-back" ? 0.23 : mode === "switch" ? 0.49 : 0.55,
+  return { version: 1, layoutRevision: 3, layout: "spotlight", avatar: { kind: "builtin", id: "fox" }, reducedMotion: false, avatarVisible: true,
+    avatarX: mode === "say-it-back" ? 0.79 : 0.5, avatarY: mode === "say-it-back" ? 0.60 : mode === "switch" ? 0.51 : 0.35,
+    avatarSize: mode === "say-it-back" ? 0.23 : mode === "switch" ? 0.57 : 0.55,
     captions: true, includeName: true, includeScore: true, trimStart: 0, trimEnd: null };
 }
 export function layoutClipEditSettings(mode: CompositionMode, layout: ClipEditSettings["layout"]): Pick<ClipEditSettings, "layout" | "avatarX" | "avatarY" | "avatarSize"> {
   const initial = defaultClipEditSettings(mode);
   if (layout === "spotlight") return { layout, avatarX: initial.avatarX, avatarY: initial.avatarY, avatarSize: initial.avatarSize };
-  return { layout, avatarX: mode === "say-it-back" ? 0.205 : 0.275, avatarY: mode === "say-it-back" ? 0.665 : mode === "switch" ? 0.465 : 0.44, avatarSize: mode === "say-it-back" ? 0.25 : 0.43 };
+  return { layout, avatarX: mode === "say-it-back" ? 0.205 : mode === "switch" ? 0.5 : 0.275, avatarY: mode === "say-it-back" ? 0.665 : mode === "switch" ? 0.48 : 0.44, avatarSize: mode === "say-it-back" ? 0.25 : mode === "switch" ? 0.64 : 0.43 };
+}
+/** Only previous preset coordinates move; intentional custom placement survives. */
+export function migrateClipEditSettings(mode: CompositionMode, settings: ClipEditSettings): ClipEditSettings {
+  if (settings.layoutRevision === 3) return settings;
+  const previous = settings.layout === "spotlight" ? { x: 0.5, y: 0.34, size: 0.49 } : { x: 0.275, y: 0.465, size: 0.43 };
+  const matches = Math.abs(settings.avatarX - previous.x) < 0.000001 && Math.abs(settings.avatarY - previous.y) < 0.000001 && Math.abs(settings.avatarSize - previous.size) < 0.000001;
+  return { ...settings, ...(mode === "switch" && matches ? layoutClipEditSettings(mode, settings.layout) : {}), layoutRevision: 3 };
 }
 export type CompositionScene = { duration: number; invitationUrl?: string; displayName?: string | null; score?: { value: number; label: string; beta?: boolean } | null } & (
   | { mode: "classic"; classic: { phrase: string; direction: string } }
@@ -48,8 +55,14 @@ export type CompositionScene = { duration: number; invitationUrl?: string; displ
 export interface CompositionFrame { x: number; y: number; width: number; height: number }
 export function sceneFrame(settings: ClipEditSettings): CompositionFrame { return settings.layout === "duet" ? { x: 64, y: 360, width: 952, height: 760 } : { x: 64, y: 340, width: 952, height: 930 }; }
 export function contentFrame(scene: CompositionScene, settings: ClipEditSettings): CompositionFrame {
-  if (scene.mode === "say-it-back") return settings.layout === "duet" ? { x: 400, y: 1160, width: 590, height: 365 } : { x: 86, y: 1310, width: 884, height: 215 };
-  return settings.layout === "duet" ? { x: 572, y: 605, width: 414, height: 780 } : { x: 86, y: 1000, width: 884, height: 445 };
+  if (scene.mode === "say-it-back") return settings.layout === "duet" ? { x: 400, y: 1160, width: 590, height: 290 } : { x: 86, y: 1280, width: 884, height: 174 };
+  return settings.layout === "duet" ? { x: 86, y: 210, width: 884, height: 330 } : { x: 86, y: 200, width: 884, height: 430 };
+}
+/** Waveforms use the selected source interval; the recording itself is untouched. */
+export function waveformFrame(scene: CompositionScene, settings: ClipEditSettings): CompositionFrame {
+  if (scene.mode === "classic") return settings.layout === "duet" ? { x: 86, y: 1130, width: 422, height: 60 } : { x: 86, y: 978, width: 884, height: 44 };
+  if (scene.mode === "switch") return { x: 86, y: 1295, width: 884, height: 54 };
+  return { x: 86, y: 1465, width: 884, height: 48 };
 }
 export function avatarFrame(settings: ClipEditSettings): CompositionFrame {
   const size = Math.round(settings.avatarSize * COMPOSITION_WIDTH);
@@ -58,7 +71,7 @@ export function avatarFrame(settings: ClipEditSettings): CompositionFrame {
 }
 const clamp = (value: number, low = 0, high = 1) => Math.min(high, Math.max(low, Number.isFinite(value) ? value : 0));
 /** Visual measurement only: never changes recorded or rendered audio gain. */
-export function speechLevel(rms: number): number { return Math.round(clamp((rms - 0.012) * 8) * 7) / 7; }
+export function speechLevel(rms: number): number { return Math.round(clamp(Math.sqrt(Math.max(0, rms - 0.004)) * 2.8) * 7) / 7; }
 export function measureAudioLevels(samples: Float32Array, sampleRate: number): number[] {
   if (!samples.length || !Number.isFinite(sampleRate) || sampleRate <= 0) return [];
   const frames = Math.ceil(samples.length / sampleRate * AUDIO_LEVEL_FPS);
@@ -100,16 +113,27 @@ function fitText(value: string, x: number, top: number, width: number, height: n
 }
 function rect(x: number, y: number, width: number, height: number, fill: string, radius = 0, extra = ""): string { return `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${radius}" fill="${fill}" ${extra}/>`; }
 function svg(body: string, width = COMPOSITION_WIDTH, height = COMPOSITION_HEIGHT): string { return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${body}</svg>`; }
+export interface AvatarSpeechPose { x: number; y: number; rotation: number; scaleX: number; scaleY: number }
+/** An eight-pose response to measured sound, with no timer or idle animation. */
+export function avatarSpeechPose(avatar: ClipAvatar, level: number, reducedMotion = false): AvatarSpeechPose {
+  const amount = Math.round(clamp(level) * 7) / 7;
+  if (reducedMotion || amount === 0) return { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 };
+  if (avatar.kind === "upload") return { x: 0, y: -4.5 * amount, rotation: -2.25 * amount, scaleX: 1 + 0.055 * amount, scaleY: 1 + 0.055 * amount };
+  const direction = avatar.id === "fox" || avatar.id === "cat" ? -1 : 1;
+  const soft = avatar.id === "cloud" || avatar.id === "robot";
+  return { x: direction * 2.5 * amount, y: -(avatar.id === "star" ? 9 : 7.5) * amount, rotation: direction * (soft ? 3 : 4.5) * amount,
+    scaleX: 1 + (soft ? 0.065 : -0.025) * amount, scaleY: 1 + (soft ? -0.02 : 0.10) * amount };
+}
 export function avatarSvg(avatar: ClipAvatar, options: { size?: number; level?: number; reducedMotion?: boolean; imageHref?: string } = {}): string {
   const level = clamp(options.level ?? 0), selected = BUILTIN_AVATARS.find((item) => avatar.kind === "builtin" && item.id === avatar.id) ?? BUILTIN_AVATARS[0];
   const source = options.imageHref ?? (avatar.kind === "upload" ? avatar.dataUrl : selected.imageUrl);
-  const scale = options.reducedMotion ? 1 : 1 + level * 0.026;
+  const pose = avatarSpeechPose(avatar, level, options.reducedMotion);
   const background = avatar.kind === "upload" ? C.violet : selected.color;
   const assetId = avatar.kind === "upload" ? "uploaded" : selected.id;
   const body = `<defs><radialGradient id="avatar-wash-${assetId}"><stop stop-color="${background}" stop-opacity="0.25"/><stop offset="1" stop-color="${background}" stop-opacity="0.055"/></radialGradient><clipPath id="avatar-crop-${assetId}"><circle cx="128" cy="128" r="107"/></clipPath></defs>`
     + `<circle cx="128" cy="128" r="120" fill="${background}" fill-opacity="${(0.025 + level * 0.07).toFixed(3)}"/>`
     + `<circle cx="128" cy="128" r="116" fill="none" stroke="${background}" stroke-width="${(1.8 + level * 3.2).toFixed(2)}" stroke-opacity="${(0.25 + level * 0.7).toFixed(3)}"/>`
-    + `<g transform="translate(128 128) scale(${scale.toFixed(4)}) translate(-128 -128)"><circle cx="128" cy="128" r="107" fill="${C.surface}"/><circle cx="128" cy="128" r="107" fill="url(#avatar-wash-${assetId})"/><image href="${xml(source)}" x="21" y="21" width="214" height="214" preserveAspectRatio="${avatar.kind === "upload" ? "xMidYMid slice" : "xMidYMid meet"}"${avatar.kind === "upload" ? ` clip-path="url(#avatar-crop-${assetId})"` : ""}/></g>`
+    + `<g data-avatar-body="true" data-speech-level="${level}" transform="translate(${(128 + pose.x).toFixed(4)} ${(128 + pose.y).toFixed(4)}) rotate(${pose.rotation.toFixed(4)}) scale(${pose.scaleX.toFixed(4)} ${pose.scaleY.toFixed(4)}) translate(-128 -128)"><circle cx="128" cy="128" r="107" fill="${C.surface}"/><circle cx="128" cy="128" r="107" fill="url(#avatar-wash-${assetId})"/><image href="${xml(source)}" x="21" y="21" width="214" height="214" preserveAspectRatio="${avatar.kind === "upload" ? "xMidYMid slice" : "xMidYMid meet"}"${avatar.kind === "upload" ? ` clip-path="url(#avatar-crop-${assetId})"` : ""}/></g>`
     + Array.from({ length: 5 }, (_, i) => { const h = 3 + level * [10, 19, 26, 19, 10][i]!; return rect(112 + i * 7, 242 - h / 2, 4, h, background, 2); }).join("");
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${options.size ?? 256}" height="${options.size ?? 256}" viewBox="0 0 256 256">${body}</svg>`;
 }
@@ -142,8 +166,7 @@ function baseBody(scene: CompositionScene, settings: ClipEditSettings): string {
     if (settings.captions) body += text("CHALLENGE LINE", x, duet ? 572 : 1040, 20, C.muted, 500) + fitText(scene.classic.phrase, x, duet ? 600 : 1070, width, duet ? 390 : 225, duet ? 52 : 65, 28);
     body += text("DELIVERED AS", x, duet ? 1110 : 1351, 19, C.muted, 500) + fitText(scene.classic.direction, x, duet ? 1138 : 1374, width, duet ? 250 : 139, duet ? 34 : 32, 19, C.accent);
   } else if (scene.mode === "switch") {
-    body += text(scene.switch.kind === "speed" ? "ONE LINE. FIVE SPEEDS." : "SAME LINE. NEW ENERGY.", 540, 259, 26, C.accent, 700, "middle");
-    if (settings.captions) body += text("CHALLENGE LINE", 86, 325, 19, C.muted, 500) + fitText(scene.switch.cues[0]?.text ?? "", 86, 347, 884, 140, 59, 27);
+    if (settings.captions) body += text("CHALLENGE LINE", 86, 1370, 19, C.muted, 500) + fitText(scene.switch.cues[0]?.text ?? "", 86, 1391, 884, 121, 61, 27);
   } else {
     body += fitText(scene.say.clip.title, 86, 210, 884, 93, 40, 27);
     const f = sceneFrame(settings);
@@ -163,15 +186,17 @@ function contentBody(scene: CompositionScene, settings: ClipEditSettings, time: 
     const cue = scene.switch.cues[index];
     if (!cue) return "";
     const duet = settings.layout === "duet", cx = f.x + f.width / 2;
+    const symbolX = duet ? f.x + 44 : cx - 92, symbolY = f.y + 38, symbolSize = duet ? 210 : 184;
     let body = rect(f.x, f.y, f.width, f.height, C.surface, 32, `stroke="${C.border}" stroke-width="2"`)
-      + text(`${index + 1} / ${scene.switch.cues.length}`, cx, f.y + 51, 22, C.muted, 500, "middle");
-    if (scene.switch.kind === "speed") body += text(`${cue.speed ?? 1}×`, cx, f.y + (duet ? 294 : 212), duet ? 110 : 121, C.accent, 700, "middle");
-    else { const emoji = (emojiImages as Record<string, string>)[cue.emoji]; body += emoji ? `<image href="${emoji}" x="${cx - (duet ? 110 : 82)}" y="${f.y + (duet ? 118 : 76)}" width="${duet ? 220 : 164}" height="${duet ? 220 : 164}"/>` : text(cue.emoji, cx, f.y + 212, 120, C.accent, 700, "middle"); }
-    body += fitText(cue.directionLabel, f.x + 22, f.y + (duet ? 372 : 256), f.width - 44, duet ? 180 : 77, duet ? 46 : 43, 25, C.paper, true);
+      + text(`${index + 1} / ${scene.switch.cues.length}`, f.x + f.width - 32, f.y + 40, 20, C.muted, 500, "end");
+    if (scene.switch.kind === "speed") body += text(`${cue.speed ?? 1}×`, duet ? f.x + 153 : cx, f.y + (duet ? 191 : 196), duet ? 116 : 138, C.accent, 700, "middle");
+    else { const emoji = (emojiImages as Record<string, string>)[cue.emoji]; body += emoji ? `<image href="${emoji}" x="${symbolX}" y="${symbolY}" width="${symbolSize}" height="${symbolSize}"/>` : text(cue.emoji, duet ? f.x + 153 : cx, f.y + 196, 135, C.accent, 700, "middle"); }
+    const labelX = duet ? f.x + 300 : f.x + 26, labelWidth = duet ? f.width - 335 : f.width - 52;
+    body += fitText(cue.directionLabel, labelX, f.y + (duet ? 92 : 242), labelWidth, duet ? 96 : 78, duet ? 48 : 53, 29, C.paper, !duet);
     const next = scene.switch.cues[index + 1];
-    body += fitText(next ? `Next: ${next.directionLabel}` : "Last switch", f.x + 24, f.y + f.height - 103, f.width - 48, 53, 20, 16, C.muted, true);
+    body += fitText(next ? `Next: ${next.directionLabel}` : "Last switch", labelX, f.y + (duet ? 204 : 338), labelWidth, 46, 21, 16, C.muted, !duet);
     const gap = 9, step = (f.width - 64) / scene.switch.cues.length;
-    scene.switch.cues.forEach((_, i) => { body += rect(f.x + 32 + i * step, f.y + f.height - 33, step - gap, 7, i === index ? C.accent : i < index ? C.blue : C.border, 3); });
+    scene.switch.cues.forEach((_, i) => { body += rect(f.x + 32 + i * step, f.y + f.height - 27, step - gap, 7, i === index ? C.accent : i < index ? C.blue : C.border, 3); });
     return body;
   }
   if (scene.mode === "say-it-back" && settings.captions) {
@@ -182,10 +207,31 @@ function contentBody(scene: CompositionScene, settings: ClipEditSettings, time: 
   }
   return "";
 }
-export function compositionSvg(scene: CompositionScene, settings: ClipEditSettings, options: { time: number; level?: number; reducedMotion?: boolean; layer?: "all" | "base" | "content" | "avatar"; avatarImageHref?: string } = { time: 0 }): string {
+function waveformBody(scene: CompositionScene, settings: ClipEditSettings, levels: readonly number[], options: { time: number; audioOffset?: number; part?: "all" | "bars" | "cursor" }): string {
+  const f = waveformFrame(scene, settings), start = settings.trimStart, end = Math.min(scene.duration, settings.trimEnd ?? scene.duration);
+  const duration = Math.max(0.001, end - start), step = f.width / 48, part = options.part ?? "all";
+  let body = "";
+  if (part !== "cursor") {
+    for (let bar = 0; bar < 48; bar++) {
+      const from = Math.floor((start + duration * bar / 48 + (options.audioOffset ?? 0)) * AUDIO_LEVEL_FPS);
+      const to = Math.ceil((start + duration * (bar + 1) / 48 + (options.audioOffset ?? 0)) * AUDIO_LEVEL_FPS);
+      let peak = 0;
+      for (let i = Math.max(0, from); i < Math.min(levels.length, to); i++) peak = Math.max(peak, clamp(levels[i]!));
+      const height = Math.max(2, peak * (f.height - 8));
+      body += rect(f.x + bar * step, f.y + (f.height - height) / 2, Math.max(3, step - 5), height, peak > 0 ? C.blue : C.border, 2);
+    }
+  }
+  if (part !== "bars") body += rect(f.x + clamp((options.time - start) / duration) * (f.width - 3), f.y, 3, f.height, C.accent, 1);
+  return body;
+}
+export function waveformSvg(scene: CompositionScene, settings: ClipEditSettings, levels: readonly number[], options: { time: number; audioOffset?: number; part?: "all" | "bars" | "cursor" }): string {
+  return svg(waveformBody(scene, settings, levels, options));
+}
+export function compositionSvg(scene: CompositionScene, settings: ClipEditSettings, options: { time: number; level?: number; reducedMotion?: boolean; layer?: "all" | "base" | "content" | "waveform" | "avatar"; audioLevels?: readonly number[]; audioOffset?: number; avatarImageHref?: string } = { time: 0 }): string {
   const layer = options.layer ?? "all";
   let body = layer === "all" || layer === "base" ? baseBody(scene, settings) : "";
   if (layer === "all" || layer === "content") body += contentBody(scene, settings, options.time);
+  if (layer === "all" || layer === "waveform") body += waveformBody(scene, settings, options.audioLevels ?? [], { time: options.time, audioOffset: options.audioOffset });
   if ((layer === "all" || layer === "avatar") && settings.avatarVisible) {
     const f = avatarFrame(settings);
     body += `<g transform="translate(${f.x} ${f.y})">${avatarSvg(settings.avatar, { size: f.width, level: options.level, reducedMotion: options.reducedMotion ?? settings.reducedMotion, imageHref: options.avatarImageHref })}</g>`;

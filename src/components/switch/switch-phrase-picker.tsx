@@ -18,11 +18,15 @@ export function SwitchModePicker({ phrase, selectedId, onChoose, disabled = fals
   </div>;
 }
 
-export function SwitchPhraseCard({ phrase, selectedId, onChoose, disabled = false }: {
-  phrase: SwitchPhrase; selectedId?: string; onChoose: (challenge: SwitchChallenge) => void; disabled?: boolean;
+export function SwitchPhraseCard({ phrase, selectedId, onChoose, disabled = false, compact = false }: {
+  phrase: SwitchPhrase; selectedId?: string; onChoose: (challenge: SwitchChallenge) => void; disabled?: boolean; compact?: boolean;
 }) {
   const representative = phrase.variants.emotion ?? phrase.variants.speed!;
   const selected = Object.values(phrase.variants).some((item) => item.id === selectedId);
+  if (compact) return <article aria-label={`Phrase: ${phrase.text}`} className={cn("grid grid-cols-[minmax(0,1fr)_9.5rem] items-center gap-3 rounded-xl border bg-[var(--ink-soft)] p-3 sm:gap-4 sm:p-4", selected ? "border-hot bg-hot/5" : "border-white/15")}>
+    <div className="min-w-0"><h3 className="break-words text-base font-bold leading-snug tracking-tight sm:text-lg">“{phrase.text}”</h3><p className="mt-1 text-[11px] text-white/45">{representative.duration}s · {CONTENT_LABELS[representative.rating]}</p></div>
+    <div className="min-w-0 [&_button]:!px-1.5 [&_button_span]:!mr-1"><SwitchModePicker phrase={phrase} selectedId={selectedId} onChoose={onChoose} disabled={disabled} /></div>
+  </article>;
   return <article aria-label={`Phrase: ${phrase.text}`} className={cn("flex flex-col rounded-2xl border bg-[var(--ink-soft)] p-5 sm:p-6", selected ? "border-hot bg-hot/5" : "border-white/15")}>
     <div className="flex items-center justify-between gap-3 text-xs text-white/55"><span>{CONTENT_LABELS[representative.rating]}</span><span>{representative.duration}s</span></div>
     <h3 className="mb-5 mt-4 flex-1 text-2xl font-bold leading-snug tracking-tight">“{phrase.text}”</h3>

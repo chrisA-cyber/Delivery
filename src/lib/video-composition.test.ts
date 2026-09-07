@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { audioLevelAt, avatarFrame, avatarSvg, clipEditSettingsSchema, compositionSvg, defaultClipEditSettings, measureAudioLevels, sceneFrame, type CompositionScene } from "./video-composition";
+import { audioLevelAt, avatarFrame, avatarSpeechPose, avatarSvg, clipEditSettingsSchema, compositionSvg, contentFrame, defaultClipEditSettings, layoutClipEditSettings, measureAudioLevels, sceneFrame, waveformSvg, type CompositionScene } from "./video-composition";
 import { SWITCH_CHALLENGES } from "./switch/catalog";
 import { SAY_CLIPS } from "./say-it-back/catalog";
 
@@ -13,7 +13,7 @@ describe("saved clip composition", () => {
     expect(audioLevelAt(levels, 0.8)).toBe(0);
     expect(audioLevelAt(levels, -0.1)).toBe(0);
     expect(avatarSvg({ kind: "builtin", id: "fox" }, { level: 0 })).not.toBe(avatarSvg({ kind: "builtin", id: "fox" }, { level: 1 }));
-    expect(avatarSvg({ kind: "builtin", id: "fox" }, { level: 1, reducedMotion: true })).toContain("scale(1.0000)");
+    expect(avatarSpeechPose({ kind: "builtin", id: "fox" }, 1, true)).toEqual({ x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 });
   });
   it("preserves source Switch boundaries when the trim starts inside a cue", () => {
     const challenge = SWITCH_CHALLENGES[0]!;
@@ -23,6 +23,50 @@ describe("saved clip composition", () => {
     expect(compositionSvg(scene, settings, { time: 4, layer: "content" })).toContain("Angry");
     expect(compositionSvg(scene, settings, { time: 8, layer: "content" })).toContain("Sad");
     expect(challenge.cues[1]?.start).toBe(4);
+  });
+  it("puts emotion and speed changes above the portrait in both Switch presets", () => {
+    for (const layout of ["spotlight", "duet"] as const) {
+      const settings = { ...defaultClipEditSettings("switch"), ...layoutClipEditSettings("switch", layout) };
+      for (const kind of ["emotion", "speed"] as const) {
+        const challenge = SWITCH_CHALLENGES.find((item) => item.kind === kind)!;
+        const scene: CompositionScene = { mode: "switch", duration: 20, switch: challenge };
+        const card = contentFrame(scene, settings), portrait = avatarFrame(settings);
+        expect(card.y + card.height).toBeLessThan(portrait.y);
+        expect(portrait.y + portrait.height).toBeLessThan(1350);
+        expect(compositionSvg(scene, settings, { time: 4.1, layer: "content" })).toContain(challenge.cues[1]!.directionLabel);
+        expect(compositionSvg(scene, settings, { time: 4.1, layer: "base" })).toContain('y="1370"');
+      }
+    }
+  });
+  it("moves actual characters noticeably only with sound and keeps uploaded photos rigid", () => {
+    const fox = { kind: "builtin", id: "fox" } as const;
+    const still = { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 };
+    expect(avatarSpeechPose(fox, 0)).toEqual(still);
+    const speaking = avatarSpeechPose(fox, 1);
+    expect(speaking.y).toBeLessThan(-7);
+    expect(Math.abs(speaking.rotation)).toBeGreaterThan(4);
+    expect(speaking.scaleY).toBeGreaterThan(1.08);
+    expect(avatarSpeechPose(fox, 1 / 7 + 0.001)).toEqual(avatarSpeechPose(fox, 1 / 7));
+    const photo = { kind: "upload", dataUrl: "data:image/png;base64,aGVsbG8=" } as const;
+    const photoPose = avatarSpeechPose(photo, 1);
+    expect(photoPose.scaleX).toBe(photoPose.scaleY);
+    expect(photoPose.scaleX).toBeGreaterThan(1.05);
+    expect(avatarSpeechPose(photo, 1, true)).toEqual(still);
+    expect(avatarSvg(fox, { level: 1 })).toContain('data-avatar-body="true"');
+  });
+  it("draws measured waveform bars from the selected trim and aligns its playhead", () => {
+    const scene: CompositionScene = { mode: "classic", duration: 1, classic: { phrase: "Hello", direction: "Quietly" } };
+    const settings = { ...defaultClipEditSettings("classic"), trimStart: 0.4, trimEnd: 0.9 };
+    const discardedSpeech = Array.from({ length: 15 }, (_, i) => i < 3 ? 1 : 0);
+    const bars = waveformSvg(scene, settings, discardedSpeech, { time: 0.4, part: "bars" });
+    expect(bars.match(/<rect/g)).toHaveLength(48);
+    expect(bars).not.toContain('fill="#5d7cff"');
+    const retainedSpeech = discardedSpeech.map((_, i) => i >= 6 && i <= 8 ? 1 : 0);
+    expect(waveformSvg(scene, settings, retainedSpeech, { time: 0.4, part: "bars" })).toContain('fill="#5d7cff"');
+    expect(waveformSvg(scene, settings, retainedSpeech, { time: 0.65, part: "cursor" })).toContain('x="526.5"');
+    const noAvatar = compositionSvg(scene, { ...settings, avatarVisible: false }, { time: 0.65, audioLevels: retainedSpeech });
+    expect(noAvatar).toContain('fill="#5d7cff"');
+    expect(noAvatar).not.toContain('data-avatar-body="true"');
   });
   it("labels stored Say dialogue honestly and keeps it off outside its interval", () => {
     const clip = SAY_CLIPS.find((item) => item.id === "hgf-perfect-fiance")!;

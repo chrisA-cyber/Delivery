@@ -1,6 +1,20 @@
-# Avatar and clip editor release — September 7, 2026
+# Compact Switch, speaking avatars and waveforms — September 7, 2026
 
-**Deployed application:** [`0eec933901c41bbf22826faa5aa7f92983d903ff`](https://github.com/chrisA-cyber/Delivery/commit/0eec933901c41bbf22826faa5aa7f92983d903ff), Railway deployment `dc0df35d-35ad-4f52-ba50-226b2b3b6e23` (**SUCCESS**). Subsequent verification/documentation publication does not change the running application.
+This follow-up supersedes the application release recorded below. Switch now uses compact phrase choices and a single recording/replay stage, with the current emoji or speed and five-step progression above the avatar. Desktop and simulated 390×844 layouts were inspected.
+
+The shared avatar artwork now visibly lifts, leans and scales with measured speech; silence settles it, uploaded images retain their proportions, and reduced motion suppresses movement. All three clip modes include an actual-audio waveform and synchronized playhead. Switch video presets put cues at the top and the avatar beneath them. Preview and MP4 use the same composition and original source clock, including trimmed cues and Say It Back offsets. Original audio and the existing dub mix are unchanged.
+
+The renderer is `delivery-vertical-v3`. Saved settings carry `layoutRevision: 3`; only exact legacy Switch default placements migrate, while custom positions remain intact. Existing finished exports stay accessible and revised settings render a new version. No dependency, schema, infrastructure or Clipping changes are needed.
+
+Focused checks cover Switch capture/recovery, avatar speech and reduced motion, preview interactions, waveform/trim timing, and saved-edit migration. Four actual MP4 samples cover Classic with an uploaded avatar, emoji Switch, speed Switch and Say It Back. Ten decoded frames agree with the shared preview within normal compression differences. See the [render contact sheet](evidence/switch-compact/v3-render-contact-sheet.webp), [render results](evidence/switch-compact/v3-render-results.json), [frame comparisons](evidence/switch-compact/v3-composition-agreement.json), and [uploaded-image speech motion](evidence/switch-compact/v3-upload-speech-motion.webp). Physical-phone microphone and native sharing remain outside these simulated checks.
+
+Railway still requires an explicit update of the existing Delivery service's pinned source commit followed by deployment; pushing main alone does not deploy. The release report identifies the exact deployed revision.
+
+---
+
+# Previous avatar and clip editor release — September 7, 2026
+
+**Previous deployed application:** [`0eec933901c41bbf22826faa5aa7f92983d903ff`](https://github.com/chrisA-cyber/Delivery/commit/0eec933901c41bbf22826faa5aa7f92983d903ff), Railway deployment `dc0df35d-35ad-4f52-ba50-226b2b3b6e23` (**SUCCESS**).
 
 Extends the working export pipeline below. Railway’s Delivery service uses `chrisA-cyber/Delivery` **main** with a pinned `source.commitSha`; pushing main does not deploy it automatically, and ordinary redeploy repeats the pinned revision. Explicitly update that source commit and deploy this existing service, preserving its Dockerfile, Next process, serial FFmpeg worker, storage and ownership checks. Clipping remains untouched.
 

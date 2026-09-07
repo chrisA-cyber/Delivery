@@ -6,13 +6,13 @@ import { dirname, join } from "node:path";
 // Sharp 0.35 ships declarations but omits them from its ESM export map.
 // @ts-expect-error Upstream package export map; runtime import is supported.
 import sharp from "sharp";
-import { BUILTIN_AVATARS, audioLevelAt, avatarFrame, avatarSvg, clipEditSettingsSchema, compositionBoundaries, compositionFooter, compositionSvg, contentFrame, defaultClipEditSettings, measureAudioLevels, sceneFrame, type ClipEditSettings, type CompositionScene } from "@/lib/video-composition";
+import { BUILTIN_AVATARS, audioLevelAt, avatarFrame, avatarSvg, clipEditSettingsSchema, compositionBoundaries, compositionFooter, compositionSvg, contentFrame, defaultClipEditSettings, measureAudioLevels, migrateClipEditSettings, sceneFrame, waveformFrame, waveformSvg, type ClipEditSettings, type CompositionScene } from "@/lib/video-composition";
 export { wrapVideoText } from "@/lib/video-composition";
 import { MAX_SAY_RECORDING_MS } from "@/lib/audio-capture";
 import type { SwitchChallenge } from "@/lib/switch/types";
 import type { SayClip } from "@/lib/say-it-back/types";
 
-export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v2" as const;
+export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v3" as const;
 export const VIDEO_RENDER_LIMITS = Object.freeze({ durationSeconds: 22, outputBytes: 48 * 1024 * 1024, timeoutMs: 180_000, threads: 2 });
 const SAY_VIDEO_RENDER_LIMITS = Object.freeze({ ...VIDEO_RENDER_LIMITS, durationSeconds: MAX_SAY_RECORDING_MS / 1000, timeoutMs: 360_000 });
 const W = 1080;
@@ -125,7 +125,7 @@ export async function renderPerformanceVideo(input: VideoRenderInput, options: {
   validateInput(input);
   const parsed = clipEditSettingsSchema.safeParse(input.settings ?? defaultClipEditSettings(input.mode));
   if (!parsed.success) throw new VideoRenderError("RENDER_SETTINGS", "The clip settings are unavailable. Reset the editor and try again.");
-  const settings = parsed.data;
+  const settings = migrateClipEditSettings(input.mode, parsed.data);
   // Keep malformed/private invitation links out of every composition layer.
   renderVideoFooter(input);
   const limits = input.mode === "say-it-back" ? SAY_VIDEO_RENDER_LIMITS : VIDEO_RENDER_LIMITS;
@@ -142,6 +142,10 @@ export async function renderPerformanceVideo(input: VideoRenderInput, options: {
     const trimStart = settings.trimStart, trimEnd = settings.trimEnd ?? sourceDuration;
     if (trimStart >= sourceDuration || trimEnd > sourceDuration + 0.05 || trimEnd - trimStart < 0.5) throw new VideoRenderError("RENDER_TRIM", "Keep at least half a second within the original take.");
     const duration = Math.min(sourceDuration, trimEnd) - trimStart;
+    const pcm = await run(process.env.FFMPEG_PATH || "ffmpeg", ["-v", "error", "-nostdin", "-threads", "1", "-protocol_whitelist", "file,pipe", "-i", input.recordingPath, "-vn", "-t", String(limits.durationSeconds), "-ac", "1", "-ar", "8000", "-f", "f32le", "pipe:1"], signal, 8000 * 4 * limits.durationSeconds + 1000);
+    const samples = new Float32Array(Math.floor(pcm.length / 4));
+    for (let i = 0; i < samples.length; i++) samples[i] = pcm.readFloatLE(i * 4);
+    const levels = measureAudioLevels(samples, 8000);
     const scene = compositionScene(input, sourceDuration), basePath = join(dir, "layout.png");
     await raster(basePath, compositionSvg(scene, settings, { time: trimStart, layer: "base" }));
     const args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-y", "-filter_complex_threads", "1", "-threads", "2", "-loop", "1", "-framerate", String(FPS), "-i", basePath, "-threads", "2", "-protocol_whitelist", "file,pipe", "-i", input.recordingPath];
@@ -186,6 +190,12 @@ export async function renderPerformanceVideo(input: VideoRenderInput, options: {
       filters.push(`[${videoLabel}][${inputIndex++}:v]overlay=x=${frame.x}:y=${frame.y}:eof_action=repeat:enable='gte(t,${start - trimStart})*lt(t,${end - trimStart})'[${label}]`);
       videoLabel = label;
     }
+    const wave = waveformFrame(scene, settings), wavePath = join(dir, "waveform.png"), cursorPath = join(dir, "wave-cursor.png");
+    await raster(wavePath, cropSvg(waveformSvg(scene, settings, levels, { time: trimStart, audioOffset: input.mode === "say-it-back" ? input.recordingOffsetMs / 1000 : 0, part: "bars" }), wave));
+    await raster(cursorPath, cropSvg(waveformSvg(scene, settings, levels, { time: trimStart, part: "cursor" }), { x: wave.x, y: wave.y, width: 3, height: wave.height }));
+    args.push("-threads", "1", "-i", wavePath, "-threads", "1", "-i", cursorPath);
+    filters.push(`[${videoLabel}][${inputIndex++}:v]overlay=x=${wave.x}:y=${wave.y}:eof_action=repeat[waveform]`, `[waveform][${inputIndex++}:v]overlay=x='${wave.x}+min(t/${duration},1)*${wave.width - 3}':y=${wave.y}:eof_action=repeat[wave_cursor]`);
+    videoLabel = "wave_cursor";
     if (settings.avatarVisible) {
       let imageHref: string;
       if (settings.avatar.kind === "upload") {
@@ -199,10 +209,6 @@ export async function renderPerformanceVideo(input: VideoRenderInput, options: {
       }
       const f = avatarFrame(settings);
       for (let level = 0; level < 8; level++) await raster(join(dir, `avatar-level-${level}.png`), avatarSvg(settings.avatar, { size: f.width, level: level / 7, imageHref, reducedMotion: settings.reducedMotion }));
-      const pcm = await run(process.env.FFMPEG_PATH || "ffmpeg", ["-v", "error", "-nostdin", "-threads", "1", "-protocol_whitelist", "file,pipe", "-i", input.recordingPath, "-vn", "-t", String(limits.durationSeconds), "-ac", "1", "-ar", "8000", "-f", "f32le", "pipe:1"], signal, 8000 * 4 * limits.durationSeconds + 1000);
-      const samples = new Float32Array(Math.floor(pcm.length / 4));
-      for (let i = 0; i < samples.length; i++) samples[i] = pcm.readFloatLE(i * 4);
-      const levels = measureAudioLevels(samples, 8000);
       const offset = input.mode === "say-it-back" ? input.recordingOffsetMs / 1000 : 0;
       // Hardlinks repeat only eight tiny PNG assets, avoiding per-frame encoding.
       for (let i = 0; i <= Math.ceil(duration * FPS); i++) {

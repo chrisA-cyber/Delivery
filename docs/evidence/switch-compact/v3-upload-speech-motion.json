@@ -1,0 +1,25 @@
+{
+  "method": "Compared two actual decoded MP4 frames of the same unchanged uploaded crop, excluding the outer ring and waveform. Source0.95s measured silence; source0.2833s measured speaking.",
+  "avatarInteriorCrop": [
+    390,
+    520,
+    690,
+    820
+  ],
+  "meanRgbDifference": 25.710111111111107,
+  "speakingPose": {
+    "x": 0,
+    "y": -4.5,
+    "rotation": -2.25,
+    "scaleX": 1.055,
+    "scaleY": 1.055
+  },
+  "quietPose": {
+    "x": 0,
+    "y": 0,
+    "rotation": 0,
+    "scaleX": 1,
+    "scaleY": 1
+  },
+  "audioProcessingChanged": false
+}

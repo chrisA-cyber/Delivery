@@ -67,10 +67,10 @@ describe("Switch take recovery and immutable playback", () => {
     expect(screen.getAllByRole("article")).toHaveLength(1);
     expect(screen.getByRole("status")).toHaveTextContent("1 phrase");
     fireEvent.click(screen.getByRole("button", { name: "Speed: I'm fine." }));
-    expect(screen.getByRole("heading", { name: "Speed: I'm fine" })).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "Switch recording stage" })).getByText("“I'm fine.”")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Speed: I'm fine.", pressed: true })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Emoji: I'm fine." }));
-    expect(screen.getByRole("heading", { name: "I'm fine." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Switch." })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Emoji: I'm fine.", pressed: true })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Choose another Switch" }));
     expect(screen.getAllByRole("article")).toHaveLength(1);
@@ -86,6 +86,9 @@ describe("Switch take recovery and immutable playback", () => {
     render(<SwitchExperience initialAttemptId="saved-take" />);
     await screen.findByRole("button", { name: "Retry full take" });
     expect(screen.queryByRole("group", { name: "How to play: I'm fine." })).not.toBeInTheDocument();
+    const stage = screen.getByRole("region", { name: "Switch recording stage" });
+    expect(within(stage).getByRole("region", { name: "Your take with Switch cues" })).toBeInTheDocument();
+    expect(screen.getAllByText("“I'm fine.”")).toHaveLength(1);
   });
 
   it.each(["denied", "cancelled"])("keeps a saved take available after a %s full-take retry", async (outcome) => {

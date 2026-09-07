@@ -123,6 +123,8 @@ export function ClipPreview({ source, settings, onChange, disabled = false }: {
   const motionReduced = reducedMotion || appReducedMotion || settings.reducedMotion;
   const content = useMemo(() => compositionSvg(source.scene, settings, { time: clock, layer: "content" }), [source.scene, settings, clock]);
   const avatar = useMemo(() => compositionSvg(source.scene, settings, { time: clock, level, reducedMotion: motionReduced, layer: "avatar" }), [source.scene, settings, clock, level, motionReduced]);
+  const audioOffset = isSay ? source.recordingOffsetMs / 1000 : 0;
+  const waveform = useMemo(() => compositionSvg(source.scene, settings, { time: clock, audioLevels: levels, audioOffset, layer: "waveform" }), [source.scene, settings, clock, levels, audioOffset]);
   const rectangle = sceneFrame(settings);
   const avatarBounds = avatarFrame(settings);
   const centerX = (avatarBounds.x + avatarBounds.width / 2) / 1080;
@@ -139,6 +141,7 @@ export function ClipPreview({ source, settings, onChange, disabled = false }: {
           <DubPlayer ref={dub} presentationOnly clip={sayScene.clip} role={sayScene.clip.roles.find((role) => role.id === sayScene.roleId)!} takeUrl={source.recordingUrl} recordingOffsetMs={source.recordingOffsetMs} onTime={setTime} onPlayingChange={setPlaying} />
         </div>}
         <div className="clip-artwork pointer-events-none absolute inset-0" dangerouslySetInnerHTML={{ __html: content }} />
+        <div className="clip-artwork pointer-events-none absolute inset-0" aria-label="Recorded audio waveform" dangerouslySetInnerHTML={{ __html: waveform }} />
         <div className="clip-artwork pointer-events-none absolute inset-0" dangerouslySetInnerHTML={{ __html: avatar }} />
         {settings.avatarVisible && <button type="button" aria-label="Move avatar. Drag, or use arrow keys." disabled={disabled} className={`absolute touch-none rounded-full border-2 outline-none focus-visible:border-electric ${dragging ? "cursor-grabbing border-electric" : "cursor-grab border-transparent hover:border-white/60"}`} style={{ left: `${centerX * 100}%`, top: `${centerY * 100}%`, width: `${settings.avatarSize * 100}%`, aspectRatio: "1", transform: "translate(-50%, -50%)" }}
           onPointerDown={(event) => { if (event.button !== 0) return; event.preventDefault(); event.currentTarget.setPointerCapture?.(event.pointerId); drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, centerX, centerY }; setDragging(true); }}

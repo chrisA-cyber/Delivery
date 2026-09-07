@@ -36,4 +36,15 @@ describe("bounded custom avatars and non-destructive clip edits", () => {
     await expect(validateClipSettings({ ...settings, trimEnd: 7 }, source)).rejects.toMatchObject({ code: "CLIP_TRIM_INVALID" });
     await expect(validateClipSettings({ ...settings, trimStart: 4.8, trimEnd: null }, source)).rejects.toMatchObject({ code: "CLIP_TRIM_INVALID" });
   });
+  it("moves legacy Switch preset positions while preserving custom placement and the take", async () => {
+    const source = { input: { durationMs: 20000, recordingOffsetMs: 0, assignment: { mode: "switch" } } } as ExportSource;
+    const before = structuredClone(source);
+    const legacy = { ...defaultClipEditSettings("switch"), avatarX: 0.5, avatarY: 0.34, avatarSize: 0.49, trimStart: 1, trimEnd: 12 };
+    delete legacy.layoutRevision;
+    const migrated = await validateClipSettings(legacy, source);
+    expect(migrated).toMatchObject({ ...defaultClipEditSettings("switch"), trimStart: 1, trimEnd: 12 });
+    expect(source).toEqual(before);
+    const custom = { ...legacy, avatarX: 0.7, avatarY: 0.72, avatarSize: 0.3 };
+    expect(await validateClipSettings(custom, source)).toMatchObject({ avatarX: 0.7, avatarY: 0.72, avatarSize: 0.3, layoutRevision: 3 });
+  });
 });

@@ -1,0 +1,95 @@
+{
+  "method": "Shared SVG preview composition, including the real selected-trim waveform, source-clock playhead and measured character pose, compared with10 decoded MP4 frames. Say scene pixels excluded to isolate composition from source frame resampling. Mean8-bit RGB difference follows normal H264/YUV conversion; exact Switch and Say source cue boundaries remain aligned after trimming.",
+  "results": [
+    {
+      "mode": "switch",
+      "file": "emotion.mp4",
+      "frame": 0,
+      "outputTime": 0,
+      "sourceTime": 3.5,
+      "level": 0,
+      "meanAbsolutePixelError": 1.6162880979938272
+    },
+    {
+      "mode": "switch",
+      "file": "emotion.mp4",
+      "frame": 15,
+      "outputTime": 0.5,
+      "sourceTime": 4,
+      "level": 0,
+      "meanAbsolutePixelError": 1.6174937307098765
+    },
+    {
+      "mode": "switch",
+      "file": "emotion.mp4",
+      "frame": 45,
+      "outputTime": 1.5,
+      "sourceTime": 5,
+      "level": 1,
+      "meanAbsolutePixelError": 1.716720357510288
+    },
+    {
+      "mode": "switch",
+      "file": "speed.mp4",
+      "frame": 0,
+      "outputTime": 0,
+      "sourceTime": 3.5,
+      "level": 0,
+      "meanAbsolutePixelError": 1.7244926697530865
+    },
+    {
+      "mode": "switch",
+      "file": "speed.mp4",
+      "frame": 15,
+      "outputTime": 0.5,
+      "sourceTime": 4,
+      "level": 0,
+      "meanAbsolutePixelError": 1.750989744084362
+    },
+    {
+      "mode": "switch",
+      "file": "speed.mp4",
+      "frame": 45,
+      "outputTime": 1.5,
+      "sourceTime": 5,
+      "level": 0.42857142857142855,
+      "meanAbsolutePixelError": 1.8330222800925926
+    },
+    {
+      "mode": "classic",
+      "file": "classic.mp4",
+      "frame": 21,
+      "outputTime": 0.7,
+      "sourceTime": 0.95,
+      "level": 0,
+      "meanAbsolutePixelError": 1.7041120113168724
+    },
+    {
+      "mode": "classic",
+      "file": "classic.mp4",
+      "frame": 1,
+      "outputTime": 0.03333333333333333,
+      "sourceTime": 0.2833333333333333,
+      "level": 1,
+      "meanAbsolutePixelError": 1.8546338091563785
+    },
+    {
+      "mode": "say-it-back",
+      "file": "say-it-back.mp4",
+      "frame": 48,
+      "outputTime": 1.6,
+      "sourceTime": 4.800000000000001,
+      "level": 0,
+      "meanAbsolutePixelError": 1.3268639542058935
+    },
+    {
+      "mode": "say-it-back",
+      "file": "say-it-back.mp4",
+      "frame": 60,
+      "outputTime": 2,
+      "sourceTime": 5.2,
+      "level": 0.5714285714285714,
+      "meanAbsolutePixelError": 1.3704932138656813
+    }
+  ]
+}

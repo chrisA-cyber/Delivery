@@ -32,13 +32,20 @@ describe("original-clock composition preview", () => {
     expect(screen.getByText("0.5×")).toBeInTheDocument();
     expect(screen.getByText("2 / 3")).toBeInTheDocument();
     expect(container.querySelector("audio")!.currentTime).toBe(1.2);
-    const ring = () => container.querySelector('.clip-artwork:last-of-type circle[fill="none"]');
+    const ring = () => container.querySelector('.clip-artwork circle[fill="none"]');
     await waitFor(() => expect(ring()?.getAttribute("stroke-width")).not.toBe("1.80"));
-    expect(ring()?.getAttribute("stroke-width")).toBe("4.09");
+    expect(ring()?.getAttribute("stroke-width")).toBe("4.54");
+    const waveform = screen.getByLabelText("Recorded audio waveform");
+    const bars = [...waveform.querySelectorAll("rect")].slice(0, -1);
+    expect(bars.some((bar) => Number(bar.getAttribute("height")) > 10)).toBe(true);
+    expect(bars.some((bar) => bar.getAttribute("height") === "2")).toBe(true);
+    const cursor = () => Number(waveform.querySelector("rect:last-child")?.getAttribute("x"));
+    const startCursor = cursor();
     fireEvent.change(screen.getByRole("slider", { name: "Clip playback position" }), { target: { value: "3.2" } });
     expect(screen.getByText("2×")).toBeInTheDocument();
     expect(screen.getByText("3 / 3")).toBeInTheDocument();
     expect(ring()?.getAttribute("stroke-width")).toBe("1.80");
+    expect(cursor()).toBeGreaterThan(startCursor);
     expect(container.querySelector("audio")!.playbackRate).toBe(1);
   });
 
@@ -50,10 +57,10 @@ describe("original-clock composition preview", () => {
     const avatar = screen.getByRole("button", { name: /Move avatar/ });
     fireEvent.pointerDown(avatar, { pointerId: 4, pointerType, clientX: 135, clientY: 150, button: 0 });
     fireEvent.pointerMove(avatar, { pointerId: 4, pointerType, clientX: 162, clientY: 198 });
-    expect(onChange).toHaveBeenLastCalledWith({ avatarX: expect.closeTo(0.6, 2), avatarY: expect.closeTo(0.44, 2) });
+    expect(onChange).toHaveBeenLastCalledWith({ avatarX: expect.closeTo(settings.avatarX + 0.1, 2), avatarY: expect.closeTo(settings.avatarY + 0.1, 2) });
     fireEvent.pointerUp(avatar, { pointerId: 4, pointerType });
     fireEvent.keyDown(avatar, { key: "ArrowLeft" });
-    expect(onChange).toHaveBeenLastCalledWith({ avatarX: expect.closeTo(0.49, 2), avatarY: expect.closeTo(0.34, 2) });
+    expect(onChange).toHaveBeenLastCalledWith({ avatarX: expect.closeTo(settings.avatarX - 0.01, 2), avatarY: expect.closeTo(settings.avatarY, 2) });
   });
 
   it("uses the normalized uploaded crop in the same nested avatar SVG as export", () => {
