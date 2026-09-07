@@ -9,7 +9,7 @@ import { useApp } from "@/components/providers/app-provider";
 import { ContentControl } from "@/components/content/content-control";
 
 const filters = ["all", "free", "pro", "rotating"] as const;
-const colors = ["#eef2ff", "#c4b5fd", "#8eb8ff", "#ffc266", "#d6e4ff", "#dbd3ff"];
+const colors = ["#f5f2e8", "#ff4cc8", "#5d7cff", "#ffdc66", "#dbe3ff", "#e1d0ff"];
 
 export function PackBrowser({ packs }: { packs: readonly ContentPack[]; promptCounts?: Record<string, number> }) {
   const { tier, billing, contentRating, updatePreferences } = useApp();

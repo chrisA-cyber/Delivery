@@ -1,27 +1,30 @@
-# Delivery visual theme
+# Delivery visual identity
 
-Midnight stage theme, September 2026. No green or mint interface accents.
+The original neon direction from `573a658`, adapted to the current app.
 
-- Midnight `#0b1020`: page background and dark text on light cards.
-- Slate blue `#141c31`: panels, forms, recording and room surfaces.
-- Ice `#eef2ff`: body text and light performance cards.
-- Amber `#ffc266`: primary actions and score emphasis.
-- Blue `#8eb8ff`: selected controls, levels and completion states.
-- Lavender `#c4b5fd`: supporting accents and Switch/Roast elements.
+- Near-black `#070707` and graphite `#0e0e10`: backgrounds and panels.
+- Paper `#f5f2e8`: text and readable performance cards.
+- Yellow `#ffdc66`: primary controls and score emphasis. Replaces the
+  original lime to retain the requested no-green/no-mint palette.
+- Electric blue `#5d7cff`: selections, levels and completed states.
+- Hot pink `#ff4cc8` and violet `#a96cff`: supporting accents.
+- Orange `#ff7a2f`: complementary emphasis.
 
-Use the shared CSS/Tailwind tokens in `src/app/globals.css` and
-`tailwind.config.ts`. Canvas, OG cards and video output use
-`src/lib/visual-theme.ts`; keep those values aligned. Existing persisted badge
-colors are mapped at display time; awards are not changed.
+The original blue/pink radial glows, translucent panels and neon button shadows
+return. The homepage headline uses a white/blue/violet/pink gradient. Current
+navigation, concise copy, focus styles and light-card contrast remain intact.
 
-The homepage prioritizes four modes. Secondary destinations live in More;
-mobile navigation retains all destinations. Classic light-card buttons have
-explicit dark text and focus styles. Roast Off offers private hosting/solo
-play while offline, with battle details in an expandable section.
+CSS/Tailwind tokens live in `src/app/globals.css` and `tailwind.config.ts`.
+Canvas, OG cards and video output use `src/lib/visual-theme.ts`; keep them aligned.
 
-New renders use the theme. Existing finished videos remain valid and are not
-regenerated. Audio processing, storage, judging and live-room logic are unchanged.
+The new speech-wave logo uses one path and a shared blue/violet/pink/orange
+gradient in `src/lib/brand.ts`. The header/footer,
+share cards, OG images, video headers and app icons use this same geometry.
+Run `node --import tsx scripts/render-icons.mjs` to rebuild both public SVGs and
+the four PWA raster icons. Maskable artwork stays inside the central safe area.
 
-Local preview accepts standard host/port flags through `scripts/dev.mjs`.
-Development output uses `.next-dev` so previews cannot overwrite production
-`.next` builds.
+New renders use the theme. Existing finished videos are not regenerated.
+Audio processing, storage, judging and live-room logic are unchanged.
+
+Local preview accepts host/port flags through `scripts/dev.mjs`. Development
+uses `.next-dev` so previews cannot overwrite production `.next` builds.

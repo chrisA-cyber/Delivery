@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 // Sharp 0.35 ships declarations but omits them from its ESM export map.
 // @ts-expect-error Upstream package export map; runtime import is supported.
 import sharp from "sharp";
+import { BRAND_MARK_PATH, brandGradientSvg } from "@/lib/brand";
 import { VISUAL_THEME } from "@/lib/visual-theme";
 import type { SwitchChallenge } from "@/lib/switch/types";
 import type { SayClip } from "@/lib/say-it-back/types";
@@ -15,7 +16,7 @@ export const VIDEO_RENDER_LIMITS = Object.freeze({ durationSeconds: 22, outputBy
 const W = 1080;
 const H = 1920;
 const FPS = 30;
-const C = { ...VISUAL_THEME, accent: VISUAL_THEME.amber, panel: VISUAL_THEME.surface };
+const C = { ...VISUAL_THEME, accent: VISUAL_THEME.accent, panel: VISUAL_THEME.surface };
 
 export interface VideoRenderCommon {
   layoutVersion: typeof VIDEO_LAYOUT_VERSION;
@@ -190,7 +191,7 @@ export async function renderPerformanceVideo(input: VideoRenderInput, options: {
     if (!audio || recordingDuration <= 0 || recordingDuration > VIDEO_RENDER_LIMITS.durationSeconds) throw new VideoRenderError("RENDER_AUDIO", "The saved recording has no supported audio or exceeds the video limit.");
     const duration = input.mode === "say-it-back" ? input.say.clip.duration : recordingDuration;
     const basePath = join(dir, "layout.png");
-    let body = rect(0, 0, W, H, C.ink) + rect(86, 128, 8, 58, C.accent, 4) + text("DELIVERY", 117, 177, 47) + text("THE VOICE IS THE WHOLE POINT.", 86, 229, 19, C.muted, 500);
+    let body = rect(0, 0, W, H, C.ink) + brandGradientSvg("delivery-video-spectrum") + `<path d="${BRAND_MARK_PATH}" transform="translate(76 114) scale(1.1)" fill="url(#delivery-video-spectrum)" fill-rule="evenodd"/>` + text("delivery", 155, 173, 49) + text("THE VOICE IS THE WHOLE POINT.", 86, 229, 19, C.muted, 500);
     body += await identity(input) + footer(input);
     const parts: { path: string; start?: number; end?: number; x: number; y: number }[] = [];
     let waveform: { x: number; y: number; width: number; height: number } | null = null;
@@ -213,7 +214,7 @@ export async function renderPerformanceVideo(input: VideoRenderInput, options: {
           // stored emoji through Pango's RGBA text path before composing the card.
           const emojiPng = await sharp({ text: { text: xml(cue.emoji), font: "Noto Color Emoji", fontfile: process.env.VIDEO_EMOJI_FONT_PATH || "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf", rgba: true, width: 160, height: 160 } }).resize(160, 160, { fit: "contain", background: "#00000000" }).png().toBuffer();
           card += `<image href="data:image/png;base64,${emojiPng.toString("base64")}" x="352" y="91" width="160" height="160"/>`;
-          card += fitText(cue.directionLabel, 28, 260, 808, 94, challenge.kind === "speed" ? 53 : 61, 39, C.lavender, true);
+          card += fitText(cue.directionLabel, 28, 260, 808, 94, challenge.kind === "speed" ? 53 : 61, 39, C.pink, true);
           card += text(next ? `NEXT: ${next.directionLabel}` : "THE FINAL SWITCH", 432, 391, 23, C.muted, 500, "middle");
           challenge.cues.forEach((_, dot) => { card += rect(46 + dot * (772 / challenge.cues.length), 438, 772 / challenge.cues.length - 10, 7, dot === index ? C.accent : dot < index ? C.blue : C.border, 3); });
           await png(cuePath, card, 864, 495);

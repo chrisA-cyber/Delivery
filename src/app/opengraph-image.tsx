@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/shell/brand-mark";
 import { VISUAL_THEME } from "@/lib/visual-theme";
 import { ImageResponse } from "next/og";
 export const runtime = "edge";
@@ -27,7 +28,7 @@ export default function OpenGraphImage() {
             alignItems: "center",
           }}
         >
-          <span style={{ fontSize: 30, fontWeight: 900 }}>DELIVERY</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}><BrandMark size={44} /><span style={{ fontSize: 34, fontWeight: 700, letterSpacing: -2 }}>delivery</span></div>
           <span style={{ fontSize: 18, color: VISUAL_THEME.blue }}>
             THE VOICE PERFORMANCE GAME
           </span>
@@ -38,12 +39,12 @@ export default function OpenGraphImage() {
             flexDirection: "column",
             fontSize: 79,
             lineHeight: 1.03,
-            fontWeight: 900,
+            fontWeight: 700,
             letterSpacing: -4,
           }}
         >
           <span>Terrible lines.</span>
-          <span style={{ color: VISUAL_THEME.amber }}>Incredible commitment.</span>
+          <span style={{ color: VISUAL_THEME.accent }}>Incredible commitment.</span>
         </div>
         <div
           style={{
@@ -56,7 +57,7 @@ export default function OpenGraphImage() {
           }}
         >
           <span>One line. One direction. Your interpretation.</span>
-          <span style={{ color: VISUAL_THEME.blue }}>PLAY CLASSIC →</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, color: VISUAL_THEME.blue }}><span>PLAY CLASSIC</span><svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 12h16M13 5l7 7-7 7" fill="none" stroke={VISUAL_THEME.blue} strokeWidth="2" /></svg></div>
         </div>
       </div>
     ),

@@ -12,20 +12,20 @@ export function ScoreRing({ score, label = "Delivery score", size = "large" }: {
   return (
     <div className="relative" role="img" aria-label={`${label}: ${score} out of 100`} style={{ width: dimension, height: dimension }}>
       <svg width={dimension} height={dimension} className="-rotate-90" aria-hidden="true">
-        <circle cx={dimension / 2} cy={dimension / 2} r={radius} fill="rgba(255,194,102,.05)" stroke={VISUAL_THEME.border} strokeWidth={stroke} />
+        <circle cx={dimension / 2} cy={dimension / 2} r={radius} fill="rgba(255,220,102,.05)" stroke={VISUAL_THEME.border} strokeWidth={stroke} />
         <motion.circle
           cx={dimension / 2}
           cy={dimension / 2}
           r={radius}
           fill="none"
-          stroke={VISUAL_THEME.amber}
+          stroke={VISUAL_THEME.accent}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: circumference * (1 - score / 100) }}
           transition={{ duration: 1.15, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-          style={{ filter: "drop-shadow(0 0 10px rgba(255,194,102,.25))" }}
+          style={{ filter: "drop-shadow(0 0 10px rgba(255,220,102,.25))" }}
         />
       </svg>
       <div className="absolute inset-0 grid place-content-center text-center">

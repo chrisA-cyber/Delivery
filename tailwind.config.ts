@@ -23,8 +23,8 @@ const config: Config = {
         mono: ["JetBrains Mono", "SFMono-Regular", "Consolas", "monospace"],
       },
       boxShadow: {
-        acid: "0 8px 28px rgba(255,194,102,.15)",
-        hot: "0 8px 28px rgba(196,181,253,.15)",
+        acid: "0 8px 28px rgba(255,220,102,.15)",
+        hot: "0 8px 28px rgba(255,76,200,.15)",
       },
       animation: {
         marquee: "marquee 28s linear infinite",

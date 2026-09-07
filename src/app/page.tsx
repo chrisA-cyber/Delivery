@@ -97,7 +97,7 @@ export default function HomePage() {
               <h1 className="display-type home-headline">
                 Terrible lines.
                 <br />
-                <span className="text-acid">Incredible commitment.</span>
+                <span className="text-gradient">Incredible commitment.</span>
               </h1>
               <p className="mt-5 max-w-md text-base leading-7 text-white/70 sm:text-lg">
                 Make a scene with just your voice. Record, replay, and share your best take.

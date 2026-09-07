@@ -41,7 +41,7 @@ export function SiteFooter() {
     <footer className="border-t border-white/10 px-5 pb-28 pt-10 md:pb-10">
       <div className="mx-auto grid max-w-[1184px] gap-8 lg:grid-cols-[1.4fr_2fr]">
         <div>
-          <Logo />
+          <Logo gradientId="delivery-footer-spectrum" />
           <p className="mt-4 max-w-sm text-sm leading-6 text-white/60">
             Make a scene with your voice.
           </p>

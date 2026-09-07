@@ -1,3 +1,4 @@
+import { BRAND_MARK_PATH, BRAND_GRADIENT_STOPS } from "@/lib/brand";
 import { VISUAL_THEME } from "@/lib/visual-theme";
 import type { JudgeResult, Prompt } from "@/types/game";
 
@@ -63,9 +64,17 @@ export async function createResultCard(prompt: Prompt, result: JudgeResult) {
   const fixture = result.source === "fallback";
   ctx.fillStyle = VISUAL_THEME.ink;
   ctx.fillRect(0, 0, 1200, 800);
+  ctx.save();
+  ctx.translate(40, 24);
+  ctx.scale(.8, .8);
+  const brandGradient = ctx.createLinearGradient(12, 8, 56, 62);
+  BRAND_GRADIENT_STOPS.forEach(([offset, color]) => brandGradient.addColorStop(offset, color));
+  ctx.fillStyle = brandGradient;
+  ctx.fill(new Path2D(BRAND_MARK_PATH), "evenodd");
+  ctx.restore();
   ctx.fillStyle = VISUAL_THEME.paper;
-  ctx.font = '700 40px "Barlow Condensed", Arial';
-  ctx.fillText("DELIVERY", 48, 67);
+  ctx.font = '700 38px "DM Sans", Arial';
+  ctx.fillText("delivery", 100, 65);
   ctx.font = '700 15px "DM Sans", Arial';
   ctx.textAlign = "right";
   ctx.fillStyle = VISUAL_THEME.blue;
@@ -83,7 +92,7 @@ export async function createResultCard(prompt: Prompt, result: JudgeResult) {
   ctx.font = '700 14px "DM Sans", Arial';
   ctx.fillText("THE LINE", 72, 142);
   fitText(ctx, `“${prompt.line}”`, 72, 160, 750, 290, 48);
-  ctx.fillStyle = VISUAL_THEME.amber;
+  ctx.fillStyle = VISUAL_THEME.accent;
   ctx.beginPath();
   ctx.roundRect(872, 136, 256, 330, 14);
   ctx.fill();
