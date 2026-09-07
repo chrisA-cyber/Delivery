@@ -728,3 +728,47 @@ input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color:
 @media (forced-colors: active) {
   .text-gradient { background: none; -webkit-text-fill-color: currentColor; }
 }
+
+/* Keep the scene, current cue and live input together while recording. */
+.say-recording-grid {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+.say-active-cue { min-height: 100px; }
+.say-cue-text { max-height: 7.5rem; overflow-y: auto; overflow-wrap: anywhere; }
+.say-player-compact .say-player-picture {
+  aspect-ratio: auto;
+  height: clamp(130px, 24svh, 220px);
+}
+.say-player-compact .say-player-transport { padding-top: 0; padding-bottom: 4px; }
+.say-player-compact .say-player-transport .icon-button { min-height: 36px; min-width: 36px; height: 36px; width: 36px; }
+@media (min-width: 900px) {
+  .say-recording-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; }
+  .say-player-compact .say-player-picture { height: clamp(240px, 43svh, 460px); }
+  .say-active-cue { min-height: 112px; }
+  .say-waveform-graph { height: clamp(96px, 15svh, 144px); }
+}
+@media (max-width: 599px) {
+  .say-player-compact > div:first-child > div:first-child { font-size: 10px; }
+  .say-player-compact [aria-label="Compare playback"] button { min-height: 28px; padding: 4px 8px; font-size: 10px; }
+}
+@media (max-width: 899px) {
+  .say-line-nav { display: none; }
+  .say-workspace-heading { margin-bottom: 8px; }
+  .say-player-compact .say-player-picture { height: clamp(110px, 18svh, 160px); }
+  .say-recorder { padding: 10px; }
+  .say-recorder > div:first-child, .say-active-cue { margin-bottom: 8px; }
+  .say-active-cue { min-height: 76px; padding-top: 8px; padding-bottom: 8px; }
+  .say-cue-text { font-size: 16px; max-height: 5.5rem; }
+  .say-waveform-graph { height: 80px; }
+  .say-record-actions { margin-top: 8px; }
+}
+@media (max-width: 899px) and (max-height: 760px) {
+  .say-player-compact .say-player-picture { height: 110px; }
+  .say-player-compact > div:first-child { padding-top: 4px; padding-bottom: 4px; }
+  .say-player-compact .say-player-transport { position: relative; padding-top: 6px; }
+  .say-player-compact .say-player-transport > input { position: absolute; inset: -9px 0 auto; height: 16px; }
+  .say-active-cue { min-height: 64px; }
+  .say-waveform-graph { height: 64px; }
+}

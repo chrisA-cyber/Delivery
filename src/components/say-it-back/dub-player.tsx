@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export interface DubPlayerHandle {
   prepare: (startSeconds?: number, endSeconds?: number) => void;
   startScene: () => Promise<number>;
-  previewRange: (startSeconds: number, endSeconds: number) => Promise<void>;
+  previewRange: (startSeconds: number, endSeconds: number, playback?: "original" | "dub") => Promise<void>;
   pause: () => void;
 }
 
@@ -47,7 +47,8 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   onPlaybackStart?: () => void;
   onCancelCountdown?: () => void;
   takeLabel?: string;
-}> (function DubPlayer({ externalCommand, clip, role, takeUrl, recordingOffsetMs = 0, recording = false, countdown, onEnded, onTime, onAudioError, onInterruption, onPlaybackStart, onCancelCountdown, takeLabel = "Your take" }, forwardedRef) {
+  compact?: boolean;
+}> (function DubPlayer({ externalCommand, clip, role, takeUrl, recordingOffsetMs = 0, recording = false, countdown, onEnded, onTime, onAudioError, onInterruption, onPlaybackStart, onCancelCountdown, takeLabel = "Your take", compact = false }, forwardedRef) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const voiceRef = useRef<HTMLAudioElement>(null);
   const bedRef = useRef<HTMLAudioElement>(null);
@@ -75,6 +76,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   const bufferTimeout = useRef<number | undefined>(undefined);
   const busy = recording || countdown != null;
   const isDub = kind === "dub" && Boolean(takeUrl);
+  const previewKind = useRef<"original" | "dub">("original");
 
   const pause = useCallback(() => {
     playbackRequest.current += 1;
@@ -138,7 +140,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   const companionWaiting = useCallback((audio: HTMLAudioElement) => {
     const video = videoRef.current;
     const wanted = (video?.currentTime ?? 0) + (audio === voiceRef.current ? recordingOffsetMs / 1000 : 0);
-    if (busy || capturePrepared.current || previewEnd.current != null || !isDub || !wantsPlayback.current || audio.ended || wanted < 0 || (Number.isFinite(audio.duration) && wanted >= audio.duration)) return;
+    if (busy || capturePrepared.current || !(previewEnd.current != null ? previewKind.current === "dub" : isDub) || !wantsPlayback.current || audio.ended || wanted < 0 || (Number.isFinite(audio.duration) && wanted >= audio.duration)) return;
     waitForMedia(audio);
   }, [busy, isDub, waitForMedia, recordingOffsetMs]);
 
@@ -149,7 +151,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
     const bed = bedRef.current;
     const mutedInterval = role.muteIntervals.some((part) => video.currentTime >= part.start && video.currentTime < part.end);
     const capturing = busy || capturePrepared.current;
-    const dubActive = isDub && previewEnd.current == null;
+    const dubActive = previewEnd.current != null ? previewKind.current === "dub" : isDub;
     video.muted = capturing || !sound || (dubActive && (Boolean(role.dubAudioUrl) || mutedInterval));
     for (const [audio, offset, active] of [[voice, recordingOffsetMs / 1000, dubActive], [bed, 0, dubActive && Boolean(role.dubAudioUrl)]] as const) {
       if (!audio) continue;
@@ -186,7 +188,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
 
   const playCompanions = useCallback(() => {
     const video = videoRef.current;
-    if (!video || video.paused || busy || capturePrepared.current || previewEnd.current != null || !isDub) return;
+    if (!video || video.paused || busy || capturePrepared.current || !(previewEnd.current != null ? previewKind.current === "dub" : isDub)) return;
     for (const audio of [voiceRef.current, bedRef.current]) {
       const wanted = video.currentTime + (audio === voiceRef.current ? recordingOffsetMs / 1000 : 0);
       if (audio && wanted >= 0 && (!Number.isFinite(audio.duration) || wanted < audio.duration) && audio.readyState < 2) {
@@ -279,11 +281,12 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
       armRangeStop();
       return video.currentTime;
     },
-    async previewRange(startSeconds, endSeconds) {
+    async previewRange(startSeconds, endSeconds, playback = "original") {
       const video = videoRef.current;
       if (!video) throw new Error("The scene is unavailable. Choose it again, then listen.");
       pause();
-      setKind("original");
+      previewKind.current = playback === "dub" && takeUrl ? "dub" : "original";
+      setKind(previewKind.current);
       setError("");
       const start = Math.min(clip.duration, Math.max(0, startSeconds));
       const requestId = playbackRequest.current;
@@ -297,7 +300,20 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
       previewEnd.current = Math.min(clip.duration, Math.max(start, endSeconds));
       previewStarting.current = true;
       wantsPlayback.current = true;
-      try { await boundedPlayback(video.play()); }
+      try {
+        sync(true);
+        const requests = [boundedPlayback(video.play())];
+        // Keep all audio starts inside the replay gesture, including on Safari.
+        if (previewKind.current === "dub") for (const audio of [voiceRef.current, bedRef.current]) {
+          const wanted = start + (audio === voiceRef.current ? recordingOffsetMs / 1000 : 0);
+          if (audio && wanted >= 0 && (!Number.isFinite(audio.duration) || wanted < audio.duration)) {
+            if (audio.readyState > 0) audio.currentTime = wanted;
+            pendingPlay.current.add(audio);
+            requests.push(boundedPlayback(audio.play()).finally(() => pendingPlay.current.delete(audio)));
+          }
+        }
+        await Promise.all(requests.map((request) => request.catch((cause: unknown) => { if (!isPlaybackAbort(cause)) throw cause; })));
+      }
       catch (cause) {
         if (requestId !== playbackRequest.current && isPlaybackAbort(cause)) return;
         if (requestId === playbackRequest.current) pause();
@@ -305,7 +321,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
       } finally { if (requestId === playbackRequest.current) { previewStarting.current = false; armRangeStop(); } }
     },
     pause,
-  }), [pause, clip.duration, sound, armRangeStop]);
+  }), [pause, clip.duration, sound, armRangeStop, takeUrl, recordingOffsetMs, sync]);
 
   const togglePlay = async () => {
     const video = videoRef.current;
@@ -375,7 +391,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   const activeCues = clip.cues.filter((cue) => currentTime >= cue.start - 0.12 && currentTime <= cue.end + 0.12);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/15 bg-black">
+    <div className={cn("overflow-hidden rounded-2xl border border-white/15 bg-black", compact && "say-player-compact")}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 bg-surface px-3 py-2 sm:px-4">
         <div className="flex items-center gap-2 text-xs font-bold">
           <span className={cn("size-2 rounded-full", recording ? "animate-pulse bg-acid" : isDub ? "bg-electric" : "bg-hot")} />
@@ -385,7 +401,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
           {(["original", "dub"] as const).map((value) => <button key={value} type="button" aria-pressed={kind === value} className={cn("min-h-9 rounded-md px-3 text-xs font-bold", kind === value ? "bg-paper text-ink" : "text-white/70")} onClick={() => { pause(); setKind(value); setError(""); }}>{value === "original" ? "Original" : takeLabel}</button>)}
         </div>}
       </div>
-      <div className="relative aspect-video w-full bg-black">
+      <div className="say-player-picture relative aspect-video w-full bg-black">
         <video ref={videoRef} src={clip.videoUrl} poster={clip.posterUrl} preload="auto" playsInline aria-label={`${clip.title} scene`} className="h-full w-full object-contain" disablePictureInPicture
           onLoadedMetadata={(event) => { const pending = previewStart.current; if (pending && pending.requestId === playbackRequest.current) { event.currentTarget.currentTime = pending.time; previewStart.current = null; setCurrentTime(pending.time); } }}
           onLoadedData={() => setLoaded(true)} onCanPlay={(event) => { setLoaded(true); resumeBuffered(event.currentTarget); }}
@@ -404,7 +420,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
           {activeCues.map((cue) => <p key={cue.id} className={cn("max-w-full rounded-md px-3 py-1.5 text-center text-sm font-bold leading-snug shadow-lg sm:text-xl", cue.roleId === role.id ? "bg-paper/95 text-ink" : "bg-black/85 text-white")}><span className="mr-1.5 text-[10px] uppercase tracking-wide opacity-60 sm:text-xs">{cue.roleId === role.id ? (takeLabel === "Your take" ? "You" : "Friend") : clip.roles.find((item) => item.id === cue.roleId)?.name ?? "Scene"}</span>{cue.text}</p>)}
         </div>}
       </div>
-      <div className="bg-surface px-3 pb-3 pt-2 sm:px-4">
+      <div className="say-player-transport bg-surface px-3 pb-3 pt-2 sm:px-4">
         <input type="range" min={0} max={clip.duration} step={0.01} value={Math.min(currentTime, clip.duration)} disabled={busy || !loaded} aria-label="Scene playback position" aria-valuetext={`${timeLabel(currentTime)} of ${timeLabel(clip.duration)}`} onChange={(event) => seek(Number(event.target.value))} className="h-6 w-full cursor-pointer accent-acid" />
         <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0">
           <div className="flex items-center gap-1">
@@ -417,7 +433,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
             <button type="button" className="icon-button border-transparent" disabled={busy} aria-label={sound ? "Mute scene" : "Unmute scene"} aria-pressed={!sound} onClick={() => setSound(!sound)}>{sound && !busy ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}</button>
           </div>
         </div>
-        {busy && <p className="mt-1 flex items-center gap-2 text-xs leading-5 text-white/65"><Headphones className="size-3.5 shrink-0" />Scene audio is off while you record. Follow the captions.</p>}
+        {busy && !compact && <p className="mt-1 flex items-center gap-2 text-xs leading-5 text-white/65"><Headphones className="size-3.5 shrink-0" />Scene audio is off while you record. Follow the captions.</p>}
         {error && <div role="alert" className="mt-2 rounded-lg bg-acid/10 p-3 text-xs leading-5 text-[#ffbcaa]"><p>{error}</p>{takeUrl && onAudioError && <button type="button" onClick={() => void recoverAudio(true)} className="mt-2 min-h-9 font-bold underline">Reload recording</button>}</div>}
       </div>
     </div>

@@ -2,6 +2,14 @@
 
 **Newer milestone:** see [FRIEND_ROUNDS_HANDOFF.md](FRIEND_ROUNDS_HANDOFF.md) for the editor follow-up, seven longer scenes, asynchronous groups, and the final publication/evidence record. The historical sections below preserve earlier observations; their short-catalog status and “never merge / main remains unmerged” guidance are superseded. The owner has authorized merging completed work and deployment. Do not treat the newer milestone as deployed until its publication record confirms it.
 
+## Compact recording workspace — September 7, 2026
+
+The scene and recording panel now sit side by side on desktop and stack compactly on phones. One active cue replaces the repeated line cards and dialogue sidebar; desktop line buttons and a mobile line selector allow direct jumps. Accepted lines stay selected for Original / Replay / Redo, then an explicit Next line. Review dub opens scoring and exports after recording. Full-scene capture, partial takes, per-line replacement, saved takes, friend challenges and round handoff remain available.
+
+Live measured input is drawn more prominently over the original, with a live level meter. Recording no longer scrolls away from that waveform. Individual dub replay uses the existing video clock, recorded offset, background track, buffering recovery and range stop. No audio processing, media assets, scoring, database or infrastructure changes.
+
+Validation: production build, typecheck and focused lint passed. The 35 existing recorder/player checks were adapted to explicit line selection and review; two added checks cover synchronized per-line dub replay and live waveform updates. No paid provider calls or physical microphone tests. Verify phone fit and hardware input in the owner’s browser; the cloud browser cannot resize or access a physical mic.
+
 ## Pilot follow-up
 
 ### Owner recording feedback follow-up

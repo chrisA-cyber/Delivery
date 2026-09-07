@@ -376,3 +376,32 @@ describe("synchronized scene playback", () => {
     expect(voice.paused).toBe(true);
   });
 });
+
+describe("individual dub replay", () => {
+  it("starts the selected recorded line with its background, preserves offset and stops every track at the line end", async () => {
+    const ref = React.createRef<DubPlayerHandle>();
+    const { container } = render(<DubPlayer ref={ref} clip={clip} role={clip.roles[0]!} takeUrl="/private.wav" recordingOffsetMs={200} />);
+    const video = container.querySelector("video")!;
+    const [voice, background] = container.querySelectorAll("audio");
+    fireEvent.loadedData(video);
+    fireEvent.click(screen.getByRole("button", { name: "Original" }));
+    await act(async () => { await ref.current!.previewRange(1, 4, "dub"); });
+    expect(video.currentTime).toBe(1);
+    expect(video.muted).toBe(true);
+    expect(voice!.currentTime).toBeCloseTo(1.2);
+    expect(voice!.paused).toBe(false);
+    expect(voice!.muted).toBe(false);
+    expect(background!.paused).toBe(false);
+    expect(background!.currentTime).toBe(1);
+    video.currentTime = 4.03;
+    fireEvent.timeUpdate(video);
+    expect(video.currentTime).toBe(4);
+    expect(video.paused).toBe(true);
+    expect(voice!.paused).toBe(true);
+    expect(background!.paused).toBe(true);
+    await act(async () => { await ref.current!.previewRange(1, 4); });
+    expect(video.muted).toBe(false);
+    expect(voice!.paused).toBe(true);
+    expect(voice!.muted).toBe(true);
+  });
+});

@@ -6,7 +6,7 @@ import { encodeMonoWav } from "@/lib/audio-capture";
 import { SayItBackExperience } from "./say-it-back-experience";
 import type { SayClip } from "@/lib/say-it-back/types";
 
-const mocks = vi.hoisted(() => ({ reset: vi.fn(), refreshAccount: vi.fn(), push: vi.fn(), sceneStart: vi.fn(), prepare: vi.fn(), preview: vi.fn(), playerProps: {} as Record<string, unknown>, cancelCapture: vi.fn(), commitCapture: vi.fn(), authenticated: false, recorder: {} as Record<string, unknown> }));
+const mocks = vi.hoisted(() => ({ reset: vi.fn(), refreshAccount: vi.fn(), push: vi.fn(), sceneStart: vi.fn(), prepare: vi.fn(), preview: vi.fn().mockResolvedValue(undefined), playerProps: {} as Record<string, unknown>, cancelCapture: vi.fn(), commitCapture: vi.fn(), authenticated: false, recorder: {} as Record<string, unknown> }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
 vi.mock("@/components/providers/app-provider", () => ({
   useApp: () => {
@@ -55,7 +55,7 @@ describe("keeping the first take through sign-in", () => {
     render(<SayItBackExperience initialClipId={cleanClip.id} />);
     fireEvent.click(await screen.findByRole("button", { name: "Sign in & keep this take" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Upload interrupted");
-    expect(screen.getByRole("heading", { name: "Your dub is ready." })).toBeInTheDocument();
+    expect(mocks.playerProps.takeUrl).toBeTruthy();
     expect(mocks.push).not.toHaveBeenCalled();
   });
 
@@ -105,7 +105,7 @@ describe("keeping the first take through sign-in", () => {
     fireEvent.click(screen.getByRole("button", { name: "Record full scene" }));
     await waitFor(() => expect(mocks.cancelCapture).toHaveBeenCalledOnce());
     expect(mocks.reset).not.toHaveBeenCalled();
-    expect(screen.getByRole("heading", { name: "Your dub is ready." })).toBeInTheDocument();
+    expect(mocks.playerProps.takeUrl).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Sign in & keep this take" }));
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/login?next=%2Fsay-it-back%3Fclaim%3Dretained-guest-take"));
   });
@@ -121,7 +121,7 @@ describe("keeping the first take through sign-in", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Cancel countdown" }));
     expect(mocks.cancelCapture).toHaveBeenCalledOnce();
     expect(screen.getByRole("status")).toHaveTextContent("Your previous take is unchanged");
-    expect(screen.getByRole("heading", { name: "Your dub is ready." })).toBeInTheDocument();
+    expect(mocks.playerProps.takeUrl).toBeTruthy();
   });
 
   it("discards an unsynchronized startup without pairing it with the previous take", async () => {
@@ -142,7 +142,7 @@ describe("keeping the first take through sign-in", () => {
     expect(mocks.cancelCapture).toHaveBeenCalledOnce();
     expect(mocks.commitCapture).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent("took too long to start in sync");
-    expect(screen.getByRole("heading", { name: "Your dub is ready." })).toBeInTheDocument();
+    expect(mocks.playerProps.takeUrl).toBeTruthy();
     expect(window.location.search).toBe("?attempt=retained-guest-take");
   });
 });
@@ -230,8 +230,10 @@ describe("line recording and responsive retakes", () => {
       getCapturePositionMs: () => 20, cancelCapture: mocks.cancelCapture, commitCapture: mocks.commitCapture, canSubmit: true, durationMs: 2100 };
     mocks.sceneStart.mockImplementation(async () => mocks.prepare.mock.lastCall?.[0] ?? 0);
     render(<SayItBackExperience initialClipId={clip.id} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Listen to original line 2" }));
-    expect(mocks.preview).toHaveBeenCalledWith(2, 4);
+    fireEvent.click(await screen.findByRole("button", { name: "Select line 2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Listen to original line 2" }));
+    expect(mocks.preview).toHaveBeenCalledWith(2, 4, "original");
+    fireEvent.click(screen.getByRole("button", { name: "Select line 1" }));
     const record = async (name: string, end: number) => {
       vi.useFakeTimers();
       await act(async () => { fireEvent.click(screen.getByRole("button", { name })); });
@@ -244,14 +246,23 @@ describe("line recording and responsive retakes", () => {
     };
     await record("Record line 1", 2);
     expect(await screen.findByRole("button", { name: "Redo line 1" })).toBeInTheDocument();
+    // Keep the recorded line selected for an immediate replay/redo.
+    expect(screen.getByRole("button", { name: "Select line 1, recorded" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Replay your line 1" }));
+    expect(mocks.preview).toHaveBeenLastCalledWith(0, 2, "dub");
+    fireEvent.click(screen.getByRole("button", { name: "Preview recorded lines" }));
     expect(screen.getByRole("button", { name: "Match these 1 of 2 lines" })).toBeEnabled();
     expect(screen.getByText(/Unrecorded lines stay silent and count as missing words/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Record another take" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next line" }));
     expect(mocks.playerProps.takeUrl).toBe("blob:line-one");
     await record("Record line 2", 4);
     expect(await screen.findByRole("button", { name: "Redo line 2" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Review dub" }));
     expect(screen.getByRole("button", { name: "Get my match" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Record another take" }));
     await record("Redo line 1", 2);
-    expect(screen.getByRole("button", { name: "Redo line 2" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Select line 2, recorded" })).toBeInTheDocument();
     expect(mocks.playerProps.takeUrl).toBe("blob:redone-line");
     expect(mocks.playerProps.recordingOffsetMs).toBe(0);
     expect(mocks.commitCapture).toHaveBeenCalledTimes(3);
@@ -267,10 +278,10 @@ describe("line recording and responsive retakes", () => {
     const retake = screen.getByRole("button", { name: "Record another take" });
     expect(retake).toBeEnabled();
     fireEvent.click(retake);
-    expect(screen.getByRole("button", { name: "Record line 1" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Redo line 1" })).toBeEnabled();
     await act(async () => { finishJudge(ok({ attempt: makeAttempt({ status: "scored", score: { overall: 99 } }) })); });
     expect(screen.queryByRole("region", { name: "Your matching result" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Record line 1" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Redo line 1" })).toBeEnabled();
   });
 });
 
@@ -282,7 +293,8 @@ describe("round recording handoff", () => {
     const fetch = vi.fn(async (url: string) => url.includes("/clips") ? ok({ clips: [] }) : ok({ attempt: makeAttempt() }));
     vi.stubGlobal("fetch", fetch);
     render(<SayItBackExperience roundContext={roundContext} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Use this take in round" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Review dub" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use this take in round" }));
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/rounds/group-token?attempt=retained-guest-take"));
     expect(window.location.pathname).toBe("/rounds/group-token/record");
     expect(screen.queryByRole("combobox", { name: "Choose your role" })).not.toBeInTheDocument();

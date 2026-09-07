@@ -17,6 +17,7 @@ interface TakeWaveformProps {
   liveWaveform?: WaveformPoint[];
   liveStart?: number;
   recording?: boolean;
+  level?: number;
 }
 
 function envelopePath(points: WaveformPoint[], start: number, end: number, offset = 0) {
@@ -30,7 +31,7 @@ function envelopePath(points: WaveformPoint[], start: number, end: number, offse
   }).join("");
 }
 
-export function TakeWaveform({ referenceUrl, duration, rangeStart = 0, rangeEnd = duration, playhead, takeWaveform = [], takeUrl, takeOffsetMs = 0, liveWaveform = [], liveStart = 0, recording = false }: TakeWaveformProps) {
+export function TakeWaveform({ referenceUrl, duration, rangeStart = 0, rangeEnd = duration, playhead, takeWaveform = [], takeUrl, takeOffsetMs = 0, liveWaveform = [], liveStart = 0, recording = false, level = 0 }: TakeWaveformProps) {
   const [reference, setReference] = useState<{ url?: string; points: WaveformPoint[]; status: "loading" | "ready" | "unavailable" }>({ points: [], status: "loading" });
   const [savedTake, setSavedTake] = useState<{ url: string; offsetMs: number; points: WaveformPoint[] } | null>(null);
   const hasLocalWaveform = takeWaveform.length > 0;
@@ -65,17 +66,20 @@ export function TakeWaveform({ referenceUrl, duration, rangeStart = 0, rangeEnd 
   }, [recording, liveWaveform, hasLocalWaveform, takeWaveform, savedTake, takeUrl, takeOffsetMs, start, end, liveStart]);
   const position = Math.max(0, Math.min(1, (playhead - start) / (end - start))) * 1_000;
   const status = !referenceUrl ? "unavailable" : current?.status ?? "loading";
-  return <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-3 sm:px-4" aria-label="Original and your voice waveforms">
+  return <div className="say-waveform rounded-xl border border-white/15 bg-black/25 px-3 py-2.5 sm:px-4" aria-label="Original and your voice waveforms">
     <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wide">
       <div className="flex items-center gap-4"><span className="flex items-center gap-1.5 text-white/65"><span className="h-0.5 w-3 bg-white/60" />Original audio</span><span className="flex items-center gap-1.5 text-acid"><span className="h-0.5 w-3 bg-acid" />{recording ? "Your voice · live" : "Your voice"}</span></div>
-      <span className="font-mono text-white/45">{start.toFixed(2)}–{end.toFixed(2)}s</span>
+      <span className="font-mono text-white/60">{Math.max(0, Math.min(end - start, playhead - start)).toFixed(1)} / {(end - start).toFixed(1)}s</span>
     </div>
-    <svg viewBox="0 0 1000 96" preserveAspectRatio="none" className="mt-2 h-24 w-full overflow-hidden" role="img" aria-label={recording ? "Your microphone waveform overlaid on the original audio" : "Original audio and recorded voice on the same timeline"}>
+    <svg viewBox="0 0 1000 96" preserveAspectRatio="none" className="say-waveform-graph mt-2 h-28 w-full overflow-hidden" role="img" aria-label={recording ? "Your microphone waveform overlaid on the original audio" : "Original audio and recorded voice on the same timeline"}>
       <path d="M0,48H1000" stroke="currentColor" className="text-white/10" strokeWidth="1" />
-      <path d={originalPath} stroke="currentColor" className="text-white/40" strokeWidth="2.5" />
-      <path d={takePath} stroke="currentColor" className="text-acid" strokeWidth="2" />
+      <path d={originalPath} stroke="currentColor" className="text-white/35" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+      <path d={takePath} stroke="currentColor" className="text-acid" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
       <path d={`M${position},2V94`} stroke="currentColor" className={recording ? "text-red-400" : "text-white/70"} strokeWidth="2" />
     </svg>
-    <p className="text-[10px] leading-4 text-white/45">{status === "loading" ? "Loading the original waveform… You can still record." : status === "unavailable" ? "Original waveform unavailable. You can still listen and record." : "Follow the phrase starts and pauses. Wave height shows audio level, not your score."}</p>
+    <div className="flex min-h-4 items-center justify-between gap-3 text-[10px] leading-4 text-white/60">
+      <span>{recording ? "Mic live · scene muted" : status === "loading" ? "Loading original waveform…" : status === "unavailable" ? "Original waveform unavailable · listen to the scene" : "Match the starts and pauses"}</span>
+      {recording && <div role="meter" aria-label="Microphone level" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(level * 100)} className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-white/15"><div className="h-full bg-acid" style={{ width: `${Math.min(100, Math.sqrt(Math.max(0, level)) * 100)}%` }} /></div>}
+    </div>
   </div>;
 }
