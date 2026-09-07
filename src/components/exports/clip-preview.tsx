@@ -124,7 +124,7 @@ export function ClipPreview({ source, settings, onChange, disabled = false }: {
   const content = useMemo(() => compositionSvg(source.scene, settings, { time: clock, layer: "content" }), [source.scene, settings, clock]);
   const avatar = useMemo(() => compositionSvg(source.scene, settings, { time: clock, level, reducedMotion: motionReduced, layer: "avatar" }), [source.scene, settings, clock, level, motionReduced]);
   const audioOffset = isSay ? source.recordingOffsetMs / 1000 : 0;
-  const waveform = useMemo(() => compositionSvg(source.scene, settings, { time: clock, audioLevels: levels, audioOffset, layer: "waveform" }), [source.scene, settings, clock, levels, audioOffset]);
+  const waveform = useMemo(() => compositionSvg(source.scene, settings, { time: clock, audioLevels: levels, audioOffset, reducedMotion: motionReduced, layer: "waveform" }), [source.scene, settings, clock, levels, audioOffset, motionReduced]);
   const rectangle = sceneFrame(settings);
   const avatarBounds = avatarFrame(settings);
   const centerX = (avatarBounds.x + avatarBounds.width / 2) / 1080;

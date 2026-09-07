@@ -7,7 +7,7 @@ import { AppError } from "@/lib/server/api-error";
 import { resolveExportSource, checkedExport, exportUnavailable, type ExportMode, type ExportInput } from "@/lib/server/video-export-sources";
 import { defaultClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
 import { validateClipSettings } from "@/lib/server/clip-editor";
-export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v3";
+export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v4";
 export const VIDEO_EXPORT_BUCKET = "delivery-exports";
 type Row = Record<string, unknown>;
 export function presentVideoExport(row: Row) {

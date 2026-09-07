@@ -1,3 +1,11 @@
+# Reactive speech waveform correction
+
+The waveform now redraws a rolling 650 ms window of the audible performance at 15 fps, following speech volume and rhythm and settling to a flat baseline in silence. It replaces the static whole-clip waveform and cursor. Shared preview/export geometry uses the trimmed source clock and Say It Back recording offset; reduced motion uses a stationary volume display. Audio is unchanged. Renderer version `delivery-vertical-v4` prevents reusing the previous visual treatment; already finished files remain available.
+
+Twenty focused composition, preview and renderer tests and scoped lint pass. Four actual MP4s cover Classic, emotion/speed Switch and Say It Back; ten decoded-frame comparisons include the waveform region. Evidence: [render results](evidence/speech-waveform/render-results.json) and [preview/export comparisons](evidence/speech-waveform/composition-agreement.json).
+
+---
+
 # Compact Switch, speaking avatars and waveforms — September 7, 2026
 
 This follow-up supersedes the application release recorded below. Switch now uses compact phrase choices and a single recording/replay stage, with the current emoji or speed and five-step progression above the avatar. Desktop and simulated 390×844 layouts were inspected.

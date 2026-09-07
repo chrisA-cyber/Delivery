@@ -207,31 +207,34 @@ function contentBody(scene: CompositionScene, settings: ClipEditSettings, time: 
   }
   return "";
 }
-function waveformBody(scene: CompositionScene, settings: ClipEditSettings, levels: readonly number[], options: { time: number; audioOffset?: number; part?: "all" | "bars" | "cursor" }): string {
-  const f = waveformFrame(scene, settings), start = settings.trimStart, end = Math.min(scene.duration, settings.trimEnd ?? scene.duration);
-  const duration = Math.max(0.001, end - start), step = f.width / 48, part = options.part ?? "all";
+export const WAVEFORM_FPS = 15;
+function waveformBody(scene: CompositionScene, settings: ClipEditSettings, levels: readonly number[], options: { time: number; audioOffset?: number }): string {
+  const f = waveformFrame(scene, settings), count = 32, step = f.width / count;
+  // A short, rolling window of the voice that is audible now, never the entire take.
+  // Quantize relative to the trim so browser seeks and encoded frames agree.
+  const elapsed = Math.max(0, options.time - settings.trimStart);
+  const time = settings.trimStart + Math.floor((elapsed + 1e-7) * WAVEFORM_FPS) / WAVEFORM_FPS;
+  const end = Math.min(scene.duration, settings.trimEnd ?? scene.duration);
   let body = "";
-  if (part !== "cursor") {
-    for (let bar = 0; bar < 48; bar++) {
-      const from = Math.floor((start + duration * bar / 48 + (options.audioOffset ?? 0)) * AUDIO_LEVEL_FPS);
-      const to = Math.ceil((start + duration * (bar + 1) / 48 + (options.audioOffset ?? 0)) * AUDIO_LEVEL_FPS);
-      let peak = 0;
-      for (let i = Math.max(0, from); i < Math.min(levels.length, to); i++) peak = Math.max(peak, clamp(levels[i]!));
-      const height = Math.max(2, peak * (f.height - 8));
-      body += rect(f.x + bar * step, f.y + (f.height - height) / 2, Math.max(3, step - 5), height, peak > 0 ? C.blue : C.border, 2);
-    }
+  for (let bar = 0; bar < count; bar++) {
+    const sampleTime = time - (settings.reducedMotion ? 0 : (count - 1 - bar) / (count - 1) * 0.65);
+    const position = (sampleTime + (options.audioOffset ?? 0)) * AUDIO_LEVEL_FPS;
+    const index = Math.floor(position), fraction = position - index;
+    const level = sampleTime < settings.trimStart || sampleTime >= end || position < 0 ? 0
+      : clamp((levels[index] ?? 0) * (1 - fraction) + (levels[index + 1] ?? 0) * fraction);
+    const height = Math.max(2, level * (f.height - 4));
+    body += rect(f.x + bar * step, f.y + (f.height - height) / 2, Math.max(3, step - 6), height, level > 0 ? (bar > count - 5 ? C.accent : C.blue) : C.border, 3);
   }
-  if (part !== "bars") body += rect(f.x + clamp((options.time - start) / duration) * (f.width - 3), f.y, 3, f.height, C.accent, 1);
   return body;
 }
-export function waveformSvg(scene: CompositionScene, settings: ClipEditSettings, levels: readonly number[], options: { time: number; audioOffset?: number; part?: "all" | "bars" | "cursor" }): string {
+export function waveformSvg(scene: CompositionScene, settings: ClipEditSettings, levels: readonly number[], options: { time: number; audioOffset?: number }): string {
   return svg(waveformBody(scene, settings, levels, options));
 }
 export function compositionSvg(scene: CompositionScene, settings: ClipEditSettings, options: { time: number; level?: number; reducedMotion?: boolean; layer?: "all" | "base" | "content" | "waveform" | "avatar"; audioLevels?: readonly number[]; audioOffset?: number; avatarImageHref?: string } = { time: 0 }): string {
   const layer = options.layer ?? "all";
   let body = layer === "all" || layer === "base" ? baseBody(scene, settings) : "";
   if (layer === "all" || layer === "content") body += contentBody(scene, settings, options.time);
-  if (layer === "all" || layer === "waveform") body += waveformBody(scene, settings, options.audioLevels ?? [], { time: options.time, audioOffset: options.audioOffset });
+  if (layer === "all" || layer === "waveform") body += waveformBody(scene, { ...settings, reducedMotion: options.reducedMotion ?? settings.reducedMotion }, options.audioLevels ?? [], { time: options.time, audioOffset: options.audioOffset });
   if ((layer === "all" || layer === "avatar") && settings.avatarVisible) {
     const f = avatarFrame(settings);
     body += `<g transform="translate(${f.x} ${f.y})">${avatarSvg(settings.avatar, { size: f.width, level: options.level, reducedMotion: options.reducedMotion ?? settings.reducedMotion, imageHref: options.avatarImageHref })}</g>`;

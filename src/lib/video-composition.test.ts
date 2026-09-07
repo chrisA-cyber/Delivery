@@ -54,19 +54,19 @@ describe("saved clip composition", () => {
     expect(avatarSpeechPose(photo, 1, true)).toEqual(still);
     expect(avatarSvg(fox, { level: 1 })).toContain('data-avatar-body="true"');
   });
-  it("draws measured waveform bars from the selected trim and aligns its playhead", () => {
-    const scene: CompositionScene = { mode: "classic", duration: 1, classic: { phrase: "Hello", direction: "Quietly" } };
-    const settings = { ...defaultClipEditSettings("classic"), trimStart: 0.4, trimEnd: 0.9 };
-    const discardedSpeech = Array.from({ length: 15 }, (_, i) => i < 3 ? 1 : 0);
-    const bars = waveformSvg(scene, settings, discardedSpeech, { time: 0.4, part: "bars" });
-    expect(bars.match(/<rect/g)).toHaveLength(48);
-    expect(bars).not.toContain('fill="#5d7cff"');
-    const retainedSpeech = discardedSpeech.map((_, i) => i >= 6 && i <= 8 ? 1 : 0);
-    expect(waveformSvg(scene, settings, retainedSpeech, { time: 0.4, part: "bars" })).toContain('fill="#5d7cff"');
-    expect(waveformSvg(scene, settings, retainedSpeech, { time: 0.65, part: "cursor" })).toContain('x="526.5"');
-    const noAvatar = compositionSvg(scene, { ...settings, avatarVisible: false }, { time: 0.65, audioLevels: retainedSpeech });
-    expect(noAvatar).toContain('fill="#5d7cff"');
-    expect(noAvatar).not.toContain('data-avatar-body="true"');
+  it("animates a rolling speech window, settles in silence and respects trim/offset", () => {
+    const scene: CompositionScene = { mode: "classic", duration: 3, classic: { phrase: "Hello", direction: "Quietly" } };
+    const settings = { ...defaultClipEditSettings("classic"), trimStart: 0.4, trimEnd: 2.9 };
+    const levels = Array.from({ length: 45 }, (_, i) => i >= 6 && i <= 8 ? 1 : 0);
+    const frame = (time: number, audioOffset = 0) => waveformSvg(scene, settings, levels, { time, audioOffset });
+    expect(frame(0.4).match(/<rect/g)).toHaveLength(32);
+    expect(frame(0.4)).not.toBe(frame(0.7));
+    expect(frame(0.7)).toContain('fill="#5d7cff"');
+    expect(frame(1.5)).not.toMatch(/fill="#(?:5d7cff|ffe16a)"/);
+    expect(frame(0.7, 1)).not.toContain('fill="#5d7cff"');
+    const discarded = Array.from({ length: 45 }, (_, i) => i < 3 ? 1 : 0);
+    expect(waveformSvg(scene, settings, discarded, { time: 0.4 })).not.toContain('fill="#5d7cff"');
+    expect(compositionSvg(scene, { ...settings, avatarVisible: false }, { time: 0.7, audioLevels: levels })).toContain('fill="#5d7cff"');
   });
   it("labels stored Say dialogue honestly and keeps it off outside its interval", () => {
     const clip = SAY_CLIPS.find((item) => item.id === "hgf-perfect-fiance")!;

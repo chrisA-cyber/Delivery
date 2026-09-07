@@ -36,16 +36,16 @@ describe("original-clock composition preview", () => {
     await waitFor(() => expect(ring()?.getAttribute("stroke-width")).not.toBe("1.80"));
     expect(ring()?.getAttribute("stroke-width")).toBe("4.54");
     const waveform = screen.getByLabelText("Recorded audio waveform");
-    const bars = [...waveform.querySelectorAll("rect")].slice(0, -1);
+    const bars = [...waveform.querySelectorAll("rect")];
     expect(bars.some((bar) => Number(bar.getAttribute("height")) > 10)).toBe(true);
     expect(bars.some((bar) => bar.getAttribute("height") === "2")).toBe(true);
-    const cursor = () => Number(waveform.querySelector("rect:last-child")?.getAttribute("x"));
-    const startCursor = cursor();
+    const speakingWave = waveform.innerHTML;
     fireEvent.change(screen.getByRole("slider", { name: "Clip playback position" }), { target: { value: "3.2" } });
     expect(screen.getByText("2×")).toBeInTheDocument();
     expect(screen.getByText("3 / 3")).toBeInTheDocument();
     expect(ring()?.getAttribute("stroke-width")).toBe("1.80");
-    expect(cursor()).toBeGreaterThan(startCursor);
+    expect(waveform.innerHTML).not.toBe(speakingWave);
+    expect([...waveform.querySelectorAll("rect")].every((bar) => bar.getAttribute("height") === "2")).toBe(true);
     expect(container.querySelector("audio")!.playbackRate).toBe(1);
   });
 

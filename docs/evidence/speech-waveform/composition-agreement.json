@@ -1,0 +1,105 @@
+{
+  "method": "Expected shared preview SVG raster compared with corresponding decoded final MP4 frames. Say video pixels excluded to isolate avatar/caption geometry from24fps source frame resampling. Error is mean8-bit RGB distance after H264/YUV conversion; frames cover trim start and exact Switch/Say boundaries.",
+  "results": [
+    {
+      "waveformError": 2.112821909390537,
+      "mode": "switch",
+      "file": "emotion.mp4",
+      "frame": 0,
+      "outputTime": 0,
+      "sourceTime": 3.5,
+      "level": 0,
+      "meanAbsolutePixelError": 1.578568672839506
+    },
+    {
+      "waveformError": 2.1127241494888556,
+      "mode": "switch",
+      "file": "emotion.mp4",
+      "frame": 15,
+      "outputTime": 0.5,
+      "sourceTime": 4,
+      "level": 0,
+      "meanAbsolutePixelError": 1.5731844778806585
+    },
+    {
+      "waveformError": 7.363289760348584,
+      "mode": "switch",
+      "file": "emotion.mp4",
+      "frame": 45,
+      "outputTime": 1.5,
+      "sourceTime": 5,
+      "level": 1,
+      "meanAbsolutePixelError": 1.7982815715020577
+    },
+    {
+      "waveformError": 2.112821909390537,
+      "mode": "switch",
+      "file": "speed.mp4",
+      "frame": 0,
+      "outputTime": 0,
+      "sourceTime": 3.5,
+      "level": 0,
+      "meanAbsolutePixelError": 1.6704264724794238
+    },
+    {
+      "waveformError": 2.1127241494888556,
+      "mode": "switch",
+      "file": "speed.mp4",
+      "frame": 15,
+      "outputTime": 0.5,
+      "sourceTime": 4,
+      "level": 0,
+      "meanAbsolutePixelError": 1.691369598765432
+    },
+    {
+      "waveformError": 5.781639293894196,
+      "mode": "switch",
+      "file": "speed.mp4",
+      "frame": 45,
+      "outputTime": 1.5,
+      "sourceTime": 5,
+      "level": 0.42857142857142855,
+      "meanAbsolutePixelError": 1.8757619598765432
+    },
+    {
+      "waveformError": 3.9304041546688606,
+      "mode": "classic",
+      "file": "classic.mp4",
+      "frame": 21,
+      "outputTime": 0.7,
+      "sourceTime": 0.95,
+      "level": 0,
+      "meanAbsolutePixelError": 1.6799107831790123
+    },
+    {
+      "waveformError": 1.1463303853009736,
+      "mode": "classic",
+      "file": "classic.mp4",
+      "frame": 1,
+      "outputTime": 0.03333333333333333,
+      "sourceTime": 0.2833333333333333,
+      "level": 1,
+      "meanAbsolutePixelError": 1.7785775141460904
+    },
+    {
+      "waveformError": 2.7896398944193064,
+      "mode": "say-it-back",
+      "file": "say-it-back.mp4",
+      "frame": 48,
+      "outputTime": 1.6,
+      "sourceTime": 4.800000000000001,
+      "level": 0,
+      "meanAbsolutePixelError": 1.2219017717613805
+    },
+    {
+      "waveformError": 5.994893790849673,
+      "mode": "say-it-back",
+      "file": "say-it-back.mp4",
+      "frame": 60,
+      "outputTime": 2,
+      "sourceTime": 5.2,
+      "level": 0.5714285714285714,
+      "meanAbsolutePixelError": 1.3611083915587419
+    }
+  ]
+}

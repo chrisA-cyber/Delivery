@@ -6,13 +6,13 @@ import { dirname, join } from "node:path";
 // Sharp 0.35 ships declarations but omits them from its ESM export map.
 // @ts-expect-error Upstream package export map; runtime import is supported.
 import sharp from "sharp";
-import { BUILTIN_AVATARS, audioLevelAt, avatarFrame, avatarSvg, clipEditSettingsSchema, compositionBoundaries, compositionFooter, compositionSvg, contentFrame, defaultClipEditSettings, measureAudioLevels, migrateClipEditSettings, sceneFrame, waveformFrame, waveformSvg, type ClipEditSettings, type CompositionScene } from "@/lib/video-composition";
+import { BUILTIN_AVATARS, audioLevelAt, avatarFrame, avatarSvg, clipEditSettingsSchema, compositionBoundaries, compositionFooter, compositionSvg, contentFrame, defaultClipEditSettings, measureAudioLevels, migrateClipEditSettings, sceneFrame, waveformFrame, waveformSvg, WAVEFORM_FPS, type ClipEditSettings, type CompositionScene } from "@/lib/video-composition";
 export { wrapVideoText } from "@/lib/video-composition";
 import { MAX_SAY_RECORDING_MS } from "@/lib/audio-capture";
 import type { SwitchChallenge } from "@/lib/switch/types";
 import type { SayClip } from "@/lib/say-it-back/types";
 
-export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v3" as const;
+export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v4" as const;
 export const VIDEO_RENDER_LIMITS = Object.freeze({ durationSeconds: 22, outputBytes: 48 * 1024 * 1024, timeoutMs: 180_000, threads: 2 });
 const SAY_VIDEO_RENDER_LIMITS = Object.freeze({ ...VIDEO_RENDER_LIMITS, durationSeconds: MAX_SAY_RECORDING_MS / 1000, timeoutMs: 360_000 });
 const W = 1080;
@@ -190,12 +190,16 @@ export async function renderPerformanceVideo(input: VideoRenderInput, options: {
       filters.push(`[${videoLabel}][${inputIndex++}:v]overlay=x=${frame.x}:y=${frame.y}:eof_action=repeat:enable='gte(t,${start - trimStart})*lt(t,${end - trimStart})'[${label}]`);
       videoLabel = label;
     }
-    const wave = waveformFrame(scene, settings), wavePath = join(dir, "waveform.png"), cursorPath = join(dir, "wave-cursor.png");
-    await raster(wavePath, cropSvg(waveformSvg(scene, settings, levels, { time: trimStart, audioOffset: input.mode === "say-it-back" ? input.recordingOffsetMs / 1000 : 0, part: "bars" }), wave));
-    await raster(cursorPath, cropSvg(waveformSvg(scene, settings, levels, { time: trimStart, part: "cursor" }), { x: wave.x, y: wave.y, width: 3, height: wave.height }));
-    args.push("-threads", "1", "-i", wavePath, "-threads", "1", "-i", cursorPath);
-    filters.push(`[${videoLabel}][${inputIndex++}:v]overlay=x=${wave.x}:y=${wave.y}:eof_action=repeat[waveform]`, `[waveform][${inputIndex++}:v]overlay=x='${wave.x}+min(t/${duration},1)*${wave.width - 3}':y=${wave.y}:eof_action=repeat[wave_cursor]`);
-    videoLabel = "wave_cursor";
+    const wave = waveformFrame(scene, settings), waveFrames = new Map<string, string>();
+    for (let i = 0; i <= Math.ceil(duration * WAVEFORM_FPS); i++) {
+      const source = cropSvg(waveformSvg(scene, settings, levels, { time: trimStart + i / WAVEFORM_FPS, audioOffset: input.mode === "say-it-back" ? input.recordingOffsetMs / 1000 : 0 }), wave);
+      const path = join(dir, `wave-${String(i).padStart(5, "0")}.png`), existing = waveFrames.get(source);
+      if (existing) await link(existing, path);
+      else { await raster(path, source); waveFrames.set(source, path); }
+    }
+    args.push("-threads", "1", "-framerate", String(WAVEFORM_FPS), "-i", join(dir, "wave-%05d.png"));
+    filters.push(`[${videoLabel}][${inputIndex++}:v]overlay=x=${wave.x}:y=${wave.y}:eof_action=repeat[waveform]`);
+    videoLabel = "waveform";
     if (settings.avatarVisible) {
       let imageHref: string;
       if (settings.avatar.kind === "upload") {

@@ -1,0 +1,54 @@
+[
+  {
+    "mode": "switch",
+    "variant": "emotion",
+    "path": "/tmp/delivery-video-v4/emotion.mp4",
+    "bytes": 315462,
+    "duration": 8,
+    "width": 1080,
+    "height": 1920,
+    "videoCodec": "h264",
+    "audioCodec": "aac",
+    "renderMs": 10588,
+    "audioCopied": false
+  },
+  {
+    "mode": "switch",
+    "variant": "speed",
+    "path": "/tmp/delivery-video-v4/speed.mp4",
+    "bytes": 381183,
+    "duration": 7,
+    "width": 1080,
+    "height": 1920,
+    "videoCodec": "h264",
+    "audioCodec": "aac",
+    "renderMs": 11698,
+    "audioCopied": false
+  },
+  {
+    "mode": "classic",
+    "variant": "classic",
+    "path": "/tmp/delivery-video-v4/classic.mp4",
+    "bytes": 408254,
+    "duration": 3.415,
+    "width": 1080,
+    "height": 1920,
+    "videoCodec": "h264",
+    "audioCodec": "aac",
+    "renderMs": 8234,
+    "audioCopied": false
+  },
+  {
+    "mode": "say-it-back",
+    "variant": "say-it-back",
+    "path": "/tmp/delivery-video-v4/say-it-back.mp4",
+    "bytes": 1608294,
+    "duration": 6.7,
+    "width": 1080,
+    "height": 1920,
+    "videoCodec": "h264",
+    "audioCodec": "aac",
+    "renderMs": 8555,
+    "audioCopied": false
+  }
+]
