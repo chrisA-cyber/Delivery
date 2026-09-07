@@ -1,0 +1,10 @@
+{
+  "attemptRunId": "05cd4f53-9c71-4ab4-82b5-261e668f596f",
+  "deploymentId": "04036485-5eb4-41f8-9b29-0f3fa3f7560d",
+  "applicationCommit": "d0e365a4be7935ad922810175cce8227118333fb",
+  "result": "Verifier callback failure; not a passed acceptance run",
+  "failure": "rtc-node LocalTrackUnpublished emitted an undefined publication; the test helper dereferenced publication.sid.",
+  "fixedBy": "a765772dd9999bdf19d65598f6f08b32959e0e26",
+  "cleanup": "Four exact disposable account IDs, created 2026-09-07T01:41:02\u201303Z and matched to @example.invalid fixture names, deleted and returned by Supabase. RTC process exited; bounded application/provider absence timeouts release room resources.",
+  "limitations": "The aborted attempt produced no final media metrics receipt and is not counted as verification success."
+}

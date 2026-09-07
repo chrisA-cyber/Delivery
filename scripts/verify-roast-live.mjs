@@ -6,7 +6,7 @@
  */
 import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
-import { writeFileSync } from "node:fs";
+import { writeFileSync, writeSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
@@ -58,7 +58,9 @@ function writeReport() {
   evidence.cleanup.remainingFixtureUserIds = fixtures.filter(f => !f.deleted).map(f => f.id);
   const text = JSON.stringify(evidence);
   writeFileSync(`/tmp/roast-live-${runId}.json`, text + "\n", { mode: 0o600 });
-  process.stdout.write(`ROAST_VERIFY_RESULT ${text}\n`);
+  // The disposable subprocess exits immediately after cleanup. Flush the
+  // evidence synchronously so pipe buffering cannot truncate the final receipt.
+  writeSync(1, `ROAST_VERIFY_RESULT ${text}\n`);
 }
 const hardTimer = setTimeout(() => {
   evidence.success = false;
