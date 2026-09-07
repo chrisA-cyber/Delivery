@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Clapperboard, Clock3, FileVideo, Link2, LoaderCircle, Play, Plus, RotateCcw, Scissors, Trash2, Upload } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Clapperboard, Clock3, FileVideo, Link2, LoaderCircle, Play, Plus, RotateCcw, Scissors, Search, Trash2, Upload, X } from "lucide-react";
 import { ContentControl, CONTENT_LABELS } from "@/components/content/content-control";
 import { isRatingAllowed } from "@/data/content";
 import type { ContentRating } from "@/lib/content/types";
 import type { SayImport, SayImportCue } from "@/lib/say-it-back/import-types";
 import type { SayClip } from "@/lib/say-it-back/types";
+import { matchesSceneSearch } from "@/lib/say-it-back/library";
 import { cn } from "@/lib/utils";
 
 const PENDING = new Set<SayImport["status"]>(["queued", "fetching", "processing", "publishing"]);
@@ -230,8 +231,11 @@ export function CustomSceneCreator({ initialImport, initialRating, authenticated
   </section>;
 }
 
-export function CustomSceneLibrary({ rating, authenticated, onCreate, onResume, onPlay }: {
+export type MySceneFilters = { search: string; status: "all" | "published" | "progress" | "attention" };
+
+export function CustomSceneLibrary({ rating, authenticated, filters, onFiltersChange, onCreate, onResume, onPlay }: {
   rating: ContentRating; authenticated: boolean; onCreate: () => void; onResume: (item: SayImport) => void; onPlay: (clip: SayClip) => void;
+  filters: MySceneFilters; onFiltersChange: (value: MySceneFilters) => void;
 }) {
   const [imports, setImports] = useState<SayImport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -254,11 +258,24 @@ export function CustomSceneLibrary({ rating, authenticated, onCreate, onResume, 
     finally { if (mounted.current) setDeleting(null); }
   }
 
-  const visible = imports.filter((item) => !item.clip || isRatingAllowed(item.clip.rating, rating));
+  const allowed = imports.filter((item) => !item.clip || isRatingAllowed(item.clip.rating, rating));
+  const activeFilters = Boolean(filters.search.trim() || filters.status !== "all");
+  const visible = allowed.filter((item) => {
+    if (filters.status === "published" && item.status !== "published") return false;
+    if (filters.status === "attention" && item.status !== "failed") return false;
+    if (filters.status === "progress" && (item.status === "published" || item.status === "failed")) return false;
+    return matchesSceneSearch(filters.search, item.title, item.sourceUrl ?? "", ...item.cues.map((cue) => cue.text),
+      item.clip?.title ?? "", item.clip?.description ?? "", item.clip?.source.creator ?? "", ...(item.clip?.cues.map((cue) => cue.text) ?? []));
+  });
   return <section aria-label="My scenes">
+    <div className="mb-3 flex gap-2 sm:gap-3">
+      <div className="relative min-w-0 flex-1"><Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-white/45" /><input type="search" aria-label="Search my scenes" placeholder="Search your scenes or dialogue" value={filters.search} onChange={(event) => onFiltersChange({ ...filters, search: event.target.value })} className={`${FIELD} min-h-11 pl-10 pr-10`} />{filters.search && <button type="button" aria-label="Clear my scene search" onClick={() => onFiltersChange({ ...filters, search: "" })} className="absolute right-0 top-0 grid size-11 place-items-center text-white/60"><X className="size-4" /></button>}</div>
+      <select aria-label="My scene status" value={filters.status} onChange={(event) => onFiltersChange({ ...filters, status: event.target.value as MySceneFilters["status"] })} className="min-h-11 w-36 min-w-0 rounded-lg border border-white/20 bg-surface px-3 text-xs font-bold text-paper sm:w-44"><option value="all">Any status</option><option value="published">Ready to play</option><option value="progress">In progress</option><option value="attention">Needs attention</option></select>
+    </div>
+    <div className="mb-4 flex min-h-8 items-center justify-between gap-3">{activeFilters && <button type="button" className="button-ghost min-h-11 px-2 text-xs" onClick={() => onFiltersChange({ search: "", status: "all" })}><X className="size-3.5" />Clear filters</button>}<p role="status" aria-live="polite" className="ml-auto text-xs text-white/50">{loading ? "Loading scenes…" : `${visible.length} ${visible.length === 1 ? "scene" : "scenes"}`}</p></div>
     <p className="mb-5 text-xs leading-5 text-white/60">{authenticated ? "Your created scenes stay here. Unfinished imports expire after 7 days." : "Your imports and scenes on this browser expire after 24 hours. Sign in before then to keep your created scenes."}</p>
     {error && <div className="game-error mb-5" role="alert">{error}<button type="button" onClick={() => void load()} className="ml-3 underline">Try again</button></div>}
-    {loading && !imports.length ? <div role="status" className="flex min-h-40 items-center justify-center gap-2 text-sm text-white/60"><LoaderCircle className="size-4 animate-spin" />Opening your scenes…</div> : error && !imports.length ? null : !visible.length ? <div className="panel flex flex-col items-center p-8 text-center"><Clapperboard className="mb-4 size-8 text-hot" /><h3 className="text-xl font-bold">{imports.length ? "No scenes match this filter" : "Your next scene can be anything"}</h3><p className="mt-2 max-w-sm text-sm leading-6 text-white/60">{imports.length ? "Change your content setting to see more." : "Bring a clip or upload a video, then choose the lines you want to perform."}</p><button type="button" className="button-primary mt-5" onClick={onCreate}><Plus className="size-4" />Make your own</button></div> : <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{visible.map((item) => <article className="overflow-hidden rounded-2xl border border-white/15 bg-surface" key={item.id}>
+    {loading && !imports.length ? <div role="status" className="flex min-h-40 items-center justify-center gap-2 text-sm text-white/60"><LoaderCircle className="size-4 animate-spin" />Opening your scenes…</div> : error && !imports.length ? null : !visible.length ? <div className="panel flex flex-col items-center p-8 text-center"><Clapperboard className="mb-4 size-8 text-hot" /><h3 className="text-xl font-bold">{allowed.length && activeFilters ? "No scenes match your filters" : imports.length ? "No scenes match this content setting" : "Your next scene can be anything"}</h3><p className="mt-2 max-w-sm text-sm leading-6 text-white/60">{allowed.length && activeFilters ? "Try a different search or status to find your scene." : imports.length ? "Change your content setting to see more." : "Bring a clip or upload a video, then choose the lines you want to perform."}</p>{allowed.length && activeFilters ? <button type="button" className="button-secondary mt-5" onClick={() => onFiltersChange({ search: "", status: "all" })}>Show all my scenes</button> : <button type="button" className="button-primary mt-5" onClick={onCreate}><Plus className="size-4" />Make your own</button>}</div> : <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{visible.map((item) => <article className="overflow-hidden rounded-2xl border border-white/15 bg-surface" key={item.id}>
       {item.clip && <div className="aspect-video bg-black">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={item.clip.posterUrl} alt="" className="h-full w-full object-contain" loading="lazy" />

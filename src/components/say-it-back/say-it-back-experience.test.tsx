@@ -41,6 +41,8 @@ describe("keeping the first take through sign-in", () => {
     vi.stubGlobal("fetch", fetch);
     render(<><a href="/login?next=%2Fsay-it-back">Header sign in</a><SayItBackExperience initialClipId={cleanClip.id} /></>);
     await screen.findByRole("button", { name: "Sign in & keep this take" });
+    // Flush the scene's document-listener effect before clicking outside React.
+    await act(async () => {});
     fireEvent.click(screen.getByRole("link", { name: "Header sign in" }));
     await waitFor(() => expect(mocks.push).toHaveBeenCalledOnce());
     const target = new URL(mocks.push.mock.calls[0]![0], "https://delivery.test");
@@ -315,5 +317,48 @@ describe("round recording handoff", () => {
     render(<SayItBackExperience roundContext={roundContext} initialAttemptId="different-assignment" />);
     expect(await screen.findByRole("alert")).toHaveTextContent("another assignment");
     expect(screen.queryByTestId("scene-player")).not.toBeInTheDocument();
+  });
+});
+
+describe("scene library filters", () => {
+  const streamer: SayClip = { ...cleanClip as SayClip, id: "library-streamer", title: "Stream highlight", category: "Twitch", duration: 4, difficulty: "easy", source: { ...cleanClip.source, creator: "Test creator" } };
+  const movie: SayClip = { ...cleanClip as SayClip, id: "library-movie", title: "Movie moment", category: "Comedy", duration: 10 };
+
+  it("keeps browsing choices when returning from a scene, and clears an empty search", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok({ clips: [streamer, movie] })));
+    render(<SayItBackExperience />);
+    fireEvent.click(await screen.findByRole("button", { name: /^Streamers/ }));
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search scenes" }), { target: { value: "test creator" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Scene length" }), { target: { value: "quick" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Sort scenes" }), { target: { value: "shortest" } });
+    expect(screen.queryByRole("heading", { name: movie.title })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("heading", { name: streamer.title }));
+    await screen.findByTestId("scene-player");
+    fireEvent.click(screen.getByRole("button", { name: "All scenes", exact: true }));
+    expect(screen.getByRole("searchbox", { name: "Search scenes" })).toHaveValue("test creator");
+    expect(screen.getByRole("button", { name: /^Streamers/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("combobox", { name: "Scene length" })).toHaveValue("quick");
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search scenes" }), { target: { value: "zznomatchingdialogue" } });
+    expect(screen.getByRole("heading", { name: "No scenes match your filters" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show all scenes", exact: true }));
+    expect(screen.getByRole("heading", { name: movie.title })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Sort scenes" })).toHaveValue("shortest");
+  });
+
+  it("applies content preferences before search results and category counts", async () => {
+    const spicy: SayClip = { ...streamer, id: "spicy", title: "Spicy highlight", rating: "teen" };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok({ clips: [movie, spicy] })));
+    render(<SayItBackExperience />);
+    await screen.findByRole("heading", { name: movie.title });
+    expect(screen.queryByRole("heading", { name: spicy.title })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Streamers/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Spicy", exact: true }));
+    await screen.findByRole("heading", { name: spicy.title });
+    fireEvent.click(screen.getByRole("button", { name: /^Streamers/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Clean", exact: true }));
+    expect(screen.queryByRole("heading", { name: spicy.title })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(screen.queryByRole("heading", { name: spicy.title })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Clean", exact: true })).toHaveAttribute("aria-pressed", "true");
   });
 });

@@ -2,7 +2,7 @@ import React from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SayImport } from "@/lib/say-it-back/import-types";
-import { CustomSceneCreator } from "./custom-scene-creator";
+import { CustomSceneCreator, CustomSceneLibrary, type MySceneFilters } from "./custom-scene-creator";
 
 const base: SayImport = {
   id: "private-import", requestId: "2b7af0a1-25fa-4f22-a548-98c25c9f4913", status: "ready", title: "The moment",
@@ -67,5 +67,29 @@ describe("custom Say It Back scene creation", () => {
     expect(screen.getByRole("button", { name: "Prepare lines" })).toBeEnabled();
     await act(async () => { await vi.advanceTimersByTimeAsync(6000); });
     expect(fetch).toHaveBeenCalledOnce();
+  });
+});
+
+describe("My scenes filters", () => {
+  it("combines dialogue search with status and recovers from no matches", async () => {
+    const imports: SayImport[] = [base, { ...base, id: "failed-import", title: "Failed scene", status: "failed" }, { ...base, id: "other-import", title: "Different scene", cues: [] }];
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok({ imports })));
+    const onResume = vi.fn();
+    function Library() {
+      const [filters, setFilters] = React.useState<MySceneFilters>({ search: "", status: "all" });
+      return <CustomSceneLibrary rating="everyone" authenticated={false} filters={filters} onFiltersChange={setFilters} onCreate={vi.fn()} onResume={onResume} onPlay={vi.fn()} />;
+    }
+    render(<Library />);
+    await screen.findByRole("heading", { name: "Different scene" });
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search my scenes" }), { target: { value: "original words" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "My scene status" }), { target: { value: "attention" } });
+    expect(screen.queryByRole("heading", { name: base.title })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Different scene" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Continue", exact: true }));
+    expect(onResume).toHaveBeenCalledWith(imports[1]);
+    fireEvent.change(screen.getByRole("combobox", { name: "My scene status" }), { target: { value: "published" } });
+    expect(screen.getByRole("heading", { name: "No scenes match your filters" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show all my scenes" }));
+    expect(screen.getAllByRole("article")).toHaveLength(3);
   });
 });
