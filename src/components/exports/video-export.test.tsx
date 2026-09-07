@@ -2,7 +2,7 @@ import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VideoExport, type ExportVideo } from "./video-export";
-import { defaultClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
+import { defaultCameraSettings, defaultClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
 
 vi.mock("@/components/providers/app-provider", () => ({ useApp: () => ({ contentRating: "everyone", reducedMotion: false }) }));
 vi.mock("@/hooks/use-preferred-avatar", () => ({ usePreferredAvatar: () => ({ avatar: { kind: "builtin", id: "fox" }, setAvatar: vi.fn(), loading: false, saving: false, error: "" }) }));
@@ -36,6 +36,22 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("compact clip editor and finished video workflow", () => {
+  it("regenerates old camera layouts and makes phrase text opt-in", async () => {
+    const cameraSettings = { ...defaultCameraSettings("classic"), includeName: false };
+    const saved = { ...editor, settings: cameraSettings, source: { ...editor.source, camera: [{ start: 0, end: 5, sourceStart: 0, mirror: true, url: "/camera" }] } };
+    setup({ saved, exports: [{ ...video, settings: cameraSettings, layoutVersion: "delivery-vertical-v4" }] });
+    render(<VideoExport mode="classic" attemptId="camera-take" hasScore initialOpen />);
+    await screen.findByLabelText("Editable clip preview");
+    expect(screen.getByRole("button", { name: "Generate video" })).toBeEnabled();
+    expect(screen.queryByRole("link", { name: "Download video" })).toBeNull();
+    expect(screen.getByText("Earlier clips")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Text" }));
+    const toggle = screen.getByRole("checkbox", { name: /Challenge text/ });
+    expect(toggle).not.toBeChecked();
+    fireEvent.click(toggle);
+    expect(JSON.parse(screen.getByLabelText("Editable clip preview").getAttribute("data-settings")!).captions).toBe(true);
+  });
+
   it("opens the editor directly, recovers a matching MP4, and never displays a stale video after edits", async () => {
     const fetchMock = setup();
     render(<VideoExport mode="classic" attemptId="owned-take" hasScore />);

@@ -1,0 +1,77 @@
+{
+  "layoutVersion": "delivery-vertical-v6-full-camera",
+  "simulatedCapture": true,
+  "physicalDevice": false,
+  "results": [
+    {
+      "mode": "classic",
+      "layout": "spotlight",
+      "captions": false,
+      "path": "/tmp/delivery-fullcamera/classic.mp4",
+      "bytes": 235238,
+      "duration": 4.2,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 5157,
+      "audioCopied": false
+    },
+    {
+      "mode": "switch",
+      "layout": "spotlight",
+      "captions": false,
+      "path": "/tmp/delivery-fullcamera/switch.mp4",
+      "bytes": 425859,
+      "duration": 8.166667,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 7411,
+      "audioCopied": false
+    },
+    {
+      "mode": "say-it-back",
+      "layout": "spotlight",
+      "captions": false,
+      "path": "/tmp/delivery-fullcamera/say-it-back.mp4",
+      "bytes": 1503718,
+      "duration": 10.4,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 12923,
+      "audioCopied": false
+    },
+    {
+      "mode": "switch",
+      "layout": "spotlight",
+      "captions": false,
+      "path": "/tmp/delivery-fullcamera/switch-speed.mp4",
+      "bytes": 464153,
+      "duration": 8.166667,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 7780,
+      "audioCopied": false
+    },
+    {
+      "mode": "say-it-back",
+      "layout": "duet",
+      "captions": true,
+      "path": "/tmp/delivery-fullcamera/say-framed.mp4",
+      "bytes": 2198774,
+      "duration": 10.4,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 10276,
+      "audioCopied": false
+    }
+  ]
+}

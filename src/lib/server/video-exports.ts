@@ -5,16 +5,16 @@ import type { ContentRating } from "@/lib/content/types";
 import type { SwitchViewer } from "@/lib/server/switch";
 import { AppError } from "@/lib/server/api-error";
 import { resolveExportSource, checkedExport, exportUnavailable, type ExportMode, type ExportInput } from "@/lib/server/video-export-sources";
-import { defaultClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
+import { VIDEO_LAYOUT_VERSION, defaultClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
 import { validateClipSettings } from "@/lib/server/clip-editor";
-export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v4";
+export { VIDEO_LAYOUT_VERSION } from "@/lib/video-composition";
 export const VIDEO_EXPORT_BUCKET = "delivery-exports";
 type Row = Record<string, unknown>;
 export function presentVideoExport(row: Row) {
   const expired = new Date(String(row.expires_at)).getTime() <= Date.now();
   const status = expired ? "expired" : String(row.state);
   const snapshot = row.input as Partial<ExportInput> | undefined;
-  return {id:String(row.id),status,includeScore:row.include_score === true,includeName:row.include_name === true,settings:snapshot?.settings ?? null,displayName:snapshot?.displayName ?? null,score:snapshot?.score ?? null,
+  return {id:String(row.id),status,layoutVersion:String(row.layout_version ?? ""),includeScore:row.include_score === true,includeName:row.include_name === true,settings:snapshot?.settings ?? null,displayName:snapshot?.displayName ?? null,score:snapshot?.score ?? null,
     assignmentUrl:(row.input as {invitationUrl?:string})?.invitationUrl ?? null,createdAt:row.created_at,expiresAt:row.expires_at,filename:`delivery-${row.mode}-${String(row.id).slice(0,8)}.mp4`,
     videoUrl:status === "ready" ? `/api/exports/${row.id}/video` : null,
     errorMessage:status === "failed" ? "We couldn’t finish this video. Your original take and score are safe. Try again." : status === "cancelled" ? "This video is no longer available. Create a new video from an available take." : status === "expired" ? "This download expired. Create it again from your saved take." : null};

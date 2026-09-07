@@ -5,6 +5,7 @@ import type { SwitchChallenge } from "./switch/types";
 import type { SayClip } from "./say-it-back/types";
 import emojiImages from "./video-emoji.json";
 
+export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v6-full-camera" as const;
 export const COMPOSITION_WIDTH = 1080;
 export const COMPOSITION_HEIGHT = 1920;
 export const AUDIO_LEVEL_FPS = 15;
@@ -54,14 +55,18 @@ export type CompositionScene = { duration: number; invitationUrl?: string; displ
   | { mode: "say-it-back"; say: { clip: SayClip; roleId: string } }
 );
 export interface CompositionFrame { x: number; y: number; width: number; height: number }
-export function sceneFrame(settings: ClipEditSettings): CompositionFrame { if (settings.performer === "camera") return settings.layout === "spotlight" ? { x: 64, y: 330, width: 952, height: 650 } : { x: 64, y: 330, width: 952, height: 930 }; return settings.layout === "duet" ? { x: 64, y: 360, width: 952, height: 760 } : { x: 64, y: 340, width: 952, height: 930 }; }
+export function fullFrameCamera(settings?: Pick<ClipEditSettings, "performer" | "layout">): boolean { return settings?.performer === "camera" && settings.layout === "spotlight"; }
+export function cameraFrame(settings: ClipEditSettings): CompositionFrame { return fullFrameCamera(settings) ? { x: 0, y: 0, width: COMPOSITION_WIDTH, height: COMPOSITION_HEIGHT } : avatarFrame(settings); }
+export function sceneFrame(settings: ClipEditSettings): CompositionFrame { if (fullFrameCamera(settings)) return { x: 64, y: 250, width: 480, height: 360 }; if (settings.performer === "camera") return { x: 64, y: 330, width: 952, height: 930 }; return settings.layout === "duet" ? { x: 64, y: 360, width: 952, height: 760 } : { x: 64, y: 340, width: 952, height: 930 }; }
 export function contentFrame(scene: CompositionScene, settings: ClipEditSettings): CompositionFrame {
-  if (scene.mode === "say-it-back" && settings.performer === "camera" && settings.layout === "spotlight") return { x: 500, y: 1040, width: 490, height: 400 };
+  if (fullFrameCamera(settings)) return scene.mode === "switch" ? { x: 64, y: 184, width: 952, height: 256 } : { x: 86, y: 1220, width: 884, height: 260 };
+  if (scene.mode === "say-it-back" && settings.performer === "camera") return { x: 86, y: 1280, width: 884, height: 174 };
   if (scene.mode === "say-it-back") return settings.layout === "duet" ? { x: 400, y: 1160, width: 590, height: 290 } : { x: 86, y: 1280, width: 884, height: 174 };
   return settings.layout === "duet" ? { x: 86, y: 210, width: 884, height: 330 } : { x: 86, y: 200, width: 884, height: 430 };
 }
 /** Waveforms use the selected source interval; the recording itself is untouched. */
 export function waveformFrame(scene: CompositionScene, settings: ClipEditSettings): CompositionFrame {
+  if (fullFrameCamera(settings)) return { x: 86, y: 1530, width: 884, height: 40 };
   if (scene.mode === "classic") return settings.layout === "duet" ? { x: 86, y: 1130, width: 422, height: 60 } : { x: 86, y: 978, width: 884, height: 44 };
   if (scene.mode === "switch") return { x: 86, y: 1295, width: 884, height: 54 };
   return { x: 86, y: 1465, width: 884, height: 48 };
@@ -153,6 +158,7 @@ export function compositionFooter(scene: CompositionScene): string {
   return body;
 }
 function baseBody(scene: CompositionScene, settings: ClipEditSettings): string {
+  if (fullFrameCamera(settings)) return cameraOverlayBody(scene, settings);
   let body = rect(0, 0, COMPOSITION_WIDTH, COMPOSITION_HEIGHT, C.ink)
     + `<defs><radialGradient id="stage-wash"><stop stop-color="${C.violet}" stop-opacity="0.10"/><stop offset="1" stop-color="${C.ink}" stop-opacity="0"/></radialGradient></defs><ellipse cx="540" cy="750" rx="700" ry="850" fill="url(#stage-wash)"/>`
     + brandGradientSvg("clip-brand") + `<path d="${BRAND_MARK_PATH}" transform="translate(75 94) scale(.78)" fill="url(#clip-brand)" fill-rule="evenodd"/>` + text("delivery", 137, 136, 34)
@@ -176,6 +182,31 @@ function baseBody(scene: CompositionScene, settings: ClipEditSettings): string {
   }
   return body;
 }
+/** Transparent artwork sits above the camera; the middle stays clear for faces. */
+function cameraOverlayBody(scene: CompositionScene, settings: ClipEditSettings): string {
+  let body = `<defs><linearGradient id="camera-top" x2="0" y2="1"><stop stop-color="#000" stop-opacity=".78"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient><linearGradient id="camera-bottom" x2="0" y2="1"><stop stop-color="#000" stop-opacity="0"/><stop offset=".55" stop-color="#000" stop-opacity=".70"/><stop offset="1" stop-color="#000" stop-opacity=".9"/></linearGradient></defs>`
+    + rect(0, 0, 1080, 650, "url(#camera-top)") + rect(0, 1040, 1080, 880, "url(#camera-bottom)")
+    + brandGradientSvg("clip-brand") + `<path d="${BRAND_MARK_PATH}" transform="translate(75 94) scale(.78)" fill="url(#clip-brand)" fill-rule="evenodd"/>` + text("delivery", 137, 136, 34)
+    + text(scene.mode === "classic" ? "CLASSIC" : scene.mode === "switch" ? "SWITCH" : "SAY IT BACK", 970, 133, 23, C.paper, 700, "end");
+  if (scene.mode === "classic") {
+    body += text("DELIVERED AS", 86, 220, 18, C.paper, 500) + fitText(scene.classic.direction, 86, 240, 884, 210, 43, 24, C.accent);
+    if (settings.captions) body += text("CHALLENGE LINE", 86, 1208, 18, C.paper, 500) + fitText(scene.classic.phrase, 86, 1230, 884, 260, 66, 28);
+  } else if (scene.mode === "switch") {
+    if (settings.captions) body += text("CHALLENGE LINE", 86, 1230, 18, C.paper, 500) + fitText(scene.switch.cues[0]?.text ?? "", 86, 1250, 884, 240, 72, 28);
+  } else {
+    body += fitText(scene.say.clip.title, 86, 179, 884, 52, 29, 21);
+    const f = sceneFrame(settings);
+    body += rect(f.x - 3, f.y - 3, f.width + 6, f.height + 6, "#080808", 6, 'stroke="#ffffff" stroke-opacity=".45" stroke-width="2"');
+  }
+  if (settings.includeName && scene.displayName) body += fitText(scene.displayName, 86, 1610, settings.includeScore && scene.score ? 650 : 884, 62, 30, 21);
+  if (settings.includeScore && scene.score && Number.isFinite(scene.score.value)) body += text(`${Math.round(scene.score.value)}`, 970, 1654, 40, C.accent, 700, "end") + text(scene.score.beta || scene.mode === "switch" ? "BETA SCORE" : scene.score.label.toUpperCase().slice(0, 22), 970, 1681, 15, C.paper, 500, "end");
+  // Keep the established invitation validation and mandatory scene attribution.
+  compositionFooter(scene);
+  if (scene.invitationUrl) { const url = new URL(scene.invitationUrl); body += text("Your turn.", 86, 1753, 27) + fitText(`${url.host}${url.pathname}`, 86, 1770, 884, 40, 21, 16, C.paper); }
+  else body += text("Made on Delivery.", 86, 1770, 24, C.paper);
+  if (scene.mode === "say-it-back") { const source = scene.say.clip.source; body += fitText(`${source.title} · ${source.creator} · ${source.license}\nShortened, dubbed adaptation. ${source.license === "CC BY 3.0" ? "creativecommons.org/licenses/by/3.0/" : ""}`, 86, 1810, 884, 88, 17, 14, C.paper); }
+  return body;
+}
 export function compositionBoundaries(scene: CompositionScene, settings: ClipEditSettings): number[] {
   if (scene.mode === "switch") return [...new Set([0, scene.duration, ...scene.switch.cues.flatMap((cue) => [cue.start, cue.end])])].sort((a, b) => a - b);
   if (scene.mode === "say-it-back" && settings.captions) return [...new Set([0, scene.duration, ...scene.say.clip.cues.flatMap((cue) => [cue.start, cue.end])])].sort((a, b) => a - b);
@@ -187,6 +218,17 @@ function contentBody(scene: CompositionScene, settings: ClipEditSettings, time: 
     const index = scene.switch.cues.findIndex((cue) => time >= cue.start && time < cue.end);
     const cue = scene.switch.cues[index];
     if (!cue) return "";
+    if (fullFrameCamera(settings)) {
+      let body = rect(f.x, f.y, f.width, f.height, "#000", 28, 'fill-opacity=".32" stroke="#fff" stroke-opacity=".18" stroke-width="2"');
+      if (scene.switch.kind === "speed") body += text(`${cue.speed ?? 1}×`, f.x + 142, f.y + 151, 102, C.accent, 700, "middle");
+      else { const emoji = (emojiImages as Record<string, string>)[cue.emoji]; body += emoji ? `<image href="${emoji}" x="${f.x + 50}" y="${f.y + 42}" width="156" height="156"/>` : text(cue.emoji, f.x + 128, f.y + 162, 125, C.paper, 700, "middle"); }
+      body += text(`${index + 1} / ${scene.switch.cues.length}`, f.x + f.width - 28, f.y + 40, 18, C.paper, 500, "end")
+        + fitText(cue.directionLabel, f.x + 285, f.y + 58, 615, 96, 48, 28)
+        + fitText(scene.switch.cues[index + 1] ? `Next: ${scene.switch.cues[index + 1]!.directionLabel}` : "Last switch", f.x + 285, f.y + 165, 615, 35, 22, 16, C.paper);
+      const step = (f.width - 64) / scene.switch.cues.length;
+      scene.switch.cues.forEach((_, i) => { body += rect(f.x + 32 + i * step, f.y + f.height - 24, step - 9, 6, i === index ? C.accent : i < index ? C.blue : "#ffffff55", 3); });
+      return body;
+    }
     const duet = settings.layout === "duet", cx = f.x + f.width / 2;
     const symbolX = duet ? f.x + 44 : cx - 92, symbolY = f.y + 38, symbolSize = duet ? 210 : 184;
     let body = rect(f.x, f.y, f.width, f.height, C.surface, 32, `stroke="${C.border}" stroke-width="2"`)
@@ -205,7 +247,7 @@ function contentBody(scene: CompositionScene, settings: ClipEditSettings, time: 
     const cues = scene.say.clip.cues.filter((cue) => time >= cue.start && time < cue.end);
     if (!cues.length) return "";
     const caption = cues.map((cue) => `${scene.say.clip.roles.find((role) => role.id === cue.roleId)?.name ?? "Scene"}: ${cue.text}`).join("\n");
-    return text("SCENE SCRIPT", f.x, f.y + 20, 18, C.muted, 500) + fitText(caption, f.x, f.y + 38, f.width, f.height - 46, settings.layout === "duet" ? 35 : 37, 21);
+    return text("SCENE SCRIPT", f.x, f.y + 20, 18, C.muted, 500) + fitText(caption, f.x, f.y + 38, f.width, f.height - 46, fullFrameCamera(settings) ? 52 : settings.layout === "duet" ? 35 : 37, 21);
   }
   return "";
 }
@@ -232,12 +274,13 @@ function waveformBody(scene: CompositionScene, settings: ClipEditSettings, level
 export function waveformSvg(scene: CompositionScene, settings: ClipEditSettings, levels: readonly number[], options: { time: number; audioOffset?: number }): string {
   return svg(waveformBody(scene, settings, levels, options));
 }
-export function compositionSvg(scene: CompositionScene, settings: ClipEditSettings, options: { time: number; level?: number; reducedMotion?: boolean; layer?: "all" | "base" | "content" | "waveform" | "avatar"; audioLevels?: readonly number[]; audioOffset?: number; avatarImageHref?: string } = { time: 0 }): string {
+export function compositionSvg(scene: CompositionScene, settings: ClipEditSettings, options: { time: number; level?: number; reducedMotion?: boolean; layer?: "all" | "background" | "base" | "content" | "waveform" | "avatar"; audioLevels?: readonly number[]; audioOffset?: number; avatarImageHref?: string } = { time: 0 }): string {
   const layer = options.layer ?? "all";
+  if (layer === "background") return svg(rect(0, 0, COMPOSITION_WIDTH, COMPOSITION_HEIGHT, C.ink));
   let body = layer === "all" || layer === "base" ? baseBody(scene, settings) : "";
   if (layer === "all" || layer === "content") body += contentBody(scene, settings, options.time);
   if (layer === "all" || layer === "waveform") body += waveformBody(scene, { ...settings, reducedMotion: options.reducedMotion ?? settings.reducedMotion }, options.audioLevels ?? [], { time: options.time, audioOffset: options.audioOffset });
-  if ((layer === "all" || layer === "avatar") && settings.avatarVisible) {
+  if ((layer === "all" || layer === "avatar") && settings.avatarVisible && settings.performer !== "camera") {
     const f = avatarFrame(settings);
     body += `<g transform="translate(${f.x} ${f.y})">${avatarSvg(settings.avatar, { size: f.width, level: options.level, reducedMotion: options.reducedMotion ?? settings.reducedMotion, imageHref: options.avatarImageHref })}</g>`;
   }
@@ -245,14 +288,16 @@ export function compositionSvg(scene: CompositionScene, settings: ClipEditSettin
 }
 
 /** Exact source crop used by both CSS preview and FFmpeg. */
-export function cameraCrop(width: number, height: number, settings?: Pick<ClipEditSettings, "cameraZoom" | "cameraCropX" | "cameraCropY">): CompositionFrame {
-  const size = Math.max(1, Math.floor(Math.min(width, height) / (settings?.cameraZoom ?? 1) / 2) * 2);
-  return { x: Math.floor((width - size) * (settings?.cameraCropX ?? 0.5) / 2) * 2, y: Math.floor((height - size) * (settings?.cameraCropY ?? 0.5) / 2) * 2, width: size, height: size };
+export function cameraCrop(width: number, height: number, settings?: Pick<ClipEditSettings, "cameraZoom" | "cameraCropX" | "cameraCropY"> & Partial<Pick<ClipEditSettings, "performer" | "layout">>): CompositionFrame {
+  const ratio = settings?.performer === "camera" && settings.layout === "spotlight" ? 9 / 16 : 1;
+  const heightAtZoom = Math.min(height, width / ratio) / (settings?.cameraZoom ?? 1);
+  const cropWidth = Math.max(1, Math.floor(heightAtZoom * ratio / 2) * 2), cropHeight = Math.max(1, Math.floor(heightAtZoom / 2) * 2);
+  return { x: Math.floor((width - cropWidth) * (settings?.cameraCropX ?? 0.5) / 2) * 2, y: Math.floor((height - cropHeight) * (settings?.cameraCropY ?? 0.5) / 2) * 2, width: cropWidth, height: cropHeight };
 }
 export function cameraLayoutSettings(mode: CompositionMode, layout: ClipEditSettings["layout"]): Partial<ClipEditSettings> {
   if (mode === "say-it-back") return { layout, avatarX: layout === "spotlight" ? 0.24 : 0.77, avatarY: layout === "spotlight" ? 0.64 : 0.575, avatarSize: layout === "spotlight" ? 0.36 : 0.29 };
   return layoutClipEditSettings(mode, layout);
 }
 export function defaultCameraSettings(mode: CompositionMode): ClipEditSettings {
-  return { ...defaultClipEditSettings(mode), ...cameraLayoutSettings(mode, "spotlight"), performer: "camera" };
+  return { ...defaultClipEditSettings(mode), ...cameraLayoutSettings(mode, "spotlight"), performer: "camera", captions: false };
 }

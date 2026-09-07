@@ -1,0 +1,37 @@
+[
+  {
+    "sample": "classic",
+    "captions": false,
+    "decodedAudioUnchanged": true,
+    "maxAudioDifference": 0.0,
+    "duration": 4.2
+  },
+  {
+    "sample": "switch",
+    "captions": false,
+    "decodedAudioUnchanged": true,
+    "maxAudioDifference": 0.0,
+    "duration": 8.166667
+  },
+  {
+    "sample": "say-it-back",
+    "captions": false,
+    "decodedAudioUnchanged": true,
+    "maxAudioDifference": 0.0,
+    "duration": 10.4
+  },
+  {
+    "sample": "switch-speed",
+    "captions": false,
+    "decodedAudioUnchanged": true,
+    "maxAudioDifference": 0.0,
+    "duration": 8.166667
+  },
+  {
+    "sample": "say-framed",
+    "captions": true,
+    "decodedAudioUnchanged": true,
+    "maxAudioDifference": 0.0,
+    "duration": 10.4
+  }
+]

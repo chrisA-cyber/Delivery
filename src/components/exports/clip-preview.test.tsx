@@ -2,7 +2,7 @@ import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ClipPreview, type ClipEditorSource } from "./clip-preview";
-import { defaultClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
+import { defaultCameraSettings, defaultClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
 
 vi.mock("@/components/providers/app-provider", () => ({ useApp: () => ({ reducedMotion: false }) }));
 const source: ClipEditorSource = { recordingUrl: "/audio", recordingOffsetMs: 0, duration: 4, scene: { mode: "switch", duration: 4, switch: { id: "switch", version: "1", title: "Same line", description: "", kind: "speed", duration: 4, difficulty: "easy", rating: "everyone", tags: [], scoringVersion: "1", rubricVersion: "1", cues: [{ id: "first", text: "That was intentional.", emoji: "😐", speed: 1, direction: "normal", directionLabel: "Normal", start: 0, end: 1 }, { id: "second", text: "That was intentional.", emoji: "🐢", speed: 0.5, direction: "slow", directionLabel: "Slow", start: 1, end: 3 }, { id: "third", text: "That was intentional.", emoji: "⚡", speed: 2, direction: "fast", directionLabel: "Fast", start: 3, end: 4 }] } } };
@@ -27,6 +27,20 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("original-clock composition preview", () => {
+  it("keeps full-frame camera behind the overlays and crops instead of moving the canvas", () => {
+    const onChange = vi.fn();
+    const cameraSource = { ...source, camera: [{ start: 0, end: 4, sourceStart: 0.03, mirror: true, url: "/camera.webm" }] };
+    render(<ClipPreview source={cameraSource} settings={defaultCameraSettings("switch")} onChange={onChange} />);
+    const preview = screen.getByLabelText("Editable clip preview");
+    expect(preview.firstElementChild?.querySelector("video")).toBeTruthy();
+    expect(screen.getByText("1×")).toBeInTheDocument();
+    const crop = screen.getByRole("button", { name: /Crop camera/ });
+    expect(crop).toHaveStyle({ width: "100%", height: "100%" });
+    fireEvent.keyDown(crop, { key: "ArrowRight" });
+    expect(onChange).toHaveBeenLastCalledWith({ cameraCropX: 0.51, cameraCropY: 0.5 });
+    expect(screen.queryByRole("button", { name: /Resize performer/ })).not.toBeInTheDocument();
+  });
+
   it("starts on the trimmed Switch cue and measures talking and silence from the saved audio", async () => {
     const { container } = render(<ClipPreview source={source} settings={settings} onChange={vi.fn()} />);
     expect(screen.getByText("0.5×")).toBeInTheDocument();

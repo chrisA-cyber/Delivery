@@ -5,7 +5,7 @@ import { useApp } from "@/components/providers/app-provider";
 import { Check, Captions, LayoutTemplate, Scissors, UserRound } from "lucide-react";
 import { AvatarPicker } from "@/components/avatars/avatar-picker";
 import { usePreferredAvatar } from "@/hooks/use-preferred-avatar";
-import { cameraLayoutSettings, layoutClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
+import { cameraLayoutSettings, fullFrameCamera, layoutClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
 import type { VideoExportMode } from "./video-export";
 import { clipTime } from "./clip-preview";
 
@@ -33,17 +33,17 @@ export function ClipEditorControls({ mode, settings, onChange, duration, hasScor
       <fieldset disabled={disabled} className="space-y-4">
         <legend className="sr-only">{tabs.find((item) => item.id === tab)?.label} settings</legend>
         {tab === "layout" && <>
-          {hasCamera && <div className="flex gap-2" role="group" aria-label="Clip performer">{(["avatar", "camera"] as const).map(performer => <button type="button" key={performer} aria-pressed={settings.performer === performer} className={settings.performer === performer ? "button-primary min-h-10 text-xs" : "button-secondary min-h-10 text-xs"} onClick={() => onChange({ performer, ...(performer === "camera" ? cameraLayoutSettings(mode, settings.layout) : layoutClipEditSettings(mode, settings.layout)) })}>{performer === "camera" ? "Camera" : "Avatar"}</button>)}</div>}
+          {hasCamera && <div className="flex gap-2" role="group" aria-label="Clip performer">{(["avatar", "camera"] as const).map(performer => <button type="button" key={performer} aria-pressed={settings.performer === performer} className={settings.performer === performer ? "button-primary min-h-10 text-xs" : "button-secondary min-h-10 text-xs"} onClick={() => onChange({ performer, ...(performer === "camera" && settings.performer !== "camera" ? { captions: false } : {}), ...(performer === "camera" ? cameraLayoutSettings(mode, settings.layout) : layoutClipEditSettings(mode, settings.layout)) })}>{performer === "camera" ? "Camera" : "Avatar"}</button>)}</div>}
           <div className="grid grid-cols-2 gap-3">
             {(["spotlight", "duet"] as const).map((layout) => <button type="button" key={layout} aria-pressed={settings.layout === layout} onClick={() => onChange(settings.performer === "camera" ? cameraLayoutSettings(mode, layout) : layoutClipEditSettings(mode, layout))} className={`rounded-xl border p-3 text-left transition-colors ${settings.layout === layout ? "border-electric bg-electric/10" : "border-white/15 bg-black/20 hover:border-white/35"}`}>
               <div className={`relative mx-auto h-24 w-14 overflow-hidden rounded-md border border-white/20 bg-ink ${mode === "say-it-back" ? "" : "pt-5"}`} aria-hidden="true">
-                {mode === "say-it-back" ? <><div className={`absolute inset-x-1 bg-white/25 ${layout === "spotlight" ? "top-4 h-14" : "top-3 h-10"}`} /><div className={`absolute size-4 rounded-full bg-electric ${layout === "spotlight" ? "bottom-5 right-1" : "bottom-5 left-5"}`} /></> : <><div className={`mx-auto rounded-full bg-electric ${layout === "spotlight" ? "size-7" : "mt-5 size-5"}`} /><div className={`absolute inset-x-2 h-1 rounded bg-white/50 ${layout === "spotlight" ? "bottom-6" : "top-5"}`} /></>}
+                {settings.performer === "camera" && layout === "spotlight" ? <><div className="absolute inset-0 bg-gradient-to-b from-electric/50 via-white/15 to-black/80" /><div className="absolute inset-x-1 top-3 h-4 rounded bg-black/60" />{mode === "say-it-back" && <div className="absolute left-1 top-9 h-4 w-6 border border-white/50 bg-white/25" />}<div className="absolute bottom-5 left-2 right-2 h-1 rounded bg-white/80" /></> : mode === "say-it-back" ? <><div className={`absolute inset-x-1 bg-white/25 ${layout === "spotlight" ? "top-4 h-14" : "top-3 h-10"}`} /><div className={`absolute size-4 rounded-full bg-electric ${layout === "spotlight" ? "bottom-5 right-1" : "bottom-5 left-5"}`} /></> : <><div className={`mx-auto rounded-full bg-electric ${layout === "spotlight" ? "size-7" : "mt-5 size-5"}`} /><div className={`absolute inset-x-2 h-1 rounded bg-white/50 ${layout === "spotlight" ? "bottom-6" : "top-5"}`} /></>}
                 <div className="absolute bottom-2 left-2 right-2 h-0.5 rounded bg-white/20" />
               </div>
-              <span className="mt-2 flex items-center justify-between text-sm font-bold">{layout === "spotlight" ? mode === "say-it-back" ? "Scene" : "Spotlight" : mode === "say-it-back" ? "Companion" : "Split"}{settings.layout === layout && <Check className="size-3.5 text-electric" />}</span>
+              <span className="mt-2 flex items-center justify-between text-sm font-bold">{settings.performer === "camera" ? layout === "spotlight" ? "Full frame" : mode === "say-it-back" ? "Scene focus" : "Framed" : layout === "spotlight" ? mode === "say-it-back" ? "Scene" : "Spotlight" : mode === "say-it-back" ? "Companion" : "Split"}{settings.layout === layout && <Check className="size-3.5 text-electric" />}</span>
             </button>)}
           </div>
-          <p className="text-xs leading-5 text-white/55">{mode === "say-it-back" ? "Your scene keeps its original framing. Drag your performer in the preview to place it." : "Drag your performer in the preview. Keep key content clear of the edges."}</p>
+          <p className="text-xs leading-5 text-white/55">{fullFrameCamera(settings) ? "Drag the video to frame your face. Adjust zoom in Performer." : mode === "say-it-back" ? "Your scene keeps its original framing. Drag your performer in the preview to place it." : "Drag your performer in the preview. Keep key content clear of the edges."}</p>
         </>}
         {tab === "avatar" && <>
           {settings.performer === "camera" && <>
@@ -58,11 +58,13 @@ export function ClipEditorControls({ mode, settings, onChange, duration, hasScor
           <div className="flex flex-wrap items-center justify-between gap-2"><button type="button" className="button-ghost min-h-10 px-0 text-xs" disabled={sameAvatar || preference.saving || disabled} onClick={() => void preference.setAvatar(settings.avatar)}>{sameAvatar ? <><Check className="size-3.5" />Your default avatar</> : preference.saving ? "Saving avatar…" : "Use for future clips"}</button></div>
           {preference.error && <p role="alert" className="text-xs text-orange-200">{preference.error}</p>}
           </>}
+          {!fullFrameCamera(settings) && <>
           <label className="block text-xs font-bold">Size <span className="float-right font-normal tabular-nums text-white/55">{Math.round(settings.avatarSize * 100)}%</span><input type="range" min={0.14} max={0.7} step={0.01} value={settings.avatarSize} onChange={(event) => onChange({ avatarSize: Number(event.target.value) })} className="mt-2 h-8 w-full accent-electric" /></label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block text-xs text-white/65">Horizontal<input type="range" min={settings.avatarSize / 2} max={1 - settings.avatarSize / 2} step={0.01} value={settings.avatarX} onChange={(event) => onChange({ avatarX: Number(event.target.value) })} className="mt-1 h-8 w-full accent-electric" /></label>
             <label className="block text-xs text-white/65">Vertical<input type="range" min={settings.avatarSize * 1080 / 1920 / 2} max={1 - settings.avatarSize * 1080 / 1920 / 2} step={0.01} value={settings.avatarY} onChange={(event) => onChange({ avatarY: Number(event.target.value) })} className="mt-1 h-8 w-full accent-electric" /></label>
           </div>
+          </>}
         </>}
         {tab === "text" && <>
           {[{ field: "captions" as const, label: mode === "say-it-back" ? "Scripted dialogue" : "Challenge text", note: mode === "say-it-back" ? "Original scene lines, at their saved times." : "The line you were asked to perform." }, { field: "includeName" as const, label: "Display name", note: "Your name, when available." }, { field: "includeScore" as const, label: mode === "switch" ? "Beta score" : "Score", note: hasScore ? "The original full-performance score." : "This take is unscored." }].map(({ field, label, note }) => <label key={field} className="flex min-h-12 cursor-pointer items-start gap-3"><input type="checkbox" checked={settings[field]} disabled={field === "includeScore" && !hasScore} onChange={(event) => onChange({ [field]: event.target.checked })} className="mt-1 size-4 accent-electric" /><span className="text-sm font-bold">{label}<span className="mt-0.5 block text-xs font-normal leading-5 text-white/55">{note}</span></span></label>)}

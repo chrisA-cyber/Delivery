@@ -20,14 +20,14 @@ export function CameraControls({ camera, disabled = false }: { camera?: CameraCo
       </>}
     </div>
     {camera.error && <p role="alert" className="text-xs text-orange-200">{camera.error}</p>}
-    {camera.mode === "camera" && camera.stream && <p className="text-[10px] text-white/50">{camera.mirror ? "Mirrored" : "Natural"} · saved as shown · private until you share</p>}
+    {camera.mode === "camera" && camera.stream && <p className="text-[10px] text-white/50">{camera.mirror ? "Mirrored" : "Natural"} · vertical preview · private until you share</p>}
   </div>;
 }
 export function CameraMonitor({ camera, level = 0, size = 128, editable = true }: { camera?: CameraController; level?: number; size?: number; editable?: boolean }) {
   const video = useRef<HTMLVideoElement>(null);
   useEffect(() => { const node = video.current; if (!node || !camera?.stream) return; node.srcObject = camera.stream; void node.play().catch(() => undefined); return () => { node.srcObject = null; }; }, [camera?.stream]);
   if (camera?.mode !== "camera") return <PerformerAvatar size={size} level={level} editable={editable} />;
-  return <div className="relative shrink-0 overflow-hidden rounded-xl border border-white/20 bg-black" style={{ width: size, height: size }}>
+  return <div className="relative shrink-0 overflow-hidden rounded-xl border border-white/20 bg-black" style={{ width: size * 9 / 16, height: size }}>
     <video ref={video} muted playsInline autoPlay aria-label="Live camera framing" className="size-full object-cover" style={{ transform: camera.mirror ? "scaleX(-1)" : undefined }} />
     {!camera.stream && <div className="absolute inset-0 grid place-items-center text-white/40"><Camera className="size-7" /></div>}
   </div>;

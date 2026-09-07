@@ -6,13 +6,13 @@ import { dirname, join } from "node:path";
 // Sharp 0.35 ships declarations but omits them from its ESM export map.
 // @ts-expect-error Upstream package export map; runtime import is supported.
 import sharp from "sharp";
-import { BUILTIN_AVATARS, cameraCrop, audioLevelAt, avatarFrame, avatarSvg, clipEditSettingsSchema, compositionBoundaries, compositionFooter, compositionSvg, contentFrame, defaultClipEditSettings, measureAudioLevels, migrateClipEditSettings, sceneFrame, waveformFrame, waveformSvg, WAVEFORM_FPS, type ClipEditSettings, type CompositionScene } from "@/lib/video-composition";
+import { VIDEO_LAYOUT_VERSION, BUILTIN_AVATARS, cameraCrop, cameraFrame, fullFrameCamera, audioLevelAt, avatarFrame, avatarSvg, clipEditSettingsSchema, compositionBoundaries, compositionFooter, compositionSvg, contentFrame, defaultClipEditSettings, measureAudioLevels, migrateClipEditSettings, sceneFrame, waveformFrame, waveformSvg, WAVEFORM_FPS, type ClipEditSettings, type CompositionScene } from "@/lib/video-composition";
 export { wrapVideoText } from "@/lib/video-composition";
 import { MAX_SAY_RECORDING_MS } from "@/lib/audio-capture";
 import type { SwitchChallenge } from "@/lib/switch/types";
 import type { SayClip } from "@/lib/say-it-back/types";
 
-export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v5-camera" as const;
+export { VIDEO_LAYOUT_VERSION } from "@/lib/video-composition";
 export const VIDEO_RENDER_LIMITS = Object.freeze({ durationSeconds: 22, outputBytes: 48 * 1024 * 1024, timeoutMs: 180_000, threads: 2 });
 const SAY_VIDEO_RENDER_LIMITS = Object.freeze({ ...VIDEO_RENDER_LIMITS, durationSeconds: MAX_SAY_RECORDING_MS / 1000, timeoutMs: 360_000 });
 const W = 1080;
@@ -148,10 +148,44 @@ export async function renderPerformanceVideo(input: VideoRenderInput, options: {
     for (let i = 0; i < samples.length; i++) samples[i] = pcm.readFloatLE(i * 4);
     const levels = measureAudioLevels(samples, 8000);
     const scene = compositionScene(input, sourceDuration), basePath = join(dir, "layout.png");
-    await raster(basePath, compositionSvg(scene, settings, { time: trimStart, layer: "base" }));
+    const fullCamera = fullFrameCamera(settings);
+    await raster(basePath, compositionSvg(scene, settings, { time: trimStart, layer: fullCamera ? "background" : "base" }));
     const args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-y", "-filter_complex_threads", "1", "-threads", "2", "-loop", "1", "-framerate", String(FPS), "-i", basePath, "-threads", "2", "-protocol_whitelist", "file,pipe", "-i", input.recordingPath];
     const filters: string[] = ["[0:v]format=rgba[base]"];
     let inputIndex = 2, videoLabel = "base", audioLabel: string | null = null;
+    async function composeCamera() {
+      if (settings.performer !== "camera" || !settings.avatarVisible) return;
+      if (!input.camera?.length) throw new VideoRenderError("RENDER_CAMERA", "Camera footage is unavailable. Retry the upload or choose Avatar.");
+      const f = cameraFrame(settings);
+      const dimensions = new Map<string, { width: number; height: number }>();
+      for (let i = 0; i < input.camera.length; i++) {
+        const part = input.camera[i]!, start = Math.max(trimStart, part.start), end = Math.min(trimEnd, part.end);
+        if (start >= end) continue;
+        if (!part.path) throw new VideoRenderError("RENDER_CAMERA", "Camera footage is unavailable.");
+        if (!dimensions.has(part.path)) {
+          const media = await probe(part.path, signal), v = media.streams?.find(s => s.codec_type === "video");
+          if (!v?.width || !v.height || v.width * v.height > 3840 * 2160) throw new VideoRenderError("RENDER_CAMERA", "This camera format is unavailable.");
+          // FFmpeg autorotates phone metadata before filters. Crop that displayed orientation.
+          const rotation = (v as typeof v & { side_data_list?: { rotation?: number }[] }).side_data_list?.find(d => d.rotation !== undefined)?.rotation ?? 0;
+          dimensions.set(part.path, Math.abs(rotation) % 180 === 90 ? { width: v.height, height: v.width } : { width: v.width, height: v.height });
+        }
+        const d = dimensions.get(part.path)!, crop = cameraCrop(d.width, d.height, settings), index = inputIndex++;
+        args.push("-threads", "2", "-protocol_whitelist", "file,pipe", "-i", part.path);
+        const sourceStart = part.sourceStart + start - part.start;
+        const mirror = settings.cameraMirror ?? part.mirror;
+        filters.push(`[${index}:v]trim=start=${sourceStart}:duration=${end-start},setpts=PTS-STARTPTS,crop=${crop.width}:${crop.height}:${crop.x}:${crop.y}${mirror ? ",hflip" : ""},scale=${f.width}:${f.height},setsar=1,fps=${FPS},tpad=stop_mode=clone:stop_duration=0.12,setpts=PTS+${start-trimStart}/TB[camera_${i}]`);
+        filters.push(`[${videoLabel}][camera_${i}]overlay=x=${f.x}:y=${f.y}:eof_action=pass:enable='gte(t,${start-trimStart})*lt(t,${end-trimStart})'[camera_composed_${i}]`);
+        videoLabel = `camera_composed_${i}`;
+      }
+    }
+    if (fullCamera) {
+      await composeCamera();
+      const overlayPath = join(dir, "camera-overlay.png");
+      await raster(overlayPath, compositionSvg(scene, settings, { time: trimStart, layer: "base" }));
+      args.push("-threads", "1", "-i", overlayPath);
+      filters.push(`[${videoLabel}][${inputIndex++}:v]overlay=0:0:eof_action=repeat[camera_artwork]`);
+      videoLabel = "camera_artwork";
+    }
     let audioCopied = audio.codec_name === "aac" && input.mode !== "say-it-back" && trimStart === 0 && (settings.trimEnd === null || Math.abs(trimEnd - sourceDuration) < 0.001);
     if (input.mode === "say-it-back") {
       const { clip, roleId, videoPath, backingPath } = input.say;
@@ -201,7 +235,7 @@ export async function renderPerformanceVideo(input: VideoRenderInput, options: {
     args.push("-threads", "1", "-framerate", String(WAVEFORM_FPS), "-i", join(dir, "wave-%05d.png"));
     filters.push(`[${videoLabel}][${inputIndex++}:v]overlay=x=${wave.x}:y=${wave.y}:eof_action=repeat[waveform]`);
     videoLabel = "waveform";
-    if (settings.avatarVisible) {
+    if (settings.avatarVisible && settings.performer !== "camera") {
       let imageHref: string;
       if (settings.avatar.kind === "upload") {
         const png = await sharp(Buffer.from(settings.avatar.dataUrl.split(",")[1]!, "base64"), { limitInputPixels: 1024 * 1024 }).png().toBuffer();
@@ -224,30 +258,7 @@ export async function renderPerformanceVideo(input: VideoRenderInput, options: {
       filters.push(`[${videoLabel}][${inputIndex++}:v]overlay=x=${f.x}:y=${f.y}:eof_action=repeat[avatar]`);
       videoLabel = "avatar";
     }
-    if (settings.performer === "camera" && settings.avatarVisible) {
-      if (!input.camera?.length) throw new VideoRenderError("RENDER_CAMERA", "Camera footage is unavailable. Retry the upload or choose Avatar.");
-      const f = avatarFrame(settings);
-      const dimensions = new Map<string, { width: number; height: number }>();
-      for (let i = 0; i < input.camera.length; i++) {
-        const part = input.camera[i]!, start = Math.max(trimStart, part.start), end = Math.min(trimEnd, part.end);
-        if (start >= end) continue;
-        if (!part.path) throw new VideoRenderError("RENDER_CAMERA", "Camera footage is unavailable.");
-        if (!dimensions.has(part.path)) {
-          const media = await probe(part.path, signal), v = media.streams?.find(s => s.codec_type === "video");
-          if (!v?.width || !v.height || v.width * v.height > 3840 * 2160) throw new VideoRenderError("RENDER_CAMERA", "This camera format is unavailable.");
-          // FFmpeg autorotates phone metadata before filters. Crop that displayed orientation.
-          const rotation = (v as typeof v & { side_data_list?: { rotation?: number }[] }).side_data_list?.find(d => d.rotation !== undefined)?.rotation ?? 0;
-          dimensions.set(part.path, Math.abs(rotation) % 180 === 90 ? { width: v.height, height: v.width } : { width: v.width, height: v.height });
-        }
-        const d = dimensions.get(part.path)!, crop = cameraCrop(d.width, d.height, settings), index = inputIndex++;
-        args.push("-threads", "2", "-protocol_whitelist", "file,pipe", "-i", part.path);
-        const sourceStart = part.sourceStart + start - part.start;
-        const mirror = settings.cameraMirror ?? part.mirror;
-        filters.push(`[${index}:v]trim=start=${sourceStart}:duration=${end-start},setpts=PTS-STARTPTS,crop=${crop.width}:${crop.height}:${crop.x}:${crop.y}${mirror ? ",hflip" : ""},scale=${f.width}:${f.height},setsar=1,fps=${FPS},tpad=stop_mode=clone:stop_duration=0.12,setpts=PTS+${start-trimStart}/TB[camera_${i}]`);
-        filters.push(`[${videoLabel}][camera_${i}]overlay=x=${f.x}:y=${f.y}:eof_action=pass:enable='gte(t,${start-trimStart})*lt(t,${end-trimStart})'[camera_composed_${i}]`);
-        videoLabel = `camera_composed_${i}`;
-      }
-    }
+    if (!fullCamera) await composeCamera();
     filters.push(`[${videoLabel}]format=yuv420p[out]`);
     const filterPath = join(dir, "filters.txt");
     await writeFile(filterPath, filters.join(";\n"));

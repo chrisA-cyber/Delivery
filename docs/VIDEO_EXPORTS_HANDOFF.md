@@ -1,3 +1,17 @@
+# Full-frame camera clips — September 7, 2026
+
+Camera clips now default to edge-to-edge 9:16 footage. Emoji/speed cues sit at the top, with a quiet center for the player's face and translucent shading behind text. The existing waveform, optional name/score and invitation overlay the footage. Say It Back keeps the full reference scene in a small inset. A framed/scene-focus alternative remains available; avatar layouts are unchanged.
+
+Phrase/script text is **off by default for camera clips** and can be enabled in the editor's Text tab. Existing deliberately saved presentation settings still reopen. Full-frame dragging crops the footage; zoom, crop sliders and orientation remain available under Performer. Size/position controls appear for the framed option. Live framing previews use the default vertical crop.
+
+The browser and FFmpeg share portrait crop geometry, timeline and layer order. Renderer and export-job hashes now share `delivery-vertical-v6-full-camera`; the editor won't mistake an older square-camera MP4 for the new composition. Earlier downloads remain accessible and are regenerated only when requested. No storage or infrastructure changes were needed.
+
+Verification: 37 focused composition, preview, export and renderer tests; lint/type checks; actual MediaRecorder fixtures rendered in Classic, emoji/speed Switch and Say It Back (including the rotated retake and framed alternative). Full-frame crop comparisons differ by only 0.6–1.4 pixel levels; decoded audio is identical to the previous corresponding exports. Browser inspection confirmed overlays, scene inset and crop controls. [Rendered samples](evidence/full-camera/render-results.json), [contact sheet](evidence/full-camera/contact-sheet.webp), [crop comparisons](evidence/full-camera/media-agreement.json), [final audio checks](evidence/full-camera/final-audio-check.json). Inputs are simulated; no new physical-device claim is made.
+
+The release report identifies the final pushed commit and verified Railway deployment. Update the existing source pin explicitly; Clipping remains untouched.
+
+---
+
 # Optional camera recording — September 7, 2026
 
 Camera is integrated with Classic, Switch and Say It Back. Avatar remains the default; a remembered Camera preference does not open a device until an explicit action. The recording controls offer a framing preview, available devices, front/back switching and a mirror option. The square preview shows the orientation used by replay and export. Switch retains its compact cue-first stage.

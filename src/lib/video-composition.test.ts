@@ -1,9 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { audioLevelAt, avatarFrame, avatarSpeechPose, avatarSvg, clipEditSettingsSchema, compositionSvg, contentFrame, defaultClipEditSettings, layoutClipEditSettings, measureAudioLevels, sceneFrame, waveformSvg, type CompositionScene } from "./video-composition";
+import { audioLevelAt, cameraFrame, cameraCrop, defaultCameraSettings, avatarFrame, avatarSpeechPose, avatarSvg, clipEditSettingsSchema, compositionSvg, contentFrame, defaultClipEditSettings, layoutClipEditSettings, measureAudioLevels, sceneFrame, waveformSvg, type CompositionScene } from "./video-composition";
 import { SWITCH_CHALLENGES } from "./switch/catalog";
 import { SAY_CLIPS } from "./say-it-back/catalog";
 
 describe("saved clip composition", () => {
+  it("fills the camera canvas with a matching portrait crop while retaining a framed option", () => {
+    const settings = defaultCameraSettings("switch");
+    expect(settings.captions).toBe(false);
+    expect(cameraFrame(settings)).toEqual({ x: 0, y: 0, width: 1080, height: 1920 });
+    expect(cameraCrop(720, 1280, settings)).toEqual({ x: 0, y: 0, width: 720, height: 1280 });
+    const landscape = cameraCrop(1280, 720, settings);
+    expect(landscape.width / landscape.height).toBeCloseTo(9 / 16, 2);
+    expect(landscape.x * 2 + landscape.width).toBe(1280);
+    const framed = { ...settings, layout: "duet" as const };
+    expect(cameraFrame(framed)).toEqual(avatarFrame(framed));
+    expect(cameraCrop(1280, 720, framed).width).toBe(720);
+    const scene: CompositionScene = { mode: "switch", duration: 20, switch: SWITCH_CHALLENGES[0]! };
+    expect(compositionSvg(scene, settings, { time: 4.1, layer: "base" })).not.toContain("CHALLENGE LINE");
+    expect(compositionSvg(scene, { ...settings, captions: true }, { time: 4.1, layer: "base" })).toContain("CHALLENGE LINE");
+    expect(contentFrame(scene, settings).y + contentFrame(scene, settings).height).toBeLessThan(500);
+    expect(compositionSvg(scene, settings, { time: 4.1, layer: "content" })).toContain("Angry");
+    expect(compositionSvg(scene, settings, { time: 4.1, layer: "avatar" })).not.toContain("data-avatar-body");
+    expect(sceneFrame(defaultCameraSettings("say-it-back"))).toEqual({ x: 64, y: 250, width: 480, height: 360 });
+  });
+
   it("uses measured speech and silence, with the same original-clock envelope after a cut", () => {
     const samples = new Float32Array(8000);
     samples.fill(0.125, 3200, 4800);

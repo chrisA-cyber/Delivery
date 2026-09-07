@@ -4,7 +4,7 @@ import { Check, Clapperboard, Download, Film, LoaderCircle, RefreshCw, RotateCcw
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "@/components/providers/app-provider";
-import { defaultCameraSettings, defaultClipEditSettings, type ClipAvatar, type ClipEditSettings } from "@/lib/video-composition";
+import { VIDEO_LAYOUT_VERSION, fullFrameCamera, defaultCameraSettings, defaultClipEditSettings, type ClipAvatar, type ClipEditSettings } from "@/lib/video-composition";
 import { ClipEditorControls } from "./clip-editor-controls";
 import { ClipPreview, type ClipEditorSource } from "./clip-preview";
 import Link from "next/link";
@@ -16,6 +16,7 @@ export interface ExportVideo {
   includeScore: boolean;
   includeName: boolean;
   settings?: ClipEditSettings | null;
+  layoutVersion?: string | null;
   displayName?: string | null;
   score?: ClipEditorSource["scene"]["score"];
   errorMessage?: string | null;
@@ -136,7 +137,7 @@ export function VideoExport({ mode, attemptId, prepareAttempt, hasScore = false,
   }, [opened, portalReady]);
 
   const currentKey = clipSettingsKey(settings);
-  const selected = exports.find((item) => item.settings && clipSettingsKey(item.settings) === currentKey
+  const selected = exports.find((item) => item.settings && (!fullFrameCamera(settings) || item.layoutVersion === VIDEO_LAYOUT_VERSION) && clipSettingsKey(item.settings) === currentKey
     && (!settings.includeName || (item.displayName ?? null) === (editor?.source.scene.displayName ?? null))
     && (!settings.includeScore || (item.score?.value === editor?.source.scene.score?.value && item.score?.label === editor?.source.scene.score?.label && Boolean(item.score?.beta) === Boolean(editor?.source.scene.score?.beta))));
   const selectedId = selected?.id;

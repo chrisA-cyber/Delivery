@@ -1,0 +1,40 @@
+[
+  {
+    "sample": "classic",
+    "decodedAudioUnchanged": true,
+    "maxAudioDifference": 0.0,
+    "trimDuration": 4.199999999999999,
+    "cameraCenterPixelMAE": 0.5981882716049383,
+    "rotation": 0
+  },
+  {
+    "sample": "switch",
+    "decodedAudioUnchanged": true,
+    "maxAudioDifference": 0.0,
+    "trimDuration": 8.15,
+    "cameraCenterPixelMAE": 1.3430267489711933,
+    "rotation": 0
+  },
+  {
+    "sample": "say-it-back",
+    "decodedAudioUnchanged": true,
+    "maxAudioDifference": 0.0,
+    "trimDuration": 10.4,
+    "cameraCenterPixelMAE": 0.7540771604938271,
+    "rotation": 90
+  },
+  {
+    "sample": "switch-speed",
+    "decodedAudioUnchanged": true,
+    "maxAudioDifference": 0.0,
+    "trimDuration": 8.15,
+    "cameraCenterPixelMAE": 1.3421008230452676,
+    "rotation": 0
+  },
+  {
+    "sample": "say-framed",
+    "decodedAudioUnchanged": true,
+    "maxAudioDifference": 0.0,
+    "trimDuration": 10.4
+  }
+]
