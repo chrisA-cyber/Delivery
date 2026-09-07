@@ -1,0 +1,89 @@
+{
+  "samples": [
+    {
+      "mode": "classic",
+      "bytes": 93254,
+      "state": "ready",
+      "attempts": 1,
+      "attemptId": "21d62c19-771d-4417-8198-e495c440cb42",
+      "durationMs": 2075,
+      "workerElapsedSeconds": 1.913
+    },
+    {
+      "mode": "switch",
+      "bytes": 376495,
+      "state": "ready",
+      "attempts": 1,
+      "attemptId": "2eb03efb-9113-40c9-82a4-52becd72f5c9",
+      "durationMs": 20000,
+      "workerElapsedSeconds": 5.915
+    },
+    {
+      "mode": "switch",
+      "bytes": 459243,
+      "state": "ready",
+      "attempts": 1,
+      "attemptId": "ea3175f6-0659-403f-a03c-c7353879d232",
+      "durationMs": 20000,
+      "workerElapsedSeconds": 5.792
+    },
+    {
+      "mode": "say-it-back",
+      "bytes": 3289363,
+      "state": "ready",
+      "attempts": 1,
+      "attemptId": "d1fe8aa0-f134-431a-9da9-71b353bf051c",
+      "durationMs": 14700,
+      "workerElapsedSeconds": 6.427
+    }
+  ],
+  "recovery": {
+    "state": "ready",
+    "attempts": 2,
+    "newStorageLease": true,
+    "oldWorkerMayPublish": false,
+    "workerElapsedSeconds": 2.651,
+    "method": "Simulated one expired render lease on a disposable owned source; the deployed worker reclaimed it and published with a new storage lease. This did not restart the service."
+  },
+  "revision": "f62b84260d513f82b35a59800d0b6b04e2144105",
+  "deploymentId": "eef7aa16-7433-4615-9376-d546edef66b8",
+  "metrics": [
+    {
+      "average": 0.013842034972677596,
+      "current": 0.0026201166666666668,
+      "max": 0.18717018333333332,
+      "measurement": "CPU_USAGE",
+      "min": 0,
+      "sampleCount": 61
+    },
+    {
+      "average": 0.28726124275409826,
+      "current": 0.395431936,
+      "max": 0.49856512,
+      "measurement": "MEMORY_USAGE_GB",
+      "min": 0,
+      "sampleCount": 61
+    }
+  ],
+  "metricsNote": "Default Railway one-hour, 61-sample window includes startup and the preceding release; these are not isolated renderer peaks.",
+  "browser": {
+    "verified": [
+      "Classic assignment opens exact phrase and direction through Netlify redirect",
+      "Say It Back assignment opens exact versioned scene and Walter role with five lines",
+      "Speed Switch invitation opens the original repeated phrase and exact five speed cue intervals through Netlify redirect"
+    ],
+    "limitations": [
+      "Owner export UI covered by component tests and live HTTP flow; this cloud browser had no usable capture to create its own owner session",
+      "No physical phone native-share or audible OBS test"
+    ]
+  },
+  "cleanup": {
+    "httpChecksPassed": 69,
+    "disposableSourcesDeletedViaOwnerEndpoints": 4,
+    "remainingPublishedObjects": 0,
+    "remainingLiveJobs": 0,
+    "cleanupReceipts": 7,
+    "cleanupReceiptsSwept": 7,
+    "note": "Counts restricted to the four representative jobs, the deletion fixture and the interrupted-lease recovery fixture. Tombstones remain briefly to remove delayed uploads."
+  }
+}

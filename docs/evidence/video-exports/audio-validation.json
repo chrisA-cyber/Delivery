@@ -1,0 +1,42 @@
+[
+  {
+    "file": "classic.mp4",
+    "comparedSeconds": 3.815,
+    "correlation": 0.9999968,
+    "rmsAmplitudeRatio": 0.99961,
+    "meanAbsoluteError": 0.0002709,
+    "expectedPeak": 0.63275,
+    "outputPeak": 0.63279,
+    "channels": 1
+  },
+  {
+    "file": "emotion.mp4",
+    "comparedSeconds": 20.0,
+    "correlation": 0.9999943,
+    "rmsAmplitudeRatio": 0.999561,
+    "meanAbsoluteError": 7.9e-05,
+    "expectedPeak": 0.58701,
+    "outputPeak": 0.58661,
+    "channels": 1
+  },
+  {
+    "file": "speed.mp4",
+    "comparedSeconds": 20.0,
+    "correlation": 0.9999972,
+    "rmsAmplitudeRatio": 0.999652,
+    "meanAbsoluteError": 0.000107,
+    "expectedPeak": 0.58701,
+    "outputPeak": 0.58661,
+    "channels": 1
+  },
+  {
+    "file": "say-retake.mp4",
+    "comparedSeconds": 14.7,
+    "correlation": 0.9998285,
+    "rmsAmplitudeRatio": 0.997906,
+    "meanAbsoluteError": 0.0005793,
+    "expectedPeak": 0.54276,
+    "outputPeak": 0.54333,
+    "channels": 2
+  }
+]

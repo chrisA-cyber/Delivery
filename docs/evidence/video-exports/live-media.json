@@ -1,0 +1,312 @@
+{
+  "generatedAt": "2026-09-07T00:08:51.950043+00:00",
+  "revisions": [
+    "f62b84260d513f82b35a59800d0b6b04e2144105"
+  ],
+  "method": "Actual downloaded Railway MP4s; ffprobe and decoded PCM comparisons. Cue/caption changes detected from decoded frames. Cloud verification, no physical-device or listening claim.",
+  "files": [
+    {
+      "key": "classic",
+      "sha256": "745cd36cbecefca099061e86ee67a8bbeb255755fd7bab4f3c2cdae369c47618",
+      "duration": 2.075,
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "audioChannels": 1,
+      "audioSampleRate": 16000,
+      "bytes": 93254,
+      "invitationUrl": "https://deliverygame.netlify.app/a/e2a97652275a",
+      "audio": {
+        "comparedSeconds": 2.075,
+        "correlation": 0.9999937,
+        "rmsAmplitudeRatio": 0.999773,
+        "meanAbsoluteError": 0.0003344,
+        "expectedPeak": 0.56467,
+        "outputPeak": 0.56451,
+        "channels": 1
+      },
+      "visualInspection": {
+        "frameSeconds": 0.7,
+        "phraseAndDirectionReadable": true,
+        "nameVisible": true,
+        "scoreAbsent": true,
+        "waveformVisible": true,
+        "invitationMatchesFileMetadata": true,
+        "clippedTextObserved": false
+      },
+      "publicAssignmentVerifiedByLiveAPI": true,
+      "observedRenderWaitMs": 11012
+    },
+    {
+      "key": "emotion",
+      "sha256": "6cfb1e0279e986b1320f916cfcf4d31747df32215379d4c80ece86a736f73fbc",
+      "duration": 20.0,
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "audioChannels": 1,
+      "audioSampleRate": 48000,
+      "bytes": 376495,
+      "invitationUrl": "https://deliverygame.netlify.app/a/3d84aa76b139",
+      "audio": {
+        "comparedSeconds": 20.0,
+        "correlation": 0.9999943,
+        "rmsAmplitudeRatio": 0.999561,
+        "meanAbsoluteError": 7.9e-05,
+        "expectedPeak": 0.58701,
+        "outputPeak": 0.58661,
+        "channels": 1
+      },
+      "cues": {
+        "expectedChangesSeconds": [
+          4,
+          8,
+          12,
+          16
+        ],
+        "measuredCardChangesSeconds": [
+          4.0,
+          8.0,
+          12.0,
+          16.0
+        ],
+        "withinOneFrame": true
+      },
+      "visualInspection": {
+        "frameSeconds": 5.2,
+        "phraseReadable": true,
+        "colorEmojiReadable": true,
+        "activeCue": "Angry",
+        "nameOmitted": true,
+        "scoreAbsent": true,
+        "waveformVisible": true,
+        "invitationMatchesFileMetadata": true,
+        "clippedTextObserved": false
+      },
+      "publicAssignmentVerifiedByLiveAPI": true,
+      "observedRenderWaitMs": 10131
+    },
+    {
+      "key": "speed",
+      "sha256": "f98f4a52a0b6bc142d76a9f7c94ae6079fbadeb07fdb3d1bfd2fe758f4f87c83",
+      "duration": 20.0,
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "audioChannels": 1,
+      "audioSampleRate": 48000,
+      "bytes": 459243,
+      "invitationUrl": "https://deliverygame.netlify.app/a/4be9b9095e39",
+      "audio": {
+        "comparedSeconds": 20.0,
+        "correlation": 0.9999972,
+        "rmsAmplitudeRatio": 0.999652,
+        "meanAbsoluteError": 0.000107,
+        "expectedPeak": 0.58701,
+        "outputPeak": 0.58661,
+        "channels": 1
+      },
+      "cues": {
+        "expectedChangesSeconds": [
+          4,
+          9,
+          15,
+          18
+        ],
+        "measuredCardChangesSeconds": [
+          4.0,
+          9.0,
+          15.0,
+          18.0
+        ],
+        "withinOneFrame": true
+      },
+      "visualInspection": {
+        "frameSeconds": 10.2,
+        "phraseReadable": true,
+        "colorEmojiReadable": true,
+        "activeCue": "Super slow \u00b7 0.25\u00d7",
+        "scoreAbsent": true,
+        "waveformVisible": true,
+        "invitationMatchesFileMetadata": true,
+        "clippedTextObserved": false,
+        "nameOmitted": true
+      },
+      "publicAssignmentVerifiedByLiveAPI": true,
+      "observedRenderWaitMs": 10369
+    },
+    {
+      "key": "say",
+      "sha256": "ef4943a56dad18ebf702e4508287231ca062505af92618614b002f5979d5ce37",
+      "duration": 14.7,
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "audioChannels": 2,
+      "audioSampleRate": 48000,
+      "bytes": 3289363,
+      "invitationUrl": "https://deliverygame.netlify.app/a/589a9907bdbe",
+      "audio": {
+        "comparedSeconds": 14.7,
+        "correlation": 0.9998261,
+        "rmsAmplitudeRatio": 0.997783,
+        "meanAbsoluteError": 0.0005847,
+        "expectedPeak": 0.54276,
+        "outputPeak": 0.54333,
+        "channels": 2,
+        "phraseChecks": [
+          {
+            "cueId": "cue-1",
+            "start": 0.18,
+            "end": 1.75,
+            "comparedSeconds": 1.57,
+            "correlation": 0.9996404,
+            "rmsAmplitudeRatio": 0.994716,
+            "meanAbsoluteError": 0.0014492,
+            "expectedPeak": 0.40717,
+            "outputPeak": 0.40763,
+            "channels": 2
+          },
+          {
+            "cueId": "cue-2",
+            "start": 4.8,
+            "end": 6.28,
+            "comparedSeconds": 1.48,
+            "correlation": 0.9996702,
+            "rmsAmplitudeRatio": 0.995319,
+            "meanAbsoluteError": 0.000938,
+            "expectedPeak": 0.45056,
+            "outputPeak": 0.44401,
+            "channels": 2
+          },
+          {
+            "cueId": "cue-3",
+            "start": 7.48,
+            "end": 9.78,
+            "comparedSeconds": 2.3,
+            "correlation": 0.9998968,
+            "rmsAmplitudeRatio": 0.998828,
+            "meanAbsoluteError": 0.0007185,
+            "expectedPeak": 0.54276,
+            "outputPeak": 0.54333,
+            "channels": 2
+          },
+          {
+            "cueId": "cue-4",
+            "start": 10.22,
+            "end": 11.33,
+            "comparedSeconds": 1.11,
+            "correlation": 0.999683,
+            "rmsAmplitudeRatio": 0.99751,
+            "meanAbsoluteError": 0.001152,
+            "expectedPeak": 0.46634,
+            "outputPeak": 0.46618,
+            "channels": 2
+          },
+          {
+            "cueId": "cue-5",
+            "start": 12.32,
+            "end": 13.23,
+            "comparedSeconds": 0.91,
+            "correlation": 0.9998318,
+            "rmsAmplitudeRatio": 0.997054,
+            "meanAbsoluteError": 0.000701,
+            "expectedPeak": 0.38345,
+            "outputPeak": 0.38371,
+            "channels": 2
+          }
+        ],
+        "retainedSpeakerCheck": {
+          "comparedSeconds": 2.5,
+          "correlation": 0.9999832,
+          "rmsAmplitudeRatio": 0.999409,
+          "meanAbsoluteError": 0.0001657,
+          "expectedPeak": 0.27728,
+          "outputPeak": 0.27682,
+          "channels": 2
+        }
+      },
+      "captions": {
+        "expectedPhraseChangesSeconds": [
+          0.06,
+          1.87,
+          4.68,
+          6.4,
+          7.36,
+          9.9,
+          10.1,
+          11.45,
+          12.2,
+          13.35
+        ],
+        "measuredCaptionChangesSeconds": [
+          0.0667,
+          1.9,
+          4.7,
+          6.4,
+          7.3667,
+          9.9,
+          10.1333,
+          11.4667,
+          12.2333,
+          13.3667
+        ],
+        "withinOneFrame": true,
+        "measurement": "Pixel-change threshold1/255; actual text transitions10.69\u201317.10 vs isolated H264 keyframe recompression0.412 at8.333s."
+      },
+      "partialRetake": {
+        "replacedCueId": "cue-3",
+        "start": 6.880000000000001,
+        "end": 10,
+        "outsideChanges": 0,
+        "retakeChanges": 110010,
+        "baselineSha256": "ce27eb209b6be53b8f6a1981a4ab0210cf3881a80410400701dc76f6efa898bf",
+        "assembledSha256": "d8e10fd048b51734ed5faae7941999484c3364e427a90836298c47882fcfc539"
+      },
+      "scene": {
+        "sourceDimensions": [
+          640,
+          480
+        ],
+        "outputSceneDimensions": [
+          938,
+          704
+        ],
+        "preservesAspectRatio": true,
+        "backingGain": 0.65,
+        "voiceGain": 1,
+        "backgroundStrategy": "Existing prepared role backing; original scene audio not mixed again",
+        "sourceFrameComparison": {
+          "frameSeconds": 8.2,
+          "outputX": 70,
+          "outputY": 524,
+          "correlation": 0.9995612,
+          "meanAbsolutePixelErrorOf255": 1.7395
+        }
+      },
+      "publicAssignmentVerifiedByLiveAPI": true,
+      "visualInspection": {
+        "frameSeconds": 8.2,
+        "sceneAndCaptionReadable": true,
+        "nameOmitted": true,
+        "scoreAbsent": true,
+        "attributionPresent": true,
+        "invitationMatchesFileMetadata": true,
+        "clippedTextObserved": false
+      },
+      "observedRenderWaitMs": 10708
+    }
+  ]
+}

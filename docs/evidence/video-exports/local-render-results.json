@@ -1,0 +1,46 @@
+[
+  {
+    "path": "/tmp/delivery-video-samples/classic.mp4",
+    "bytes": 169751,
+    "duration": 3.815,
+    "width": 1080,
+    "height": 1920,
+    "videoCodec": "h264",
+    "audioCodec": "aac",
+    "renderMs": 1729,
+    "audioCopied": false
+  },
+  {
+    "path": "/tmp/delivery-video-samples/emotion.mp4",
+    "bytes": 382209,
+    "duration": 20,
+    "width": 1080,
+    "height": 1920,
+    "videoCodec": "h264",
+    "audioCodec": "aac",
+    "renderMs": 6094,
+    "audioCopied": false
+  },
+  {
+    "path": "/tmp/delivery-video-samples/speed.mp4",
+    "bytes": 463079,
+    "duration": 20,
+    "width": 1080,
+    "height": 1920,
+    "videoCodec": "h264",
+    "audioCodec": "aac",
+    "renderMs": 5867,
+    "audioCopied": false
+  },
+  {
+    "path": "/tmp/delivery-video-samples/say-retake.mp4",
+    "bytes": 3292349,
+    "duration": 14.7,
+    "width": 1080,
+    "height": 1920,
+    "videoCodec": "h264",
+    "audioCodec": "aac",
+    "renderMs": 5524,
+    "audioCopied": false
+  }
+]
