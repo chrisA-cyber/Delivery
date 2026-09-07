@@ -83,7 +83,7 @@ beforeEach(() => {
     await Promise.all([writeFile(videoPath, videoBytes), writeFile(posterPath, "poster"), writeFile(referencePath, "wav audio")]);
     return { videoPath, posterPath, referencePath, duration: 6 };
   });
-  mocks.transcribe.mockResolvedValue({ text: cue.text, words: [{ text: cue.text, start: 0, end: 2 }] });
+  mocks.transcribe.mockResolvedValue({ text: cue.text, words: [{ text: cue.text, start: 0, end: 2 }], rawWords: [{ text: cue.text, start: 0.1, end: 2.1 }] });
   mocks.cues.mockReturnValue([cue]);
 });
 afterEach(() => { vi.restoreAllMocks(); });
@@ -136,6 +136,27 @@ describe("custom scene worker leases and preparation", () => {
     expect(state.row!.error_message).toMatch(/Add|dialogue/);
     expect(JSON.stringify(state.row)).not.toContain("Private provider body");
     expect(mocks.remove).not.toHaveBeenCalled();
+  });
+
+  it("uses validated ASR words as editable draft timing when acoustic refinement has no usable words", async () => {
+    const rawWords = [{ text: "Wait, what?", start: 0.2, end: 1.8 }, { text: "Give me a second.", start: 3, end: 5 }];
+    const draftCues = rawWords.map((word, index) => ({ ...word, id: `line-${index + 1}`, selected: true }));
+    mocks.transcribe.mockResolvedValue({ text: "Wait, what? Give me a second.", words: [], rawWords });
+    mocks.cues.mockReturnValue(draftCues);
+
+    await runNextSayImport();
+
+    expect(mocks.cues).toHaveBeenCalledWith("Wait, what? Give me a second.", rawWords, 6);
+    expect(state.row).toMatchObject({ status: "ready", cues: draftCues, error_message: "Check the line timing before creating your scene." });
+    expect(JSON.stringify(vi.mocked(console.log).mock.calls)).not.toContain("Give me a second.");
+    expect(JSON.stringify(vi.mocked(console.error).mock.calls)).not.toContain("Give me a second.");
+  });
+
+  it("continues to prefer refined word timing when it is available", async () => {
+    await runNextSayImport();
+
+    expect(mocks.cues).toHaveBeenCalledWith(cue.text, [{ text: cue.text, start: 0, end: 2 }], 6);
+    expect(state.row).toMatchObject({ status: "ready", cues: [cue], error_message: null });
   });
 
   it("fails clearly for a missing original before media or transcription work", async () => {

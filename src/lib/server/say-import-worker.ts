@@ -112,7 +112,10 @@ export async function runNextSayImport(parentSignal?: AbortSignal): Promise<bool
         signal.throwIfAborted();
         const transcription = await transcribeSayAudio(new File([bytes], "scene.wav", { type: "audio/wav" }));
         signal.throwIfAborted();
-        cues = importCuesFromWords(transcription.text, transcription.words, prepared.duration);
+        // Draft cue boundaries can use validated ASR timestamps even when the
+        // stricter acoustic timing checks reject them for performance scoring.
+        const draftWords = transcription.words.length ? transcription.words : transcription.rawWords;
+        cues = importCuesFromWords(transcription.text, draftWords, prepared.duration);
         if (!transcription.words.length) warning = "Check the line timing before creating your scene.";
       } catch {
         signal.throwIfAborted();
