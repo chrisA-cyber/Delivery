@@ -10,6 +10,7 @@ const links = [
   { href: "/play", label: "Classic" },
   { href: "/say-it-back", label: "Say It Back" },
   { href: "/switch", label: "Switch · Beta" },
+  { href: "/roast-off", label: "Roast Off · Live" },
   { href: "/daily", label: "Daily" },
   { href: "/discover", label: "Packs" },
   { href: "/rounds", label: "Friends" },

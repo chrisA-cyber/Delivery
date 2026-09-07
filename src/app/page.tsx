@@ -4,6 +4,7 @@ import {
   ArrowRight,
   AudioLines,
   CalendarDays,
+  Flame,
   Headphones,
   Radio,
   Shuffle,
@@ -98,6 +99,12 @@ export default function HomePage() {
           <Link href="/switch" className="group grid gap-6 rounded-2xl border border-hot/30 bg-hot/5 p-6 sm:p-8 md:grid-cols-[1.2fr_1fr] md:items-center">
             <div><p className="mono-label flex items-center gap-2 text-hot"><Shuffle className="size-4" />New mode · Unranked beta</p><h2 id="switch-mode-title" className="display-type mt-4 text-5xl sm:text-6xl">One phrase.<br />Keep switching.</h2><p className="mt-4 max-w-lg text-sm leading-7 text-white/70">One short phrase. Repeat it as the emojis change your emotion or the cues change your speaking speed. One uninterrupted take. Solo or with the group chat.</p></div>
             <div><div className="rounded-xl border border-white/15 bg-white/5 p-5"><p className="mono-label text-white/55">Same phrase. New energy.</p><div className="mt-5 flex flex-wrap justify-between gap-2 text-4xl" aria-label="Switch emotions: happy, sad, angry, surprised, sleepy">{["😄", "😢", "😠", "😳", "😴"].map((emoji) => <span key={emoji} aria-hidden="true">{emoji}</span>)}</div><p className="mt-5 text-xs leading-6 text-white/60">Or switch speaking speed: normal · 0.5× · 0.25× · 2× · 4×</p></div><span className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-hot">Play Switch<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span></div>
+          </Link>
+        </section>
+        <section className="home-wrap pt-6" aria-labelledby="roast-off-mode-title">
+          <Link href="/roast-off" className="group grid gap-6 rounded-2xl border border-acid/35 bg-acid/5 p-6 sm:p-8 md:grid-cols-[1.2fr_1fr] md:items-center">
+            <div><p className="mono-label flex items-center gap-2 text-acid"><Flame className="size-4" />Roast Off · Live stage · 18+</p><h2 id="roast-off-mode-title" className="display-type mt-4 text-5xl sm:text-6xl">Take the mic.<br />Take the heat.</h2><p className="mt-4 max-w-lg text-sm leading-7 text-white/70">Two people roasting. A crowd with opinions. Watch, chat, and vote, or queue for your turn. Voice only is welcome. Cameras are optional.</p></div>
+            <div className="rounded-xl border border-acid/20 bg-ink/60 p-5"><div className="flex items-center gap-3"><Headphones className="size-6 text-electric" /><p className="text-sm font-bold">Hanging out counts as playing.</p></div><p className="mt-3 text-sm leading-6 text-white/60">Enter as a spectator without enabling any devices. An authorized host runs the main stage. Invite your own crowd to a private room.</p><span className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-acid">Find the stage<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span></div>
           </Link>
         </section>
         <section className="home-wrap home-section" id="how-to-play">

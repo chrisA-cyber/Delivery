@@ -23,7 +23,7 @@ const actionSchema = z.object({
 
 const rowsById = (rows: Array<Record<string, unknown>>) => new Map(rows.map((row) => [String(row.id), row]));
 const stringOrNull = (value: unknown) => typeof value === "string" && value ? value : null;
-const reportFields = "id,reporter_id,delivery_id,profile_id,prompt_id,submission_id,reason,details,state,assigned_to,created_at,updated_at";
+const reportFields = "id,reporter_id,delivery_id,profile_id,prompt_id,submission_id,roast_room_id,roast_member_id,reason,details,state,assigned_to,created_at,updated_at";
 const urgentReasons: ReportReason[] = ["violence", "self_harm", "privacy", "hate"];
 
 export async function GET(request: Request) {
@@ -112,6 +112,16 @@ export async function GET(request: Request) {
         if (!prompt) return [];
         return [{ ...base, target: { kind: "prompt", id: promptId, title: String(prompt.body), context: String(prompt.slug), state: String(prompt.state) } }];
       }
+      const roastRoomId = stringOrNull(row.roast_room_id);
+      if (roastRoomId) {
+        const memberId = stringOrNull(row.roast_member_id);
+        return [{ ...base, target: {
+          kind: "roast", id: roastRoomId,
+          title: roastRoomId === "main" ? "Roast Off · Main stage" : "Roast Off · Private room",
+          context: `${memberId ? `Room member: ${memberId}. ` : ""}Manual review only. The room host handles mute, removal, and bans inside the live room. Live media is not recorded.`,
+          href: `/roast-off/${encodeURIComponent(roastRoomId)}`,
+        } }];
+      }
       const submissionId = stringOrNull(row.submission_id);
       const submission = submissionId ? submissions.get(submissionId) : null;
       if (!submissionId || !submission) return [];
@@ -132,7 +142,15 @@ export async function POST(request: Request) {
     const { user } = await requireStaff();
     const rateLimit = await enforceRateLimit(`moderation:action:${user.id}`, { limit: 60, windowMs: 10 * 60 * 1_000 });
     const body = actionSchema.parse(await request.json());
-    const { data, error } = await createSupabaseAdminClient().rpc("resolve_moderation_report", {
+    const admin = createSupabaseAdminClient();
+    const reportLookup = await admin.from("reports").select("roast_room_id").eq("id", body.reportId).maybeSingle();
+    if (reportLookup.error) throw new ExternalServiceError("Supabase moderation", { cause: reportLookup.error });
+    if (!reportLookup.data) throw new AppError("REPORT_NOT_FOUND", "That report is no longer in the queue.", 404);
+    const isRoastReport = Boolean(reportLookup.data.roast_room_id);
+    if (isRoastReport && body.decision === "remove") {
+      throw new AppError("MODERATION_DECISION_INVALID", "Review this report here. The live room host handles removal and bans.", 422);
+    }
+    const { data, error } = await admin.rpc(isRoastReport ? "resolve_roast_report" : "resolve_moderation_report", {
       p_report_id: body.reportId,
       p_actor_id: user.id,
       p_decision: body.decision,
@@ -146,6 +164,7 @@ export async function POST(request: Request) {
       if (error.code === "42501") throw new AppError("MODERATION_FORBIDDEN", "Your moderation access changed. Refresh before continuing.", 403);
       throw new ExternalServiceError("Supabase moderation", { cause: error });
     }
+    if (isRoastReport) return jsonOk(data, requestId, { headers: rateLimitHeaders(rateLimit) });
     const cleanup: {
       immediate: { attempted: number; failed: number };
       drain: Awaited<ReturnType<typeof processModerationStorageCleanup>> | null;

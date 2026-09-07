@@ -19,6 +19,7 @@ export function MobileDock() {
     pathname.startsWith("/play") ||
     pathname.startsWith("/say-it-back") ||
     pathname.startsWith("/switch") ||
+    pathname.startsWith("/roast-off") ||
     pathname.startsWith("/daily") ||
     pathname.startsWith("/endless") ||
     pathname.startsWith("/impossible") ||

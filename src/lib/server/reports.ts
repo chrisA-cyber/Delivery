@@ -94,6 +94,8 @@ export async function insertReport(
     profileId?: string | null;
     promptId?: string | null;
     submissionId?: string | null;
+    roastRoomId?: string | null;
+    roastMemberId?: string | null;
     reason: string;
     details?: string | null;
   },
@@ -108,6 +110,7 @@ export async function insertReport(
       profile_id: values.profileId ?? null,
       prompt_id: values.promptId ?? null,
       submission_id: values.submissionId ?? null,
+      ...(values.roastRoomId ? {roast_room_id: values.roastRoomId, roast_member_id: values.roastMemberId ?? null} : {}),
       reason: values.reason,
       details: values.details ?? null,
       state: "open",
