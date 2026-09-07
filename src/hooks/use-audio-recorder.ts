@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { WAVEFORM_BIN_SECONDS, type WaveformPoint } from "@/lib/say-it-back/audio-timeline";
 import { encodeMonoWav, inspectTake, MAX_RECORDING_BYTES, MAX_RECORDING_MS, MAX_SAY_RECORDING_MS, type TakeQuality } from "@/lib/audio-capture";
+import { speechLevel } from "@/lib/video-composition";
 
 export type RecorderStatus = "idle" | "requesting" | "ready" | "recording" | "stopped" | "error";
 export type RecordingStopReason = "user" | "limit" | "size-limit" | "interrupted" | "hidden";
@@ -54,6 +55,7 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [durationMs, setDurationMs] = useState(0);
   const [level, setLevel] = useState(0);
+  const [voiceLevel, setVoiceLevel] = useState(0);
   const [waveform, setWaveform] = useState<WaveformPoint[]>([]);
   const [isClipping, setIsClipping] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +99,7 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
     if (session.context.state !== "closed") void session.context.close().catch(() => undefined);
     if (mountedRef.current) {
       setLevel(0);
+      setVoiceLevel(0);
       setIsClipping(false);
     }
   }, []);
@@ -283,6 +286,7 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
           : [...session.waveform]);
         const rms = Math.sqrt(squareSum / Math.max(1, copy.length));
         setLevel(Math.min(1, Math.max(peak, rms * 4.5)));
+        setVoiceLevel(speechLevel(rms));
         setIsClipping(peak >= 0.99);
         setDurationMs(Math.round(session.sampleCount / session.context.sampleRate * 1_000));
         if (session.sampleCount >= maxSamples) stopRef.current(sizeSamples < durationSamples ? "size-limit" : "limit");
@@ -440,5 +444,5 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
       void pendingContextRef.current.resume().catch(() => undefined);
     } catch { /* start() owns the visible unsupported-device error. */ }
   }, []);
-  return { status, audioBlob, audioUrl, durationMs, waveform, level, isClipping, error, warning, quality, qualityMessage, canSubmit, stopReason, requestPermission, start, stop, reset, cancelCapture, commitCapture, getCapturePositionMs, primeAudioContext };
+  return { status, audioBlob, audioUrl, durationMs, waveform, level, voiceLevel, isClipping, error, warning, quality, qualityMessage, canSubmit, stopReason, requestPermission, start, stop, reset, cancelCapture, commitCapture, getCapturePositionMs, primeAudioContext };
 }

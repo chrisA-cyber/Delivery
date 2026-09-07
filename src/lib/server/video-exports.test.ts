@@ -22,6 +22,7 @@ vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: () => ({
 
 import { AppError } from "@/lib/server/api-error";
 import { getVideoExportRow, listVideoExports, presentVideoExport, requestVideoExport, videoExportResponse } from "@/lib/server/video-exports";
+import { defaultClipEditSettings } from "@/lib/video-composition";
 
 const userId = "11111111-1111-4111-8111-111111111111";
 const jobId = "22222222-2222-4222-8222-222222222222";
@@ -81,6 +82,20 @@ describe("private persistent video export API boundary", () => {
     mocks.source.mockRejectedValueOnce(new AppError("SCENE_EXPORT_UNAVAILABLE", "Choose a reusable scene.", 409));
     expect(await listVideoExports("say-it-back", attemptId, owner, "everyone")).toEqual({ exports: [], eligible: false, reason: "Choose a reusable scene." });
     expect(state.queries).toEqual([]);
+  });
+
+  it("binds trim, avatar, layout and placement to each immutable render version", async () => {
+    const settings = defaultClipEditSettings("classic");
+    const request = { mode: "classic" as const, attemptId, includeName: true, includeScore: true, maxRating: "everyone" as const, settings };
+    await requestVideoExport(request, owner);
+    const first = mocks.rpc.mock.calls[0]![1] as Row;
+    for (const edit of [{ trimStart: 1, trimEnd: 4 }, { avatar: { kind: "builtin" as const, id: "robot" } }, { avatarX: 0.7 }, { layout: "duet" as const }, { captions: false }, { includeScore: false }, { includeName: false }]) {
+      await requestVideoExport({ ...request, settings: { ...settings, ...edit } }, owner);
+      expect((mocks.rpc.mock.calls.at(-1)![1] as Row).p_input_hash).not.toEqual(first.p_input_hash);
+    }
+    await requestVideoExport(request, owner);
+    expect((mocks.rpc.mock.calls.at(-1)![1] as Row).p_input_hash).toEqual(first.p_input_hash);
+    expect((first.p_input as Row).settings).toEqual(settings);
   });
 
   it("presents failure and expiry safely without storage paths, private inputs, or internal codes", () => {

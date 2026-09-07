@@ -4,7 +4,7 @@ import {tmpdir} from "node:os";
 import path from "node:path";
 import {createHash} from "node:crypto";
 import {createSupabaseAdminClient} from "../src/lib/supabase/admin";
-import {renderPerformanceVideo,type VideoRenderInput} from "../src/lib/server/video-renderer";
+import {renderPerformanceVideo,VIDEO_LAYOUT_VERSION,type VideoRenderInput} from "../src/lib/server/video-renderer";
 import {assertExportAccount,assertSceneExportEligible,checkedExport,type ExportInput} from "../src/lib/server/video-export-sources";
 import {runNextSayImport} from "../src/lib/server/say-import-worker";
 import {cleanupSayImports,loadSayImport,downloadImportAsset,sayImportMediaUrl,type SayImportAsset} from "../src/lib/server/say-imports";
@@ -64,7 +64,7 @@ async function run(job:Row){
    const role=assignment.clip.roles.find(r=>r.id===assignment.roleId);if(!role)throw new Error("ROLE_UNAVAILABLE");
    say={clip:assignment.clip,roleId:assignment.roleId,videoPath:await asset(assignment.clip.videoUrl,assignment.clip.assetIntegrity,scratch,controller.signal),backingPath:role.dubAudioUrl?await asset(role.dubAudioUrl,assignment.clip.assetIntegrity,scratch,controller.signal):null};
   }
-  const rendered=await renderPerformanceVideo({layoutVersion:"delivery-vertical-v1",mode:assignment.mode,recordingPath:recording,outputPath:path.join(scratch,"finished.mp4"),durationMs:input.durationMs,recordingOffsetMs:input.recordingOffsetMs,invitationUrl:input.invitationUrl,displayName:input.displayName,avatarPath:avatar,score:input.score,...(assignment.mode==="classic"?{classic:{phrase:assignment.promptText,direction:assignment.energy}}:{}),...(assignment.mode==="switch"?{switch:assignment.challenge}:{}),...(say?{say}:{})} as VideoRenderInput,{signal:controller.signal});
+  const rendered=await renderPerformanceVideo({layoutVersion:VIDEO_LAYOUT_VERSION,settings:input.settings,mode:assignment.mode,recordingPath:recording,outputPath:path.join(scratch,"finished.mp4"),durationMs:input.durationMs,recordingOffsetMs:input.recordingOffsetMs,invitationUrl:input.invitationUrl,displayName:input.displayName,avatarPath:avatar,score:input.score,...(assignment.mode==="classic"?{classic:{phrase:assignment.promptText,direction:assignment.energy}}:{}),...(assignment.mode==="switch"?{switch:assignment.challenge}:{}),...(say?{say}:{})} as VideoRenderInput,{signal:controller.signal});
   if(controller.signal.aborted)throw new Error("LEASE_LOST");
   const owned=await admin.rpc("renew_video_export_lease",{p_export_id:id,p_lease_token:token,p_lease_seconds:180});checkedExport(owned.error);if(!owned.data)throw new Error("LEASE_LOST");
   const output=await readFile(rendered.path);if(output.length>60*1024*1024)throw new Error("OUTPUT_LIMIT");
@@ -84,7 +84,7 @@ let cleanupAt=0;
 console.log("Delivery media worker ready (one job, two FFmpeg threads).");
 while(!stopping){
  try{
-  if(Date.now()>cleanupAt){await cleanupVideoExports(30);await cleanupExpiredClassicVideoAttempts(30);await cleanupSayImports(20);cleanupAt=Date.now()+60_000;}
+  if(Date.now()>cleanupAt){await cleanupVideoExports(30);await cleanupExpiredClassicVideoAttempts(30);await cleanupSayImports(20);const edits=await admin.rpc("expire_performance_clip_edits",{p_limit:100});checkedExport(edits.error);cleanupAt=Date.now()+60_000;}
   const claim=await admin.rpc("claim_video_export",{p_lease_seconds:180});checkedExport(claim.error);
   if(claim.data){await run(claim.data as Row);continue;}
   current=new AbortController();

@@ -1,0 +1,41 @@
+{
+  "method": "Decoded 48 kHz float audio compared against the original source trimmed on the same sample clock; Say expected retains the existing stereo mix, backing gain 0.65 and amix normalize=0. AAC encoding alone is lossy.",
+  "results": [
+    {
+      "mode": "classic",
+      "file": "classic.mp4",
+      "trimStart": 0.25,
+      "trimEnd": 3.665,
+      "correlation": 0.9999626542683743,
+      "gain": 0.9995018243789673,
+      "normalizedRmse": 0.00865256693214178
+    },
+    {
+      "mode": "switch",
+      "file": "emotion.mp4",
+      "trimStart": 3.5,
+      "trimEnd": 11.5,
+      "correlation": 0.9999971631601029,
+      "gain": 0.9996970295906067,
+      "normalizedRmse": 0.002400348661467433
+    },
+    {
+      "mode": "switch",
+      "file": "speed.mp4",
+      "trimStart": 3.5,
+      "trimEnd": 10.5,
+      "correlation": 0.999996721943252,
+      "gain": 0.9996119141578674,
+      "normalizedRmse": 0.002588708186522126
+    },
+    {
+      "mode": "say-it-back",
+      "file": "say-retake.mp4",
+      "trimStart": 1.6,
+      "trimEnd": 12.6,
+      "correlation": 0.9998641517783843,
+      "gain": 0.9981973171234131,
+      "normalizedRmse": 0.01655145362019539
+    }
+  ]
+}

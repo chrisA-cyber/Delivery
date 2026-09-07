@@ -269,12 +269,19 @@ describe("microphone capture lifecycle", () => {
     const { result, context } = await record();
     act(() => context.push(4_800, 0.2));
     expect(result.current.level).toBeGreaterThan(0.8);
+    expect(result.current.voiceLevel).toBe(1);
     expect(result.current.isClipping).toBe(false);
     expect(result.current.durationMs).toBe(100);
     act(() => context.push(4_800, 0.999));
     expect(result.current.isClipping).toBe(true);
+    act(() => context.push(4_800, 0));
+    expect(result.current.voiceLevel).toBe(0);
+    act(() => context.push(4_800, 0.06));
+    expect(result.current.voiceLevel).toBeGreaterThan(0);
+    expect(result.current.voiceLevel).toBeLessThan(1);
     act(() => result.current.stop());
     expect(result.current.level).toBe(0);
+    expect(result.current.voiceLevel).toBe(0);
     expect(result.current.isClipping).toBe(false);
   });
 

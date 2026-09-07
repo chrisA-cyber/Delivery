@@ -15,6 +15,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "@/components/providers/app-provider";
 import { VideoExport } from "@/components/exports/video-export";
+import { PerformerAvatar } from "@/components/avatars/performer-avatar";
+import { useMediaSpeechLevel } from "@/hooks/use-media-speech-level";
 import {
   ENERGY_MODIFIERS,
   getEnergyModifierById,
@@ -86,6 +88,7 @@ export function ResultScreen({
   });
   const heading = useRef<HTMLHeadingElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const playbackVoiceLevel = useMediaSpeechLevel(audioRef, audioUrl);
   const { muted, refreshAccount } = useApp();
   useEffect(() => {
     heading.current?.focus({ preventScroll: true });
@@ -395,6 +398,7 @@ export function ResultScreen({
                 muted={muted}
                 aria-label="Replay your judged take"
               />
+              <div className="mt-3"><PerformerAvatar size={96} level={playbackVoiceLevel} /></div>
             </>
           )}
         </div>

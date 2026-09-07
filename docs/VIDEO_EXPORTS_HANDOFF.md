@@ -1,4 +1,24 @@
-# Performance video exports — shipped September 7, 2026
+# Avatar and clip editor release — September 7, 2026
+
+Extends the working export pipeline below. Railway’s Delivery service is confirmed to deploy `chrisA-cyber/Delivery` **main**, using the existing Dockerfile, Next process, serial FFmpeg worker, storage and ownership checks. Clipping remains untouched.
+
+## Current player flow
+
+Choose one of six custom illustrated avatars or upload a JPG, PNG or WebP in Settings or beside the recording controls. Uploads have a matching crop preview, drag/keyboard positioning and zoom; normalized images are bounded and stored with the existing guest/account identity. Avatar movement follows measured microphone levels during recording and saved voice levels during playback and export. Reduced motion removes the movement.
+
+From a completed or saved performance, **Create video** opens the compact editor: shared video preview, two mode-specific layouts, avatar placement/size, caption and separate name/score toggles, trim, reset, save and export. Mouse, touch and keyboard positioning are supported. Say It Back keeps the entire scene framing and existing dub mix. Text is labeled as the challenge/script; it is not represented as a speech transcript. Trims use the original source clock for sound, scene, captions and Switch cues. Original takes and scores are immutable.
+
+Edits reopen without recording again. Matching source/settings reuse an export; changed compositions produce distinct versions. Existing progress, retry, finished preview, download, supported native sharing, saved-performance access and same-challenge invitations remain. Earlier ready videos remain accessible. Additive migration `20260907201007_performance_clip_editor.sql` is applied; guest adoption, expiration and deletion follow source ownership. There is no new runtime AI call, paid service, audio effect, normalization, music or time stretching.
+
+## Focused verification
+
+Production build, scoped lint/type checks and focused renderer, backend, editor, recording and dub regression tests pass. [Render results](evidence/clip-editor/render-results.json) cover actual Classic, emotion Switch, speed Switch and Say It Back MP4s; [custom image rendering](evidence/clip-editor/upload-render.json) also passes. [Composition comparisons](evidence/clip-editor/composition-agreement.json) check 16 frames across trimmed cue/caption boundaries against the shared preview. [Audio comparisons](evidence/clip-editor/audio-agreement.json) verify the original sound and established dub mix. Browser checks cover the editor, accurate crop/zoom/reposition, avatar dragging, trim/save and a 390×844 workspace. Database checks cover saved edits, guest adoption, isolation and cleanup; disposable database fixtures were rolled back. Live release verification is recorded separately after deployment.
+
+[Avatar artwork](avatar-art.md) documents the six bundled transparent portraits. [Rendered contact sheet](evidence/clip-editor/render-contact-sheet.png) and [phone workspace](evidence/clip-editor/phone-layout.jpg) show inspected samples. Physical-phone microphone acceptance, native sharing and audible OBS output remain unverified by these simulated/browser checks. Camera recording and face/lip tracking remain outside this phase.
+
+---
+
+# Previous performance video export release — September 7, 2026
 
 **Tested application:** [`f62b84260d513f82b35a59800d0b6b04e2144105`](https://github.com/chrisA-cyber/Delivery/commit/f62b84260d513f82b35a59800d0b6b04e2144105), live on Railway in successful deployment `eef7aa16-7433-4615-9376-d546edef66b8`. The release report identifies any later documentation-only publication.
 

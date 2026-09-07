@@ -1,0 +1,12 @@
+{
+  "description": "512px WebP crop of disposable generated fixture with altered zoom/reposition, custom avatar placement, Classic duet layout, name/score hidden and2-second trim. Renderer decodes exact accepted pixels to PNG for SVG.",
+  "path": "/tmp/delivery-video-samples/classic-upload.mp4",
+  "bytes": 186008,
+  "duration": 2,
+  "width": 1080,
+  "height": 1920,
+  "videoCodec": "h264",
+  "audioCodec": "aac",
+  "renderMs": 3132,
+  "audioCopied": false
+}

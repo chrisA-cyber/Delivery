@@ -4,12 +4,15 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef,
 import { Captions, Headphones, LoaderCircle, Pause, Play, RotateCcw, Square, Volume2, VolumeX } from "lucide-react";
 import type { SayClip, SayRole } from "@/lib/say-it-back/types";
 import { cn } from "@/lib/utils";
+import { PerformerAvatar } from "@/components/avatars/performer-avatar";
+import { useMediaSpeechLevel } from "@/hooks/use-media-speech-level";
 
 export interface DubPlayerHandle {
   prepare: (startSeconds?: number, endSeconds?: number) => void;
   startScene: () => Promise<number>;
   previewRange: (startSeconds: number, endSeconds: number, playback?: "original" | "dub") => Promise<void>;
   pause: () => void;
+  seek: (time: number) => void;
 }
 
 function timeLabel(seconds: number) {
@@ -48,9 +51,13 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   onCancelCountdown?: () => void;
   takeLabel?: string;
   compact?: boolean;
-}> (function DubPlayer({ externalCommand, clip, role, takeUrl, recordingOffsetMs = 0, recording = false, countdown, onEnded, onTime, onAudioError, onInterruption, onPlaybackStart, onCancelCountdown, takeLabel = "Your take", compact = false }, forwardedRef) {
+  performerAvatar?: boolean;
+  presentationOnly?: boolean;
+  onPlayingChange?: (playing: boolean) => void;
+}> (function DubPlayer({ externalCommand, clip, role, takeUrl, recordingOffsetMs = 0, recording = false, countdown, onEnded, onTime, onAudioError, onInterruption, onPlaybackStart, onCancelCountdown, takeLabel = "Your take", compact = false, performerAvatar = false, presentationOnly = false, onPlayingChange }, forwardedRef) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const voiceRef = useRef<HTMLAudioElement>(null);
+  const voiceLevel = useMediaSpeechLevel(voiceRef, presentationOnly || !performerAvatar ? null : takeUrl);
   const bedRef = useRef<HTMLAudioElement>(null);
   const [kind, setKind] = useState<"original" | "dub">(takeUrl ? "dub" : "original");
   const [playing, setPlaying] = useState(false);
@@ -75,6 +82,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   const waitingFor = useRef(new Set<HTMLMediaElement>());
   const bufferTimeout = useRef<number | undefined>(undefined);
   const busy = recording || countdown != null;
+  useEffect(() => { onPlayingChange?.(playing); }, [playing, onPlayingChange]);
   const isDub = kind === "dub" && Boolean(takeUrl);
   const previewKind = useRef<"original" | "dub">("original");
 
@@ -321,7 +329,14 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
       } finally { if (requestId === playbackRequest.current) { previewStarting.current = false; armRangeStop(); } }
     },
     pause,
-  }), [pause, clip.duration, sound, armRangeStop, takeUrl, recordingOffsetMs, sync]);
+    seek(time) {
+      pause();
+      const next = Math.min(clip.duration, Math.max(0, time));
+      if (videoRef.current?.readyState) videoRef.current.currentTime = next;
+      else previewStart.current = { time: next, requestId: playbackRequest.current };
+      setCurrentTime(next); onTime?.(next); sync(true);
+    },
+  }), [pause, clip.duration, sound, armRangeStop, takeUrl, recordingOffsetMs, sync, onTime]);
 
   const togglePlay = async () => {
     const video = videoRef.current;
@@ -391,8 +406,8 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   const activeCues = clip.cues.filter((cue) => currentTime >= cue.start - 0.12 && currentTime <= cue.end + 0.12);
 
   return (
-    <div className={cn("overflow-hidden rounded-2xl border border-white/15 bg-black", compact && "say-player-compact")}>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 bg-surface px-3 py-2 sm:px-4">
+    <div className={cn("overflow-hidden rounded-2xl border border-white/15 bg-black", compact && "say-player-compact", presentationOnly && "h-full !rounded-none !border-0")}>
+      {!presentationOnly && <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 bg-surface px-3 py-2 sm:px-4">
         <div className="flex items-center gap-2 text-xs font-bold">
           <span className={cn("size-2 rounded-full", recording ? "animate-pulse bg-acid" : isDub ? "bg-electric" : "bg-hot")} />
           {recording ? "Recording your scene" : isDub ? (takeLabel === "Your take" ? "Your voice. Their scene." : "Your friend’s voice. Their scene.") : "The original scene"}
@@ -400,8 +415,8 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
         {takeUrl && !busy && <div className="flex rounded-lg border border-white/15 p-0.5" aria-label="Compare playback" role="group">
           {(["original", "dub"] as const).map((value) => <button key={value} type="button" aria-pressed={kind === value} className={cn("min-h-9 rounded-md px-3 text-xs font-bold", kind === value ? "bg-paper text-ink" : "text-white/70")} onClick={() => { pause(); setKind(value); setError(""); }}>{value === "original" ? "Original" : takeLabel}</button>)}
         </div>}
-      </div>
-      <div className="say-player-picture relative aspect-video w-full bg-black">
+      </div>}
+      <div className={cn("say-player-picture relative w-full bg-black", presentationOnly ? "h-full" : "aspect-video")}>
         <video ref={videoRef} src={clip.videoUrl} poster={clip.posterUrl} preload="auto" playsInline aria-label={`${clip.title} scene`} className="h-full w-full object-contain" disablePictureInPicture
           onLoadedMetadata={(event) => { const pending = previewStart.current; if (pending && pending.requestId === playbackRequest.current) { event.currentTarget.currentTime = pending.time; previewStart.current = null; setCurrentTime(pending.time); } }}
           onLoadedData={() => setLoaded(true)} onCanPlay={(event) => { setLoaded(true); resumeBuffered(event.currentTarget); }}
@@ -414,13 +429,14 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
         {takeUrl && <audio ref={voiceRef} src={takeUrl} preload="auto" onError={() => { if (!busy && !capturePrepared.current) void recoverAudio(); }} onLoadedMetadata={() => sync(true)} onWaiting={(event) => companionWaiting(event.currentTarget)} onCanPlay={(event) => resumeBuffered(event.currentTarget)} onEnded={(event) => resumeBuffered(event.currentTarget)} />}
         {role.dubAudioUrl && <audio ref={bedRef} src={role.dubAudioUrl} preload="auto" onLoadedMetadata={() => sync(true)} onWaiting={(event) => companionWaiting(event.currentTarget)} onCanPlay={(event) => resumeBuffered(event.currentTarget)} onEnded={(event) => resumeBuffered(event.currentTarget)} onError={() => { if (!busy && !capturePrepared.current && isDub) { pause(); setError("The scene background could not load. Reload before playing the dub."); } }} />}
         {(!loaded || buffering) && countdown == null && <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/30"><LoaderCircle aria-label="Loading scene" className="size-8 animate-spin text-paper" /></div>}
-        {!playing && !busy && loaded && <button type="button" onClick={() => void togglePlay()} aria-label={isDub ? (takeLabel === "Your take" ? "Play your dubbed scene" : "Play friend’s dubbed scene") : "Watch the original scene"} className="absolute inset-0 grid place-items-center bg-black/10"><span className="grid size-16 place-items-center rounded-full border border-white/50 bg-paper/95 text-ink shadow-xl sm:size-20"><Play className="ml-1 size-7 fill-current" /></span></button>}
+        {!presentationOnly && !playing && !busy && loaded && <button type="button" onClick={() => void togglePlay()} aria-label={isDub ? (takeLabel === "Your take" ? "Play your dubbed scene" : "Play friend’s dubbed scene") : "Watch the original scene"} className="absolute inset-0 grid place-items-center bg-black/10"><span className="grid size-16 place-items-center rounded-full border border-white/50 bg-paper/95 text-ink shadow-xl sm:size-20"><Play className="ml-1 size-7 fill-current" /></span></button>}
         {countdown != null && <div className="absolute inset-0 flex flex-col items-center justify-center bg-ink/70"><span className="mono-label text-paper">Your scene starts in</span><span className="display-type mt-1 text-[5rem] text-acid sm:mt-3 sm:text-[7rem]" aria-live="assertive">{countdown || "Go"}</span>{onCancelCountdown && <button type="button" className="mt-2 min-h-9 px-4 text-xs font-bold underline" onClick={onCancelCountdown}>Cancel</button>}</div>}
-        {captions && activeCues.length > 0 && countdown == null && <div className="pointer-events-none absolute inset-x-3 bottom-3 flex flex-col items-center gap-1 sm:inset-x-8 sm:bottom-5" aria-hidden="true">
+        {!presentationOnly && captions && activeCues.length > 0 && countdown == null && <div className="pointer-events-none absolute inset-x-3 bottom-3 flex flex-col items-center gap-1 sm:inset-x-8 sm:bottom-5" aria-hidden="true">
           {activeCues.map((cue) => <p key={cue.id} className={cn("max-w-full rounded-md px-3 py-1.5 text-center text-sm font-bold leading-snug shadow-lg sm:text-xl", cue.roleId === role.id ? "bg-paper/95 text-ink" : "bg-black/85 text-white")}><span className="mr-1.5 text-[10px] uppercase tracking-wide opacity-60 sm:text-xs">{cue.roleId === role.id ? (takeLabel === "Your take" ? "You" : "Friend") : clip.roles.find((item) => item.id === cue.roleId)?.name ?? "Scene"}</span>{cue.text}</p>)}
         </div>}
       </div>
-      <div className="say-player-transport bg-surface px-3 pb-3 pt-2 sm:px-4">
+      {!presentationOnly && <div className="say-player-transport bg-surface px-3 pb-3 pt-2 sm:px-4">
+        {isDub && !busy && performerAvatar && <div className="mb-1 flex items-center gap-3"><PerformerAvatar level={voiceLevel} size={64} /><span className="text-xs font-bold text-white/65">Your dub</span></div>}
         <input type="range" min={0} max={clip.duration} step={0.01} value={Math.min(currentTime, clip.duration)} disabled={busy || !loaded} aria-label="Scene playback position" aria-valuetext={`${timeLabel(currentTime)} of ${timeLabel(clip.duration)}`} onChange={(event) => seek(Number(event.target.value))} className="h-6 w-full cursor-pointer accent-acid" />
         <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0">
           <div className="flex items-center gap-1">
@@ -435,7 +451,8 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
         </div>
         {busy && !compact && <p className="mt-1 flex items-center gap-2 text-xs leading-5 text-white/65"><Headphones className="size-3.5 shrink-0" />Scene audio is off while you record. Follow the captions.</p>}
         {error && <div role="alert" className="mt-2 rounded-lg bg-acid/10 p-3 text-xs leading-5 text-[#ffbcaa]"><p>{error}</p>{takeUrl && onAudioError && <button type="button" onClick={() => void recoverAudio(true)} className="mt-2 min-h-9 font-bold underline">Reload recording</button>}</div>}
-      </div>
+      </div>}
+      {presentationOnly && error && <p role="alert" className="absolute inset-x-0 bottom-0 bg-black/90 p-2 text-xs text-orange-200">{error}</p>}
     </div>
   );
 });

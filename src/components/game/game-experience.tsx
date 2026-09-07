@@ -27,6 +27,8 @@ import { JudgingLoader } from "@/components/game/judging-loader";
 import { ResultScreen } from "@/components/game/result-screen";
 import { VideoExport } from "@/components/exports/video-export";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
+import { useMediaSpeechLevel } from "@/hooks/use-media-speech-level";
+import { PerformerAvatar } from "@/components/avatars/performer-avatar";
 import { dailyGamePrompt, gamePrompt, toGamePrompt } from "@/lib/game-prompts";
 import { createId } from "@/lib/utils";
 import { downloadBlob } from "@/lib/share-card";
@@ -198,6 +200,7 @@ export function GameExperience({
   );
   const interactionStarted = useRef(false);
   const recorder = useAudioRecorder();
+  const playbackVoiceLevel = useMediaSpeechLevel(audioRef, stage === "review" ? recorder.audioUrl : null);
   const { reset, start, stop } = recorder;
   const allowed = isRatingAllowed(prompt.rating ?? "everyone", rating);
   const isFavorite = favorites.includes(prompt.id);
@@ -928,7 +931,9 @@ export function GameExperience({
             {stage === "prompt" && (
               <>
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
+                  <div className="flex items-center gap-4">
+                    <PerformerAvatar size={92} />
+                    <div>
                     <p className="flex items-center gap-2 text-sm font-bold">
                       <span className="inline-block size-2 rounded-full bg-white/30" />
                       {recorder.status === "requesting"
@@ -941,6 +946,7 @@ export function GameExperience({
                         ? "Practice stays on this device."
                         : "Record, listen back, then submit."}
                     </p>
+                    </div>
                   </div>
                   <button
                     onClick={() => void begin()}
@@ -992,6 +998,7 @@ export function GameExperience({
             {stage === "recording" && (
               <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
                 <div>
+                  <div className="mb-3 flex items-center gap-4"><PerformerAvatar size={104} level={recorder.voiceLevel} editable={false} /><p className="text-xs text-white/60">{recorder.voiceLevel > 0 ? "Your voice is live" : "Ready for your voice"}</p></div>
                   <div className="flex items-center justify-between gap-3">
                     <p className="flex items-center gap-2 text-sm font-bold">
                       <span className="status-dot" />
@@ -1099,6 +1106,7 @@ export function GameExperience({
                     )
                   }
                 />
+                <div className="mt-3 flex items-center gap-3"><PerformerAvatar size={80} level={playbackVoiceLevel} /><span className="text-xs text-white/55">Your avatar follows your voice.</span></div>
                 {muted && (
                   <button
                     type="button"

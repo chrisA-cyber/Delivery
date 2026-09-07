@@ -12,6 +12,7 @@ import { switchChallengeSchema } from "@/lib/switch/schema";
 import type { SwitchViewer } from "@/lib/server/switch";
 import { validGroupStoragePath } from "@/lib/server/group-rounds";
 import { ensurePublicAssignment } from "@/lib/server/public-assignments";
+import type { ClipEditSettings } from "@/lib/video-composition";
 
 type Row = Record<string, unknown>;
 export type ExportMode = "classic" | "switch" | "say-it-back";
@@ -20,6 +21,7 @@ export interface ExportInput {
   recordingPath: string; audioHash: string | null; durationMs: number; recordingOffsetMs: number;
   assignment: GroupAssignment; invitationUrl: string; displayName: string | null; avatarPath: string | null;
   score: {value: number; label: string; beta?: boolean} | null;
+  settings?: ClipEditSettings;
 }
 export interface ExportSource { kind: ExportSourceKind; row: Row; ownerKey: string; userId: string | null; input: ExportInput }
 export const exportUnavailable = () => new AppError("EXPORT_UNAVAILABLE", "This performance is private, expired, or unavailable. Open a take you recorded to create its video.", 404);

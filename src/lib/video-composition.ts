@@ -1,0 +1,194 @@
+import { z } from "zod";
+import { VISUAL_THEME as C } from "./visual-theme";
+import { BRAND_MARK_PATH, brandGradientSvg } from "./brand";
+import type { SwitchChallenge } from "./switch/types";
+import type { SayClip } from "./say-it-back/types";
+import emojiImages from "./video-emoji.json";
+
+export const COMPOSITION_WIDTH = 1080;
+export const COMPOSITION_HEIGHT = 1920;
+export const AUDIO_LEVEL_FPS = 15;
+export const BUILTIN_AVATARS = [
+  { id: "fox", name: "Fox", color: C.orange, imageUrl: "/avatars/fox.webp" },
+  { id: "cloud", name: "Cloud", color: C.blue, imageUrl: "/avatars/cloud.webp" },
+  { id: "star", name: "Star", color: C.accent, imageUrl: "/avatars/star.webp" },
+  { id: "robot", name: "Robot", color: C.violet, imageUrl: "/avatars/robot.webp" },
+  { id: "alien", name: "Alien", color: "#ace89b", imageUrl: "/avatars/alien.webp" },
+  { id: "cat", name: "Cat", color: C.pink, imageUrl: "/avatars/cat.webp" },
+] as const;
+export const clipAvatarSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("builtin"), id: z.string().refine((id) => BUILTIN_AVATARS.some((item) => item.id === id), "Choose an available avatar") }).strict(),
+  z.object({ kind: z.literal("upload"), dataUrl: z.string().max(700_000).regex(/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/, "Choose a PNG, JPEG or WebP image") }).strict(),
+]);
+export type ClipAvatar = z.infer<typeof clipAvatarSchema>;
+export const clipEditSettingsSchema = z.object({
+  version: z.literal(1), layout: z.enum(["spotlight", "duet"]), avatar: clipAvatarSchema,
+  reducedMotion: z.boolean().default(false), avatarVisible: z.boolean(), avatarX: z.number().finite().min(0).max(1), avatarY: z.number().finite().min(0).max(1),
+  avatarSize: z.number().finite().min(0.14).max(0.7), captions: z.boolean(), includeName: z.boolean(), includeScore: z.boolean(),
+  trimStart: z.number().finite().min(0).max(45), trimEnd: z.number().finite().min(0).max(45).nullable(),
+}).strict().refine((value) => value.trimEnd === null || value.trimEnd - value.trimStart >= 0.5, { message: "Keep at least half a second", path: ["trimEnd"] });
+export type ClipEditSettings = z.infer<typeof clipEditSettingsSchema>;
+export type CompositionMode = "classic" | "switch" | "say-it-back";
+export function defaultClipEditSettings(mode: CompositionMode): ClipEditSettings {
+  return { version: 1, layout: "spotlight", avatar: { kind: "builtin", id: "fox" }, reducedMotion: false, avatarVisible: true,
+    avatarX: mode === "say-it-back" ? 0.79 : 0.5, avatarY: mode === "say-it-back" ? 0.60 : mode === "switch" ? 0.34 : 0.35,
+    avatarSize: mode === "say-it-back" ? 0.23 : mode === "switch" ? 0.49 : 0.55,
+    captions: true, includeName: true, includeScore: true, trimStart: 0, trimEnd: null };
+}
+export function layoutClipEditSettings(mode: CompositionMode, layout: ClipEditSettings["layout"]): Pick<ClipEditSettings, "layout" | "avatarX" | "avatarY" | "avatarSize"> {
+  const initial = defaultClipEditSettings(mode);
+  if (layout === "spotlight") return { layout, avatarX: initial.avatarX, avatarY: initial.avatarY, avatarSize: initial.avatarSize };
+  return { layout, avatarX: mode === "say-it-back" ? 0.205 : 0.275, avatarY: mode === "say-it-back" ? 0.665 : mode === "switch" ? 0.465 : 0.44, avatarSize: mode === "say-it-back" ? 0.25 : 0.43 };
+}
+export type CompositionScene = { duration: number; invitationUrl?: string; displayName?: string | null; score?: { value: number; label: string; beta?: boolean } | null } & (
+  | { mode: "classic"; classic: { phrase: string; direction: string } }
+  | { mode: "switch"; switch: SwitchChallenge }
+  | { mode: "say-it-back"; say: { clip: SayClip; roleId: string } }
+);
+export interface CompositionFrame { x: number; y: number; width: number; height: number }
+export function sceneFrame(settings: ClipEditSettings): CompositionFrame { return settings.layout === "duet" ? { x: 64, y: 360, width: 952, height: 760 } : { x: 64, y: 340, width: 952, height: 930 }; }
+export function contentFrame(scene: CompositionScene, settings: ClipEditSettings): CompositionFrame {
+  if (scene.mode === "say-it-back") return settings.layout === "duet" ? { x: 400, y: 1160, width: 590, height: 365 } : { x: 86, y: 1310, width: 884, height: 215 };
+  return settings.layout === "duet" ? { x: 572, y: 605, width: 414, height: 780 } : { x: 86, y: 1000, width: 884, height: 445 };
+}
+export function avatarFrame(settings: ClipEditSettings): CompositionFrame {
+  const size = Math.round(settings.avatarSize * COMPOSITION_WIDTH);
+  // Keep the complete pulse ring on canvas even after dragging near an edge.
+  return { x: Math.round(Math.max(0, Math.min(COMPOSITION_WIDTH - size, settings.avatarX * COMPOSITION_WIDTH - size / 2))), y: Math.round(Math.max(0, Math.min(COMPOSITION_HEIGHT - size, settings.avatarY * COMPOSITION_HEIGHT - size / 2))), width: size, height: size };
+}
+const clamp = (value: number, low = 0, high = 1) => Math.min(high, Math.max(low, Number.isFinite(value) ? value : 0));
+/** Visual measurement only: never changes recorded or rendered audio gain. */
+export function speechLevel(rms: number): number { return Math.round(clamp((rms - 0.012) * 8) * 7) / 7; }
+export function measureAudioLevels(samples: Float32Array, sampleRate: number): number[] {
+  if (!samples.length || !Number.isFinite(sampleRate) || sampleRate <= 0) return [];
+  const frames = Math.ceil(samples.length / sampleRate * AUDIO_LEVEL_FPS);
+  return Array.from({ length: frames }, (_, frame) => {
+    const start = Math.floor(frame * sampleRate / AUDIO_LEVEL_FPS), end = Math.min(samples.length, Math.floor((frame + 1) * sampleRate / AUDIO_LEVEL_FPS));
+    let sum = 0;
+    for (let i = start; i < end; i++) { const value = samples[i]!; if (Number.isFinite(value)) sum += value * value; }
+    return speechLevel(Math.sqrt(sum / Math.max(1, end - start)));
+  });
+}
+export function audioLevelAt(levels: readonly number[], time: number): number { return time < 0 ? 0 : levels[Math.floor(time * AUDIO_LEVEL_FPS)] ?? 0; }
+export function xml(value: string): string { return value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function text(value: string, x: number, y: number, size: number, color = C.paper, weight = 700, anchor = "start"): string {
+  return `<text x="${x}" y="${y}" font-family="DejaVu Sans, sans-serif" font-size="${size}" font-weight="${weight}" text-anchor="${anchor}" fill="${color}">${xml(value)}</text>`;
+}
+function textWidth(value: string, size: number): number {
+  return [...value].reduce((width, char) => width + (/[ilI.,'!:;|]/.test(char) ? 0.34 : /[MW@%]/.test(char) ? 0.96 : char === " " ? 0.37 : /[A-Z]/.test(char) ? 0.76 : char.codePointAt(0)! > 0x2fff ? 1.1 : 0.65), 0) * size;
+}
+export function wrapVideoText(value: string, size: number, width: number): string[] {
+  const lines: string[] = [];
+  for (const paragraph of value.split(/\n/)) {
+    let line = "";
+    for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+      if (textWidth(word, size) > width) {
+        if (line) { lines.push(line); line = ""; }
+        for (const char of [...word]) { if (line && textWidth(line + char, size) > width) { lines.push(line); line = ""; } line += char; }
+      } else if (line && textWidth(`${line} ${word}`, size) > width) { lines.push(line); line = word; }
+      else line = line ? `${line} ${word}` : word;
+    }
+    if (line) lines.push(line);
+  }
+  return lines;
+}
+function fitText(value: string, x: number, top: number, width: number, height: number, maxSize: number, minSize = 22, color = C.paper, centered = false): string {
+  let size = maxSize, lines = wrapVideoText(value, size, width);
+  while (size > minSize && lines.length * size * 1.22 > height) { size -= 1; lines = wrapVideoText(value, size, width); }
+  if (lines.length * size * 1.22 > height) throw new Error("The challenge text is too long for this layout.");
+  return lines.map((line, i) => text(line, centered ? x + width / 2 : x, top + size + i * size * 1.22, size, color, 700, centered ? "middle" : "start")).join("");
+}
+function rect(x: number, y: number, width: number, height: number, fill: string, radius = 0, extra = ""): string { return `<rect x="${x}" y="${y}" width="${width}" height="${height}" rx="${radius}" fill="${fill}" ${extra}/>`; }
+function svg(body: string, width = COMPOSITION_WIDTH, height = COMPOSITION_HEIGHT): string { return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${body}</svg>`; }
+export function avatarSvg(avatar: ClipAvatar, options: { size?: number; level?: number; reducedMotion?: boolean; imageHref?: string } = {}): string {
+  const level = clamp(options.level ?? 0), selected = BUILTIN_AVATARS.find((item) => avatar.kind === "builtin" && item.id === avatar.id) ?? BUILTIN_AVATARS[0];
+  const source = options.imageHref ?? (avatar.kind === "upload" ? avatar.dataUrl : selected.imageUrl);
+  const scale = options.reducedMotion ? 1 : 1 + level * 0.026;
+  const background = avatar.kind === "upload" ? C.violet : selected.color;
+  const assetId = avatar.kind === "upload" ? "uploaded" : selected.id;
+  const body = `<defs><radialGradient id="avatar-wash-${assetId}"><stop stop-color="${background}" stop-opacity="0.25"/><stop offset="1" stop-color="${background}" stop-opacity="0.055"/></radialGradient><clipPath id="avatar-crop-${assetId}"><circle cx="128" cy="128" r="107"/></clipPath></defs>`
+    + `<circle cx="128" cy="128" r="120" fill="${background}" fill-opacity="${(0.025 + level * 0.07).toFixed(3)}"/>`
+    + `<circle cx="128" cy="128" r="116" fill="none" stroke="${background}" stroke-width="${(1.8 + level * 3.2).toFixed(2)}" stroke-opacity="${(0.25 + level * 0.7).toFixed(3)}"/>`
+    + `<g transform="translate(128 128) scale(${scale.toFixed(4)}) translate(-128 -128)"><circle cx="128" cy="128" r="107" fill="${C.surface}"/><circle cx="128" cy="128" r="107" fill="url(#avatar-wash-${assetId})"/><image href="${xml(source)}" x="21" y="21" width="214" height="214" preserveAspectRatio="${avatar.kind === "upload" ? "xMidYMid slice" : "xMidYMid meet"}"${avatar.kind === "upload" ? ` clip-path="url(#avatar-crop-${assetId})"` : ""}/></g>`
+    + Array.from({ length: 5 }, (_, i) => { const h = 3 + level * [10, 19, 26, 19, 10][i]!; return rect(112 + i * 7, 242 - h / 2, 4, h, background, 2); }).join("");
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${options.size ?? 256}" height="${options.size ?? 256}" viewBox="0 0 256 256">${body}</svg>`;
+}
+export function compositionFooter(scene: CompositionScene): string {
+  let body = rect(86, 1604, 884, 2, C.border);
+  if (scene.invitationUrl) {
+    const url = new URL(scene.invitationUrl);
+    if (url.protocol !== "https:" || !/^\/a\/[A-Za-z0-9_-]{6,64}$/.test(url.pathname) || url.search || url.hash || url.username || url.password) throw new Error("Invalid playable invitation");
+    body += text("Your turn.", 86, 1678, 40) + fitText(`${url.host}${url.pathname}`, 86, 1697, 884, 75, 24, 16, C.muted);
+  } else body += text("Made on Delivery.", 86, 1678, 35, C.muted);
+  if (scene.mode === "say-it-back") {
+    const source = scene.say.clip.source;
+    body += fitText(`${source.title} · ${source.creator} · ${source.license}\nShortened, dubbed adaptation. ${source.license === "CC BY 3.0" ? "creativecommons.org/licenses/by/3.0/" : ""}`, 86, 1785, 884, 88, 17, 14, C.muted);
+  }
+  return body;
+}
+function baseBody(scene: CompositionScene, settings: ClipEditSettings): string {
+  let body = rect(0, 0, COMPOSITION_WIDTH, COMPOSITION_HEIGHT, C.ink)
+    + `<defs><radialGradient id="stage-wash"><stop stop-color="${C.violet}" stop-opacity="0.10"/><stop offset="1" stop-color="${C.ink}" stop-opacity="0"/></radialGradient></defs><ellipse cx="540" cy="750" rx="700" ry="850" fill="url(#stage-wash)"/>`
+    + brandGradientSvg("clip-brand") + `<path d="${BRAND_MARK_PATH}" transform="translate(75 94) scale(.78)" fill="url(#clip-brand)" fill-rule="evenodd"/>` + text("delivery", 137, 136, 34)
+    + text(scene.mode === "classic" ? "CLASSIC" : scene.mode === "switch" ? "SWITCH" : "SAY IT BACK", 970, 133, 23, C.muted, 700, "end")
+    + compositionFooter(scene);
+  if (settings.includeName && scene.displayName) body += fitText(scene.displayName, 86, 1531, settings.includeScore && scene.score ? 650 : 884, 52, 28, 21);
+  if (settings.includeScore && scene.score && Number.isFinite(scene.score.value)) {
+    body += text(`${Math.round(scene.score.value)}`, 970, 1556, 40, C.accent, 700, "end") + text(scene.score.beta || scene.mode === "switch" ? "BETA SCORE" : scene.score.label.toUpperCase().slice(0, 22), 970, 1584, 15, C.muted, 500, "end");
+  }
+  if (scene.mode === "classic") {
+    body += text("ONE LINE. YOUR DELIVERY.", 540, 260, 26, C.accent, 700, "middle");
+    const duet = settings.layout === "duet", x = duet ? 564 : 86, width = duet ? 422 : 884;
+    if (settings.captions) body += text("CHALLENGE LINE", x, duet ? 572 : 1040, 20, C.muted, 500) + fitText(scene.classic.phrase, x, duet ? 600 : 1070, width, duet ? 390 : 225, duet ? 52 : 65, 28);
+    body += text("DELIVERED AS", x, duet ? 1110 : 1351, 19, C.muted, 500) + fitText(scene.classic.direction, x, duet ? 1138 : 1374, width, duet ? 250 : 139, duet ? 34 : 32, 19, C.accent);
+  } else if (scene.mode === "switch") {
+    body += text(scene.switch.kind === "speed" ? "ONE LINE. FIVE SPEEDS." : "SAME LINE. NEW ENERGY.", 540, 259, 26, C.accent, 700, "middle");
+    if (settings.captions) body += text("CHALLENGE LINE", 86, 325, 19, C.muted, 500) + fitText(scene.switch.cues[0]?.text ?? "", 86, 347, 884, 140, 59, 27);
+  } else {
+    body += fitText(scene.say.clip.title, 86, 210, 884, 93, 40, 27);
+    const f = sceneFrame(settings);
+    body += rect(f.x, f.y, f.width, f.height, "#030303", 22, `stroke="${C.border}" stroke-width="2"`);
+  }
+  return body;
+}
+export function compositionBoundaries(scene: CompositionScene, settings: ClipEditSettings): number[] {
+  if (scene.mode === "switch") return [...new Set([0, scene.duration, ...scene.switch.cues.flatMap((cue) => [cue.start, cue.end])])].sort((a, b) => a - b);
+  if (scene.mode === "say-it-back" && settings.captions) return [...new Set([0, scene.duration, ...scene.say.clip.cues.flatMap((cue) => [cue.start, cue.end])])].sort((a, b) => a - b);
+  return [0, scene.duration];
+}
+function contentBody(scene: CompositionScene, settings: ClipEditSettings, time: number): string {
+  const f = contentFrame(scene, settings);
+  if (scene.mode === "switch") {
+    const index = scene.switch.cues.findIndex((cue) => time >= cue.start && time < cue.end);
+    const cue = scene.switch.cues[index];
+    if (!cue) return "";
+    const duet = settings.layout === "duet", cx = f.x + f.width / 2;
+    let body = rect(f.x, f.y, f.width, f.height, C.surface, 32, `stroke="${C.border}" stroke-width="2"`)
+      + text(`${index + 1} / ${scene.switch.cues.length}`, cx, f.y + 51, 22, C.muted, 500, "middle");
+    if (scene.switch.kind === "speed") body += text(`${cue.speed ?? 1}×`, cx, f.y + (duet ? 294 : 212), duet ? 110 : 121, C.accent, 700, "middle");
+    else { const emoji = (emojiImages as Record<string, string>)[cue.emoji]; body += emoji ? `<image href="${emoji}" x="${cx - (duet ? 110 : 82)}" y="${f.y + (duet ? 118 : 76)}" width="${duet ? 220 : 164}" height="${duet ? 220 : 164}"/>` : text(cue.emoji, cx, f.y + 212, 120, C.accent, 700, "middle"); }
+    body += fitText(cue.directionLabel, f.x + 22, f.y + (duet ? 372 : 256), f.width - 44, duet ? 180 : 77, duet ? 46 : 43, 25, C.paper, true);
+    const next = scene.switch.cues[index + 1];
+    body += fitText(next ? `Next: ${next.directionLabel}` : "Last switch", f.x + 24, f.y + f.height - 103, f.width - 48, 53, 20, 16, C.muted, true);
+    const gap = 9, step = (f.width - 64) / scene.switch.cues.length;
+    scene.switch.cues.forEach((_, i) => { body += rect(f.x + 32 + i * step, f.y + f.height - 33, step - gap, 7, i === index ? C.accent : i < index ? C.blue : C.border, 3); });
+    return body;
+  }
+  if (scene.mode === "say-it-back" && settings.captions) {
+    const cues = scene.say.clip.cues.filter((cue) => time >= cue.start && time < cue.end);
+    if (!cues.length) return "";
+    const caption = cues.map((cue) => `${scene.say.clip.roles.find((role) => role.id === cue.roleId)?.name ?? "Scene"}: ${cue.text}`).join("\n");
+    return text("SCENE SCRIPT", f.x, f.y + 20, 18, C.muted, 500) + fitText(caption, f.x, f.y + 38, f.width, f.height - 46, settings.layout === "duet" ? 35 : 37, 21);
+  }
+  return "";
+}
+export function compositionSvg(scene: CompositionScene, settings: ClipEditSettings, options: { time: number; level?: number; reducedMotion?: boolean; layer?: "all" | "base" | "content" | "avatar"; avatarImageHref?: string } = { time: 0 }): string {
+  const layer = options.layer ?? "all";
+  let body = layer === "all" || layer === "base" ? baseBody(scene, settings) : "";
+  if (layer === "all" || layer === "content") body += contentBody(scene, settings, options.time);
+  if ((layer === "all" || layer === "avatar") && settings.avatarVisible) {
+    const f = avatarFrame(settings);
+    body += `<g transform="translate(${f.x} ${f.y})">${avatarSvg(settings.avatar, { size: f.width, level: options.level, reducedMotion: options.reducedMotion ?? settings.reducedMotion, imageHref: options.avatarImageHref })}</g>`;
+  }
+  return svg(body);
+}

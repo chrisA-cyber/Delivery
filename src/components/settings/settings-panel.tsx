@@ -6,6 +6,9 @@ import { useEffect, useState } from "react";
 
 import { useApp } from "@/components/providers/app-provider";
 import { ContentControl } from "@/components/content/content-control";
+import { AvatarPicker } from "@/components/avatars/avatar-picker";
+import { SpeechAvatar } from "@/components/avatars/speech-avatar";
+import { usePreferredAvatar } from "@/hooks/use-preferred-avatar";
 
 function errorMessage(body: unknown, fallback: string) {
   if (body && typeof body === "object" && "error" in body) {
@@ -17,6 +20,7 @@ function errorMessage(body: unknown, fallback: string) {
 
 export function SettingsPanel() {
   const { muted, reducedMotion, contentRating, authenticated, accountEmail, tier, billing, profile, refreshAccount, updatePreferences, clearLocalData, signOut } = useApp();
+  const avatarPreference = usePreferredAvatar();
   const [confirmingLocal, setConfirmingLocal] = useState(false);
   const [savedNotice, setSavedNotice] = useState("");
   const [billingError, setBillingError] = useState("");
@@ -133,12 +137,18 @@ export function SettingsPanel() {
     setSavedNotice(`@${handle} unblocked.`);
   }
 
-  const navigation = [{ label: "Content", icon: Mic }, { label: "Playback", icon: Volume2 }, { label: "Privacy", icon: ShieldCheck }, { label: "Account", icon: Eye }];
+  const navigation = [{ label: "Avatar", icon: UserRound }, { label: "Content", icon: Mic }, { label: "Playback", icon: Volume2 }, { label: "Privacy", icon: ShieldCheck }, { label: "Account", icon: Eye }];
 
   return (
     <div className="grid gap-5 lg:grid-cols-[200px_minmax(0,1fr)]">
       <nav aria-label="Settings sections" className="panel grid h-fit grid-cols-2 p-2 lg:sticky lg:top-28 lg:grid-cols-1">{navigation.map(({ label, icon: Icon }) => <a key={label} href={`#${label.toLowerCase()}`} className="flex min-h-12 items-center gap-3 rounded-lg px-3 py-3 text-sm font-bold text-white/65 hover:bg-white/5 hover:text-white"><Icon className="size-4" /> {label}</a>)}</nav>
       <div className="grid min-w-0 gap-5">
+        <Section id="avatar" title="Your performance avatar" description="Your default character for recording and new clips. Change it for any clip in the editor.">
+          <div className="mb-2 flex items-center gap-4"><SpeechAvatar avatar={avatarPreference.avatar} size={112} /><p className="text-sm font-semibold text-white/70">{profile.displayName}</p></div>
+          <AvatarPicker value={avatarPreference.avatar} onChange={avatarPreference.setAvatar} disabled={avatarPreference.loading || avatarPreference.saving} />
+          {avatarPreference.saving && <p className="text-xs text-white/60" role="status">Saving avatar…</p>}
+          {avatarPreference.error && <p className="text-xs text-hot" role="alert">{avatarPreference.error}</p>}
+        </Section>
         <Section id="content" title="Your kind of trouble" description="Choose the intensity of lines shown in Classic, packs, and challenge creation.">
           <ContentControl value={contentRating} onChange={(contentRating) => updatePreferences({ contentRating })} />
           <p className="text-sm leading-6 text-white/65">Saved on this device. Hosts choose a separate setting when opening Stream Mode; each new stage setup starts clean.</p>

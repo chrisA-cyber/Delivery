@@ -2,10 +2,32 @@ import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VideoExport, type ExportVideo } from "./video-export";
+import { defaultClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
 
-vi.mock("@/components/providers/app-provider", () => ({ useApp: () => ({ contentRating: "everyone" }) }));
-const video: ExportVideo = { id: "video-1", status: "ready", includeScore: true, includeName: false, filename: "delivery-classic.mp4", assignmentUrl: "https://delivery.example/a/public1234" };
+vi.mock("@/components/providers/app-provider", () => ({ useApp: () => ({ contentRating: "everyone", reducedMotion: false }) }));
+vi.mock("@/hooks/use-preferred-avatar", () => ({ usePreferredAvatar: () => ({ avatar: { kind: "builtin", id: "fox" }, setAvatar: vi.fn(), loading: false, saving: false, error: "" }) }));
+vi.mock("@/components/avatars/avatar-picker", () => ({ AvatarPicker: ({ onChange }: { onChange: (value: unknown) => void }) => <button type="button" onClick={() => onChange({ kind: "builtin", id: "cat" })}>Choose Cat</button> }));
+vi.mock("./clip-preview", () => ({ ClipPreview: ({ settings }: { settings: ClipEditSettings }) => <div aria-label="Editable clip preview" data-settings={JSON.stringify(settings)} />, clipTime: (value: number) => `${value.toFixed(1)}s` }));
+const settings = { ...defaultClipEditSettings("classic"), includeName: false };
+const scene = { mode: "classic", duration: 5, classic: { phrase: "I was being dramatic.", direction: "A little too confidently" }, score: { value: 82, label: "Delivery score" }, displayName: "Chris" };
+const editor = { settings, preferredAvatar: settings.avatar, source: { recordingUrl: "/private-audio", recordingOffsetMs: 0, duration: 5, scene } };
+const video: ExportVideo = { id: "video-1", status: "ready", includeScore: true, includeName: false, settings, score: scene.score, displayName: null, filename: "delivery-classic.mp4", assignmentUrl: "https://delivery.example/a/public1234" };
 function ok(data: unknown) { return new Response(JSON.stringify({ ok: true, data }), { headers: { "Content-Type": "application/json" } }); }
+function setup({ saved = editor, exports = [video], eligible = true }: { saved?: typeof editor; exports?: ExportVideo[]; eligible?: boolean } = {}) {
+  let edits = saved;
+  const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+    if (url.startsWith("/api/exports/editor")) {
+      if (init?.method === "PUT") { edits = { ...edits, settings: JSON.parse(init.body as string).settings }; return ok({ settings: edits.settings }); }
+      return ok(edits);
+    }
+    if (url === "/api/exports" && init?.method === "POST") { const body = JSON.parse(init.body as string); return ok({ export: { ...video, status: "queued", settings: body.settings, includeScore: body.settings.includeScore, includeName: body.settings.includeName, displayName: body.settings.includeName ? scene.displayName : null, score: body.settings.includeScore ? scene.score : null } }); }
+    if (url.startsWith("/api/exports?")) return ok({ exports, eligible, reason: eligible ? undefined : "This scene is available for in-app replay only." });
+    if (url.endsWith("/video")) return new Response(new Blob(["finished mp4"], { type: "video/mp4" }));
+    return ok({ export: video });
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+}
 beforeEach(() => {
   vi.stubGlobal("React", React);
   Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
@@ -13,100 +35,101 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
-describe("finished video workflow", () => {
-  it.each(["", null])("describes an export without a public challenge link (%s) as a private download", async (assignmentUrl) => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok({ eligible: true, exports: [{ ...video, assignmentUrl }] })));
-    render(<VideoExport mode="say-it-back" attemptId="private-scene-take" hasScore initialOpen />);
-    await screen.findByRole("link", { name: "Download video" });
-    expect(screen.getByText(/This download has no public challenge link/)).toBeInTheDocument();
-    expect(screen.queryByText(/Its invitation opens/)).toBeNull();
-  });
-
-  it("recovers a private finished file and changes visibility options without showing the wrong preview", async () => {
-    const hidden: ExportVideo = { ...video, id: "without-score", includeScore: false };
-    const fetchMock = vi.fn().mockResolvedValue(ok({ eligible: true, exports: [video, hidden] }));
-    vi.stubGlobal("fetch", fetchMock);
-    const { container } = render(<VideoExport mode="classic" attemptId="owned-take" hasScore />);
+describe("compact clip editor and finished video workflow", () => {
+  it("opens the editor directly, recovers a matching MP4, and never displays a stale video after edits", async () => {
+    const fetchMock = setup();
+    render(<VideoExport mode="classic" attemptId="owned-take" hasScore />);
     expect(fetchMock).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Create video" }));
     await screen.findByRole("link", { name: "Download video" });
-    expect(container.querySelector("video")).toHaveAttribute("src", "/api/exports/video-1/video?v=0");
-    expect(screen.getByRole("link", { name: "Download video" })).toHaveAttribute("href", "/api/exports/video-1/video?download=1");
-    expect(screen.getByText(/Its invitation opens the same challenge/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("checkbox", { name: "Score" }));
-    expect(container.querySelector("video")).toHaveAttribute("src", "/api/exports/without-score/video?v=0");
-    fireEvent.click(screen.getByRole("checkbox", { name: "Display name / avatar" }));
-    expect(container.querySelector("video")).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Edit your clip" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Finished MP4" }));
+    expect(screen.getByLabelText("Finished performance video")).toHaveAttribute("src", "/api/exports/video-1/video?v=0");
+    fireEvent.click(screen.getByRole("tab", { name: "Text" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Display name/ }));
+    expect(screen.queryByLabelText("Finished performance video")).toBeNull();
+    expect(screen.queryByRole("link", { name: "Download video" })).toBeNull();
     expect(screen.getByRole("button", { name: "Generate video" })).toBeEnabled();
-    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(screen.getByRole("button", { name: "Save edits" })).toBeEnabled();
+    expect(screen.getByText("Earlier clips")).toBeInTheDocument();
   });
 
-  it("uploads an unscored local take once, queues the same saved source, and recovers it on reopening", async () => {
-    const queued = { ...video, status: "queued", includeScore: false };
+  it("saves a local unscored source once on opening, keeps trimming separate from judging, and restores saved edits", async () => {
+    const saved = { ...editor, settings: { ...settings, includeScore: false }, source: { ...editor.source, scene: { ...scene, score: null } } } as unknown as typeof editor;
+    const fetchMock = setup({ saved, exports: [] });
     const prepareAttempt = vi.fn().mockResolvedValue("saved-local");
-    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-      if (init?.method === "POST") return ok({ export: queued });
-      if (url.startsWith("/api/exports?")) return ok({ eligible: true, exports: [queued] });
-      return ok({ export: { ...queued, status: "ready" } });
-    });
-    vi.stubGlobal("fetch", fetchMock);
     const first = render(<VideoExport mode="switch" prepareAttempt={prepareAttempt} />);
     fireEvent.click(screen.getByRole("button", { name: "Create video" }));
-    expect(screen.getByRole("checkbox", { name: /Beta score/ })).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: "Generate video" }));
-    await screen.findByText("Your video is queued.");
+    await screen.findByLabelText("Editable clip preview");
     expect(prepareAttempt).toHaveBeenCalledOnce();
-    expect(JSON.parse(fetchMock.mock.calls.find(([, init]) => init?.method === "POST")![1]!.body as string)).toEqual({ mode: "switch", attemptId: "saved-local", includeScore: false, includeName: false, maxRating: "everyone" });
-    expect(screen.getByRole("link", { name: "Reopen this performance" })).toHaveAttribute("href", "/switch?attempt=saved-local");
+    fireEvent.click(screen.getByRole("tab", { name: "Trim" }));
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Trim start seconds" }), { target: { value: "1.2" } });
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Trim end seconds" }), { target: { value: "4.2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save edits" }));
+    await screen.findByText("Edits saved. Reopen this performance to keep editing.");
     first.unmount();
     render(<VideoExport mode="switch" attemptId="saved-local" initialOpen />);
+    await screen.findByLabelText("Editable clip preview");
+    fireEvent.click(screen.getByRole("tab", { name: "Trim" }));
+    expect(screen.getByRole("spinbutton", { name: "Trim start seconds" })).toHaveValue(1.2);
+    expect(screen.getByRole("spinbutton", { name: "Trim end seconds" })).toHaveValue(4.2);
+    fireEvent.click(screen.getByRole("button", { name: "Generate video" }));
     await screen.findByText("Your video is queued.");
-    await screen.findByRole("link", { name: "Download video" }, { timeout: 4_000 });
-    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "POST")).toHaveLength(1);
+    const posted = JSON.parse(fetchMock.mock.calls.find(([, init]) => init?.method === "POST")![1]!.body as string);
+    expect(posted).toMatchObject({ mode: "switch", attemptId: "saved-local", includeScore: false, settings: { trimStart: 1.2, trimEnd: 4.2, avatar: settings.avatar }, maxRating: "everyone" });
     expect(fetchMock.mock.calls.every(([url]) => !url.includes("judge"))).toBe(true);
   });
 
-  it("retries a failed export with the same saved source and selected options", async () => {
-    const failed = { ...video, status: "failed", includeName: true, errorMessage: "Video creation was interrupted." };
-    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => init?.method === "POST" ? ok({ export: { ...failed, status: "queued" } }) : ok({ eligible: true, exports: [failed] }));
-    vi.stubGlobal("fetch", fetchMock);
+  it("uses a different avatar for this clip without changing the preferred avatar and keeps name independent", async () => {
+    setup();
+    render(<VideoExport mode="classic" attemptId="owned" hasScore initialOpen />);
+    await screen.findByLabelText("Editable clip preview");
+    fireEvent.click(screen.getByRole("tab", { name: "Avatar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Choose Cat" }));
+    expect(screen.getByRole("button", { name: "Use for future clips" })).toBeEnabled();
+    const draft = JSON.parse(screen.getByLabelText("Editable clip preview").getAttribute("data-settings")!);
+    expect(draft).toMatchObject({ avatar: { kind: "builtin", id: "cat" }, avatarVisible: true, includeName: false });
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(JSON.parse(screen.getByLabelText("Editable clip preview").getAttribute("data-settings")!)).toMatchObject({ avatar: settings.avatar, trimStart: 0, trimEnd: null });
+  });
+
+  it("rejects an old-name render after a profile update and retains original-layout downloads", async () => {
+    const namedSettings = { ...settings, includeName: true };
+    setup({ saved: { ...editor, settings: namedSettings }, exports: [{ ...video, settings: namedSettings, includeName: true, displayName: "Old name" }, { ...video, id: "legacy", settings: null }] });
+    render(<VideoExport mode="classic" attemptId="owned" hasScore initialOpen />);
+    await screen.findByLabelText("Editable clip preview");
+    expect(screen.getByRole("button", { name: "Generate video" })).toBeEnabled();
+    expect(screen.queryByRole("link", { name: "Download video" })).toBeNull();
+    expect(screen.getByText("Clip 2 · original layout")).toHaveAttribute("href", "/api/exports/legacy/video?download=1");
+  });
+
+  it("retries failed exports with their saved source and exact settings", async () => {
+    const fetchMock = setup({ exports: [{ ...video, status: "failed", errorMessage: "Video creation was interrupted." }] });
     render(<VideoExport mode="classic" attemptId="kept-take" hasScore initialOpen />);
-    await screen.findByRole("button", { name: "Retry video" });
-    expect(screen.getByRole("checkbox", { name: "Display name / avatar" })).toBeChecked();
-    fireEvent.click(screen.getByRole("button", { name: "Retry video" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Retry video" }));
     await screen.findByText("Your video is queued.");
-    const posted = fetchMock.mock.calls.find(([, init]) => init?.method === "POST")![1]!;
-    expect(JSON.parse(posted.body as string)).toMatchObject({ attemptId: "kept-take", includeName: true, includeScore: true });
+    expect(JSON.parse(fetchMock.mock.calls.find(([, init]) => init?.method === "POST")![1]!.body as string)).toMatchObject({ attemptId: "kept-take", settings });
   });
 
   it("shares the actual preloaded MP4 on a user tap and never calls it published", async () => {
     const share = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "share", { configurable: true, value: share });
     Object.defineProperty(navigator, "canShare", { configurable: true, value: vi.fn().mockReturnValue(true) });
-    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.endsWith("/video") ? new Response(new Blob(["finished mp4"], { type: "video/mp4" })) : ok({ eligible: true, exports: [video] })));
+    setup();
     render(<VideoExport mode="classic" attemptId="owned" hasScore initialOpen />);
     await waitFor(() => expect(screen.getByRole("button", { name: "Share video" })).toBeEnabled());
     expect(share).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Share video" }));
     await screen.findByText("Share menu closed. Your video is still available here.");
-    const data = share.mock.calls[0]![0] as ShareData;
-    expect(data.files?.[0]).toMatchObject({ name: "delivery-classic.mp4", type: "video/mp4" });
-    expect(data.url).toBeUndefined();
+    expect((share.mock.calls[0]![0] as ShareData).files?.[0]).toMatchObject({ name: "delivery-classic.mp4", type: "video/mp4" });
     expect(screen.queryByText(/published/i)).toBeNull();
   });
 
-  it("keeps unsupported sharing downloadable and explains scene eligibility without a generation request", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(ok({ eligible: true, exports: [video] }));
-    vi.stubGlobal("fetch", fetchMock);
-    const first = render(<VideoExport mode="classic" attemptId="owned" hasScore initialOpen />);
-    const fallback = await screen.findByRole("link", { name: "Save to share" });
-    expect(fallback).toHaveAttribute("href", "/api/exports/video-1/video?download=1");
-    expect(fallback).toHaveAttribute("download", "delivery-classic.mp4");
-    first.unmount();
-    fetchMock.mockResolvedValue(ok({ eligible: false, reason: "This scene is available for in-app replay only.", exports: [] }));
-    render(<VideoExport mode="say-it-back" attemptId="restricted-scene" initialOpen />);
+  it("explains ineligible scenes without starting generation", async () => {
+    const fetchMock = setup({ eligible: false, exports: [] });
+    render(<VideoExport mode="say-it-back" attemptId="restricted" initialOpen />);
     await screen.findByText("This scene is available for in-app replay only.");
     expect(screen.queryByRole("button", { name: "Generate video" })).toBeNull();
-    expect(fetchMock.mock.calls.every((call) => !call[1]?.method)).toBe(true);
+    expect(fetchMock.mock.calls.every(([, init]) => !init?.method)).toBe(true);
   });
 });

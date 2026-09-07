@@ -124,6 +124,8 @@ describe("Switch take recovery and immutable playback", () => {
     const uploads: FormData[] = [];
     vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
       if (url.includes("/catalog")) return ok({ challenges: [challenge] });
+      if (url === "/api/avatars") return ok({ avatar: { kind: "builtin", id: "fox" } });
+      if (url.startsWith("blob:") || url.endsWith(".wav")) return new Response(null, { status: 404 });
       uploads.push(init!.body as FormData);
       if (uploads.length === 1) throw new Error("Upload interrupted. Retry this take.");
       return ok({ attempt: attempt() });
@@ -146,6 +148,8 @@ describe("Switch take recovery and immutable playback", () => {
     const oldJudge = new Promise<ReturnType<typeof ok>>((resolve) => { finishJudge = resolve; });
     vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
       if (url.includes("/catalog")) return ok({ challenges: [challenge] });
+      if (url === "/api/avatars") return ok({ avatar: { kind: "builtin", id: "fox" } });
+      if (url.startsWith("blob:") || url.endsWith(".wav")) return new Response(null, { status: 404 });
       if (url.endsWith("/judge")) return oldJudge;
       uploads.push(init!.body as FormData);
       return ok({ attempt: attempt({ id: uploads.length === 1 ? "old-take" : "new-take" }) });

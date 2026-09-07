@@ -8,6 +8,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { renderPerformanceVideo, VIDEO_LAYOUT_VERSION, type VideoRenderInput } from "../src/lib/server/video-renderer";
+import { defaultClipEditSettings, layoutClipEditSettings } from "../src/lib/video-composition";
 import { SWITCH_CHALLENGES } from "../src/lib/switch/catalog";
 import { composeLineTakes, readPcmWav, type LineCapture } from "../src/lib/say-it-back/audio-timeline";
 import catalog from "../src/lib/say-it-back/catalog.json";
@@ -86,10 +87,10 @@ async function main() {
   if (outsideChanges || !retakeChanges) throw new Error("Partial retake fixture did not preserve neighboring lines.");
   const common = { layoutVersion: VIDEO_LAYOUT_VERSION, invitationUrl: "https://deliverygame.netlify.app/a/Sample12345", displayName: "Sample performer", recordingOffsetMs: 0, score: null };
   const inputs: VideoRenderInput[] = [
-    { ...common, mode: "classic", recordingPath: classic, outputPath: join(outputDir, "classic.mp4"), durationMs: Math.round(duration(classic) * 1000), classic: { phrase, direction: "An exhausted customer service agent" } },
-    { ...common, mode: "switch", recordingPath: join(outputDir, "emotion.wav"), outputPath: join(outputDir, "emotion.mp4"), durationMs: 20_000, switch: emotionChallenge },
-    { ...common, mode: "switch", recordingPath: join(outputDir, "speed.wav"), outputPath: join(outputDir, "speed.mp4"), durationMs: 20_000, switch: speedChallenge },
-    { ...common, mode: "say-it-back", recordingPath: join(outputDir, "say-retake.wav"), outputPath: join(outputDir, "say-retake.mp4"), durationMs: 14_700, say: { clip, roleId: "walter", videoPath: media(clip.videoUrl), backingPath: media(clip.roles[0]!.dubAudioUrl!) } },
+    { ...common, mode: "classic", recordingPath: classic, outputPath: join(outputDir, "classic.mp4"), durationMs: Math.round(duration(classic) * 1000), settings: { ...defaultClipEditSettings("classic"), trimStart: 0.25, trimEnd: duration(classic) - 0.15 }, classic: { phrase, direction: "An exhausted customer service agent" } },
+    { ...common, mode: "switch", recordingPath: join(outputDir, "emotion.wav"), outputPath: join(outputDir, "emotion.mp4"), durationMs: 20_000, settings: { ...defaultClipEditSettings("switch"), avatar: { kind: "builtin", id: "alien" }, trimStart: 3.5, trimEnd: 11.5 }, switch: emotionChallenge },
+    { ...common, mode: "switch", recordingPath: join(outputDir, "speed.wav"), outputPath: join(outputDir, "speed.mp4"), durationMs: 20_000, settings: { ...defaultClipEditSettings("switch"), ...layoutClipEditSettings("switch", "duet"), avatar: { kind: "builtin", id: "robot" }, trimStart: 3.5, trimEnd: 10.5 }, switch: speedChallenge },
+    { ...common, mode: "say-it-back", recordingPath: join(outputDir, "say-retake.wav"), outputPath: join(outputDir, "say-retake.mp4"), durationMs: 14_700, settings: { ...defaultClipEditSettings("say-it-back"), ...layoutClipEditSettings("say-it-back", "duet"), avatar: { kind: "builtin", id: "cloud" }, trimStart: 1.6, trimEnd: 12.6 }, say: { clip, roleId: "walter", videoPath: media(clip.videoUrl), backingPath: media(clip.roles[0]!.dubAudioUrl!) } },
   ];
   const metadata = { generatedBy: "Free local FFmpeg libflite stock synthesis; no human or AI judging", syntheticPreparation: "Stock speech paced into exact fixture cue windows before saving; renderer preserves the resulting original recording", invitations: "Local samples use an illustrative invitation. Live verifier replaces with actual public assignments.", partialRetake: { replacedCueId: cues[retakeIndex]!.id, start: retained.sceneStart, end: retained.sceneEnd, outsideChanges, retakeChanges, baselineSha256: hash(baseline), assembledSha256: hash(saved) }, fixtures: inputs.map((input) => ({ ...input, durationMs: Math.round(duration(input.recordingPath) * 1000) })) };
   await writeFile(join(outputDir, "fixtures.json"), JSON.stringify(metadata, null, 2));
