@@ -1,0 +1,78 @@
+{
+  "origin": "https://delivery-production-0577.up.railway.app",
+  "revision": "b801eb9da51040f9c07654c6800b0e060966c6e9",
+  "passed": true,
+  "checks": [
+    "classic: idempotent camera upload",
+    "classic: camera default and assembled segments",
+    "classic: original WAV unchanged",
+    "classic: authorized camera bytes unchanged",
+    "classic: framing trim and orientation reopen",
+    "classic: ready",
+    "classic: downloadable 1080x1920 H264/AAC with exact trim",
+    "classic: full decoded playback",
+    "classic: scoring input untouched",
+    "classic:avatar: ready",
+    "Camera take can export its avatar",
+    "switch: idempotent camera upload",
+    "switch: camera default and assembled segments",
+    "switch: original WAV unchanged",
+    "switch: authorized camera bytes unchanged",
+    "switch: framing trim and orientation reopen",
+    "switch: ready",
+    "switch: downloadable 1080x1920 H264/AAC with exact trim",
+    "switch: full decoded playback",
+    "switch: scoring input untouched",
+    "say-it-back: idempotent camera upload",
+    "say-it-back: camera default and assembled segments",
+    "say-it-back: original WAV unchanged",
+    "say-it-back: authorized camera bytes unchanged",
+    "say-it-back: framing trim and orientation reopen",
+    "say-it-back: ready",
+    "say-it-back: downloadable 1080x1920 H264/AAC with exact trim",
+    "say-it-back: full decoded playback",
+    "say-it-back: scoring input untouched",
+    "Authenticated camera range seek returns exactly the requested bytes",
+    "classic: owner deletion denies camera and finished video access",
+    "switch: owner deletion denies camera and finished video access",
+    "say-it-back: owner deletion denies camera and finished video access"
+  ],
+  "samples": [
+    {
+      "mode": "classic",
+      "exportId": "30cbbc8f-d741-4617-83a0-c7724e387e06",
+      "duration": 4.2,
+      "width": 1080,
+      "height": 1920,
+      "cameraParts": 1
+    },
+    {
+      "mode": "switch",
+      "exportId": "b540baac-a782-4344-8dd3-7031a3d994b4",
+      "duration": 8.166667,
+      "width": 1080,
+      "height": 1920,
+      "cameraParts": 1
+    },
+    {
+      "mode": "say-it-back",
+      "exportId": "fbb04e39-97a4-40c8-bc1e-4b9304297c20",
+      "duration": 10.4,
+      "width": 1080,
+      "height": 1920,
+      "cameraParts": 5
+    }
+  ],
+  "paidCalls": 0,
+  "simulatedCapture": true,
+  "physicalPhoneChecked": false,
+  "nativeSharingChecked": false,
+  "cleanedAt": "2026-09-07T23:03:28.742Z",
+  "cleanupStorage": {
+    "cameraManifestsRemaining": 0,
+    "cameraObjectsRemaining": 0,
+    "cameraObjectsRemoved": 4,
+    "tombstonesRetained": 4,
+    "verifiedBy": "Scoped live database query after owner API deletion and existing worker sweep"
+  }
+}

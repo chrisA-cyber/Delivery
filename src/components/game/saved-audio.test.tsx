@@ -21,7 +21,8 @@ describe("saved playback recovery", () => {
 
   it("refreshes an expired link through the authorized route only after a click", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ data: { audioUrl: "https://example.test/fresh.wav" } })));
-    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("fetch", (url: string, options: RequestInit) => url.endsWith("?camera=manifest")
+      ? Promise.resolve(new Response(JSON.stringify({ segments: [] }))) : fetchMock(url, options));
     render(<SavedAudio url="https://example.test/expired.wav" label="Saved take" refreshPath="/api/deliveries/fixture" />);
     fireEvent.error(screen.getByLabelText("Saved take"));
     expect(screen.getByRole("alert")).toHaveTextContent("link may have expired");
@@ -34,7 +35,8 @@ describe("saved playback recovery", () => {
 
   it("shows access rejection without retrying in a loop or inventing a playable URL", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { message: "That take is private, expired, or lost to the timeline." } }), { status: 404 }));
-    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("fetch", (url: string, options: RequestInit) => url.endsWith("?camera=manifest")
+      ? Promise.resolve(new Response(JSON.stringify({ segments: [] }))) : fetchMock(url, options));
     render(<SavedAudio url="https://example.test/expired.wav" label="Shared take" refreshPath="/api/share/fixture" />);
     fireEvent.error(screen.getByLabelText("Shared take"));
     fireEvent.click(screen.getByRole("button", { name: "Reload playback" }));

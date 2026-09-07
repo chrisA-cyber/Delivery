@@ -36,13 +36,13 @@
       "mode": "say-it-back",
       "performer": "camera",
       "path": "/tmp/delivery-camera-media/say-it-back.mp4",
-      "bytes": 2173366,
+      "bytes": 2174310,
       "duration": 10.4,
       "width": 1080,
       "height": 1920,
       "videoCodec": "h264",
       "audioCodec": "aac",
-      "renderMs": 25018,
+      "renderMs": 14155,
       "audioCopied": false
     },
     {
@@ -58,5 +58,10 @@
       "renderMs": 5981,
       "audioCopied": false
     }
+  ],
+  "formats": [
+    "Chrome MediaRecorder WebM VP8/Opus",
+    "Converted H264/AAC MP4 at 30fps",
+    "MP4 display matrix +90 degrees"
   ]
 }

@@ -59,7 +59,14 @@ async function ready(key, job) {
 function cleanup() {
   for (const mode of ['classic', 'switch', 'say-it-back']) {
     const take = state.saved[mode + ':upload']?.attempt;
-    if (take) call(mode + ':cleanup', `/api/${mode}/attempts/${take.id}`, { method: 'DELETE' });
+    if (take) {
+      call(mode + ':cleanup', `/api/${mode}/attempts/${take.id}`, { method: 'DELETE' });
+      const cameraUrl = state.saved[mode + ':editor']?.source.camera[0]?.url;
+      const exportId = state.saved[mode + ':export']?.export.id;
+      if (cameraUrl) call(mode + ':deleted-camera', cameraUrl, { expect: [404] });
+      if (exportId) call(mode + ':deleted-export', `/api/exports/${exportId}/video`, { expect: [404] });
+      check(mode + ': owner deletion denies camera and finished video access', true);
+    }
   }
   state.cleanedAt = new Date().toISOString(); persist();
 }

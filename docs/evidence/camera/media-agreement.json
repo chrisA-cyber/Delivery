@@ -41,13 +41,13 @@
   {
     "mode": "say-it-back",
     "time": 2,
-    "cameraPixelMAE": 2.1231377887625205,
+    "cameraPixelMAE": 2.0096395521220893,
     "rotation": 90
   },
   {
     "mode": "say-it-back",
     "time": 5,
-    "cameraPixelMAE": 2.5229280800417655,
+    "cameraPixelMAE": 2.4736861814729396,
     "rotation": 0
   },
   {

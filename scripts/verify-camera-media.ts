@@ -31,7 +31,7 @@ const a=readPcmWav(await before.blob.arrayBuffer())!,b=readPcmWav(await retaken.
 let outside=0,inside=0;for(let i=0;i<a.samples.length;i++)if(a.samples[i]!==b.samples[i]){if(i/a.sampleRate<windows[1]!.start||i/a.sampleRate>=windows[1]!.end)outside++;else inside++;}
 assert.equal(outside,0);assert.ok(inside>0);
 await writeFile(file('say-retake.wav'),Buffer.from(await retaken.blob.arrayBuffer()));
-ffmpeg(['-i',file('classic-camera.webm'),'-c:v','libx264','-threads','2','-c:a','aac',file('classic-camera.mp4')]);
+ffmpeg(['-i',file('classic-camera.webm'),'-c:v','libx264','-r','30','-threads','2','-c:a','aac',file('classic-camera.mp4')]);
 ffmpeg(['-display_rotation:v:0','90','-i',file('classic-camera.mp4'),'-c','copy',file('rotated-camera.mp4')]);
 const sayCamera=windows.flatMap((w,i)=>i===1?[{start:w.start,end:w.end,sourceStart:offsets.classic,mirror:false,path:file('rotated-camera.mp4')}]:sliceCamera(cam('say',clip.duration),w.start,w.end));
 const common={layoutVersion:VIDEO_LAYOUT_VERSION,recordingOffsetMs:0,invitationUrl:'',score:null};
