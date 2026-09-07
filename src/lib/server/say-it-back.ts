@@ -1,3 +1,4 @@
+import { claimSayImports } from "@/lib/server/say-imports";
 import "server-only";
 
 import { createHash, randomBytes, randomUUID } from "node:crypto";
@@ -17,6 +18,7 @@ import { moderateLine } from "@/lib/server/moderation";
 import { getOptionalUser } from "@/lib/supabase/auth";
 import { getPublicAssignment } from "@/lib/server/public-assignments";
 import { transcribeSayAudio } from "@/lib/server/say-it-back-transcription";
+import { MAX_SAY_RECORDING_MS } from "@/lib/audio-capture";
 
 type Row = Record<string, unknown>;
 export type SayRating = "everyone" | "teen" | "mature";
@@ -35,8 +37,10 @@ export async function getSayViewer(request: Request, attemptKey?: string): Promi
   return { user: null, guest, ownerKey: `guest:${guest.idempotencyScope}`, setCookie: guest.setCookie };
 }
 
-export async function getSayClips(maxRating: SayRating): Promise<SayClip[]> {
-  const result = await createSupabaseAdminClient().from("say_clip_versions").select("manifest").eq("enabled", true).order("created_at", { ascending: false }).limit(100);
+export async function getSayClips(maxRating: SayRating, viewer?: SayViewer): Promise<SayClip[]> {
+  let query = createSupabaseAdminClient().from("say_clip_versions").select("manifest").eq("enabled", true);
+  query = viewer ? query.or(`owner_key.is.null,owner_key.eq.${viewer.ownerKey}`) : query.is("owner_key", null);
+  const result = await query.order("created_at", { ascending: false }).limit(100);
   checked(result.error);
   const seen = new Set<string>();
   return (result.data ?? []).flatMap((row) => {
@@ -48,10 +52,11 @@ export async function getSayClips(maxRating: SayRating): Promise<SayClip[]> {
   });
 }
 
-async function clipVersion(id: string, version: string, maxRating: SayRating): Promise<SayClip> {
-  const result = await createSupabaseAdminClient().from("say_clip_versions").select("manifest,enabled").eq("id", `${id}:${version}`).maybeSingle();
+async function clipVersion(id: string, version: string, maxRating: SayRating, viewer: SayViewer, sharedVersion?: string): Promise<SayClip> {
+  const result = await createSupabaseAdminClient().from("say_clip_versions").select("manifest,enabled,owner_key").eq("id", `${id}:${version}`).maybeSingle();
   checked(result.error);
   if (!result.data?.enabled) throw new AppError("SAY_CLIP_NOT_FOUND", "That scene is unavailable. Choose another clip.", 404);
+  if (result.data.owner_key && result.data.owner_key !== viewer.ownerKey && sharedVersion !== `${id}:${version}`) throw new AppError("SAY_CLIP_NOT_FOUND", "That scene is private. Open the invitation from its creator.", 404);
   const clip = sayClipSchema.parse(result.data.manifest);
   assertContentRating(clip.rating, maxRating);
   return clip;
@@ -156,8 +161,7 @@ export interface CreateSayAttempt {
 
 export async function createSayAttempt(input: CreateSayAttempt, viewer: SayViewer): Promise<{ attempt: SayAttempt; replayed: boolean }> {
   const admin = createSupabaseAdminClient();
-  const audio = await validateAudio(input.audio, input.durationMs);
-  if (audio.durationMs > 30_000) throw new AppError("AUDIO_TOO_LONG", "Keep your take under 30 seconds.", 422);
+  const audio = await validateAudio(input.audio, input.durationMs, { maxDurationMs: MAX_SAY_RECORDING_MS });
   const fingerprint = createRequestFingerprint(audio.contentHash, input.clipId, input.clipVersion, input.roleId, String(input.recordingOffsetMs), input.challengeToken ?? "", input.assignmentCode ?? "", String(input.shareAudio), input.maxRating);
   const existing = await admin.from("say_attempts").select("*").eq("owner_key", viewer.ownerKey).eq("attempt_key", input.attemptId).maybeSingle();
   checked(existing.error);
@@ -170,14 +174,13 @@ export async function createSayAttempt(input: CreateSayAttempt, viewer: SayViewe
   const result = await runIdempotent("say-upload", viewer.ownerKey, input.attemptId, fingerprint, 15 * 60_000, async () => {
     const assignment = input.assignmentCode ? await getPublicAssignment(input.assignmentCode, input.maxRating) : null;
     if (assignment && (assignment.mode !== "say-it-back" || assignment.clip.id !== input.clipId || assignment.clip.version !== input.clipVersion || assignment.roleId !== input.roleId)) throw new AppError("ASSIGNMENT_MISMATCH", "Record the exact scene and role from this assignment.", 409);
-    const clip = assignment?.mode === "say-it-back" ? assignment.clip : await clipVersion(input.clipId, input.clipVersion, input.maxRating);
+    const challenge = input.challengeToken ? await findChallenge(input.challengeToken, viewer) : null;
+    const clip = assignment?.mode === "say-it-back" ? assignment.clip : await clipVersion(input.clipId, input.clipVersion, input.maxRating, viewer, challenge ? String(challenge.clip_version_id) : undefined);
     const scoringVersion = assignment?.scoringVersion ?? SAY_SCORING_VERSION;
     if (!clip.roles.some((role) => role.id === input.roleId)) throw new AppError("SAY_ROLE_INVALID", "Choose a role from this scene.", 422);
     if (audio.durationMs > clip.duration * 1000 + 2000) throw new AppError("AUDIO_TOO_LONG", "This recording runs beyond the scene. Record another take with the scene cues.", 422);
-    let challenge: Row | null = null;
     if (input.challengeToken) {
-      challenge = await findChallenge(input.challengeToken, viewer);
-      if (challenge.clip_version_id !== `${clip.id}:${clip.version}` || challenge.role_id !== input.roleId || challenge.scoring_version !== SAY_SCORING_VERSION) throw new AppError("SAY_CHALLENGE_MISMATCH", "Record the exact scene and role from the challenge link.", 409);
+      if (!challenge || challenge.clip_version_id !== `${clip.id}:${clip.version}` || challenge.role_id !== input.roleId || challenge.scoring_version !== SAY_SCORING_VERSION) throw new AppError("SAY_CHALLENGE_MISMATCH", "Record the exact scene and role from the challenge link.", 409);
     }
     const id = randomUUID();
     const path = viewer.user ? `${viewer.user.id}/say/${id}.${audio.container}` : `guests/${viewer.guest!.idempotencyScope}/say/${id}.${audio.container}`;
@@ -278,7 +281,7 @@ export async function approveSaySharing(row: Row): Promise<void> {
   // it is not reclassified as harassment for saying an approved fictional line.
   // Any added, substituted or omitted dialogue still receives live moderation.
   const exactScript = score.words === 100 && score.evidence.expectedWords > 0 && score.evidence.matchedWords === score.evidence.expectedWords && score.evidence.additions === 0 && score.evidence.substitutions === 0 && score.evidence.omissions === 0;
-  if (exactScript) {
+  if (exactScript && !clip.id.startsWith("custom-")) {
     const approved = await createSupabaseAdminClient().from("say_attempts").update({ moderation_state: "approved", moderation_labels: ["say-curated-script-exact"] }).eq("id", String(row.id));
     checked(approved.error);
     return;
@@ -352,6 +355,7 @@ export async function deleteSayAttempt(id: string, viewer: SayViewer): Promise<v
 
 export async function claimSayAttempt(id: string, request: Request, viewer: SayViewer): Promise<SayAttempt> {
   if (!viewer.user) throw new AppError("UNAUTHORIZED", "Sign in to save this take.", 401);
+  await claimSayImports(request, viewer);
   const row = await loadAttempt(id);
   if (owns(row, viewer)) return getSayAttempt(id, viewer);
   const guest = getGuestIdentity(request);

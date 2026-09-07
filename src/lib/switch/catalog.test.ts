@@ -3,10 +3,11 @@ import { getSwitchChallenge, snapshotSwitchChallenge, SWITCH_CHALLENGES, switchC
 import { switchChallengeSchema } from "@/lib/switch/schema";
 
 describe("Switch immutable timing and curated catalog", () => {
-  it("ships four emotion and four speed challenges repeating one short phrase over 20 seconds", () => {
-    expect(SWITCH_CHALLENGES).toHaveLength(8);
-    expect(SWITCH_CHALLENGES.filter((challenge) => challenge.kind === "emotion")).toHaveLength(4);
-    expect(SWITCH_CHALLENGES.filter((challenge) => challenge.kind === "speed")).toHaveLength(4);
+  it("ships twelve emotion and twelve speed challenges repeating one short phrase over 20 seconds", () => {
+    expect(SWITCH_CHALLENGES).toHaveLength(24);
+    expect(SWITCH_CHALLENGES.filter((challenge) => challenge.kind === "emotion")).toHaveLength(12);
+    expect(SWITCH_CHALLENGES.filter((challenge) => challenge.kind === "speed")).toHaveLength(12);
+    expect(new Set(SWITCH_CHALLENGES.map((challenge) => challenge.id)).size).toBe(SWITCH_CHALLENGES.length);
     for (const challenge of SWITCH_CHALLENGES) {
       expect(switchChallengeSchema.safeParse(challenge).success).toBe(true);
       expect(challenge.duration).toBe(20);
@@ -18,10 +19,20 @@ describe("Switch immutable timing and curated catalog", () => {
         expect(challenge.cues.map((cue) => [cue.start, cue.end])).toEqual([[0, 4], [4, 9], [9, 15], [15, 18], [18, 20]]);
       }
       for (const cue of challenge.cues) {
-        expect(cue.text.split(/\s+/).length).toBeLessThanOrEqual(4);
+        expect(cue.text.split(/\s+/).length).toBeLessThanOrEqual(5);
         expect(cue.emoji.length).toBeGreaterThan(0);
       }
     }
+  });
+
+  it("keeps profanity and sexual innuendo out of Clean and Spicy catalogs", () => {
+    const adultIds = ["shut-the-fuck-up", "speed-shut-the-fuck-up", "im-coming", "speed-im-coming"];
+    for (const rating of ["everyone", "teen"] as const) {
+      expect(switchChallengesForRating(rating).some((item) => adultIds.includes(item.id))).toBe(false);
+    }
+    expect(switchChallengesForRating("mature").filter((item) => adultIds.includes(item.id))).toHaveLength(4);
+    expect(switchChallengesForRating("everyone")).toHaveLength(16);
+    expect(switchChallengesForRating("teen")).toHaveLength(20);
   });
 
   it("uses media time after arbitrary seeking and keeps the last cue at the end", () => {

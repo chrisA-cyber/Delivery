@@ -59,6 +59,25 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("Switch take recovery and immutable playback", () => {
+  it("filters emotion and speed challenges and keeps the choice when returning to browse", async () => {
+    const speedChallenge = { ...challenge, id: "speed-switch", title: "Speed: I'm fine", kind: "speed" as const };
+    vi.stubGlobal("fetch", vi.fn(async () => ok({ challenges: [challenge, speedChallenge] })));
+    render(<SwitchExperience />);
+    await screen.findByRole("heading", { name: "Switch." });
+    const filters = screen.getByRole("group", { name: "Switch type" });
+    expect(screen.getByRole("status")).toHaveTextContent("2 challenges");
+    fireEvent.click(within(filters).getByRole("button", { name: "Speeds" }));
+    expect(screen.queryByRole("heading", { name: "I'm fine." })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Speed: I'm fine" })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("1 challenge");
+    fireEvent.click(screen.getByRole("button", { name: /Play Switch/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Choose another Switch" }));
+    expect(screen.getByRole("button", { name: "Speeds", pressed: true })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Emotions" }));
+    expect(screen.getByRole("heading", { name: "I'm fine." })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Speed: I'm fine" })).not.toBeInTheDocument();
+  });
+
   it.each(["denied", "cancelled"])("keeps a saved take available after a %s full-take retry", async (outcome) => {
     mocks.requestPermission.mockResolvedValue(outcome !== "denied");
     vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("/catalog") ? ok({ challenges: [challenge] }) : ok({ attempt: attempt() })));

@@ -29,6 +29,8 @@ export interface SayClip {
   source: {
     title: string; creator: string; url: string; license: string;
     licenseUrl: string; attribution: string; reuseNote: string;
+    /** Set by the trusted scene importer when source reuse covers player exports. */
+    exportAllowed?: boolean;
     excerptStart: number; excerptEnd: number;
   };
 }

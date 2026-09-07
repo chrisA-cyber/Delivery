@@ -315,7 +315,9 @@ export function getWavEnergyFrames(bytes: Uint8Array): { rms: number[]; frameSec
 export async function validateAudio(
   file: File,
   claimedDurationMs: number,
+  options: { maxDurationMs?: number } = {},
 ): Promise<ValidatedAudio> {
+  const maxDurationMs = options.maxDurationMs ?? 60_000;
   const bytes = new Uint8Array(await file.arrayBuffer());
   const header = bytes.subarray(0, Math.min(bytes.length, 256 * 1024));
   const container = detectContainer(header);
@@ -385,10 +387,10 @@ export async function validateAudio(
     parsedDurationMs =
       (wav.dataSize / wav.blockAlign / wav.sampleRate) * 1_000;
     audioBytes = wav.dataSize;
-    if (parsedDurationMs < 250 || parsedDurationMs > 60_000) {
+    if (parsedDurationMs < 250 || parsedDurationMs > maxDurationMs) {
       throw new AppError(
         "AUDIO_DURATION_INVALID",
-        "Keep the recorded take between a quarter-second and 60 seconds.",
+        `Keep the recorded take between a quarter-second and ${maxDurationMs / 1000} seconds.`,
         422,
       );
     }
@@ -405,10 +407,10 @@ export async function validateAudio(
   }
 
   if (container === "mp3") {
-    if (parsedDurationMs < 250 || parsedDurationMs > 60_000) {
+    if (parsedDurationMs < 250 || parsedDurationMs > maxDurationMs) {
       throw new AppError(
         "AUDIO_DURATION_INVALID",
-        "Keep the recorded take between a quarter-second and 60 seconds.",
+        `Keep the recorded take between a quarter-second and ${maxDurationMs / 1000} seconds.`,
         422,
       );
     }

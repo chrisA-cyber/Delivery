@@ -6,7 +6,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { AppError, ExternalServiceError } from "@/lib/server/api-error";
 import { assertAccountNotDeleting, isOwnerStoragePath } from "@/lib/server/account-deletion";
 import { assertContentRating, challengeHasActiveProfileContainment } from "@/lib/server/content";
-import { assertPublicContentAllowed } from "@/lib/server/content-publication";
+import { assertPublicContentAllowed, isMatureTake } from "@/lib/server/content-publication";
 import { sayClipSchema } from "@/lib/say-it-back/schema";
 import { switchChallengeSchema } from "@/lib/switch/schema";
 import type { SwitchViewer } from "@/lib/server/switch";
@@ -32,7 +32,7 @@ export function assertSceneExportEligible(assignment: GroupAssignment): void {
   if (assignment.mode !== "say-it-back") return;
   const source = assignment.clip.source;
   // Read the existing provenance. Never infer new creator permission from playback availability.
-  const reusable = /^CC BY 3\.0/i.test(source.license) || /public domain/i.test(source.license) && !/not|unverified/i.test(source.license);
+  const reusable = source.exportAllowed === true || /^CC BY 3\.0/i.test(source.license) || /public domain/i.test(source.license) && !/not|unverified/i.test(source.license);
   if (!reusable) throw new AppError("SCENE_EXPORT_UNAVAILABLE", "This scene is available for in-app replay, but its recorded source permissions do not cover downloadable videos. Try one of the film scenes with a reusable license.", 409);
 }
 export async function assertExportAccount(userId: string | null): Promise<void> {
@@ -99,8 +99,9 @@ export async function resolveExportSource(mode: ExportMode, id: string, viewer: 
     if (s.provider === "openai" && typeof s.overall === "number" && s.overall >= 0 && s.overall <= 100) score = {value:s.overall,label:"Delivery score"};
   }
   if (assignment.mode !== mode) throw exportUnavailable();
-  assertContentRating(assignment.rating, maxRating);
-  assertPublicContentAllowed(assignment.rating, Array.isArray(row.moderation_labels) ? row.moderation_labels as string[] : []);
+  const privateOnly = isMatureTake(assignment.rating, Array.isArray(row.moderation_labels) ? row.moderation_labels as string[] : []);
+  assertContentRating(privateOnly ? "mature" : assignment.rating, maxRating);
+  if (!privateOnly) assertPublicContentAllowed(assignment.rating);
   assertSceneExportEligible(assignment);
   let displayName: string | null = null, avatarPath: string | null = null;
   if (options.includeName) {
@@ -111,6 +112,6 @@ export async function resolveExportSource(mode: ExportMode, id: string, viewer: 
     }
   }
   // The stable Netlify hostname already redirects paths and query strings to the playable app.
-  const invitation = options.invitation ? await ensurePublicAssignment(assignment,"https://deliverygame.netlify.app") : null;
+  const invitation = options.invitation && !privateOnly && !(assignment.mode === "say-it-back" && assignment.clip.id.startsWith("custom-")) ? await ensurePublicAssignment(assignment,"https://deliverygame.netlify.app") : null;
   return {kind,row,ownerKey,userId,input:{recordingPath:path,audioHash:row.audio_hash ? String(row.audio_hash) : null,durationMs:Number(row.duration_ms),recordingOffsetMs:Number(row.recording_offset_ms ?? 0),assignment,invitationUrl:invitation?.url ?? "",displayName,avatarPath,score:options.includeScore ? score : null}};
 }

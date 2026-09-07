@@ -2,6 +2,7 @@
 // allowance for historical audio containers.
 export const MIN_RECORDING_MS = 250;
 export const MAX_RECORDING_MS = 20_000;
+export const MAX_SAY_RECORDING_MS = 45_000;
 export const MAX_RECORDING_BYTES = 15 * 1024 * 1024;
 
 export type TakeQuality = "empty" | "too-short" | "silent" | "quiet" | "ready";

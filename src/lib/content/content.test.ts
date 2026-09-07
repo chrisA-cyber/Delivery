@@ -37,7 +37,7 @@ import type { TrendingPromptInjection } from "./types";
 
 describe("Delivery content catalog", () => {
   it("ships the complete launch baseline", () => {
-    expect(CONTENT_COUNTS).toEqual({ prompts: 86, modifiers: 36, packs: 6 });
+    expect(CONTENT_COUNTS).toEqual({ prompts: 166, modifiers: 36, packs: 8 });
     expect(new Set(PROMPTS.map(({ id }) => id)).size).toBe(PROMPTS.length);
     expect(new Set(ENERGY_MODIFIERS.map(({ id }) => id)).size).toBe(
       ENERGY_MODIFIERS.length,
@@ -98,22 +98,20 @@ describe("Delivery content catalog", () => {
       resolve(process.cwd(), "supabase/seed.sql"),
       "utf8",
     );
-    const sql = fullSql.slice(
-      fullSql.indexOf("-- BEGIN CLASSIC V3 CATALOG"),
-      fullSql.indexOf("-- END CLASSIC V3 CATALOG"),
-    );
+    const catalogBlocks = [3, 4].map((version) => fullSql.slice(
+      fullSql.indexOf(`-- BEGIN CLASSIC V${version} CATALOG`),
+      fullSql.indexOf(`-- END CLASSIC V${version} CATALOG`),
+    ));
     const section = (start: string, end: string): string => {
-      const startIndex = sql.indexOf(start);
-      const endIndex = sql.indexOf(end, startIndex + start.length);
-      expect(
-        startIndex,
-        `missing seed section: ${start}`,
-      ).toBeGreaterThanOrEqual(0);
-      expect(
-        endIndex,
-        `missing seed section terminator: ${end}`,
-      ).toBeGreaterThan(startIndex);
-      return sql.slice(startIndex, endIndex);
+      const sections = catalogBlocks.flatMap((sql) => {
+        const startIndex = sql.indexOf(start);
+        if (startIndex < 0) return [];
+        const endIndex = sql.indexOf(end, startIndex + start.length);
+        expect(endIndex, `missing seed section terminator: ${end}`).toBeGreaterThan(startIndex);
+        return [sql.slice(startIndex, endIndex)];
+      });
+      expect(sections.length, `missing seed section: ${start}`).toBeGreaterThan(0);
+      return sections.join("\n");
     };
     const unescapeSql = (value: string): string => value.replaceAll("''", "'");
 
@@ -164,10 +162,10 @@ describe("Delivery content catalog", () => {
 
 describe("v2 audience and history contracts", () => {
   it("fails clean by default and requires explicit mature selection", () => {
-    expect(queryPrompts()).toHaveLength(36);
-    expect(queryPrompts({ maxRating: "teen" })).toHaveLength(55);
-    expect(queryPrompts({ maxRating: "mature" })).toHaveLength(86);
-    expect(PROMPTS.filter((p) => p.rating === "mature")).toHaveLength(31);
+    expect(queryPrompts()).toHaveLength(68);
+    expect(queryPrompts({ maxRating: "teen" })).toHaveLength(103);
+    expect(queryPrompts({ maxRating: "mature" })).toHaveLength(166);
+    expect(PROMPTS.filter((p) => p.rating === "mature")).toHaveLength(63);
     for (let seed = 0; seed < 100; seed++)
       expect(getRandomPrompt({ seed }).rating).toBe("everyone");
   });
@@ -179,7 +177,7 @@ describe("v2 audience and history contracts", () => {
       "Say it like you're calmly explaining something extremely suspicious to the police.",
     );
     expect(
-      queryPrompts({ maxRating: "mature" }).every((p) => /^v[23]-/.test(p.id)),
+      queryPrompts({ maxRating: "mature" }).every((p) => /^v[234]-/.test(p.id)),
     ).toBe(true);
     expect(
       getDailyPrompt(new Date("2026-08-25T12:00:00Z")).prompt.id.startsWith(

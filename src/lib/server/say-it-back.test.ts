@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({ reserve: vi.fn(), release: vi.fn(), transcribe
 vi.mock("@/lib/server/public-assignments", () => ({ getPublicAssignment: mocks.publicAssignment }));
 vi.mock("@/lib/server/moderation", () => ({ moderateLine: mocks.moderate }));
 vi.mock("@/lib/server/account-deletion", () => ({ assertAccountNotDeleting: mocks.deleteCheck, isOwnerStoragePath: (path: string, owner: string) => path.startsWith(`${owner}/`) }));
+vi.mock("@/lib/server/say-imports", () => ({ claimSayImports: vi.fn(async () => undefined) }));
 vi.mock("@/lib/server/entitlements", () => ({ reserveJudgedPlay: mocks.reserve, releaseJudgedPlay: mocks.release }));
 vi.mock("@/lib/server/say-it-back-transcription", () => ({ transcribeSayAudio: mocks.transcribe }));
 vi.mock("@/lib/server/audio", () => ({ validateAudio: vi.fn(async () => ({ contentHash: "abc", durationMs: 2000, container: "wav" })) }));

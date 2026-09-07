@@ -1331,5 +1331,736 @@
       "/media/say-it-back/notld-coming-to-get-you/v1-0f237846a300/reference.wav": "b3cb6f743133cd8f8e3dfd704e04c046b8377ae30b82aeab46be89be28b2d1a1",
       "/media/say-it-back/notld-coming-to-get-you/v1-0f237846a300/scene.mp4": "1503f5ac6064bc6da6e4648323198d5db09566cdc3be28d902b0b8a5fe10cc19"
     }
+  },
+  {
+    "id": "xqc-stop-smoking-crack",
+    "title": "Stop smoking crack",
+    "description": "An exasperated request turns into a blunt punchline. Match the pause before the final three words.",
+    "difficulty": "medium",
+    "rating": "mature",
+    "category": "Twitch",
+    "tags": [
+      "Uncensored",
+      "Internet classic",
+      "Exasperated"
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "xqc",
+        "text": "Fifteen minutes delay.",
+        "start": 0.19,
+        "end": 1.31
+      },
+      {
+        "id": "cue-2",
+        "roleId": "xqc",
+        "text": "Please, dude, stop smoking crack.",
+        "start": 1.31,
+        "end": 4.09
+      }
+    ],
+    "version": "v1-9cb246a0c474",
+    "duration": 4.55,
+    "roles": [
+      {
+        "id": "xqc",
+        "name": "xQc",
+        "description": "Repeat the whole irritated punchline.",
+        "muteIntervals": [
+          {
+            "start": 0,
+            "end": 4.55
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/xqc-stop-smoking-crack/v1-9cb246a0c474/backing-xqc.m4a"
+      }
+    ],
+    "source": {
+      "title": "Fifteen-minute delay",
+      "creator": "xQc (Félix Lengyel)",
+      "url": "https://clips.twitch.tv/SlipperyOnerousDoveNotATK",
+      "license": "Owner-directed excerpt; third-party reuse rights not independently verified",
+      "licenseUrl": "https://livestreamfails.com/clip/L1ezEdegF6-W/xqc-on-a-15-minute-delay-to-prevent-stream-sniping",
+      "attribution": "Fifteen-minute delay — xQc. Trimmed dubbing adaptation; no endorsement implied.",
+      "reuseNote": "Included at the Delivery owner’s direction. Original-footage public mirror: https://streamable.com/aje2y. Source record: https://livestreamfails.com/clip/L1ezEdegF6-W/xqc-on-a-15-minute-delay-to-prevent-stream-sniping. This is not a creator license or a copy of Choicer Voicer assets.",
+      "excerptStart": 37.0,
+      "excerptEnd": 41.55,
+      "exportAllowed": true
+    },
+    "videoUrl": "/media/say-it-back/xqc-stop-smoking-crack/v1-9cb246a0c474/scene.mp4",
+    "posterUrl": "/media/say-it-back/xqc-stop-smoking-crack/v1-9cb246a0c474/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/xqc-stop-smoking-crack/v1-9cb246a0c474/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/xqc-stop-smoking-crack/v1-9cb246a0c474/backing-xqc.m4a": "034978f150430510aacc5329614e7eb7ba1b70af6ded894b13ab7ee94da6ed9e",
+      "/media/say-it-back/xqc-stop-smoking-crack/v1-9cb246a0c474/poster.jpg": "b73b9c5612931b0d198f5c21917466405764819215066a1bf6655cfb80644ee6",
+      "/media/say-it-back/xqc-stop-smoking-crack/v1-9cb246a0c474/reference.wav": "61e4e80b6b3b694e18e87b4292a900eb9ca8200d9a455b4659427519369c0fb8",
+      "/media/say-it-back/xqc-stop-smoking-crack/v1-9cb246a0c474/scene.mp4": "da049c3d9bd4e7ea778016a3b158198aafe6245199b4c1c7ea283ad52059ba15"
+    }
+  },
+  {
+    "id": "xqc-feels-like-work",
+    "title": "It feels like going to work",
+    "description": "A relatable office complaint, delivered at streamer speed, ends in a completely uncensored reaction.",
+    "difficulty": "hard",
+    "rating": "mature",
+    "category": "Twitch",
+    "tags": [
+      "Uncensored",
+      "Fast delivery",
+      "Relatable"
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "xqc",
+        "text": "I don't want to go in an office",
+        "start": 0.04,
+        "end": 1.54
+      },
+      {
+        "id": "cue-2",
+        "roleId": "xqc",
+        "text": "and feel like I'm going to work.",
+        "start": 1.54,
+        "end": 3.38
+      },
+      {
+        "id": "cue-3",
+        "roleId": "xqc",
+        "text": "Like, what the fuck, man?",
+        "start": 3.58,
+        "end": 4.36
+      }
+    ],
+    "version": "v1-7717c4b31e60",
+    "duration": 4.7,
+    "roles": [
+      {
+        "id": "xqc",
+        "name": "xQc",
+        "description": "Keep the rushed complaint flowing into the final reaction.",
+        "muteIntervals": [
+          {
+            "start": 0,
+            "end": 4.7
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/xqc-feels-like-work/v1-7717c4b31e60/backing-xqc.m4a"
+      }
+    ],
+    "source": {
+      "title": "Opinion on professional streaming setups",
+      "creator": "xQc (Félix Lengyel)",
+      "url": "https://clips.twitch.tv/PlumpHelplessSnakeWholeWheat",
+      "license": "Owner-directed excerpt; third-party reuse rights not independently verified",
+      "licenseUrl": "https://www.reddit.com/r/LivestreamFail/comments/bhg9f1/xqcs_opinion_on_professional_streaming_setups/",
+      "attribution": "Opinion on professional streaming setups — xQc. Trimmed dubbing adaptation; no endorsement implied.",
+      "reuseNote": "Included at the Delivery owner’s direction. Original-footage public mirror: https://streamable.com/owlqs. Source record: https://www.reddit.com/r/LivestreamFail/comments/bhg9f1/xqcs_opinion_on_professional_streaming_setups/. This is not a creator license or a copy of Choicer Voicer assets.",
+      "excerptStart": 50.9,
+      "excerptEnd": 55.6,
+      "exportAllowed": true
+    },
+    "videoUrl": "/media/say-it-back/xqc-feels-like-work/v1-7717c4b31e60/scene.mp4",
+    "posterUrl": "/media/say-it-back/xqc-feels-like-work/v1-7717c4b31e60/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/xqc-feels-like-work/v1-7717c4b31e60/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/xqc-feels-like-work/v1-7717c4b31e60/backing-xqc.m4a": "dc2bb870caa1b419f55186156216acda793e7ad4e98969a6d467634c955e0519",
+      "/media/say-it-back/xqc-feels-like-work/v1-7717c4b31e60/poster.jpg": "986e1f18348f8314261c335f0d642644e43e9ccf8a9ff09decd60fa1be621684",
+      "/media/say-it-back/xqc-feels-like-work/v1-7717c4b31e60/reference.wav": "5198a76c4c058cb2b8850ed38e88bfdd016b0fb5c06abef2df183eb7f1b82243",
+      "/media/say-it-back/xqc-feels-like-work/v1-7717c4b31e60/scene.mp4": "18d6f1592465b5504b57bf68bb4d3304275c7cbfb549e9bf09672fb561ac1791"
+    }
+  },
+  {
+    "id": "tyler1-get-counseling",
+    "title": "Get counseling, bro",
+    "description": "Exhaustion becomes disbelief, a sarcastic “nice,” and one last deadpan piece of advice.",
+    "difficulty": "medium",
+    "rating": "teen",
+    "category": "Twitch",
+    "tags": [
+      "Sarcastic",
+      "Multi-line",
+      "Streamer moment"
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "tyler1",
+        "text": "You twisted creep individual.",
+        "start": 0.22,
+        "end": 2.56
+      },
+      {
+        "id": "cue-2",
+        "roleId": "tyler1",
+        "text": "Ten thousand dollars.",
+        "start": 3.34,
+        "end": 4.32
+      },
+      {
+        "id": "cue-3",
+        "roleId": "tyler1",
+        "text": "You rather see me like this. Nice.",
+        "start": 4.32,
+        "end": 6.72
+      },
+      {
+        "id": "cue-4",
+        "roleId": "tyler1",
+        "text": "Get counseling, bro.",
+        "start": 7.64,
+        "end": 9.02
+      }
+    ],
+    "version": "v1-602ecca65c12",
+    "duration": 9.4,
+    "roles": [
+      {
+        "id": "tyler1",
+        "name": "Tyler1",
+        "description": "Replace the full sarcastic complaint after a 24-hour stream.",
+        "muteIntervals": [
+          {
+            "start": 0,
+            "end": 9.4
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/tyler1-get-counseling/v1-602ecca65c12/backing-tyler1.m4a"
+      }
+    ],
+    "source": {
+      "title": "Tyler1 finishes his 24-hour stream",
+      "creator": "Tyler1 (Tyler Steinkamp)",
+      "url": "https://clips.twitch.tv/MushyZealousShrewDBstyle-vuB0Cruj4tRYHygX",
+      "license": "Owner-directed excerpt; third-party reuse rights not independently verified",
+      "licenseUrl": "https://www.reddit.com/r/LivestreamFail/comments/150ezk9/tyler1_finishes_his_24_hour_stream/",
+      "attribution": "Tyler1’s original Twitch performance. Shortened dubbing adaptation; no endorsement implied.",
+      "reuseNote": "Included at the Delivery owner’s direction. Documented original-footage mirror: https://arazu.io/t3_150ezk9/. Source record: https://www.reddit.com/r/LivestreamFail/comments/150ezk9/tyler1_finishes_his_24_hour_stream/. No creator license or reuse permission is claimed.",
+      "excerptStart": 17.5,
+      "excerptEnd": 26.9,
+      "exportAllowed": true
+    },
+    "videoUrl": "/media/say-it-back/tyler1-get-counseling/v1-602ecca65c12/scene.mp4",
+    "posterUrl": "/media/say-it-back/tyler1-get-counseling/v1-602ecca65c12/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/tyler1-get-counseling/v1-602ecca65c12/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/tyler1-get-counseling/v1-602ecca65c12/backing-tyler1.m4a": "a570e30f635095805bf1cc3e9d6b1165ac39079380eeaf68a6dd8bac982377d0",
+      "/media/say-it-back/tyler1-get-counseling/v1-602ecca65c12/poster.jpg": "ae8771a65b433d762422128f50efdbea2d5ecb48af31e967154b89f8f5d73557",
+      "/media/say-it-back/tyler1-get-counseling/v1-602ecca65c12/reference.wav": "73c5f4d90d29392a95d6952843254e3336d271692e5f2000a88ff2cf0026d91f",
+      "/media/say-it-back/tyler1-get-counseling/v1-602ecca65c12/scene.mp4": "eb0edbdd32dc41105f40db34c894e6d38f5e1f9c2d87d12db3a5133f5963a5ed"
+    }
+  },
+  {
+    "id": "northernlion-i-prefer-it",
+    "title": "I prefer it that way",
+    "description": "Deliver a simple preference with enough confidence to make it your entire personality.",
+    "difficulty": "easy",
+    "rating": "everyone",
+    "category": "Twitch",
+    "tags": [
+      "Deadpan",
+      "Relatable",
+      "Everyday internet"
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "northernlion",
+        "text": "Just say, I like it.",
+        "start": 0.26,
+        "end": 0.94
+      },
+      {
+        "id": "cue-2",
+        "roleId": "northernlion",
+        "text": "I prefer it that way.",
+        "start": 1.24,
+        "end": 2.48
+      },
+      {
+        "id": "cue-3",
+        "roleId": "northernlion",
+        "text": "That gives you personality.",
+        "start": 3.16,
+        "end": 4.26
+      }
+    ],
+    "version": "v1-8e75e58a3588",
+    "duration": 4.75,
+    "roles": [
+      {
+        "id": "northernlion",
+        "name": "Northernlion",
+        "description": "Match the selected speaker’s timing, pauses, and delivery.",
+        "muteIntervals": [
+          {
+            "start": 0,
+            "end": 4.75
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/northernlion-i-prefer-it/v1-8e75e58a3588/backing-northernlion.m4a"
+      }
+    ],
+    "source": {
+      "title": "Northernlion on watching videos at 2× speed",
+      "creator": "Northernlion (Ryan Letourneau)",
+      "url": "https://clips.twitch.tv/BraveCogentDugongTBCheesePull-zuyv9OtCjdo_kLdW",
+      "license": "Owner-directed excerpt; third-party reuse rights not independently verified",
+      "licenseUrl": "https://www.reddit.com/r/LivestreamFail/comments/1caj8jt/nl_on_2x_speed_video_watching/",
+      "attribution": "Northernlion on watching videos at 2× speed — Northernlion (Ryan Letourneau). Shortened dubbing adaptation; no endorsement implied.",
+      "reuseNote": "Included at the Delivery owner’s direction. Documented public original-footage mirror: https://arazu.io/t3_1caj8jt/. Source record: https://www.reddit.com/r/LivestreamFail/comments/1caj8jt/nl_on_2x_speed_video_watching/. No creator license, reuse permission, or endorsement is claimed.",
+      "excerptStart": 19.6,
+      "excerptEnd": 24.35,
+      "exportAllowed": true
+    },
+    "videoUrl": "/media/say-it-back/northernlion-i-prefer-it/v1-8e75e58a3588/scene.mp4",
+    "posterUrl": "/media/say-it-back/northernlion-i-prefer-it/v1-8e75e58a3588/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/northernlion-i-prefer-it/v1-8e75e58a3588/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/northernlion-i-prefer-it/v1-8e75e58a3588/backing-northernlion.m4a": "568cd0c09b2714acd4b266fa7e1668571a27175a5c9f1c21b243b4f8b3b71043",
+      "/media/say-it-back/northernlion-i-prefer-it/v1-8e75e58a3588/poster.jpg": "50e97fff5024b14f03e1c4ecc5329037fd22a9e1816228b4f80ee14a95975b4f",
+      "/media/say-it-back/northernlion-i-prefer-it/v1-8e75e58a3588/reference.wav": "f27ae10f7277812311b49e5a696fa1adbaeb640735875d06d9133dba75404a1b",
+      "/media/say-it-back/northernlion-i-prefer-it/v1-8e75e58a3588/scene.mp4": "fe2aedb2cbf28106dd6373199897d82294d317c36445bd9ec728bbaa68def618"
+    }
+  },
+  {
+    "id": "northernlion-sinners-spoilers",
+    "title": "Wrong kind of Sinner spoilers",
+    "description": "A friend mentions the movie. Jump in with an indignant response that becomes a suspiciously detailed tennis recap.",
+    "difficulty": "hard",
+    "rating": "everyone",
+    "category": "Twitch",
+    "tags": [
+      "Wordplay",
+      "Fast delivery",
+      "Multi-line"
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "northernlion",
+        "text": "No, dude! Spoilers!",
+        "start": 1.8,
+        "end": 4.16
+      },
+      {
+        "id": "cue-2",
+        "roleId": "northernlion",
+        "text": "He lost to Carlos Alcaraz in a thrilling four-and-a-half-hour-long French Open final at Roland Garros.",
+        "start": 4.16,
+        "end": 9.88
+      }
+    ],
+    "version": "v1-2f5247aa24da",
+    "duration": 12.0,
+    "roles": [
+      {
+        "id": "northernlion",
+        "name": "Northernlion",
+        "description": "Match the selected speaker’s timing, pauses, and delivery.",
+        "muteIntervals": [
+          {
+            "start": 1.5,
+            "end": 10.15
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/northernlion-sinners-spoilers/v1-2f5247aa24da/backing-northernlion.m4a"
+      }
+    ],
+    "source": {
+      "title": "Sinners and Sinner: Northernlion’s tennis tangent",
+      "creator": "Northernlion with DumbDog and friends",
+      "url": "https://arazu.io/t3_1l8he7a/",
+      "license": "Owner-directed excerpt; third-party reuse rights not independently verified",
+      "licenseUrl": "https://www.reddit.com/r/LivestreamFail/comments/1l8he7a/dumbdog_finally_explains_what_2_means_in/",
+      "attribution": "Sinners and Sinner: Northernlion’s tennis tangent — Northernlion with DumbDog and friends. Shortened dubbing adaptation; no endorsement implied.",
+      "reuseNote": "Included at the Delivery owner’s direction. Documented public original-footage mirror: https://arazu.io/t3_1l8he7a/. Source record: https://www.reddit.com/r/LivestreamFail/comments/1l8he7a/dumbdog_finally_explains_what_2_means_in/. No creator license, reuse permission, or endorsement is claimed.",
+      "excerptStart": 0,
+      "excerptEnd": 12.0,
+      "exportAllowed": true
+    },
+    "videoUrl": "/media/say-it-back/northernlion-sinners-spoilers/v1-2f5247aa24da/scene.mp4",
+    "posterUrl": "/media/say-it-back/northernlion-sinners-spoilers/v1-2f5247aa24da/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/northernlion-sinners-spoilers/v1-2f5247aa24da/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/northernlion-sinners-spoilers/v1-2f5247aa24da/backing-northernlion.m4a": "ca79d71e258aea187b9aba4348e4eab72daa2204a1dd8de8ed3bf87d2b84712c",
+      "/media/say-it-back/northernlion-sinners-spoilers/v1-2f5247aa24da/poster.jpg": "0e087027906487d3e4ae145ab5b76c948229f923a6960a81ed2c6116e839511a",
+      "/media/say-it-back/northernlion-sinners-spoilers/v1-2f5247aa24da/reference.wav": "9f9c275f216b4ba0140b31c1a4d3b4b442403ffc7776937a5f5ae9a001c78061",
+      "/media/say-it-back/northernlion-sinners-spoilers/v1-2f5247aa24da/scene.mp4": "39f49f26a053a38d8978466652bdc77dbde10828124cae0088b34954d08e2990"
+    }
+  },
+  {
+    "id": "ludwig-going-once",
+    "title": "Going once, going twice…",
+    "description": "Call the auction with absolute confidence, then react when the room proves you wrong. The crowd’s interruption stays in the scene.",
+    "difficulty": "medium",
+    "rating": "everyone",
+    "category": "Twitch",
+    "tags": [
+      "Live audience",
+      "Long scene",
+      "Surprise"
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "ludwig",
+        "text": "Then I think it's safe to say",
+        "start": 0.2,
+        "end": 2.32
+      },
+      {
+        "id": "cue-2",
+        "roleId": "ludwig",
+        "text": "nobody's gonna outbid this.",
+        "start": 2.96,
+        "end": 3.96
+      },
+      {
+        "id": "cue-3",
+        "roleId": "ludwig",
+        "text": "So, going once, going twice.",
+        "start": 4.3,
+        "end": 6.34
+      },
+      {
+        "id": "cue-4",
+        "roleId": "ludwig",
+        "text": "Whoa!",
+        "start": 7.58,
+        "end": 8.18
+      }
+    ],
+    "version": "v1-5fd1c2746d30",
+    "duration": 19.65,
+    "roles": [
+      {
+        "id": "ludwig",
+        "name": "Ludwig",
+        "description": "Match the selected speaker’s timing, pauses, and delivery.",
+        "muteIntervals": [
+          {
+            "start": 0,
+            "end": 6.55
+          },
+          {
+            "start": 7.35,
+            "end": 8.35
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/ludwig-going-once/v1-5fd1c2746d30/backing-ludwig.m4a"
+      }
+    ],
+    "source": {
+      "title": "Jerma fan makes a big donation at the charity auction",
+      "creator": "Ludwig and the charity-auction audience",
+      "url": "https://arazu.io/t3_14mlvb2/",
+      "license": "Owner-directed excerpt; third-party reuse rights not independently verified",
+      "licenseUrl": "https://www.reddit.com/r/LivestreamFail/comments/14mlvb2/average_jerma_fan_makes_a_big_donation/",
+      "attribution": "Jerma fan makes a big donation at the charity auction — Ludwig and the charity-auction audience. Shortened dubbing adaptation; no endorsement implied.",
+      "reuseNote": "Included at the Delivery owner’s direction. Documented public original-footage mirror: https://arazu.io/t3_14mlvb2/. Source record: https://www.reddit.com/r/LivestreamFail/comments/14mlvb2/average_jerma_fan_makes_a_big_donation/. No creator license, reuse permission, or endorsement is claimed.",
+      "excerptStart": 18.9,
+      "excerptEnd": 38.55,
+      "exportAllowed": true
+    },
+    "videoUrl": "/media/say-it-back/ludwig-going-once/v1-5fd1c2746d30/scene.mp4",
+    "posterUrl": "/media/say-it-back/ludwig-going-once/v1-5fd1c2746d30/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/ludwig-going-once/v1-5fd1c2746d30/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/ludwig-going-once/v1-5fd1c2746d30/backing-ludwig.m4a": "a59a2ac7bfba34be539e17f539b1ddf5d691ccd05152085c50db7a75f8e493f3",
+      "/media/say-it-back/ludwig-going-once/v1-5fd1c2746d30/poster.jpg": "93971557edc17db733d1966825964cf9ee85c986ff730a440ca6e4e9ca4c180a",
+      "/media/say-it-back/ludwig-going-once/v1-5fd1c2746d30/reference.wav": "def08e3ce0114d95982a85a51c1f632ce2d4b65aac964e634a4c1df76b90e344",
+      "/media/say-it-back/ludwig-going-once/v1-5fd1c2746d30/scene.mp4": "eab8ba7bc9a56ce1fa5e9b9afa3772900f8d81e68baebafb5b289f0c7067d6f4"
+    }
+  },
+  {
+    "id": "caseoh-perfect-product-name",
+    "title": "That is not a better name",
+    "description": "Reroll increasingly ridiculous in-game product names. Let the pauses do the work before your final, unexpectedly approving verdict.",
+    "difficulty": "medium",
+    "rating": "mature",
+    "category": "Twitch",
+    "tags": [
+      "Absurd",
+      "Awkward pauses",
+      "Multi-line"
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "caseoh",
+        "text": "Let's see which one's the best one.",
+        "start": 0.23,
+        "end": 1.55
+      },
+      {
+        "id": "cue-2",
+        "roleId": "caseoh",
+        "text": "Okay, nah.",
+        "start": 3.35,
+        "end": 4.21
+      },
+      {
+        "id": "cue-3",
+        "roleId": "caseoh",
+        "text": "Hey, you know what?",
+        "start": 13.17,
+        "end": 14.09
+      },
+      {
+        "id": "cue-4",
+        "roleId": "caseoh",
+        "text": "I'm kind of messing with that right there.",
+        "start": 14.13,
+        "end": 15.83
+      }
+    ],
+    "version": "v1-1969ceb2603c",
+    "duration": 15.93,
+    "roles": [
+      {
+        "id": "caseoh",
+        "name": "CaseOh",
+        "description": "Match the selected speaker’s timing, pauses, and delivery.",
+        "muteIntervals": [
+          {
+            "start": 0,
+            "end": 15.93
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/caseoh-perfect-product-name/v1-1969ceb2603c/backing-caseoh.m4a"
+      }
+    ],
+    "source": {
+      "title": "CaseOh tries to pick the best name for his special new product",
+      "creator": "CaseOh",
+      "url": "https://clips.twitch.tv/PlayfulGrossApeResidentSleeper-d90bNrvyFwGKHZ9t",
+      "license": "Owner-directed excerpt; third-party reuse rights not independently verified",
+      "licenseUrl": "https://www.reddit.com/r/LivestreamFail/comments/1jkee3b/caseoh_tries_to_pick_the_best_name_for_his/",
+      "attribution": "CaseOh tries to pick the best name for his special new product — CaseOh. Shortened dubbing adaptation; no endorsement implied.",
+      "reuseNote": "Included at the Delivery owner’s direction. Documented public original-footage mirror: https://arazu.io/t3_1jkee3b/. Source record: https://www.reddit.com/r/LivestreamFail/comments/1jkee3b/caseoh_tries_to_pick_the_best_name_for_his/. No creator license, reuse permission, or endorsement is claimed.",
+      "excerptStart": 22.55,
+      "excerptEnd": 38.48,
+      "exportAllowed": true
+    },
+    "videoUrl": "/media/say-it-back/caseoh-perfect-product-name/v1-1969ceb2603c/scene.mp4",
+    "posterUrl": "/media/say-it-back/caseoh-perfect-product-name/v1-1969ceb2603c/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/caseoh-perfect-product-name/v1-1969ceb2603c/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/caseoh-perfect-product-name/v1-1969ceb2603c/backing-caseoh.m4a": "aeac9688b3176c0ce5dd4e04cfb4358c34d887e61f4ea92c5b49ea1c04b82372",
+      "/media/say-it-back/caseoh-perfect-product-name/v1-1969ceb2603c/poster.jpg": "6af36f9b988c100a5d3c2ed9d9f99a790a0fe2a9a831460f7f33d7b2d5bbbf18",
+      "/media/say-it-back/caseoh-perfect-product-name/v1-1969ceb2603c/reference.wav": "ba955b52093bd6c48657c133759703d87e77802f8aacb28dabbef6076da486d2",
+      "/media/say-it-back/caseoh-perfect-product-name/v1-1969ceb2603c/scene.mp4": "0fa15643a59785f407e079ed4cd892da515064fba0db5d28f1d69931ab58b4e6"
+    }
+  },
+  {
+    "id": "ninja-the-fattest-one",
+    "title": "Literally the fattest one",
+    "description": "A win immediately becomes an outrageous insult. Hit the opening bluntly and stretch the absurd qualification.",
+    "difficulty": "medium",
+    "rating": "mature",
+    "category": "Twitch",
+    "tags": [
+      "Uncensored",
+      "Rage",
+      "Absurd"
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "ninja",
+        "text": "Suck a dick, dude.",
+        "start": 0.18,
+        "end": 1.22
+      },
+      {
+        "id": "cue-2",
+        "roleId": "ninja",
+        "text": "Literally the fattest one you can find.",
+        "start": 1.22,
+        "end": 3.0
+      }
+    ],
+    "version": "v1-8cf838c363ab",
+    "duration": 3.25,
+    "roles": [
+      {
+        "id": "ninja",
+        "name": "Ninja",
+        "description": "Match the selected speaker’s timing, pauses, and delivery.",
+        "muteIntervals": [
+          {
+            "start": 0,
+            "end": 3.25
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/ninja-the-fattest-one/v1-8cf838c363ab/backing-ninja.m4a"
+      }
+    ],
+    "source": {
+      "title": "Old Ninja is back",
+      "creator": "Ninja (Tyler Blevins)",
+      "url": "https://streamable.com/4h6ow",
+      "license": "Owner-directed excerpt; third-party reuse rights not independently verified",
+      "licenseUrl": "https://www.reddit.com/r/LivestreamFail/comments/bcx6nb/old_ninja_is_back/",
+      "attribution": "Old Ninja is back — Ninja (Tyler Blevins). Shortened dubbing adaptation; no endorsement implied.",
+      "reuseNote": "Included at the Delivery owner’s direction. Documented public original-footage mirror: https://streamable.com/4h6ow. Source record: https://www.reddit.com/r/LivestreamFail/comments/bcx6nb/old_ninja_is_back/. No creator license, reuse permission, or endorsement is claimed.",
+      "excerptStart": 17.6,
+      "excerptEnd": 20.85,
+      "exportAllowed": true
+    },
+    "videoUrl": "/media/say-it-back/ninja-the-fattest-one/v1-8cf838c363ab/scene.mp4",
+    "posterUrl": "/media/say-it-back/ninja-the-fattest-one/v1-8cf838c363ab/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/ninja-the-fattest-one/v1-8cf838c363ab/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/ninja-the-fattest-one/v1-8cf838c363ab/backing-ninja.m4a": "a31cb77b8d4a30a754648dbf862d3ecd7259812b0cbc1e8cdf22cbb01e7aa31f",
+      "/media/say-it-back/ninja-the-fattest-one/v1-8cf838c363ab/poster.jpg": "e4d557508e5999466211699fe7738e21687d1eae1d37e14e870bb4fdf4916783",
+      "/media/say-it-back/ninja-the-fattest-one/v1-8cf838c363ab/reference.wav": "b590e6c587c4313987373e194c71994e944982ac4d47ecbebd3e3dee3adec059",
+      "/media/say-it-back/ninja-the-fattest-one/v1-8cf838c363ab/scene.mp4": "7432effb59763e654a60a6f373dc97ed552b4d09b5d1d4d5deca5a644c798d74"
+    }
+  },
+  {
+    "id": "drk-come-up-for-air",
+    "title": "The most awkward follow-up",
+    "description": "Turn a wildly inappropriate suggestion into an improvised punchline. Dr K’s opening stays in the scene; you supply Ludwig’s response.",
+    "difficulty": "medium",
+    "rating": "mature",
+    "category": "Twitch",
+    "tags": [
+      "Dark humor",
+      "Awkward pauses",
+      "Conversation"
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "ludwig",
+        "text": "That's... yeah.",
+        "start": 3.4,
+        "end": 4.12
+      },
+      {
+        "id": "cue-2",
+        "roleId": "ludwig",
+        "text": "To tie a dick joke into my dad's death would be phenomenal.",
+        "start": 4.68,
+        "end": 7.56
+      },
+      {
+        "id": "cue-3",
+        "roleId": "ludwig",
+        "text": "Yeah, I'll come up with one.",
+        "start": 8.52,
+        "end": 9.84
+      },
+      {
+        "id": "cue-4",
+        "roleId": "ludwig",
+        "text": "Rigor mortis, who knows?",
+        "start": 9.86,
+        "end": 10.9
+      }
+    ],
+    "version": "v1-6499750354ce",
+    "duration": 16.5,
+    "roles": [
+      {
+        "id": "ludwig",
+        "name": "Ludwig",
+        "description": "Deliver the awkward response and improvised punchline after Dr K’s opening suggestion.",
+        "muteIntervals": [
+          {
+            "start": 3.25,
+            "end": 7.72
+          },
+          {
+            "start": 8.3,
+            "end": 11.1
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/drk-come-up-for-air/v1-6499750354ce/backing-ludwig.m4a"
+      }
+    ],
+    "source": {
+      "title": "Dr K and Ludwig: the inappropriate joke",
+      "creator": "Healthy Gamer (Dr Alok Kanojia) with Ludwig Ahgren",
+      "url": "https://clips.twitch.tv/TrappedTiredHareLeeroyJenkins",
+      "license": "Owner-directed excerpt; third-party reuse rights not independently verified",
+      "licenseUrl": "https://www.reddit.com/r/LivestreamFail/comments/l80nui/dr_k_challenges_ludwig_to_make_a_dick_joke_out_of/",
+      "attribution": "Dr K and Ludwig’s original charity-stream conversation. Shortened dubbing adaptation; no endorsement implied.",
+      "reuseNote": "Included at the Delivery owner’s direction. Public original-footage archive linked by the contemporary source record: https://web.archive.org/web/20210129191002if_/https%3A//stream.livestreamfails.com/video/60145cd837ead.mp4 . Source record: https://www.reddit.com/r/LivestreamFail/comments/l80nui/dr_k_challenges_ludwig_to_make_a_dick_joke_out_of/. No creator license or reuse permission is claimed.",
+      "excerptStart": 0,
+      "excerptEnd": 16.5,
+      "exportAllowed": true
+    },
+    "videoUrl": "/media/say-it-back/drk-come-up-for-air/v1-6499750354ce/scene.mp4",
+    "posterUrl": "/media/say-it-back/drk-come-up-for-air/v1-6499750354ce/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/drk-come-up-for-air/v1-6499750354ce/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/drk-come-up-for-air/v1-6499750354ce/backing-ludwig.m4a": "edd39935de1390b4234644d000ace8f8cd74dae6c7cf72d5fe55c2cdfaad3241",
+      "/media/say-it-back/drk-come-up-for-air/v1-6499750354ce/poster.jpg": "a399c45ec01bc9a3db88666b260b7cd7a6465891c1123a268cead9e23083b09f",
+      "/media/say-it-back/drk-come-up-for-air/v1-6499750354ce/reference.wav": "81bada82e42c9d290923254dd27aebb784b2ce3eaca2c6eb7b35efe3f6752ecd",
+      "/media/say-it-back/drk-come-up-for-air/v1-6499750354ce/scene.mp4": "63e64b764984f5e3840113065a45829b03e372c05d28a228591adefee713d8d8"
+    }
+  },
+  {
+    "id": "maya-parrot-final-question",
+    "title": "The parrot gets the last word",
+    "description": "Hear the parrot derail the explanation, then copy Maya’s exasperated final question. The interrupted setup stays in the scene.",
+    "difficulty": "easy",
+    "rating": "teen",
+    "category": "Internet",
+    "tags": [
+      "Animals",
+      "Exasperated",
+      "Unexpected interruption"
+    ],
+    "cues": [
+      {
+        "id": "cue-1",
+        "roleId": "maya",
+        "text": "Are you deadass right now?",
+        "start": 7.1,
+        "end": 8.55
+      }
+    ],
+    "version": "v1-f4f98a5c1b33",
+    "duration": 8.7,
+    "roles": [
+      {
+        "id": "maya",
+        "name": "Maya",
+        "description": "Copy only the final exasperated question after the parrot interrupts.",
+        "muteIntervals": [
+          {
+            "start": 6.9,
+            "end": 8.7
+          }
+        ],
+        "dubAudioUrl": "/media/say-it-back/maya-parrot-final-question/v1-f4f98a5c1b33/backing-maya.m4a"
+      }
+    ],
+    "source": {
+      "title": "Let the parrot speak: Maya and Siren",
+      "creator": "Maya Higa / Alveus Sanctuary",
+      "url": "https://clips.twitch.tv/BloodySoftSalsifyPJSugar-UU2NOUYK4m2ak2jK",
+      "license": "Owner-directed excerpt; third-party reuse rights not independently verified",
+      "licenseUrl": "https://www.reddit.com/r/LivestreamFail/comments/14zmhkx/let_the_parrot_speak_maya_ruining_the_stream/",
+      "attribution": "Maya Higa and Siren at Alveus Sanctuary. Shortened dubbing adaptation; no endorsement implied.",
+      "reuseNote": "Included at the Delivery owner’s direction. Public original-footage mirror: https://arazu.io/t3_14zmhkx/ . The contemporary source discussion independently transcribes the selected closing question. Earlier interrupted sentences remain context and are not recording cues. No creator license or reuse permission is claimed.",
+      "excerptStart": 17.5,
+      "excerptEnd": 26.2,
+      "exportAllowed": true
+    },
+    "videoUrl": "/media/say-it-back/maya-parrot-final-question/v1-f4f98a5c1b33/scene.mp4",
+    "posterUrl": "/media/say-it-back/maya-parrot-final-question/v1-f4f98a5c1b33/poster.jpg",
+    "referenceAudioUrl": "/media/say-it-back/maya-parrot-final-question/v1-f4f98a5c1b33/reference.wav",
+    "assetIntegrity": {
+      "/media/say-it-back/maya-parrot-final-question/v1-f4f98a5c1b33/backing-maya.m4a": "be33d3dc9d195bca8b97b3efa5b016046695eccc30c670f967b6e67e8c818a1e",
+      "/media/say-it-back/maya-parrot-final-question/v1-f4f98a5c1b33/poster.jpg": "25e32307fc3c3f5dc5c63a6824923b3de0086c72a5ae261b867cac021fc4114f",
+      "/media/say-it-back/maya-parrot-final-question/v1-f4f98a5c1b33/reference.wav": "ea21028e32bd5e2a218b7437e9384d17c15b6cb7269e9f944589775277b711fc",
+      "/media/say-it-back/maya-parrot-final-question/v1-f4f98a5c1b33/scene.mp4": "2a7187f79dadf3d2f1f4d24475a5e26b6babdc00882f8da728dd4ede6ff1db2a"
+    }
   }
 ]

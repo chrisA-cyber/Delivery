@@ -15,6 +15,7 @@ export interface ExportVideo {
   filename?: string;
   expiresAt?: string | null;
   createdAt?: string;
+  assignmentUrl?: string | null;
 }
 
 class ExportRequestError extends Error {
@@ -177,7 +178,7 @@ export function VideoExport({ mode, attemptId, prepareAttempt, hasScore = false,
     if (!shareFile || sharing) return;
     setSharing(true); setError(""); setNotice("");
     try {
-      await navigator.share({ title: "Your turn on Delivery", files: [shareFile] });
+      await navigator.share({ title: selected?.assignmentUrl ? "Your turn on Delivery" : "My Delivery performance", files: [shareFile] });
       if (mounted.current) setNotice("Share menu closed. Your video is still available here.");
     } catch (cause) {
       if (mounted.current && !(cause instanceof Error && cause.name === "AbortError")) setNotice("The share menu could not open. Download the video, then share it from your device.");
@@ -186,7 +187,7 @@ export function VideoExport({ mode, attemptId, prepareAttempt, hasScore = false,
 
   return <section className={compact ? "mt-4" : "rounded-2xl border border-electric/25 bg-electric/[.045] p-5 sm:p-6"} aria-label="Performance video">
     {!opened ? <div className="flex flex-wrap items-center justify-between gap-4">
-      {!compact && <div className="min-w-0"><p className="mono-label text-electric">Keep the performance</p><h2 className="mt-2 text-xl font-bold">Made for a second watch.</h2><p className="mt-2 max-w-md text-sm leading-6 text-white/60">Your voice, a finished vertical video, and an invitation to try the same challenge.</p></div>}
+      {!compact && <div className="min-w-0"><p className="mono-label text-electric">Keep the performance</p><h2 className="mt-2 text-xl font-bold">Made for a second watch.</h2><p className="mt-2 max-w-md text-sm leading-6 text-white/60">Your voice in a finished vertical video, ready to download or share.</p></div>}
       <button type="button" className="button-secondary min-h-12" disabled={disabled} onClick={() => setOpened(true)}><Clapperboard className="size-4" />Create video</button>
     </div> : <div className="min-w-0 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="flex items-center gap-2 text-lg font-bold"><Film className="size-5 text-electric" />Your performance video</h2><button className="button-ghost min-h-11 px-3 text-xs" type="button" onClick={() => setOpened(false)}>Close</button></div>
@@ -206,7 +207,7 @@ export function VideoExport({ mode, attemptId, prepareAttempt, hasScore = false,
         {selected?.status === "failed" && <p role="alert" className="text-sm leading-6 text-orange-200">{selected.errorMessage || "Video creation didn’t finish. Retry to recover this export. Your original take and score are safe."}</p>}
         {(selected?.status === "expired" || selected?.status === "cancelled") && <p className="text-sm leading-6 text-white/65">This video is no longer available. You can recreate it while your saved performance is available.</p>}
         {!ready && !rendering && <button type="button" className="button-primary min-h-12" disabled={creating || loading || disabled} onClick={() => void create()}>{creating ? <LoaderCircle className="size-4 animate-spin" /> : selected ? <RefreshCw className="size-4" /> : <Clapperboard className="size-4" />}{creating ? "Preparing your video…" : selected ? "Retry video" : "Generate video"}</button>}
-        <p className="flex items-start gap-2 text-xs leading-6 text-white/50"><LockKeyhole className="mt-1 size-3.5 shrink-0" /><span>Your video stays private here. Its invitation opens the same challenge, without your recording. Downloaded or externally shared copies cannot be recalled.</span></p>
+        <p className="flex items-start gap-2 text-xs leading-6 text-white/50"><LockKeyhole className="mt-1 size-3.5 shrink-0" /><span>Your video stays private here. {selected ? selected.assignmentUrl ? "Its invitation opens the same challenge, without your recording." : "This download has no public challenge link." : "Public challenge links are included when available."} Downloaded or externally shared copies cannot be recalled.</span></p>
       </>}
       {error && <div role="alert" className="rounded-xl border border-hot/25 bg-hot/5 p-4 text-sm leading-6 text-orange-200"><p>{error}</p><button type="button" className="button-ghost mt-2 min-h-11 px-0 text-xs" onClick={() => setRefresh((current) => current + 1)}><RefreshCw className="size-3.5" />Check video status</button></div>}
       {notice && <p role="status" className="text-xs leading-6 text-white/65">{notice}</p>}

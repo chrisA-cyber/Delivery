@@ -22,17 +22,17 @@ const id = z.string().regex(/^[a-z0-9][a-z0-9-]{0,79}$/);
 const interval = z.object({ start: z.number().min(0), end: z.number().positive() }).strict();
 const clipSchema = z.object({
   id, version: id, title: z.string().min(2).max(100), description: z.string().min(5).max(400),
-  duration: z.number().positive().max(18.5),
+  duration: z.number().positive().max(45),
   difficulty: z.enum(["easy", "medium", "hard"]), rating: z.enum(["everyone", "teen", "mature"]),
   category: z.string().min(2).max(80), tags: z.array(z.string().min(1).max(60)).max(12),
   videoUrl: localAsset, posterUrl: localAsset, referenceAudioUrl: localAsset.optional(),
   roles: z.array(z.object({ id, name: z.string().min(1), description: z.string().min(1),
-    muteIntervals: z.array(interval).min(1), dubAudioUrl: localAsset.optional() }).strict()).min(1).max(4),
+    muteIntervals: z.array(interval).min(1).max(40), dubAudioUrl: localAsset.optional() }).strict()).min(1).max(4),
   cues: z.array(z.object({ id, roleId: id, text: z.string().min(1).max(400),
     start: z.number().min(0), end: z.number().positive() }).strict()).min(1).max(60),
   source: z.object({ title: z.string().min(1), creator: z.string().min(1), url: z.string().url(),
     license: z.string().min(1), licenseUrl: z.string().url(), attribution: z.string().min(1),
-    reuseNote: z.string().min(10), excerptStart: z.number().min(0), excerptEnd: z.number().positive() }).strict(),
+    reuseNote: z.string().min(10), exportAllowed: z.boolean().optional(), excerptStart: z.number().min(0), excerptEnd: z.number().positive() }).strict(),
   assetIntegrity: z.record(z.string().regex(/^[a-f0-9]{64}$/)),
 }).strict();
 
@@ -78,7 +78,7 @@ try {
     for (const asset of new Set(assets)) {
       const assetPath = path.join(root, "public", asset);
       const info = await stat(assetPath);
-      if (!info.isFile() || !info.size || info.size > 8 * 1024 * 1024) throw new Error(`${key}: invalid or oversized asset ${asset}`);
+      if (!info.isFile() || !info.size || info.size > 48 * 1024 * 1024) throw new Error(`${key}: invalid or oversized asset ${asset}`);
       const hash = createHash("sha256").update(await readFile(assetPath)).digest("hex");
       if (clip.assetIntegrity[asset] !== hash) throw new Error(`${key}: asset hash mismatch ${asset}; publish a new clip version after edits`);
       if (probe && /\.(mp4|m4a|wav)$/.test(asset)) {

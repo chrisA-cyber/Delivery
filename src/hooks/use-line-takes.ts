@@ -60,10 +60,29 @@ export function useLineTakes() {
     setLines(next);
   }, []);
 
+  const replaceScene = useCallback(async (base: Blob, windows: LineWindow[], duration: number, offsetMs: number) => {
+    const token = ++operation.current;
+    setAssembling(true);
+    try {
+      // Trim only measured capture startup. Keeping one continuous interval
+      // avoids introducing per-line fades into a whole-scene performance.
+      const assembled = await composeLineTakes([{ blob: base, sceneStart: 0, sceneEnd: duration, recordingOffsetMs: offsetMs }], duration);
+      if (token !== operation.current) return false;
+      const next = windows.map((window) => ({ cueId: window.cue.id, blob: base, sceneStart: window.start, sceneEnd: window.end, recordingOffsetMs: offsetMs + window.start * 1000 }));
+      const url = URL.createObjectURL(assembled.blob);
+      const oldUrl = urlRef.current;
+      urlRef.current = url;
+      linesRef.current = next;
+      setLines(next); setTake({ ...assembled, audioUrl: url });
+      if (oldUrl) URL.revokeObjectURL(oldUrl);
+      return true;
+    } finally { if (token === operation.current) setAssembling(false); }
+  }, []);
+
   useEffect(() => () => {
     operation.current += 1;
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
   }, []);
 
-  return { lines, take, assembling, reset, accept, seed };
+  return { lines, take, assembling, reset, accept, seed, replaceScene };
 }

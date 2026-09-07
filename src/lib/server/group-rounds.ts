@@ -163,9 +163,11 @@ async function assignmentFor(input: CreateGroupRoundInput, viewer: GroupViewer):
     return { mode: "switch", challenge: snapshotSwitchChallenge(challenge), rating: challenge.rating, scoringVersion: challenge.scoringVersion, rubricVersion: challenge.rubricVersion };
   }
   if (input.mode === "say-it-back") {
-    const found = await createSupabaseAdminClient().from("say_clip_versions").select("manifest,enabled").eq("id", `${input.clipId}:${input.clipVersion}`).maybeSingle();
+    const found = await createSupabaseAdminClient().from("say_clip_versions").select("manifest,enabled,owner_key").eq("id", `${input.clipId}:${input.clipVersion}`).maybeSingle();
     checked(found.error);
     if (!found.data?.enabled) throw new AppError("SAY_CLIP_NOT_FOUND", "Choose an available scene.", 404);
+    const ownerKey = viewer.user ? `user:${viewer.user.id}` : `guest:${viewer.guest.idempotencyScope}`;
+    if (found.data.owner_key && found.data.owner_key !== ownerKey) throw new AppError("SAY_CLIP_NOT_FOUND", "Choose one of your own scenes to start a round.", 404);
     const clip = sayClipSchema.parse(found.data.manifest);
     assertContentRating(clip.rating, input.maxRating);
     if (input.community && !["CC BY 3.0", "Public domain in the United States"].includes(clip.source.license)) throw new AppError("ROUND_BROADCAST_SOURCE", "This scene has no verified broadcast reuse permission. Choose another scene for a community round.", 403);

@@ -1,5 +1,6 @@
 import { VISUAL_THEME } from "../lib/visual-theme";
 import { RECOGNIZABLE_PROMPTS } from "./recognizable-content";
+import { V4_PACKS, V4_PROMPTS } from "./classic-content-v4";
 import { createSeededRandom, toUtcDateKey } from "../lib/content/hash";
 import {
   PACKS as LEGACY_PACKS,
@@ -37,7 +38,7 @@ export type {
 } from "../lib/content/types";
 
 /** Active Step 1B catalog. Text changes receive fresh IDs; prior releases stay resolvable. */
-export const CATALOG_VERSION = "classic-content-v3";
+export const CATALOG_VERSION = "classic-content-v4";
 export const PACKS: readonly ContentPack[] = [
   {
     id: "internet-originals",
@@ -128,6 +129,7 @@ export const PACKS: readonly ContentPack[] = [
     sortOrder: 60,
     featured: false,
   },
+  ...V4_PACKS,
 ];
 
 export const ENERGY_MODIFIERS: readonly EnergyModifier[] = [
@@ -1219,6 +1221,7 @@ export const ORIGINAL_PROMPTS: readonly DeliveryPrompt[] = [
 export const PROMPTS: readonly DeliveryPrompt[] = [
   ...ORIGINAL_PROMPTS,
   ...RECOGNIZABLE_PROMPTS,
+  ...V4_PROMPTS,
 ];
 
 const PACK_BY_ID = new Map(
@@ -1377,6 +1380,8 @@ export function getDailyPrompt(date: Date = new Date()): DailyPrompt {
   );
   const prompt = getRandomPrompt({
     packIds: dailyPackIds,
+    // Preserve daily fallbacks already seen before this drop; new content enters tomorrow.
+    excludeIds: dateKey < "2026-09-08" ? V4_PROMPTS.map(({ id }) => id) : undefined,
     seed: `delivery:daily:prompt:${dateKey}`,
   });
   const compatibleEnergy = ENERGY_MODIFIERS.filter((modifier) =>

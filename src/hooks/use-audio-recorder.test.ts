@@ -1,7 +1,7 @@
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { MAX_RECORDING_BYTES, MAX_RECORDING_MS } from "@/lib/audio-capture";
+import { MAX_RECORDING_BYTES, MAX_RECORDING_MS, MAX_SAY_RECORDING_MS } from "@/lib/audio-capture";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 
 class FakeTrack extends EventTarget {
@@ -306,6 +306,41 @@ describe("microphone capture lifecycle", () => {
     expect(result.current.stopReason).toBe("limit");
     expect(result.current.status).toBe("stopped");
     expect(stream.track.stop).toHaveBeenCalledOnce();
+  });
+
+  it("records a full 45-second Say scene past the Classic watchdog and trims the final block", async () => {
+    const { result } = renderHook(() => useAudioRecorder({ mode: "say-it-back" }));
+    await act(async () => { expect(await result.current.start({ maxDurationMs: 45_000 })).toBe(true); });
+    const context = FakeAudioContext.instances[0]!;
+    act(() => { context.push(48_000 * 23); vi.advanceTimersByTime(23_000); });
+    expect(result.current.status).toBe("recording");
+    act(() => context.push(48_000 * 23));
+    expect(result.current.durationMs).toBe(MAX_SAY_RECORDING_MS);
+    expect(result.current.audioBlob?.size).toBe(44 + 48_000 * 45 * 2);
+    expect(result.current.stopReason).toBe("limit");
+    expect(result.current.warning).toContain("45-second");
+    expect(stream.track.stop).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("cannot extend a Classic or Switch recorder by passing a longer requested duration", async () => {
+    const { result } = renderHook(() => useAudioRecorder({ mode: "switch" }));
+    await act(async () => { expect(await result.current.start({ maxDurationMs: 45_000, prerollMs: 300 })).toBe(true); });
+    act(() => FakeAudioContext.instances[0]!.push(48_000 * 21));
+    expect(result.current.durationMs).toBe(MAX_RECORDING_MS);
+    expect(result.current.status).toBe("stopped");
+  });
+
+  it("keeps Say's bounded technical startup separately from its 45 seconds of performance", async () => {
+    const { result } = renderHook(() => useAudioRecorder({ mode: "say-it-back" }));
+    await act(async () => { expect(await result.current.start({ prerollMs: 500 })).toBe(true); });
+    const context = FakeAudioContext.instances[0]!;
+    act(() => { context.push(48_000 * 45); vi.advanceTimersByTime(45_000); });
+    expect(result.current.status).toBe("recording");
+    act(() => context.push(48_000));
+    expect(result.current.durationMs).toBe(45_300);
+    expect(result.current.warning).toContain("45-second");
+    expect(result.current.stopReason).toBe("limit");
   });
 
   it.each([18_000, 20_000])("finishes a %sms timed take by sample count despite ordinary startup latency", async (maxDurationMs) => {

@@ -138,7 +138,7 @@ describe("keeping the first take through sign-in", () => {
     fireEvent.click(screen.getByRole("button", { name: "Full scene" }));
     await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Record full scene" })); });
     await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
-    expect(start).toHaveBeenCalledWith({ preservePreviousTake: true });
+    expect(start).toHaveBeenCalledWith({ preservePreviousTake: true, prerollMs: 300 });
     expect(mocks.cancelCapture).toHaveBeenCalledOnce();
     expect(mocks.commitCapture).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent("took too long to start in sync");
@@ -178,6 +178,40 @@ describe("challenge content preferences", () => {
 });
 
 describe("line recording and responsive retakes", () => {
+  it("uploads a full 45-second scene with startup audio removed and zero playback offset", async () => {
+    mocks.authenticated = true;
+    const clip = { ...cleanClip, duration: 45, cues: [{ ...cleanClip.cues[0]!, start: 0, end: 45 }] };
+    const fetch = vi.fn<(url: string, init?: RequestInit) => Promise<ReturnType<typeof ok>>>(async (url) => url.includes("/clips") ? ok({ clips: [clip] }) : ok({ attempt: makeAttempt({ clip, saved: true }) }));
+    vi.stubGlobal("fetch", fetch);
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: vi.fn().mockReturnValue("blob:complete-scene"), revokeObjectURL: vi.fn() }));
+    const start = vi.fn(async () => { mocks.recorder.status = "recording"; return true; });
+    const stop = vi.fn(() => {
+      const samples = new Float32Array(48_000 * 45.3).fill(0.12);
+      mocks.recorder.audioBlob = encodeMonoWav([samples], samples.length, 48_000);
+      mocks.recorder.status = "stopped";
+    });
+    mocks.recorder = { status: "ready", requestPermission: vi.fn().mockResolvedValue(true), primeAudioContext: vi.fn(), start, stop,
+      getCapturePositionMs: () => 300, cancelCapture: mocks.cancelCapture, commitCapture: mocks.commitCapture, canSubmit: true, durationMs: 45_300 };
+    mocks.sceneStart.mockResolvedValue(0);
+    render(<SayItBackExperience initialClipId={clip.id} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Full scene" }));
+    vi.useFakeTimers();
+    await act(async () => { fireEvent.click(screen.getByRole("button", { name: "Record full scene" })); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+    vi.useRealTimers();
+    expect(start).toHaveBeenCalledWith({ preservePreviousTake: true, prerollMs: 300 });
+    await act(async () => { (mocks.playerProps.onEnded as () => void)(); });
+    await waitFor(() => expect(mocks.commitCapture).toHaveBeenCalledOnce());
+    expect(mocks.playerProps.takeUrl).toBe("blob:complete-scene");
+    expect(mocks.playerProps.recordingOffsetMs).toBe(0);
+    fireEvent.click(screen.getByRole("button", { name: "Save without scoring" }));
+    await waitFor(() => expect(fetch.mock.calls.some(([url]) => url === "/api/say-it-back/attempts")).toBe(true));
+    const form = fetch.mock.calls.find(([url]) => url === "/api/say-it-back/attempts")![1]!.body as FormData;
+    expect(form.get("durationMs")).toBe("45000");
+    expect(form.get("recordingOffsetMs")).toBe("0");
+    expect((form.get("audio") as Blob).size).toBe(44 + 45 * 48_000 * 2);
+  });
+
   it("previews a selected line and keeps each accepted line while redoing another", async () => {
     const clip = { ...cleanClip, duration: 4, cues: [
       { id: "one", roleId: cleanClip.roles[0]!.id, text: "First phrase.", start: 0.2, end: 1.5 },

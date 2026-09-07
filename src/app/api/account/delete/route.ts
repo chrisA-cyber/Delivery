@@ -1,3 +1,4 @@
+import { deleteOwnerSayImports } from "@/lib/server/say-imports";
 import { cleanupVideoExports, deleteOwnerVideoExports } from "@/lib/server/video-export-cleanup";
 import { z } from "zod";
 
@@ -180,6 +181,7 @@ export async function DELETE(request: Request) {
         }
 
         await deleteGroupAccountMedia(user.id);
+        await deleteOwnerSayImports(user.id);
         // Account containment already revoked jobs; drain derived media before identity cascade.
         await deleteOwnerVideoExports(user.id);
         await cleanupVideoExports(100);

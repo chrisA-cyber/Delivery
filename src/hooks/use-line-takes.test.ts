@@ -50,6 +50,28 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("accepted line takes", () => {
+  it("replaces a complete scene without its startup and keeps the last line available for a redo", async () => {
+    const { result } = renderHook(() => useLineTakes());
+    const sceneCues = [{ ...cues[0]!, start: 0, end: 2 }, { ...cues[1]!, start: 43, end: 45 }];
+    const windows = lineRecordingWindows(sceneCues, 45);
+    const pcm = new Float32Array(48_000 * 45.3).fill(0.2);
+    pcm.fill(0.9, 0, 48_000 * 0.3);
+    pcm.fill(0.4, 48_000 * 44.3);
+    const base = encodeMonoWav([pcm], pcm.length, 48_000);
+    await act(async () => { expect(await result.current.replaceScene(base, windows, 45, 300)).toBe(true); });
+    const samples = readPcmWav(await bytes(result.current.take!.blob))!.samples;
+    expect(result.current.take!.durationMs).toBe(45_000);
+    expect(samples[48_000]).toBeCloseTo(0.2, 3);
+    expect(samples[48_000 * 44.8]).toBeCloseTo(0.4, 3);
+    expect(samples.some((sample) => sample > 0.5)).toBe(false);
+    expect(result.current.lines.map((line) => line.recordingOffsetMs)).toEqual(windows.map((window) => 300 + window.start * 1000));
+    const saved = result.current.take;
+    compose.mockRejectedValueOnce(new Error("Decode failed"));
+    await act(async () => { await expect(result.current.replaceScene(audio(0.6), windows, 45, 0)).rejects.toThrow("Decode failed"); });
+    expect(result.current.take).toBe(saved);
+    expect(result.current.lines[0]!.blob).toBe(base);
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+  });
   it("keeps the playable arrangement while a redo is pending and after composition fails", async () => {
     const { result } = renderHook(() => useLineTakes());
     const first = firstLine();

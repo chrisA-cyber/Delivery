@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import type { User } from "@supabase/supabase-js";
 import type { GroupViewer } from "@/lib/server/group-rounds";
 import { SWITCH_CHALLENGES, snapshotSwitchChallenge } from "@/lib/switch/catalog";
+import { SAY_CLIPS } from "@/lib/say-it-back/catalog";
 import type { SwitchScore } from "@/lib/switch/types";
 import type { SayScore } from "@/lib/say-it-back/types";
 const state = vi.hoisted(() => ({ tables: {} as Record<string, Record<string, unknown>[]>, signed: vi.fn() }));
@@ -24,7 +25,7 @@ vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: () => ({
   rpc: async (_name: string, input: Record<string, unknown>) => ({ data: state.tables.challenges?.find((row) => row.id === input.p_challenge_id), error: null }),
   storage: { from: () => ({ createSignedUrl: state.signed }) },
 }) }));
-import { getGroupRound, groupAudioResponse, groupScoreGroup, ownsGroupMember, ownsGroupSaySource, validGroupStoragePath, matchesGroupSwitchAssignment } from "@/lib/server/group-rounds";
+import { createGroupRound, getGroupRound, groupAudioResponse, groupScoreGroup, ownsGroupMember, ownsGroupSaySource, validGroupStoragePath, matchesGroupSwitchAssignment } from "@/lib/server/group-rounds";
 const token = "a".repeat(43);
 const roundId = "00000000-0000-4000-8000-000000000001";
 const memberId = "00000000-0000-4000-8000-000000000002";
@@ -42,6 +43,19 @@ beforeEach(() => {
   };
 });
 describe("group capability and reveal boundary", () => {
+  it.each(["guest", "account"])("requires the custom scene owner before a %s can create a round", async (identity) => {
+    const viewer = identity === "guest" ? guest : account;
+    const clip = { ...structuredClone(SAY_CLIPS[0]!), id: "custom-private-scene", rating: "mature" as const };
+    const version = { id: `${clip.id}:${clip.version}`, manifest: clip, enabled: true, owner_key: "user:someone-else" };
+    state.tables.say_clip_versions = [version];
+    const input = { mode: "say-it-back" as const, clipId: clip.id, clipVersion: clip.version, roleId: clip.roles[0]!.id,
+      maxRating: "mature" as const, requestId: "private-scene-round", name: "Friends", displayName: "Host", closesInHours: 24 as const };
+    await expect(createGroupRound(input, viewer, "https://delivery.test")).rejects.toMatchObject({ code: "SAY_CLIP_NOT_FOUND", status: 404 });
+    // Ownership admits the scene to the usual audience checks; it does not bypass them.
+    version.owner_key = viewer.user ? `user:${viewer.user.id}` : `guest:${viewer.guest.idempotencyScope}`;
+    await expect(createGroupRound(input, viewer, "https://delivery.test")).rejects.toMatchObject({ code: "GROUP_MATURE_PRIVATE", status: 403 });
+  });
+
   it("returns progress without another player's score, take identifier or recording before reveal", async () => {
     const round = await getGroupRound(token, guest, "https://delivery.test");
     expect(round.submittedCount).toBe(1);

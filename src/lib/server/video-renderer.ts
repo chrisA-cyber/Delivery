@@ -8,11 +8,13 @@ import { dirname, join } from "node:path";
 import sharp from "sharp";
 import { BRAND_MARK_PATH, brandGradientSvg } from "@/lib/brand";
 import { VISUAL_THEME } from "@/lib/visual-theme";
+import { MAX_SAY_RECORDING_MS } from "@/lib/audio-capture";
 import type { SwitchChallenge } from "@/lib/switch/types";
 import type { SayClip } from "@/lib/say-it-back/types";
 
 export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v1" as const;
 export const VIDEO_RENDER_LIMITS = Object.freeze({ durationSeconds: 22, outputBytes: 48 * 1024 * 1024, timeoutMs: 180_000, threads: 2 });
+const SAY_VIDEO_RENDER_LIMITS = Object.freeze({ ...VIDEO_RENDER_LIMITS, durationSeconds: MAX_SAY_RECORDING_MS / 1000, timeoutMs: 360_000 });
 const W = 1080;
 const H = 1920;
 const FPS = 30;
@@ -25,7 +27,7 @@ export interface VideoRenderCommon {
   outputPath: string;
   durationMs: number;
   recordingOffsetMs: number;
-  /** Public immutable assignment URL; never an attempt/share/round token. */
+  /** Public immutable assignment URL, or empty for a private export. Never an attempt/share/round token. */
   invitationUrl: string;
   displayName?: string | null;
   avatarPath?: string | null;
@@ -46,7 +48,7 @@ export class VideoRenderError extends Error {
 interface MediaProbe { format?: { duration?: string }; streams?: { codec_type?: string; codec_name?: string; width?: number; height?: number; sample_rate?: string; channels?: number; duration?: string }[] }
 
 /** Bounded child process output and wall time; no shell interpolation. */
-async function run(binary: string, args: string[], signal?: AbortSignal, maxBytes = 2 * 1024 * 1024): Promise<Buffer> {
+async function run(binary: string, args: string[], signal?: AbortSignal, maxBytes = 2 * 1024 * 1024, timeoutMs: number = VIDEO_RENDER_LIMITS.timeoutMs): Promise<Buffer> {
   if (signal?.aborted) throw new VideoRenderError("RENDER_INTERRUPTED", "Video creation was interrupted. Try again.");
   return new Promise((resolve, reject) => {
     const child = spawn(binary, args, { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
@@ -56,7 +58,7 @@ async function run(binary: string, args: string[], signal?: AbortSignal, maxByte
     let stopped: VideoRenderError | null = null;
     const stop = (error: VideoRenderError) => { stopped = error; child.kill("SIGKILL"); };
     const aborted = () => stop(new VideoRenderError("RENDER_INTERRUPTED", "Video creation was interrupted. Try again."));
-    const timeout = setTimeout(() => stop(new VideoRenderError("RENDER_TIMEOUT", "Video creation took too long. Try again.")), VIDEO_RENDER_LIMITS.timeoutMs);
+    const timeout = setTimeout(() => stop(new VideoRenderError("RENDER_TIMEOUT", "Video creation took too long. Try again.")), timeoutMs);
     signal?.addEventListener("abort", aborted, { once: true });
     child.stdout.on("data", (chunk: Buffer) => {
       count += chunk.length;
@@ -115,11 +117,22 @@ function rect(x: number, y: number, width: number, height: number, fill: string,
 function svg(body: string, width = W, height = H): string { return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${body}</svg>`; }
 async function png(path: string, body: string, width = W, height = H): Promise<void> { await sharp(Buffer.from(svg(body, width, height)), { limitInputPixels: W * H * 2 }).png().toFile(path); }
 
-function footer(input: VideoRenderInput): string {
-  const url = new URL(input.invitationUrl);
-  if (url.protocol !== "https:" || !/^\/a\/[A-Za-z0-9_-]{6,64}$/.test(url.pathname) || url.search || url.hash || url.username || url.password) throw new VideoRenderError("RENDER_INVITATION", "The playable invitation is unavailable. Try creating the video again.");
-  let body = rect(86, 1532, 864, 2, C.border) + text("Your turn.", 86, 1618, 52) + text(url.host, 86, 1672, 27, C.muted, 500);
-  body += fitText(url.pathname, 86, 1690, 864, 62, 37, 26, C.blue);
+export function renderVideoFooter(input: VideoRenderInput): string {
+  let body = rect(86, 1532, 864, 2, C.border);
+  if (input.invitationUrl) {
+    let url: URL;
+    try { url = new URL(input.invitationUrl); } catch { throw new VideoRenderError("RENDER_INVITATION", "The playable invitation is unavailable. Try creating the video again."); }
+    if (url.protocol !== "https:" || !/^\/a\/[A-Za-z0-9_-]{6,64}$/.test(url.pathname) || url.search || url.hash || url.username || url.password) throw new VideoRenderError("RENDER_INVITATION", "The playable invitation is unavailable. Try creating the video again.");
+    body += text("Your turn.", 86, 1618, 52) + text(url.host, 86, 1672, 27, C.muted, 500);
+    body += fitText(url.pathname, 86, 1690, 864, 62, 37, 26, C.blue);
+  } else {
+    let host = "delivery-production-0577.up.railway.app";
+    try {
+      const site = new URL(process.env.NEXT_PUBLIC_APP_URL || "");
+      if (site.protocol === "https:" && !site.username && !site.password) host = site.host;
+    } catch { /* The brand footer remains available without a configured public origin. */ }
+    body += text("Made on Delivery.", 86, 1618, 52) + text(host, 86, 1672, 27, C.muted, 500);
+  }
   if (input.mode === "say-it-back") {
     const source = input.say.clip.source;
     body += fitText(`${source.title} · ${source.creator} · ${source.license}\nShortened, dubbed adaptation. ${source.license === "CC BY 3.0" ? "creativecommons.org/licenses/by/3.0/" : ""}`, 86, 1790, 864, 90, 18, 16, C.muted);
@@ -163,12 +176,13 @@ export function measureVideoPeaks(pcm: Buffer, bars = 108): number[] {
 }
 
 function validateInput(input: VideoRenderInput) {
-  if (input.layoutVersion !== VIDEO_LAYOUT_VERSION || !Number.isFinite(input.durationMs) || input.durationMs <= 0 || input.durationMs > VIDEO_RENDER_LIMITS.durationSeconds * 1000 || !Number.isFinite(input.recordingOffsetMs) || Math.abs(input.recordingOffsetMs) > 2000) throw new VideoRenderError("RENDER_INPUT", "This recording is outside the video export limits.");
+  const limits = input.mode === "say-it-back" ? SAY_VIDEO_RENDER_LIMITS : VIDEO_RENDER_LIMITS;
+  if (input.layoutVersion !== VIDEO_LAYOUT_VERSION || !Number.isFinite(input.durationMs) || input.durationMs <= 0 || input.durationMs > limits.durationSeconds * 1000 || !Number.isFinite(input.recordingOffsetMs) || Math.abs(input.recordingOffsetMs) > 2000) throw new VideoRenderError("RENDER_INPUT", "This recording is outside the video export limits.");
   if (input.mode === "switch") {
     const challenge = input.switch;
     if (challenge.cues[0]?.start !== 0 || challenge.cues.at(-1)?.end !== challenge.duration || challenge.cues.length < 4 || challenge.cues.length > 6 || !Number.isFinite(challenge.duration) || challenge.duration > 22 || challenge.cues.some((cue, index) => !Number.isFinite(cue.start) || !Number.isFinite(cue.end) || cue.start < 0 || cue.end <= cue.start || cue.end > challenge.duration || (index > 0 && cue.start !== challenge.cues[index - 1]!.end) || cue.text !== challenge.cues[0]!.text)) throw new VideoRenderError("RENDER_CUES", "This Switch cue sequence is unavailable for export.");
   }
-  if (input.mode === "say-it-back" && (!input.say.clip.roles.some((role) => role.id === input.say.roleId) || input.say.clip.duration <= 0 || input.say.clip.duration > VIDEO_RENDER_LIMITS.durationSeconds)) throw new VideoRenderError("RENDER_SCENE", "This scene is unavailable for export.");
+  if (input.mode === "say-it-back" && (!input.say.clip.roles.some((role) => role.id === input.say.roleId) || !Number.isFinite(input.say.clip.duration) || input.say.clip.duration <= 0 || input.say.clip.duration > limits.durationSeconds)) throw new VideoRenderError("RENDER_SCENE", "This scene is unavailable for export.");
 }
 
 /**
@@ -178,21 +192,22 @@ function validateInput(input: VideoRenderInput) {
  */
 export async function renderPerformanceVideo(input: VideoRenderInput, options: { signal?: AbortSignal } = {}): Promise<VideoRenderResult> {
   validateInput(input);
+  const limits = input.mode === "say-it-back" ? SAY_VIDEO_RENDER_LIMITS : VIDEO_RENDER_LIMITS;
   const started = Date.now();
   const dir = await mkdtemp(join(dirname(input.outputPath), ".delivery-render-"));
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), VIDEO_RENDER_LIMITS.timeoutMs);
+  const timeout = setTimeout(() => controller.abort(), limits.timeoutMs);
   const signal = options.signal ? AbortSignal.any([options.signal, controller.signal]) : controller.signal;
   const partial = join(dir, "finished.mp4");
   try {
     const recording = await probe(input.recordingPath, signal);
     const audio = recording.streams?.find((stream) => stream.codec_type === "audio");
     const recordingDuration = numeric(recording.format?.duration, numeric(audio?.duration));
-    if (!audio || recordingDuration <= 0 || recordingDuration > VIDEO_RENDER_LIMITS.durationSeconds) throw new VideoRenderError("RENDER_AUDIO", "The saved recording has no supported audio or exceeds the video limit.");
+    if (!audio || recordingDuration <= 0 || recordingDuration > limits.durationSeconds + 0.05) throw new VideoRenderError("RENDER_AUDIO", "The saved recording has no supported audio or exceeds the video limit.");
     const duration = input.mode === "say-it-back" ? input.say.clip.duration : recordingDuration;
     const basePath = join(dir, "layout.png");
     let body = rect(0, 0, W, H, C.ink) + brandGradientSvg("delivery-video-spectrum") + `<path d="${BRAND_MARK_PATH}" transform="translate(76 114) scale(1.1)" fill="url(#delivery-video-spectrum)" fill-rule="evenodd"/>` + text("delivery", 155, 173, 49) + text("THE VOICE IS THE WHOLE POINT.", 86, 229, 19, C.muted, 500);
-    body += await identity(input) + footer(input);
+    body += await identity(input) + renderVideoFooter(input);
     const parts: { path: string; start?: number; end?: number; x: number; y: number }[] = [];
     let waveform: { x: number; y: number; width: number; height: number } | null = null;
     if (input.mode !== "say-it-back") {
@@ -299,7 +314,7 @@ export async function renderPerformanceVideo(input: VideoRenderInput, options: {
     args.push("-filter_complex_script", filterPath, "-map", "[out]", "-map", audioLabel ? `[${audioLabel}]` : "1:a:0", "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-maxrate", "6M", "-bufsize", "12M", "-threads", String(VIDEO_RENDER_LIMITS.threads), "-pix_fmt", "yuv420p", "-r", String(FPS), "-c:a", audioCopied ? "copy" : "aac");
     if (!audioCopied) args.push("-b:a", "192k");
     args.push("-t", String(duration), "-movflags", "+faststart", "-map_metadata", "-1", "-metadata", "title=Delivery performance", "-metadata", `comment=${input.invitationUrl}`, "-fs", String(VIDEO_RENDER_LIMITS.outputBytes), partial);
-    await run(process.env.FFMPEG_PATH || "ffmpeg", args, signal);
+    await run(process.env.FFMPEG_PATH || "ffmpeg", args, signal, 2 * 1024 * 1024, limits.timeoutMs);
     const [output, info] = await Promise.all([stat(partial), probe(partial, signal)]);
     const video = info.streams?.find((stream) => stream.codec_type === "video");
     const sound = info.streams?.find((stream) => stream.codec_type === "audio");

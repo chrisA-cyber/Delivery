@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, AudioLines, Check, CheckCircle2, Clapperboard, Clock3, Copy, ExternalLink, Film, Headphones, Link2, LoaderCircle, LockKeyhole, Mic, RotateCcw, ShieldCheck, Sparkles, Square, Trophy, Users, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, AudioLines, Check, CheckCircle2, Clapperboard, Clock3, Copy, ExternalLink, Film, Headphones, Link2, LoaderCircle, LockKeyhole, Mic, Plus, RotateCcw, ShieldCheck, Sparkles, Square, Trophy, Users, X } from "lucide-react";
 import { ContentControl, CONTENT_LABELS } from "@/components/content/content-control";
 import { useApp } from "@/components/providers/app-provider";
 import { VideoExport } from "@/components/exports/video-export";
@@ -12,9 +12,11 @@ import { lineRecordingWindows, useLineTakes, type LineWindow } from "@/hooks/use
 import { isRatingAllowed } from "@/data/content";
 import { cn } from "@/lib/utils";
 import type { GroupAssignment } from "@/lib/groups/types";
+import type { SayImport } from "@/lib/say-it-back/import-types";
 import { SAY_SCORING_VERSION, type SayAttempt, type SayChallenge, type SayClip, type SayScore } from "@/lib/say-it-back/types";
 import { DubPlayer, type DubPlayerHandle } from "./dub-player";
 import { TakeWaveform } from "./take-waveform";
+import { CustomSceneCreator, CustomSceneLibrary } from "./custom-scene-creator";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController();
@@ -75,6 +77,9 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
   const router = useRouter();
   const { authenticated, authReady, contentRating, tier, updatePreferences, refreshAccount } = useApp();
   const [clips, setClips] = useState<SayClip[]>([]);
+  const [catalogTab, setCatalogTab] = useState<"browse" | "mine">("browse");
+  const [creatingScene, setCreatingScene] = useState(false);
+  const [resumingImport, setResumingImport] = useState<SayImport | undefined>();
   const [clip, setClip] = useState<SayClip | null>(null);
   const [roleId, setRoleId] = useState("");
   const [catalogLoading, setCatalogLoading] = useState(true);
@@ -109,10 +114,11 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
   const friendPlayerRef = useRef<DubPlayerHandle>(null);
   const responsePlayerRef = useRef<DubPlayerHandle>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
-  const recorder = useAudioRecorder();
+  const recorder = useAudioRecorder({ mode: "say-it-back" });
   const lineTakes = useLineTakes();
   const resetLines = lineTakes.reset;
   const acceptLine = lineTakes.accept;
+  const replaceScene = lineTakes.replaceScene;
   const { reset, stop, start, cancelCapture, commitCapture, requestPermission, getCapturePositionMs, primeAudioContext } = recorder;
   const recordingRef = useRef(false);
   const countdownToken = useRef(0);
@@ -254,7 +260,7 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
 
   useEffect(() => {
     const pending = pendingScene.current;
-    if (!pending || recorder.status !== "stopped" || !recorder.audioBlob || recorder.audioBlob === pending.previousBlob) return;
+    if (!pending || !clip || recorder.status !== "stopped" || !recorder.audioBlob || recorder.audioBlob === pending.previousBlob) return;
     pendingScene.current = null;
     if (!recorder.canSubmit || pending.interrupted || recorder.stopReason === "interrupted" || recorder.stopReason === "hidden") {
       rawCaptureKind.current = pending.previousKind;
@@ -262,9 +268,18 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
       setError("That recording was interrupted or unusable. Your previous take is unchanged; record again when ready.");
       return;
     }
-    commitCapture(); resetLines(); rawCaptureKind.current = "scene";
-    setOffsetMs(pending.offsetMs); setAttempt(null); setEditing(false);
-  }, [recorder.status, recorder.audioBlob, recorder.canSubmit, recorder.stopReason, cancelCapture, commitCapture, resetLines]);
+    const token = countdownToken.current;
+    void replaceScene(recorder.audioBlob, lineWindows, clip.duration, pending.offsetMs).then((accepted) => {
+      if (!accepted || !mounted.current || token !== countdownToken.current) return;
+      commitCapture(); rawCaptureKind.current = "lines";
+      setOffsetMs(0); setAttempt(null); setEditing(false); setCreatedChallenge(null); setSharing(false);
+      submissionId.current = crypto.randomUUID();
+    }).catch(() => {
+      if (!mounted.current || token !== countdownToken.current) return;
+      rawCaptureKind.current = pending.previousKind; cancelCapture();
+      setError("That take could not be prepared. Your previous take is unchanged; try recording again.");
+    });
+  }, [recorder.status, recorder.audioBlob, recorder.canSubmit, recorder.stopReason, cancelCapture, commitCapture, replaceScene, clip, lineWindows]);
 
   useEffect(() => {
     if (recording && (recorder.status === "stopped" || recorder.status === "error")) {
@@ -330,7 +345,7 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
       }
       if (token !== countdownToken.current || !mounted.current) return;
       setCountdown(0);
-      if (!await start({ preservePreviousTake: true })) { cancelCapture(); playerRef.current?.pause(); setActiveWindow(null); setCountdown(null); return; }
+      if (!await start({ preservePreviousTake: true, prerollMs: 300 })) { cancelCapture(); playerRef.current?.pause(); setActiveWindow(null); setCountdown(null); return; }
       // Let the first input block establish the PCM origin, then measure only
       // the small technical pre-roll at scene playback startup.
       const deadline = performance.now() + 250;
@@ -532,6 +547,15 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
     finally { setCheckingResponses(false); }
   };
 
+  const openCustomScene = (created: SayClip) => {
+    setCreatingScene(false); setResumingImport(undefined); setCatalogTab("mine");
+    setClips((current) => [created, ...current.filter((item) => item.id !== created.id)]);
+    if (!isRatingAllowed(created.rating, contentRating)) updatePreferences({ contentRating: created.rating });
+    setChallenge(null); selectClip(created);
+  };
+
+  if (creatingScene && !clip && !roundContext && !publicAssignment) return <main className="min-h-screen px-4 pb-28 pt-28 sm:px-8 sm:pt-32"><CustomSceneCreator key={resumingImport?.id ?? "new"} initialImport={resumingImport} initialRating={contentRating} authenticated={authenticated} onCreated={openCustomScene} onClose={() => { setCreatingScene(false); setResumingImport(undefined); setCatalogTab("mine"); }} /></main>;
+
   if (!clip || !role) return <main className="min-h-screen px-4 pb-28 pt-28 sm:px-8 sm:pt-32"><div className="mx-auto max-w-[1184px]">
     <header className="mb-9 grid gap-7 border-b border-white/15 pb-8 lg:grid-cols-[1.15fr_1fr] lg:items-end">
       <div><p className="mono-label mb-4 flex items-center gap-2 text-hot"><Clapperboard className="size-4" />Dub the scene</p><h1 className="display-type text-[clamp(3.2rem,7vw,5rem)] leading-[.86]">SAY IT <span className="text-hot">BACK.</span></h1></div>
@@ -541,9 +565,10 @@ export function SayItBackExperience({ initialClipId, initialRoleId, initialAttem
       {([{ icon: Film, label: "Watch the scene", sub: "Catch the words and timing" }, { icon: Mic, label: "Make it yours", sub: "Record and redo each line" }, { icon: Headphones, label: "Watch your dub", sub: "Get a match. Go again." }]).map((step, index) => <div key={step.label} className={cn("flex min-w-0 flex-col gap-2 px-3 py-4 sm:flex-row sm:items-center sm:gap-3 sm:p-5", index > 0 && "border-l border-white/15")}><step.icon className="size-5 shrink-0 text-hot" /><div><p className="text-xs font-bold sm:text-sm">{step.label}</p><p className="mt-1 hidden text-xs text-white/50 sm:block">{step.sub}</p></div></div>)}
     </div>
     <p className="mb-6 text-xs leading-6 text-white/60">{tier === "pro" ? "Record, replay, and match your scenes with your Pro allowance." : "5 scored plays daily across modes. Free recording and replay. Resets midnight UTC."}{!authenticated && " No account needed to play."}</p>
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-xl font-bold tracking-tight">Choose your scene</h2><p className="mt-1 text-xs leading-5 text-white/55">Record one line at a time.</p></div><ContentControl compact value={contentRating} onChange={(rating) => updatePreferences({ contentRating: rating })} /></div>
-    {loadError && <div className="game-error mb-6" role="alert">{loadError}{initialClaimId && !authenticated && <Link className="ml-3 underline" href={`/login?next=${encodeURIComponent(`/say-it-back?claim=${initialClaimId}`)}`}>Sign in</Link>}<button type="button" onClick={() => void loadCatalog()} className="ml-3 underline">Try again</button></div>}
-    {catalogLoading && clips.length === 0 ? <div role="status" className="flex min-h-56 items-center justify-center gap-3 text-sm text-white/60"><LoaderCircle className="size-5 animate-spin" />Opening the scene collection…</div> : clips.length === 0 ? <div className="panel p-8 text-center"><p className="font-bold">No scenes are available with this filter yet.</p><p className="mt-2 text-sm text-white/60">Try another content setting or check back when the collection is ready.</p></div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{[...clips].sort((a, b) => b.duration - a.duration).map((item, index) => <ClipCard key={`${item.id}:${item.version}`} clip={item} index={index} onSelect={() => selectClip(item)} />)}</div>}
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-xl font-bold tracking-tight">Choose your scene</h2><p className="mt-1 text-xs leading-5 text-white/55">Record one line at a time.</p></div><button type="button" className="button-primary" onClick={() => { initialLoadDone.current = true; setResumingImport(undefined); setCreatingScene(true); }}><Plus className="size-4" />Make your own</button></div>
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-4"><div className="segmented-control" role="group" aria-label="Scene collection"><button type="button" aria-pressed={catalogTab === "browse"} onClick={() => setCatalogTab("browse")}>Browse scenes</button><button type="button" aria-pressed={catalogTab === "mine"} onClick={() => setCatalogTab("mine")}>My scenes</button></div><ContentControl compact value={contentRating} onChange={(rating) => updatePreferences({ contentRating: rating })} /></div>
+    {catalogTab === "browse" && loadError && <div className="game-error mb-6" role="alert">{loadError}{initialClaimId && !authenticated && <Link className="ml-3 underline" href={`/login?next=${encodeURIComponent(`/say-it-back?claim=${initialClaimId}`)}`}>Sign in</Link>}<button type="button" onClick={() => void loadCatalog()} className="ml-3 underline">Try again</button></div>}
+    {catalogTab === "mine" ? <CustomSceneLibrary rating={contentRating} authenticated={authenticated} onCreate={() => { setResumingImport(undefined); setCreatingScene(true); }} onResume={(item) => { setResumingImport(item); setCreatingScene(true); }} onPlay={selectClip} /> : catalogLoading && clips.length === 0 ? <div role="status" className="flex min-h-56 items-center justify-center gap-3 text-sm text-white/60"><LoaderCircle className="size-5 animate-spin" />Opening the scene collection…</div> : clips.length === 0 ? <div className="panel p-8 text-center"><p className="font-bold">No scenes are available with this filter yet.</p><p className="mt-2 text-sm text-white/60">Try another content setting or check back when the collection is ready.</p></div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{[...clips].sort((a, b) => b.duration - a.duration).map((item, index) => <ClipCard key={`${item.id}:${item.version}`} clip={item} index={index} onSelect={() => selectClip(item)} />)}</div>}
     <p className="mt-8 flex items-start gap-2 text-xs leading-6 text-white/50"><ShieldCheck className="mt-1 size-4 shrink-0" />Curated real footage with source credits in every scene. Your recordings stay private unless you choose to share a challenge or submit a performance to a friend round.</p>
   </div></main>;
 

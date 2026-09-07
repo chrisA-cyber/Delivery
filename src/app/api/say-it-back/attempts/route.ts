@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_SAY_RECORDING_MS } from "@/lib/audio-capture";
 import { AppError, jsonError, jsonOk, requestIdFrom } from "@/lib/server/api-error";
 import { assertContentLength, assertMultipartRequest, assertSameOrigin } from "@/lib/server/request";
 import { enforceRateLimit, getClientKey } from "@/lib/server/rate-limit";
@@ -7,7 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const fieldsSchema = z.object({
   clipId: z.string().regex(/^[a-z0-9-]{1,80}$/), clipVersion: z.string().regex(/^[a-z0-9-]{1,80}$/), roleId: z.string().regex(/^[a-z0-9-]{1,80}$/),
-  durationMs: z.coerce.number().int().min(250).max(30000), recordingOffsetMs: z.coerce.number().int().min(-300).max(300).default(0),
+  durationMs: z.coerce.number().int().min(250).max(MAX_SAY_RECORDING_MS), recordingOffsetMs: z.coerce.number().int().min(-300).max(300).default(0),
   attemptId: z.string().uuid(), maxRating: z.enum(["everyone", "teen", "mature"]).default("everyone"),
   assignmentCode: z.string().regex(/^[a-f0-9]{12}$/).optional(),
   challengeToken: z.string().regex(/^[A-Za-z0-9_-]{40,80}$/).optional(), shareAudio: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),

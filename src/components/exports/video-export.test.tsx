@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VideoExport, type ExportVideo } from "./video-export";
 
 vi.mock("@/components/providers/app-provider", () => ({ useApp: () => ({ contentRating: "everyone" }) }));
-const video: ExportVideo = { id: "video-1", status: "ready", includeScore: true, includeName: false, filename: "delivery-classic.mp4" };
+const video: ExportVideo = { id: "video-1", status: "ready", includeScore: true, includeName: false, filename: "delivery-classic.mp4", assignmentUrl: "https://delivery.example/a/public1234" };
 function ok(data: unknown) { return new Response(JSON.stringify({ ok: true, data }), { headers: { "Content-Type": "application/json" } }); }
 beforeEach(() => {
   vi.stubGlobal("React", React);
@@ -14,6 +14,14 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("finished video workflow", () => {
+  it.each(["", null])("describes an export without a public challenge link (%s) as a private download", async (assignmentUrl) => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok({ eligible: true, exports: [{ ...video, assignmentUrl }] })));
+    render(<VideoExport mode="say-it-back" attemptId="private-scene-take" hasScore initialOpen />);
+    await screen.findByRole("link", { name: "Download video" });
+    expect(screen.getByText(/This download has no public challenge link/)).toBeInTheDocument();
+    expect(screen.queryByText(/Its invitation opens/)).toBeNull();
+  });
+
   it("recovers a private finished file and changes visibility options without showing the wrong preview", async () => {
     const hidden: ExportVideo = { ...video, id: "without-score", includeScore: false };
     const fetchMock = vi.fn().mockResolvedValue(ok({ eligible: true, exports: [video, hidden] }));
@@ -24,6 +32,7 @@ describe("finished video workflow", () => {
     await screen.findByRole("link", { name: "Download video" });
     expect(container.querySelector("video")).toHaveAttribute("src", "/api/exports/video-1/video?v=0");
     expect(screen.getByRole("link", { name: "Download video" })).toHaveAttribute("href", "/api/exports/video-1/video?download=1");
+    expect(screen.getByText(/Its invitation opens the same challenge/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("checkbox", { name: "Score" }));
     expect(container.querySelector("video")).toHaveAttribute("src", "/api/exports/without-score/video?v=0");
     fireEvent.click(screen.getByRole("checkbox", { name: "Display name / avatar" }));

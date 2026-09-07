@@ -1,5 +1,9 @@
 FROM node:22-bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg fonts-dejavu-core fonts-noto-color-emoji ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg fonts-dejavu-core fonts-noto-color-emoji ca-certificates python3 python3-venv && rm -rf /var/lib/apt/lists/*
+# Pinned public-video importer; default extras include the matching JS extractor.
+# Uses the existing Node 22 runtime and never updates itself at application startup.
+RUN python3 -m venv /opt/yt-dlp && /opt/yt-dlp/bin/pip install --no-cache-dir --disable-pip-version-check 'yt-dlp[default]==2026.8.19'
+ENV YT_DLP_PATH=/opt/yt-dlp/bin/yt-dlp
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund

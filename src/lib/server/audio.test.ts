@@ -55,6 +55,14 @@ function constantBitrateMp3(frames: number): File {
 }
 
 describe("validateAudio", () => {
+  it("accepts 45-second Say audio and measures over-limit content despite a shorter claim", async () => {
+    const maxDurationMs = 45_000;
+    const exact = pcmWav(Array(8_000 * 45).fill(1000));
+    await expect(validateAudio(exact, maxDurationMs, { maxDurationMs })).resolves.toMatchObject({ durationMs: maxDurationMs });
+    const over = pcmWav(Array(8_000 * 45 + 8).fill(1000));
+    await expect(validateAudio(over, maxDurationMs, { maxDurationMs })).rejects.toMatchObject({ code: "AUDIO_DURATION_INVALID" });
+    await expect(validateAudio(exact, maxDurationMs, { maxDurationMs: 20_000 })).rejects.toMatchObject({ code: "AUDIO_DURATION_INVALID" });
+  });
   it("rejects an unparsed browser container instead of trusting its duration claim", async () => {
     await expect(validateAudio(webmFile(), 1_000)).rejects.toMatchObject({
       code: "AUDIO_FORMAT_UNSUPPORTED",

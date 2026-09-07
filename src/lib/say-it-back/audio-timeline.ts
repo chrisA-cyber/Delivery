@@ -1,4 +1,4 @@
-import { encodeMonoWav, inspectTake, MAX_RECORDING_MS, type TakeQuality } from "@/lib/audio-capture";
+import { encodeMonoWav, inspectTake, MAX_SAY_RECORDING_MS, type TakeQuality } from "@/lib/audio-capture";
 
 /** A measured PCM peak, at a time in seconds. This is a visual aid, not a score. */
 export interface WaveformPoint { time: number; peak: number }
@@ -130,7 +130,7 @@ export function loadReferenceWaveform(url: string): Promise<WaveformPoint[]> {
  * that interval; neighboring recordings remain byte-for-byte equivalent in time.
  */
 export async function composeLineTakes(lines: LineCapture[], duration: number): Promise<{ blob: Blob; waveform: WaveformPoint[]; durationMs: number; quality: TakeQuality; qualityMessage: string; canSubmit: boolean }> {
-  if (!Number.isFinite(duration) || duration <= 0 || duration * 1_000 > MAX_RECORDING_MS) throw new Error("This scene is outside the recording duration limit.");
+  if (!Number.isFinite(duration) || duration <= 0 || duration * 1_000 > MAX_SAY_RECORDING_MS) throw new Error("This scene is outside the recording duration limit.");
   const ordered = [...lines].sort((a, b) => a.sceneStart - b.sceneStart);
   for (let i = 0; i < ordered.length; i += 1) {
     const line = ordered[i]!;

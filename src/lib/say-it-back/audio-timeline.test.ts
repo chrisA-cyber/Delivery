@@ -70,6 +70,17 @@ describe("line capture assembly", () => {
     ], 2)).rejects.toThrow("overlap");
   });
 
+  it("keeps a line at the end of a 45-second scene and rejects a longer scene", async () => {
+    const lines = [{ blob: take(new Float32Array(48_000).fill(0.25)), sceneStart: 44, sceneEnd: 45, recordingOffsetMs: 0 }];
+    const result = await composeLineTakes(lines, 45);
+    const audio = readPcmWav(await bytes(result.blob))!;
+    expect(result.durationMs).toBe(45_000);
+    expect(audio.samples[48_000 * 43]).toBe(0);
+    expect(audio.samples[48_000 * 44.5]).toBeCloseTo(0.25, 3);
+    expect(result.canSubmit).toBe(true);
+    await expect(composeLineTakes(lines, 45.001)).rejects.toThrow("duration limit");
+  });
+
   it("measures peaks at their PCM time without inventing silence or amplifying quiet audio", () => {
     const samples = new Float32Array(4_800);
     samples[1_300] = 0.15;

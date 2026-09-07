@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { WAVEFORM_BIN_SECONDS, type WaveformPoint } from "@/lib/say-it-back/audio-timeline";
-import { encodeMonoWav, inspectTake, MAX_RECORDING_BYTES, MAX_RECORDING_MS, type TakeQuality } from "@/lib/audio-capture";
+import { encodeMonoWav, inspectTake, MAX_RECORDING_BYTES, MAX_RECORDING_MS, MAX_SAY_RECORDING_MS, type TakeQuality } from "@/lib/audio-capture";
 
 export type RecorderStatus = "idle" | "requesting" | "ready" | "recording" | "stopped" | "error";
 export type RecordingStopReason = "user" | "limit" | "size-limit" | "interrupted" | "hidden";
@@ -18,6 +18,8 @@ type RecorderSession = {
   waveform: WaveformPoint[];
   waveformBinSamples: number;
   waveformBinPeak: number;
+  captureLimitMs: number;
+  performanceLimitMs: number;
   cleanup: () => void;
 };
 
@@ -44,7 +46,9 @@ function microphoneError(cause: unknown) {
   return "We could not open your microphone. Check your input device and try again.";
 }
 
-export function useAudioRecorder() {
+export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-it-back" }) {
+  const isSayScene = options?.mode === "say-it-back";
+  const modeLimitMs = isSayScene ? MAX_SAY_RECORDING_MS : MAX_RECORDING_MS;
   const [status, setStatus] = useState<RecorderStatus>("idle");
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -157,7 +161,7 @@ export function useAudioRecorder() {
       return;
     }
     setStopReason(reason);
-    setWarning(reason === "interrupted" ? "Your microphone was interrupted. The captured audio is saved here; replay it before submitting." : reason === "hidden" ? "Recording stopped when you left the page. Your captured audio is saved here." : reason === "limit" ? "The 20-second limit is up. Your take is ready to review." : reason === "size-limit" ? "The recording reached its file-size limit. Your take is saved here." : null);
+    setWarning(reason === "interrupted" ? "Your microphone was interrupted. The captured audio is saved here; replay it before submitting." : reason === "hidden" ? "Recording stopped when you left the page. Your captured audio is saved here." : reason === "limit" ? `The ${session.performanceLimitMs / 1000}-second limit is up. Your take is ready to review.` : reason === "size-limit" ? "The recording reached its file-size limit. Your take is saved here." : null);
     const checked = inspectTake(session.frames, session.sampleCount, session.context.sampleRate);
     if (session.sampleCount === 0) {
       setWarning(null);
@@ -200,7 +204,7 @@ export function useAudioRecorder() {
     if (backup?.url && backup.url !== audioUrlRef.current) URL.revokeObjectURL(backup.url);
   }, []);
 
-  const start = useCallback(async (options?: { preservePreviousTake?: boolean; maxDurationMs?: number }) => {
+  const start = useCallback(async (options?: { preservePreviousTake?: boolean; maxDurationMs?: number; prerollMs?: number }) => {
     // Catch clicks arriving before React rerenders.
     if (startPendingRef.current || sessionRef.current) return false;
     startPendingRef.current = true;
@@ -233,9 +237,13 @@ export function useAudioRecorder() {
       const processor = context.createScriptProcessor(1024, 1, 1);
       const silentGain = context.createGain();
       silentGain.gain.value = 0;
-      const session: RecorderSession = { context, source, processor, silentGain, frames: [], sampleCount: 0, lastFrameAt: null, waveform: [], waveformBinSamples: 0, waveformBinPeak: 0, cleanup: () => undefined };
+      const performanceLimitMs = Math.min(modeLimitMs, Math.max(250, Number.isFinite(options?.maxDurationMs) ? options!.maxDurationMs! : modeLimitMs));
+      // Say's player measures at most 300ms of microphone startup before the
+      // scene begins. Its line/scene assembly removes this technical pre-roll.
+      const prerollMs = isSayScene && Number.isFinite(options?.prerollMs) ? Math.min(300, Math.max(0, options!.prerollMs!)) : 0;
+      const captureLimitMs = performanceLimitMs + prerollMs;
+      const session: RecorderSession = { context, source, processor, silentGain, frames: [], sampleCount: 0, lastFrameAt: null, waveform: [], waveformBinSamples: 0, waveformBinPeak: 0, captureLimitMs, performanceLimitMs, cleanup: () => undefined };
       sessionRef.current = session;
-      const captureLimitMs = Math.min(MAX_RECORDING_MS, Math.max(250, options?.maxDurationMs ?? MAX_RECORDING_MS));
       const durationSamples = Math.floor(context.sampleRate * captureLimitMs / 1_000);
       const sizeSamples = Math.floor((MAX_RECORDING_BYTES - 44) / 2);
       const maxSamples = Math.min(durationSamples, sizeSamples);
@@ -292,9 +300,9 @@ export function useAudioRecorder() {
       const pageHidden = () => stopRef.current("hidden");
       // Sample count ends timed modes exactly. This watchdog only catches a
       // device that stops delivering input; it must not cut off startup latency.
-      const hardStop = options?.maxDurationMs
-        ? setTimeout(() => stopRef.current("interrupted"), MAX_RECORDING_MS + 2000)
-        : setTimeout(() => stopRef.current("limit"), MAX_RECORDING_MS);
+      const hardStop = options?.maxDurationMs || prerollMs
+        ? setTimeout(() => stopRef.current("interrupted"), captureLimitMs + 2000)
+        : setTimeout(() => stopRef.current("limit"), captureLimitMs);
       const tracks = stream.getAudioTracks();
       for (const track of tracks) {
         track.addEventListener("ended", interrupted);
@@ -344,7 +352,7 @@ export function useAudioRecorder() {
     } finally {
       if (operationRef.current === operationToken) startPendingRef.current = false;
     }
-  }, [audioBlob, durationMs, waveform, quality, qualityMessage, warning, stopReason, commitCapture, disposeSession, requestPermission, stopStream]);
+  }, [audioBlob, durationMs, waveform, quality, qualityMessage, warning, stopReason, commitCapture, disposeSession, requestPermission, stopStream, modeLimitMs, isSayScene]);
 
   const stop = useCallback(() => finish("user"), [finish]);
   const cancelCapture = useCallback(() => {
