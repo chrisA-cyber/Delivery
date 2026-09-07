@@ -59,23 +59,33 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("Switch take recovery and immutable playback", () => {
-  it("filters emotion and speed challenges and keeps the choice when returning to browse", async () => {
+  it("shows one phrase card and quick-picks either mode without choosing the phrase again", async () => {
     const speedChallenge = { ...challenge, id: "speed-switch", title: "Speed: I'm fine", kind: "speed" as const };
     vi.stubGlobal("fetch", vi.fn(async () => ok({ challenges: [challenge, speedChallenge] })));
     render(<SwitchExperience />);
     await screen.findByRole("heading", { name: "Switch." });
-    const filters = screen.getByRole("group", { name: "Switch type" });
-    expect(screen.getByRole("status")).toHaveTextContent("2 challenges");
-    fireEvent.click(within(filters).getByRole("button", { name: "Speeds" }));
-    expect(screen.queryByRole("heading", { name: "I'm fine." })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("article")).toHaveLength(1);
+    expect(screen.getByRole("status")).toHaveTextContent("1 phrase");
+    fireEvent.click(screen.getByRole("button", { name: "Speed: I'm fine." }));
     expect(screen.getByRole("heading", { name: "Speed: I'm fine" })).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("1 challenge");
-    fireEvent.click(screen.getByRole("button", { name: /Play Switch/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Choose another Switch" }));
-    expect(screen.getByRole("button", { name: "Speeds", pressed: true })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Emotions" }));
+    expect(screen.getByRole("button", { name: "Speed: I'm fine.", pressed: true })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Emoji: I'm fine." }));
     expect(screen.getByRole("heading", { name: "I'm fine." })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Speed: I'm fine" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Emoji: I'm fine.", pressed: true })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Choose another Switch" }));
+    expect(screen.getAllByRole("article")).toHaveLength(1);
+  });
+
+  it("keeps mode selection out of fixed rounds and saved takes", async () => {
+    const speedChallenge = { ...challenge, id: "speed-switch", kind: "speed" as const };
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("/catalog") ? ok({ challenges: [challenge, speedChallenge] }) : ok({ attempt: attempt() })));
+    const view = render(<SwitchExperience roundContext={{ token: "fixed-round", returnPath: "/rounds/fixed-round", challenge }} />);
+    await screen.findByRole("button", { name: "Record Switch" });
+    expect(screen.queryByRole("group", { name: "How to play: I'm fine." })).not.toBeInTheDocument();
+    view.unmount();
+    render(<SwitchExperience initialAttemptId="saved-take" />);
+    await screen.findByRole("button", { name: "Retry full take" });
+    expect(screen.queryByRole("group", { name: "How to play: I'm fine." })).not.toBeInTheDocument();
   });
 
   it.each(["denied", "cancelled"])("keeps a saved take available after a %s full-take retry", async (outcome) => {

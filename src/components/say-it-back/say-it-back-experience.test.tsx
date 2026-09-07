@@ -321,8 +321,8 @@ describe("round recording handoff", () => {
 });
 
 describe("scene library filters", () => {
-  const streamer: SayClip = { ...cleanClip as SayClip, id: "library-streamer", title: "Stream highlight", category: "Twitch", duration: 4, difficulty: "easy", source: { ...cleanClip.source, creator: "Test creator" } };
-  const movie: SayClip = { ...cleanClip as SayClip, id: "library-movie", title: "Movie moment", category: "Comedy", duration: 10 };
+  const streamer: SayClip = { ...cleanClip as unknown as SayClip, id: "library-streamer", title: "Stream highlight", category: "Twitch", duration: 4, difficulty: "easy", source: { ...cleanClip.source, creator: "Test creator" } };
+  const movie: SayClip = { ...cleanClip as unknown as SayClip, id: "library-movie", title: "Movie moment", category: "Comedy", duration: 10 };
 
   it("keeps browsing choices when returning from a scene, and clears an empty search", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(ok({ clips: [streamer, movie] })));
@@ -334,13 +334,13 @@ describe("scene library filters", () => {
     expect(screen.queryByRole("heading", { name: movie.title })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("heading", { name: streamer.title }));
     await screen.findByTestId("scene-player");
-    fireEvent.click(screen.getByRole("button", { name: "All scenes", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "All scenes" }));
     expect(screen.getByRole("searchbox", { name: "Search scenes" })).toHaveValue("test creator");
     expect(screen.getByRole("button", { name: /^Streamers/ })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("combobox", { name: "Scene length" })).toHaveValue("quick");
     fireEvent.change(screen.getByRole("searchbox", { name: "Search scenes" }), { target: { value: "zznomatchingdialogue" } });
     expect(screen.getByRole("heading", { name: "No scenes match your filters" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Show all scenes", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Show all scenes" }));
     expect(screen.getByRole("heading", { name: movie.title })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "Sort scenes" })).toHaveValue("shortest");
   });
@@ -352,13 +352,13 @@ describe("scene library filters", () => {
     await screen.findByRole("heading", { name: movie.title });
     expect(screen.queryByRole("heading", { name: spicy.title })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Streamers/ })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Spicy", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Spicy" }));
     await screen.findByRole("heading", { name: spicy.title });
     fireEvent.click(screen.getByRole("button", { name: /^Streamers/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Clean", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Clean" }));
     expect(screen.queryByRole("heading", { name: spicy.title })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(screen.queryByRole("heading", { name: spicy.title })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Clean", exact: true })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Clean" })).toHaveAttribute("aria-pressed", "true");
   });
 });

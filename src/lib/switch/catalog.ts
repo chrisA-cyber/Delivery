@@ -79,6 +79,13 @@ export const SWITCH_CHALLENGES: readonly SwitchChallenge[] = Object.freeze([
   speedChallenge("speed-give-me-a-second", "Speed: give me a second", "Some seconds last longer than others.", "Give me a second", { tags: ["social-trend", "everyday"] }),
   emotionChallenge("im-coming", "I'm coming", "Context is doing absolutely none of the work.", "I'm coming", ["confident", "flirty", "shocked", "whisper", "laughing"], { rating: "mature", tags: ["social-trend", "innuendo"] }),
   speedChallenge("speed-im-coming", "Speed: I'm coming", "Your estimated arrival time keeps changing.", "I'm coming", { rating: "mature", tags: ["social-trend", "innuendo"] }),
+  // Complete the original phrases so every library card offers both ways to play.
+  speedChallenge("speed-im-the-manager", "Speed: I'm the manager", "Your promotion, at every pace.", "I'm the manager."),
+  speedChallenge("speed-thats-my-lawyer", "Speed: that's my lawyer", "The legal department has five gears.", "That's my lawyer."),
+  speedChallenge("speed-send-help", "Speed: send help", "Same emergency. Different response times.", "Please send help."),
+  emotionChallenge("im-cooked", "I'm cooked", "Five ways to realize it is over.", "I am cooked.", ["shocked", "sad", "laughing", "angry", "robot"]),
+  emotionChallenge("skill-issue", "Skill issue", "The diagnosis has range.", "Major skill issue.", ["confident", "sarcastic", "sad", "laughing", "alien"]),
+  emotionChallenge("sir-please", "Sir, please", "Customer service is going through it.", "Sir, please stop.", ["whisper", "angry", "sad", "robot", "laughing"]),
 ]);
 
 export function getSwitchChallenge(id: string, version?: string): SwitchChallenge | null {

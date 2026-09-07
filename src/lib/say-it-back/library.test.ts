@@ -3,10 +3,10 @@ import catalog from "./catalog.json";
 import type { SayClip } from "./types";
 import { DEFAULT_SCENE_FILTERS, filterScenes, matchesSceneSearch, sceneCategory, sceneGenre } from "./library";
 
-const base = catalog[0] as SayClip;
+const base = catalog[0] as unknown as SayClip;
 describe("scene library browsing", () => {
   it("groups the existing catalog without rewriting scene metadata", () => {
-    expect(catalog.map((clip) => sceneCategory(clip as SayClip))).not.toContain("other");
+    expect(catalog.map((clip) => sceneCategory(clip as unknown as SayClip))).not.toContain("other");
     expect(sceneGenre({ ...base, category: "Classic comedy" })).toBe("Comedy");
     expect(sceneCategory({ ...base, category: "Your scenes", tags: ["custom"] })).toBe("custom");
     expect(sceneCategory({ ...base, category: "Future category" })).toBe("other");

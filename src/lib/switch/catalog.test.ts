@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { getSwitchChallenge, snapshotSwitchChallenge, SWITCH_CHALLENGES, switchChallengeKey, switchChallengesForRating, switchCueAt } from "@/lib/switch/catalog";
 import { switchChallengeSchema } from "@/lib/switch/schema";
+import { groupSwitchPhrases } from "@/lib/switch/phrases";
 
 describe("Switch immutable timing and curated catalog", () => {
-  it("ships twelve emotion and twelve speed challenges repeating one short phrase over 20 seconds", () => {
-    expect(SWITCH_CHALLENGES).toHaveLength(24);
-    expect(SWITCH_CHALLENGES.filter((challenge) => challenge.kind === "emotion")).toHaveLength(12);
-    expect(SWITCH_CHALLENGES.filter((challenge) => challenge.kind === "speed")).toHaveLength(12);
+  it("offers fifteen phrases in both emoji and speed modes over 20 seconds", () => {
+    const phrases = groupSwitchPhrases(SWITCH_CHALLENGES);
+    expect(phrases).toHaveLength(15);
+    for (const phrase of phrases) {
+      expect(phrase.variants.emotion?.kind).toBe("emotion");
+      expect(phrase.variants.speed?.kind).toBe("speed");
+      expect(phrase.variants.emotion?.cues[0]?.text).toBe(phrase.variants.speed?.cues[0]?.text);
+    }
     expect(new Set(SWITCH_CHALLENGES.map((challenge) => challenge.id)).size).toBe(SWITCH_CHALLENGES.length);
     for (const challenge of SWITCH_CHALLENGES) {
       expect(switchChallengeSchema.safeParse(challenge).success).toBe(true);
@@ -31,8 +36,8 @@ describe("Switch immutable timing and curated catalog", () => {
       expect(switchChallengesForRating(rating).some((item) => adultIds.includes(item.id))).toBe(false);
     }
     expect(switchChallengesForRating("mature").filter((item) => adultIds.includes(item.id))).toHaveLength(4);
-    expect(switchChallengesForRating("everyone")).toHaveLength(16);
-    expect(switchChallengesForRating("teen")).toHaveLength(20);
+    expect(groupSwitchPhrases(switchChallengesForRating("everyone"))).toHaveLength(11);
+    expect(groupSwitchPhrases(switchChallengesForRating("teen"))).toHaveLength(13);
   });
 
   it("uses media time after arbitrary seeking and keeps the last cue at the end", () => {

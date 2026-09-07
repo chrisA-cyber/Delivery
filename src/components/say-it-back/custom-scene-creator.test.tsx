@@ -85,7 +85,7 @@ describe("My scenes filters", () => {
     fireEvent.change(screen.getByRole("combobox", { name: "My scene status" }), { target: { value: "attention" } });
     expect(screen.queryByRole("heading", { name: base.title })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Different scene" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Continue", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(onResume).toHaveBeenCalledWith(imports[1]);
     fireEvent.change(screen.getByRole("combobox", { name: "My scene status" }), { target: { value: "published" } });
     expect(screen.getByRole("heading", { name: "No scenes match your filters" })).toBeInTheDocument();
