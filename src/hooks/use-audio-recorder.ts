@@ -4,8 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { WAVEFORM_BIN_SECONDS, type WaveformPoint } from "@/lib/say-it-back/audio-timeline";
 import { encodeMonoWav, inspectTake, MAX_RECORDING_BYTES, MAX_RECORDING_MS, MAX_SAY_RECORDING_MS, type TakeQuality } from "@/lib/audio-capture";
 import { speechLevel } from "@/lib/video-composition";
+import { useCameraCapture } from "@/hooks/use-camera-capture";
+import type { CameraCapture } from "@/lib/camera";
 
-export type RecorderStatus = "idle" | "requesting" | "ready" | "recording" | "stopped" | "error";
+export type RecorderStatus = "idle" | "requesting" | "ready" | "recording" | "finalizing" | "stopped" | "error";
 export type RecordingStopReason = "user" | "limit" | "size-limit" | "interrupted" | "hidden";
 
 type RecorderSession = {
@@ -25,6 +27,7 @@ type RecorderSession = {
 };
 
 type PreservedTake = {
+  camera: CameraCapture | null;
   blob: Blob | null;
   url: string | null;
   durationMs: number;
@@ -48,6 +51,10 @@ function microphoneError(cause: unknown) {
 }
 
 export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-it-back" }) {
+  const camera = useCameraCapture();
+  const { prepare: prepareCamera, begin: beginCamera, anchor: anchorCamera, finish: finishCamera, cancel: cancelCamera } = camera;
+  const [cameraTake, setCameraTake] = useState<CameraCapture | null>(null);
+  const finalizingRef = useRef(false);
   const isSayScene = options?.mode === "say-it-back";
   const modeLimitMs = isSayScene ? MAX_SAY_RECORDING_MS : MAX_RECORDING_MS;
   const [status, setStatus] = useState<RecorderStatus>("idle");
@@ -119,6 +126,7 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
       // Keep even synchronous browser exceptions behind the promise reference.
       await Promise.resolve();
       try {
+        if (!await prepareCamera()) { setStatus("idle"); return false; }
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: { channelCount: 1, sampleRate: 48_000, echoCancellation: false, noiseSuppression: false, autoGainControl: false },
           video: false,
@@ -146,9 +154,10 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
     })();
     permissionPromiseRef.current = pending;
     return pending;
-  }, [stopStream]);
+  }, [stopStream, prepareCamera]);
 
   const finish = useCallback((reason: RecordingStopReason = "user") => {
+    if (finalizingRef.current) return;
     operationRef.current += 1;
     permissionRequestRef.current += 1;
     permissionPromiseRef.current = null;
@@ -157,9 +166,10 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
     // Always release capture, even before the first audio frame.
     disposeSession();
     closePendingContext();
-    stopStream();
+    const cameraResult = finishCamera();
     if (!mountedRef.current) return;
     if (!session) {
+      stopStream();
       setStatus(audioUrlRef.current ? "stopped" : "idle");
       return;
     }
@@ -167,6 +177,7 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
     setWarning(reason === "interrupted" ? "Your microphone was interrupted. The captured audio is saved here; replay it before submitting." : reason === "hidden" ? "Recording stopped when you left the page. Your captured audio is saved here." : reason === "limit" ? `The ${session.performanceLimitMs / 1000}-second limit is up. Your take is ready to review.` : reason === "size-limit" ? "The recording reached its file-size limit. Your take is saved here." : null);
     const checked = inspectTake(session.frames, session.sampleCount, session.context.sampleRate);
     if (session.sampleCount === 0) {
+      stopStream();
       setWarning(null);
       // A connected graph is not proof that the device delivered any input.
       // Keep the previous playable take if startup failed before its first frame.
@@ -187,17 +198,24 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
     setDurationMs(Math.round(session.sampleCount / session.context.sampleRate * 1_000));
     try {
       const blob = encodeMonoWav(session.frames, session.sampleCount, session.context.sampleRate);
-      const nextUrl = URL.createObjectURL(blob);
-      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
-      audioUrlRef.current = nextUrl;
-      setAudioBlob(blob);
-      setAudioUrl(nextUrl);
-      setStatus("stopped");
+      const operation = operationRef.current;
+      const publish = (capturedCamera: CameraCapture | null) => {
+        stopStream();
+        if (!mountedRef.current || operation !== operationRef.current) return;
+        const nextUrl = URL.createObjectURL(blob);
+        if (audioUrlRef.current && audioUrlRef.current !== captureBackupRef.current?.url) URL.revokeObjectURL(audioUrlRef.current);
+        audioUrlRef.current = nextUrl;
+        setCameraTake(capturedCamera);
+        setAudioBlob(blob); setAudioUrl(nextUrl); setStatus("stopped");
+      };
+      if (cameraResult) {
+        finalizingRef.current = true; setStatus("finalizing");
+        void cameraResult.then(publish).finally(() => { finalizingRef.current = false; stopStream(); });
+      } else publish(null);
     } catch {
-      setError("The browser could not prepare playback. Please record another take.");
-      setStatus("error");
+      stopStream(); setError("The browser could not prepare playback. Please record another take."); setStatus("error");
     }
-  }, [closePendingContext, disposeSession, stopStream]);
+  }, [closePendingContext, disposeSession, stopStream, finishCamera]);
 
   useEffect(() => { stopRef.current = finish; }, [finish]);
 
@@ -209,13 +227,14 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
 
   const start = useCallback(async (options?: { preservePreviousTake?: boolean; maxDurationMs?: number; prerollMs?: number }) => {
     // Catch clicks arriving before React rerenders.
-    if (startPendingRef.current || sessionRef.current) return false;
+    if (startPendingRef.current || sessionRef.current || finalizingRef.current) return false;
     startPendingRef.current = true;
     commitCapture();
-    if (options?.preservePreviousTake) captureBackupRef.current = { blob: audioBlob, url: audioUrlRef.current, durationMs, waveform, quality, qualityMessage, warning, stopReason };
+    if (options?.preservePreviousTake) captureBackupRef.current = { camera: cameraTake, blob: audioBlob, url: audioUrlRef.current, durationMs, waveform, quality, qualityMessage, warning, stopReason };
     const operationToken = ++operationRef.current;
     let context: AudioContext | null = null;
     try {
+      if (!await prepareCamera()) return false;
       const granted = await requestPermission();
       if (!granted || !mountedRef.current || operationRef.current !== operationToken) return false;
       const stream = streamRef.current;
@@ -328,6 +347,10 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
         document.removeEventListener("visibilitychange", visibilityChanged);
         window.removeEventListener("pagehide", pageHidden);
       };
+      beginCamera(stream, interrupted);
+      // Anchor to the source graph, not the later main-thread PCM callback.
+      // Callback dispatch includes buffering/jitter and is not capture time.
+      anchorCamera(performance.now());
       source.connect(processor);
       processor.connect(silentGain);
       silentGain.connect(context.destination);
@@ -348,6 +371,7 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
       }
       const contextOwnedBySession = sessionRef.current?.context === context;
       disposeSession();
+      cancelCamera();
       if (!contextOwnedBySession && context && context.state !== "closed") void context.close().catch(() => undefined);
       stopStream();
       setError("Recording could not start. Check your microphone and try again.");
@@ -356,10 +380,11 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
     } finally {
       if (operationRef.current === operationToken) startPendingRef.current = false;
     }
-  }, [audioBlob, durationMs, waveform, quality, qualityMessage, warning, stopReason, commitCapture, disposeSession, requestPermission, stopStream, modeLimitMs, isSayScene]);
+  }, [audioBlob, cameraTake, durationMs, waveform, quality, qualityMessage, warning, stopReason, commitCapture, disposeSession, requestPermission, stopStream, modeLimitMs, isSayScene, prepareCamera, beginCamera, anchorCamera, cancelCamera]);
 
   const stop = useCallback(() => finish("user"), [finish]);
   const cancelCapture = useCallback(() => {
+    cancelCamera();
     operationRef.current += 1;
     permissionRequestRef.current += 1;
     permissionPromiseRef.current = null;
@@ -370,6 +395,7 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
     const backup = captureBackupRef.current;
     captureBackupRef.current = null;
     if (backup) {
+      setCameraTake(backup.camera);
       if (audioUrlRef.current && audioUrlRef.current !== backup.url) URL.revokeObjectURL(audioUrlRef.current);
       audioUrlRef.current = backup.url;
       setAudioBlob(backup.blob);
@@ -382,9 +408,10 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
       setStopReason(backup.stopReason);
     }
     setStatus(audioUrlRef.current ? "stopped" : "idle");
-  }, [closePendingContext, disposeSession, stopStream]);
+  }, [closePendingContext, disposeSession, stopStream, cancelCamera]);
 
   const reset = useCallback(() => {
+    cancelCamera(); setCameraTake(null);
     operationRef.current += 1;
     permissionRequestRef.current += 1;
     permissionPromiseRef.current = null;
@@ -407,7 +434,7 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
     setQualityMessage(null);
     setStopReason(null);
     setStatus("idle");
-  }, [closePendingContext, commitCapture, disposeSession, stopStream]);
+  }, [closePendingContext, commitCapture, disposeSession, stopStream, cancelCamera]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -444,5 +471,5 @@ export function useAudioRecorder(options?: { mode?: "classic" | "switch" | "say-
       void pendingContextRef.current.resume().catch(() => undefined);
     } catch { /* start() owns the visible unsupported-device error. */ }
   }, []);
-  return { status, audioBlob, audioUrl, durationMs, waveform, level, voiceLevel, isClipping, error, warning, quality, qualityMessage, canSubmit, stopReason, requestPermission, start, stop, reset, cancelCapture, commitCapture, getCapturePositionMs, primeAudioContext };
+  return { camera, cameraTake, status, audioBlob, audioUrl, durationMs, waveform, level, voiceLevel, isClipping, error, warning, quality, qualityMessage, canSubmit, stopReason, requestPermission, start, stop, reset, cancelCapture, commitCapture, getCapturePositionMs, primeAudioContext };
 }

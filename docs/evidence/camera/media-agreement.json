@@ -1,0 +1,60 @@
+[
+  {
+    "mode": "classic",
+    "performer": "camera",
+    "audioRmsError": 0.00028294752701185644,
+    "audioGain": 0.9997507929801941,
+    "audioSNRdB": 47.231170654296875
+  },
+  {
+    "mode": "classic",
+    "time": 0.7,
+    "cameraPixelMAE": 2.1737417194768485,
+    "rotation": 0
+  },
+  {
+    "mode": "switch",
+    "performer": "camera",
+    "audioRmsError": 0.00036119483411312103,
+    "audioGain": 0.9995993375778198,
+    "audioSNRdB": 44.62437438964844
+  },
+  {
+    "mode": "switch",
+    "time": 0.7,
+    "cameraPixelMAE": 2.3442126250820836,
+    "rotation": 0
+  },
+  {
+    "mode": "say-it-back",
+    "performer": "camera",
+    "audioRmsError": 0.001263769925571978,
+    "audioGain": 0.9993153810501099,
+    "audioSNRdB": 37.55766677856445
+  },
+  {
+    "mode": "say-it-back",
+    "time": 0.5,
+    "cameraPixelMAE": 2.4457147388663834,
+    "rotation": 0
+  },
+  {
+    "mode": "say-it-back",
+    "time": 2,
+    "cameraPixelMAE": 2.1231377887625205,
+    "rotation": 90
+  },
+  {
+    "mode": "say-it-back",
+    "time": 5,
+    "cameraPixelMAE": 2.5229280800417655,
+    "rotation": 0
+  },
+  {
+    "mode": "classic",
+    "performer": "avatar",
+    "audioRmsError": 0.00028294752701185644,
+    "audioGain": 0.9997507929801941,
+    "audioSNRdB": 47.231170654296875
+  }
+]

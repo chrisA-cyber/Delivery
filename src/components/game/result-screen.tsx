@@ -15,6 +15,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "@/components/providers/app-provider";
 import { VideoExport } from "@/components/exports/video-export";
+import { CameraPlayback, useCameraSegments } from "@/components/recording/camera-playback";
+import type { CameraSegment } from "@/lib/camera";
 import { PerformerAvatar } from "@/components/avatars/performer-avatar";
 import { useMediaSpeechLevel } from "@/hooks/use-media-speech-level";
 import {
@@ -42,6 +44,7 @@ export function ResultScreen({
   prompt,
   result,
   delivery,
+  cameraSegments,
   audioBlob,
   audioUrl,
   warning,
@@ -61,6 +64,7 @@ export function ResultScreen({
   prompt: Prompt;
   result: JudgeResult;
   delivery: DeliveryReference | null;
+  cameraSegments?: CameraSegment[];
   audioBlob: Blob | null;
   audioUrl?: string | null;
   warning?: string;
@@ -88,6 +92,7 @@ export function ResultScreen({
   });
   const heading = useRef<HTMLHeadingElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const camera = useCameraSegments(delivery?.persisted && delivery.id ? `/api/deliveries/${delivery.id}` : null, cameraSegments);
   const playbackVoiceLevel = useMediaSpeechLevel(audioRef, audioUrl);
   const { muted, refreshAccount } = useApp();
   useEffect(() => {
@@ -398,7 +403,7 @@ export function ResultScreen({
                 muted={muted}
                 aria-label="Replay your judged take"
               />
-              <div className="mt-3"><PerformerAvatar size={96} level={playbackVoiceLevel} /></div>
+              <div className="mt-3">{camera.length ? <CameraPlayback segments={camera} clockRef={audioRef} className="aspect-square w-44 overflow-hidden rounded-xl" onError={() => audioRef.current?.pause()} /> : <PerformerAvatar size={96} level={playbackVoiceLevel} />}</div>
             </>
           )}
         </div>

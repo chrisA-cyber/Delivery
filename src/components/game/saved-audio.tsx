@@ -1,5 +1,6 @@
 "use client";
 
+import { CameraPlayback, useCameraSegments } from "@/components/recording/camera-playback";
 import React, { useEffect, useRef, useState } from "react";
 
 /** Signed links expire independently of a saved result. Recovery rechecks access. */
@@ -12,6 +13,7 @@ export function SavedAudio({ url, label, refreshPath, reloadOnRetry = false, aut
   className?: string;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const camera = useCameraSegments(refreshPath ?? url);
   const retryingRef = useRef(false);
   const [source, setSource] = useState(url);
   const [error, setError] = useState("");
@@ -44,6 +46,7 @@ export function SavedAudio({ url, label, refreshPath, reloadOnRetry = false, aut
   }
 
   return <div className={className}>
+    {camera.length > 0 && <CameraPlayback segments={camera} clockRef={audioRef} className="mb-3 aspect-square w-44 overflow-hidden rounded-xl" onError={() => audioRef.current?.pause()} />}
     <audio ref={audioRef} controls autoPlay={autoPlay} preload="metadata" src={source} className="w-full" aria-label={label} onError={() => setError(refreshPath || reloadOnRetry ? "Playback could not load. The link may have expired or your connection may have dropped." : "This local recording is no longer available. Record a new take to hear it again.")} />
     {error && <div role="alert" className="mt-3 rounded-xl border border-white/15 p-3 text-sm leading-6 text-white/75"><p>{error}</p>{(refreshPath || reloadOnRetry) && <button type="button" className="button-secondary mt-3 min-h-11" disabled={retrying} onClick={() => void retry()}>{retrying ? "Refreshing playback…" : "Reload playback"}</button>}</div>}
   </div>;

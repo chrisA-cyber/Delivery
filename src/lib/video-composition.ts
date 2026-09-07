@@ -22,6 +22,7 @@ export const clipAvatarSchema = z.discriminatedUnion("kind", [
 ]);
 export type ClipAvatar = z.infer<typeof clipAvatarSchema>;
 export const clipEditSettingsSchema = z.object({
+  performer: z.enum(["avatar", "camera"]).default("avatar"), cameraZoom: z.number().finite().min(1).max(3).default(1), cameraCropX: z.number().finite().min(0).max(1).default(0.5), cameraCropY: z.number().finite().min(0).max(1).default(0.5), cameraMirror: z.boolean().optional(),
   version: z.literal(1), layoutRevision: z.literal(3).optional(), layout: z.enum(["spotlight", "duet"]), avatar: clipAvatarSchema,
   reducedMotion: z.boolean().default(false), avatarVisible: z.boolean(), avatarX: z.number().finite().min(0).max(1), avatarY: z.number().finite().min(0).max(1),
   avatarSize: z.number().finite().min(0.14).max(0.7), captions: z.boolean(), includeName: z.boolean(), includeScore: z.boolean(),
@@ -30,7 +31,7 @@ export const clipEditSettingsSchema = z.object({
 export type ClipEditSettings = z.infer<typeof clipEditSettingsSchema>;
 export type CompositionMode = "classic" | "switch" | "say-it-back";
 export function defaultClipEditSettings(mode: CompositionMode): ClipEditSettings {
-  return { version: 1, layoutRevision: 3, layout: "spotlight", avatar: { kind: "builtin", id: "fox" }, reducedMotion: false, avatarVisible: true,
+  return { performer: "avatar", cameraZoom: 1, cameraCropX: 0.5, cameraCropY: 0.5, version: 1, layoutRevision: 3, layout: "spotlight", avatar: { kind: "builtin", id: "fox" }, reducedMotion: false, avatarVisible: true,
     avatarX: mode === "say-it-back" ? 0.79 : 0.5, avatarY: mode === "say-it-back" ? 0.60 : mode === "switch" ? 0.51 : 0.35,
     avatarSize: mode === "say-it-back" ? 0.23 : mode === "switch" ? 0.57 : 0.55,
     captions: true, includeName: true, includeScore: true, trimStart: 0, trimEnd: null };
@@ -53,8 +54,9 @@ export type CompositionScene = { duration: number; invitationUrl?: string; displ
   | { mode: "say-it-back"; say: { clip: SayClip; roleId: string } }
 );
 export interface CompositionFrame { x: number; y: number; width: number; height: number }
-export function sceneFrame(settings: ClipEditSettings): CompositionFrame { return settings.layout === "duet" ? { x: 64, y: 360, width: 952, height: 760 } : { x: 64, y: 340, width: 952, height: 930 }; }
+export function sceneFrame(settings: ClipEditSettings): CompositionFrame { if (settings.performer === "camera") return settings.layout === "spotlight" ? { x: 64, y: 330, width: 952, height: 650 } : { x: 64, y: 330, width: 952, height: 930 }; return settings.layout === "duet" ? { x: 64, y: 360, width: 952, height: 760 } : { x: 64, y: 340, width: 952, height: 930 }; }
 export function contentFrame(scene: CompositionScene, settings: ClipEditSettings): CompositionFrame {
+  if (scene.mode === "say-it-back" && settings.performer === "camera" && settings.layout === "spotlight") return { x: 500, y: 1040, width: 490, height: 400 };
   if (scene.mode === "say-it-back") return settings.layout === "duet" ? { x: 400, y: 1160, width: 590, height: 290 } : { x: 86, y: 1280, width: 884, height: 174 };
   return settings.layout === "duet" ? { x: 86, y: 210, width: 884, height: 330 } : { x: 86, y: 200, width: 884, height: 430 };
 }
@@ -240,4 +242,17 @@ export function compositionSvg(scene: CompositionScene, settings: ClipEditSettin
     body += `<g transform="translate(${f.x} ${f.y})">${avatarSvg(settings.avatar, { size: f.width, level: options.level, reducedMotion: options.reducedMotion ?? settings.reducedMotion, imageHref: options.avatarImageHref })}</g>`;
   }
   return svg(body);
+}
+
+/** Exact source crop used by both CSS preview and FFmpeg. */
+export function cameraCrop(width: number, height: number, settings?: Pick<ClipEditSettings, "cameraZoom" | "cameraCropX" | "cameraCropY">): CompositionFrame {
+  const size = Math.max(1, Math.floor(Math.min(width, height) / (settings?.cameraZoom ?? 1) / 2) * 2);
+  return { x: Math.floor((width - size) * (settings?.cameraCropX ?? 0.5) / 2) * 2, y: Math.floor((height - size) * (settings?.cameraCropY ?? 0.5) / 2) * 2, width: size, height: size };
+}
+export function cameraLayoutSettings(mode: CompositionMode, layout: ClipEditSettings["layout"]): Partial<ClipEditSettings> {
+  if (mode === "say-it-back") return { layout, avatarX: layout === "spotlight" ? 0.24 : 0.77, avatarY: layout === "spotlight" ? 0.64 : 0.575, avatarSize: layout === "spotlight" ? 0.36 : 0.29 };
+  return layoutClipEditSettings(mode, layout);
+}
+export function defaultCameraSettings(mode: CompositionMode): ClipEditSettings {
+  return { ...defaultClipEditSettings(mode), ...cameraLayoutSettings(mode, "spotlight"), performer: "camera" };
 }

@@ -179,3 +179,19 @@ describe("line recording windows", () => {
     expect(reversed[0]!.id).toBe("line-2");
   });
 });
+
+it("replaces the selected camera interval with its audio while preserving other camera takes", async () => {
+  const { result } = renderHook(() => useLineTakes());
+  const original = new Blob(["first-camera"], { type: "video/webm" });
+  const replacement = new Blob(["retake-camera"], { type: "video/mp4" });
+  const windows = lineRecordingWindows(cues, 4);
+  await act(async () => { await result.current.replaceScene(audio(0.15, 4.1), windows, 4, 100, [{ start: 0, end: 4, sourceStart: 0.14, mirror: true, blob: original }]); });
+  const previous = result.current.take!.camera[0]!;
+  await act(async () => { await result.current.accept({ ...secondLine(), camera: [{ start: 2, end: 4, sourceStart: 0.05, mirror: false, blob: replacement }] }, 4); });
+  expect(result.current.take!.camera).toEqual([previous, { start: 2, end: 4, sourceStart: 0.05, mirror: false, blob: replacement }]);
+  expect(result.current.take!.camera[0]!.blob).toBe(original);
+  const kept = result.current.take;
+  compose.mockRejectedValueOnce(new Error("assembly interrupted"));
+  await act(async () => { await expect(result.current.accept({ ...firstLine(), camera: [] }, 4)).rejects.toThrow(); });
+  expect(result.current.take).toBe(kept);
+});

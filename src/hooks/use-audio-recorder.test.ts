@@ -466,3 +466,76 @@ describe("microphone capture lifecycle", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+class CameraRecorder {
+  static latest: CameraRecorder;
+  static isTypeSupported = (type: string) => type === "video/mp4";
+  state = "inactive";
+  mimeType: string;
+  ondataavailable?: (event: { data: Blob }) => void;
+  onstop?: () => void;
+  onerror?: () => void;
+  constructor(public stream: MediaStream, options: MediaRecorderOptions) { CameraRecorder.latest = this; this.mimeType = options.mimeType ?? "video/mp4"; }
+  start() { this.state = "recording"; }
+  stop() { this.state = "inactive"; }
+  flush() { this.ondataavailable?.({ data: new Blob(["encoded camera bytes"], { type: this.mimeType }) }); this.onstop?.(); }
+}
+function cameraDevice() {
+  const video = Object.assign(new FakeTrack(), { kind: "video", getSettings: () => ({ width: 1280, height: 720, facingMode: "user", deviceId: "camera" }) });
+  const camera = { getTracks: () => [video], getVideoTracks: () => [video], getAudioTracks: () => [] };
+  vi.stubGlobal("MediaRecorder", CameraRecorder);
+  vi.stubGlobal("MediaStream", class { constructor(private tracks: FakeTrack[]) {} getTracks() { return this.tracks; } getAudioTracks() { return this.tracks.filter(t => t !== video); } getVideoTracks() { return this.tracks.filter(t => t === video); } });
+  Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia, enumerateDevices: async () => [{ kind: "videoinput", deviceId: "camera", label: "Camera" }] } });
+  getUserMedia.mockImplementation(async (constraints: MediaStreamConstraints) => constraints.video ? camera : stream);
+  return { video, camera };
+}
+describe("optional synchronized camera", () => {
+  afterEach(() => localStorage.removeItem("delivery.recordingMode"));
+  it("remembers Camera without opening devices until an explicit action", async () => {
+    localStorage.setItem("delivery.recordingMode", "camera"); cameraDevice();
+    const { result } = renderHook(() => useAudioRecorder());
+    expect(result.current.camera.mode).toBe("camera"); expect(getUserMedia).not.toHaveBeenCalled();
+    await act(async () => { expect(await result.current.start()).toBe(true); });
+    expect(getUserMedia.mock.calls.filter(([c]) => c.audio)).toHaveLength(1);
+    expect(CameraRecorder.latest.stream.getAudioTracks()).toEqual([stream.track]);
+    expect(CameraRecorder.latest.mimeType).toBe("video/mp4");
+  });
+  it("publishes paired camera and PCM only after the final encoded chunk and releases both devices", async () => {
+    localStorage.setItem("delivery.recordingMode", "camera"); const { video } = cameraDevice();
+    const { result } = await record();
+    act(() => { FakeAudioContext.instances[0]!.push(48000); result.current.stop(); });
+    expect(result.current.status).toBe("finalizing"); expect(result.current.audioBlob).toBeNull();
+    await act(async () => { CameraRecorder.latest.flush(); });
+    expect(result.current.status).toBe("stopped"); expect(result.current.audioBlob?.type).toBe("audio/wav");
+    expect(result.current.cameraTake?.blob.type).toBe("video/mp4"); expect(result.current.durationMs).toBe(1000);
+    expect(video.stop).toHaveBeenCalled(); expect(stream.track.stop).toHaveBeenCalled();
+  });
+  it("does not turn delayed PCM callback delivery into a camera offset", async () => {
+    localStorage.setItem("delivery.recordingMode", "camera"); cameraDevice();
+    const { result } = await record();
+    act(() => { vi.advanceTimersByTime(200); FakeAudioContext.instances[0]!.push(4800); result.current.stop(); });
+    await act(async () => { CameraRecorder.latest.flush(); });
+    expect(result.current.cameraTake!.offset).toBeLessThan(.01);
+  });
+  it("keeps an accepted camera with its audio when a replacement is cancelled", async () => {
+    localStorage.setItem("delivery.recordingMode", "camera"); cameraDevice();
+    const { result } = await record();
+    act(() => { FakeAudioContext.instances[0]!.push(48000); result.current.stop(); });
+    await act(async () => { CameraRecorder.latest.flush(); });
+    const accepted = { audio: result.current.audioBlob, camera: result.current.cameraTake };
+    stream = new FakeStream(); cameraDevice();
+    await act(async () => { expect(await result.current.start({ preservePreviousTake: true })).toBe(true); });
+    act(() => { FakeAudioContext.instances.at(-1)!.push(12000); result.current.cancelCapture(); });
+    expect(result.current.audioBlob).toBe(accepted.audio); expect(result.current.cameraTake).toBe(accepted.camera);
+  });
+  it("leaves Avatar usable after camera permission denial", async () => {
+    cameraDevice(); getUserMedia.mockRejectedValueOnce(new DOMException("Blocked", "NotAllowedError"));
+    const { result } = renderHook(() => useAudioRecorder());
+    await act(async () => { result.current.camera.select("camera"); });
+    expect(result.current.camera.error).toMatch(/blocked/); expect(result.current.camera.stream).toBeNull();
+    act(() => result.current.camera.select("avatar"));
+    await act(async () => { expect(await result.current.start()).toBe(true); });
+    act(() => { FakeAudioContext.instances[0]!.push(48000); result.current.stop(); });
+    expect(result.current.audioBlob).not.toBeNull(); expect(result.current.cameraTake).toBeNull();
+  });
+});

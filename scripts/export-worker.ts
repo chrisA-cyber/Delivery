@@ -1,3 +1,4 @@
+import { cleanupCamera, CAMERA_BUCKET, validCameraPath } from "../src/lib/server/camera-media";
 /** One bounded media worker beside Next in the existing Railway service. Exports and custom scene imports share one bounded queue loop. */
 import {mkdtemp,readFile,writeFile,rm,stat} from "node:fs/promises";
 import {tmpdir} from "node:os";
@@ -57,6 +58,13 @@ async function run(job:Row){
   if(input.audioHash&&createHash("sha256").update(bytes).digest("hex")!==input.audioHash)throw new Error("SOURCE_CHANGED");
   let avatar:string|undefined;
   if(input.avatarPath){try{avatar=path.join(scratch,"avatar");await download("avatars",input.avatarPath,avatar,5*1024*1024,controller.signal);}catch{avatar=undefined;}}
+  const camera = []; const cameraFiles = new Map<string,string>();
+  for (const part of input.camera ?? []) {
+   if (!part.path || !validCameraPath(part.path) || !part.path.startsWith(`camera/${job.attempt_id}/`)) throw new Error("CAMERA_PATH");
+   let local = cameraFiles.get(part.path);
+   if (!local) { local = path.join(scratch, `camera-${cameraFiles.size}`); const bytes = await download(CAMERA_BUCKET, part.path, local, 32*1024*1024, controller.signal); if (createHash("sha256").update(bytes).digest("hex") !== part.hash) throw new Error("CAMERA_CHANGED"); cameraFiles.set(part.path,local); }
+   camera.push({...part,path:local});
+  }
   const assignment=input.assignment;
   let say;
   if(assignment.mode==="say-it-back"){
@@ -64,7 +72,7 @@ async function run(job:Row){
    const role=assignment.clip.roles.find(r=>r.id===assignment.roleId);if(!role)throw new Error("ROLE_UNAVAILABLE");
    say={clip:assignment.clip,roleId:assignment.roleId,videoPath:await asset(assignment.clip.videoUrl,assignment.clip.assetIntegrity,scratch,controller.signal),backingPath:role.dubAudioUrl?await asset(role.dubAudioUrl,assignment.clip.assetIntegrity,scratch,controller.signal):null};
   }
-  const rendered=await renderPerformanceVideo({layoutVersion:VIDEO_LAYOUT_VERSION,settings:input.settings,mode:assignment.mode,recordingPath:recording,outputPath:path.join(scratch,"finished.mp4"),durationMs:input.durationMs,recordingOffsetMs:input.recordingOffsetMs,invitationUrl:input.invitationUrl,displayName:input.displayName,avatarPath:avatar,score:input.score,...(assignment.mode==="classic"?{classic:{phrase:assignment.promptText,direction:assignment.energy}}:{}),...(assignment.mode==="switch"?{switch:assignment.challenge}:{}),...(say?{say}:{})} as VideoRenderInput,{signal:controller.signal});
+  const rendered=await renderPerformanceVideo({layoutVersion:VIDEO_LAYOUT_VERSION,settings:input.settings,camera,mode:assignment.mode,recordingPath:recording,outputPath:path.join(scratch,"finished.mp4"),durationMs:input.durationMs,recordingOffsetMs:input.recordingOffsetMs,invitationUrl:input.invitationUrl,displayName:input.displayName,avatarPath:avatar,score:input.score,...(assignment.mode==="classic"?{classic:{phrase:assignment.promptText,direction:assignment.energy}}:{}),...(assignment.mode==="switch"?{switch:assignment.challenge}:{}),...(say?{say}:{})} as VideoRenderInput,{signal:controller.signal});
   if(controller.signal.aborted)throw new Error("LEASE_LOST");
   const owned=await admin.rpc("renew_video_export_lease",{p_export_id:id,p_lease_token:token,p_lease_seconds:180});checkedExport(owned.error);if(!owned.data)throw new Error("LEASE_LOST");
   const output=await readFile(rendered.path);if(output.length>60*1024*1024)throw new Error("OUTPUT_LIMIT");
@@ -84,7 +92,7 @@ let cleanupAt=0;
 console.log("Delivery media worker ready (one job, two FFmpeg threads).");
 while(!stopping){
  try{
-  if(Date.now()>cleanupAt){await cleanupVideoExports(30);await cleanupExpiredClassicVideoAttempts(30);await cleanupSayImports(20);const edits=await admin.rpc("expire_performance_clip_edits",{p_limit:100});checkedExport(edits.error);cleanupAt=Date.now()+60_000;}
+  if(Date.now()>cleanupAt){await cleanupCamera(30);await cleanupVideoExports(30);await cleanupExpiredClassicVideoAttempts(30);await cleanupSayImports(20);const edits=await admin.rpc("expire_performance_clip_edits",{p_limit:100});checkedExport(edits.error);cleanupAt=Date.now()+60_000;}
   const claim=await admin.rpc("claim_video_export",{p_lease_seconds:180});checkedExport(claim.error);
   if(claim.data){await run(claim.data as Row);continue;}
   current=new AbortController();

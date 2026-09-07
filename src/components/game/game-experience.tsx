@@ -29,6 +29,9 @@ import { VideoExport } from "@/components/exports/video-export";
 import { useAudioRecorder } from "@/hooks/use-audio-recorder";
 import { useMediaSpeechLevel } from "@/hooks/use-media-speech-level";
 import { PerformerAvatar } from "@/components/avatars/performer-avatar";
+import { CameraControls, CameraMonitor } from "@/components/recording/camera-controls";
+import { CameraPlayback } from "@/components/recording/camera-playback";
+import { cameraInterval, saveCamera } from "@/lib/camera";
 import { dailyGamePrompt, gamePrompt, toGamePrompt } from "@/lib/game-prompts";
 import { createId } from "@/lib/utils";
 import { downloadBlob } from "@/lib/share-card";
@@ -200,6 +203,7 @@ export function GameExperience({
   );
   const interactionStarted = useRef(false);
   const recorder = useAudioRecorder();
+  const cameraSegments = useMemo(() => cameraInterval(recorder.cameraTake, 0, recorder.durationMs / 1000), [recorder.cameraTake, recorder.durationMs]);
   const playbackVoiceLevel = useMediaSpeechLevel(audioRef, stage === "review" ? recorder.audioUrl : null);
   const { reset, start, stop } = recorder;
   const allowed = isRatingAllowed(prompt.rating ?? "everyone", rating);
@@ -522,7 +526,7 @@ export function GameExperience({
 
   async function saveRoundTake(): Promise<string> {
     if (!roundContext || !recorder.audioBlob) throw new Error("Record a take first.");
-    if (roundTakeRef.current?.blob === recorder.audioBlob) return roundTakeRef.current.id;
+    if (roundTakeRef.current?.blob === recorder.audioBlob) { await saveCamera("classic", roundTakeRef.current.id, cameraSegments, rating); return roundTakeRef.current.id; }
     const form = new FormData();
     form.set("audio", recorder.audioBlob, "delivery.wav");
     form.set("durationMs", String(recorder.durationMs));
@@ -534,17 +538,18 @@ export function GameExperience({
     const body = await response.json();
     if (!response.ok || !body.data?.take?.id) throw new Error(body.error?.message ?? "Could not save this take. Your recording is still here.");
     roundTakeRef.current = { blob: recorder.audioBlob, id: body.data.take.id };
+    await saveCamera("classic", body.data.take.id, cameraSegments, rating);
     return body.data.take.id;
   }
 
   async function prepareVideoExport(): Promise<string> {
     if (roundSaving || submissionInFlight.current || !recorder.audioBlob || !recorder.canSubmit) throw new Error("Finish your recording or save, then create your video.");
-    if (deliveryReference?.persisted && deliveryReference.id && !roundContext) return deliveryReference.id;
+    if (deliveryReference?.persisted && deliveryReference.id && !roundContext) { await saveCamera("classic", deliveryReference.id, cameraSegments, rating); return deliveryReference.id; }
     setRoundSaving(true);
     try {
       if (roundContext) return await saveRoundTake();
       if (exportTakeRef.current?.blob !== recorder.audioBlob) exportTakeRef.current = { blob: recorder.audioBlob, key: crypto.randomUUID() };
-      if (exportTakeRef.current.id) return exportTakeRef.current.id;
+      if (exportTakeRef.current.id) { await saveCamera("classic", exportTakeRef.current.id, cameraSegments, rating); return exportTakeRef.current.id; }
       const savedTake = exportTakeRef.current;
       const form = new FormData();
       form.set("audio", recorder.audioBlob, "delivery.wav");
@@ -560,6 +565,7 @@ export function GameExperience({
       const body = await response.json();
       if (!response.ok || !body.data?.attempt?.id) throw new Error(body.error?.message ?? "Your take could not be saved. Retry video creation to recover it.");
       savedTake.id = body.data.attempt.id;
+      await saveCamera("classic", body.data.attempt.id, cameraSegments, rating);
       return body.data.attempt.id;
     } finally { setRoundSaving(false); }
   }
@@ -647,6 +653,7 @@ export function GameExperience({
       setSubmitWarning(
         typeof body.warning === "string" ? body.warning : undefined,
       );
+      if (reference?.persisted && reference.id && !roundContext) await saveCamera("classic", reference.id, cameraSegments, rating);
       setDeliveryReference(reference);
       setResult(judged);
       const historyItem: DeliveryHistoryItem = {
@@ -727,6 +734,7 @@ export function GameExperience({
         prompt={prompt}
         result={result}
         delivery={roundContext ? null : deliveryReference}
+        cameraSegments={cameraSegments}
         audioBlob={recorder.audioBlob}
         audioUrl={recorder.audioUrl}
         prepareVideoExport={prepareVideoExport}
@@ -912,13 +920,14 @@ export function GameExperience({
                 {CONTENT_LABELS[prompt.rating ?? "everyone"]}
               </span>
               <span className="flex items-center gap-1.5">
-                <Headphones className="size-3.5" /> Voice only · 20s max
+                <Headphones className="size-3.5" /> Camera optional · 20s max
               </span>
             </div>
           </div>
 
           {!roundContext && prompt.rating !== "mature" && stage === "prompt" && <div className="mt-4 flex justify-end"><Link className="button-ghost text-xs" href={`/rounds?mode=classic&prompt=${encodeURIComponent(prompt.id)}&energy=${encodeURIComponent(prompt.energyId ?? "")}`}>Start a group round with this line</Link></div>}
           <div className="recording-desk">
+            <div className="mb-3"><CameraControls camera={recorder.camera} disabled={stage === "recording" || recorder.status === "requesting" || recorder.status === "finalizing" || roundSaving} /></div>
             {recorder.error && stage === "prompt" && (
               <div className="game-error mb-5" role="alert">
                 <p className="flex items-center gap-2 font-bold">
@@ -932,7 +941,7 @@ export function GameExperience({
               <>
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-4">
-                    <PerformerAvatar size={92} />
+                    <CameraMonitor camera={recorder.camera} size={recorder.camera?.mode === "camera" ? 128 : 92} />
                     <div>
                     <p className="flex items-center gap-2 text-sm font-bold">
                       <span className="inline-block size-2 rounded-full bg-white/30" />
@@ -998,7 +1007,7 @@ export function GameExperience({
             {stage === "recording" && (
               <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
                 <div>
-                  <div className="mb-3 flex items-center gap-4"><PerformerAvatar size={104} level={recorder.voiceLevel} editable={false} /><p className="text-xs text-white/60">{recorder.voiceLevel > 0 ? "Your voice is live" : "Ready for your voice"}</p></div>
+                  <div className="mb-3 flex items-center gap-4"><CameraMonitor camera={recorder.camera} size={128} level={recorder.voiceLevel} editable={false} /><p className="text-xs text-white/60">{recorder.status === "finalizing" ? "Preparing your take…" : recorder.voiceLevel > 0 ? "Your voice is live" : "Ready for your voice"}</p></div>
                   <div className="flex items-center justify-between gap-3">
                     <p className="flex items-center gap-2 text-sm font-bold">
                       <span className="status-dot" />
@@ -1106,7 +1115,7 @@ export function GameExperience({
                     )
                   }
                 />
-                <div className="mt-3 flex items-center gap-3"><PerformerAvatar size={80} level={playbackVoiceLevel} /><span className="text-xs text-white/55">Your avatar follows your voice.</span></div>
+                <div className="mt-3 flex items-center gap-3">{cameraSegments.length ? <CameraPlayback segments={cameraSegments} clockRef={audioRef} className="aspect-square w-44 overflow-hidden rounded-xl" onError={() => audioRef.current?.pause()} /> : <PerformerAvatar size={80} level={playbackVoiceLevel} />}</div>
                 {muted && (
                   <button
                     type="button"

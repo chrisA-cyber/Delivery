@@ -48,7 +48,7 @@ describe("keeping the first take through sign-in", () => {
     const target = new URL(mocks.push.mock.calls[0]![0], "https://delivery.test");
     expect(target.searchParams.get("next")).toBe("/say-it-back?claim=retained-guest-take");
     expect(window.location.search).toBe("?attempt=retained-guest-take");
-    expect(fetch.mock.calls.map(([url]) => url)).toEqual(["/api/say-it-back/clips?maxRating=everyone", "/api/say-it-back/attempts"]);
+    expect(fetch.mock.calls.map(([url]) => url).filter(url => url !== "/api/avatars")).toEqual(["/api/say-it-back/clips?maxRating=everyone", "/api/say-it-back/attempts"]);
   });
 
   it("keeps replay and stays on the scene when the upload before sign-in fails", async () => {
@@ -69,7 +69,7 @@ describe("keeping the first take through sign-in", () => {
     render(<SayItBackExperience initialClipId={cleanClip.id} />);
     fireEvent.click(await screen.findByRole("button", { name: "Save without scoring" }));
     expect(await screen.findByRole("link", { name: "Saved in your history" })).toHaveAttribute("href", "/profile");
-    expect(fetch.mock.calls.map(([url]) => url)).toEqual(["/api/say-it-back/clips?maxRating=everyone", "/api/say-it-back/attempts"]);
+    expect(fetch.mock.calls.map(([url]) => url).filter(url => url !== "/api/avatars")).toEqual(["/api/say-it-back/clips?maxRating=everyone", "/api/say-it-back/attempts"]);
   });
 
   it("restores the guest attempt and its challenge together after sign-in", async () => {

@@ -1,0 +1,62 @@
+{
+  "simulatedCapture": true,
+  "physicalDevice": false,
+  "retake": {
+    "outsideChangedSamples": 0,
+    "replacementChangedSamples": 51057
+  },
+  "results": [
+    {
+      "mode": "classic",
+      "performer": "camera",
+      "path": "/tmp/delivery-camera-media/classic.mp4",
+      "bytes": 171969,
+      "duration": 4.2,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 7808,
+      "audioCopied": false
+    },
+    {
+      "mode": "switch",
+      "performer": "camera",
+      "path": "/tmp/delivery-camera-media/switch.mp4",
+      "bytes": 263668,
+      "duration": 8.166667,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 14253,
+      "audioCopied": false
+    },
+    {
+      "mode": "say-it-back",
+      "performer": "camera",
+      "path": "/tmp/delivery-camera-media/say-it-back.mp4",
+      "bytes": 2173366,
+      "duration": 10.4,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 25018,
+      "audioCopied": false
+    },
+    {
+      "mode": "classic",
+      "performer": "avatar",
+      "path": "/tmp/delivery-camera-media/classic-avatar.mp4",
+      "bytes": 321610,
+      "duration": 4.2,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 5981,
+      "audioCopied": false
+    }
+  ]
+}

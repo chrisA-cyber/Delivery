@@ -1,3 +1,4 @@
+import { cameraResponse } from "@/lib/server/camera-media";
 import { z } from "zod";
 
 import { assertAccountNotDeleting } from "@/lib/server/account-deletion";
@@ -47,6 +48,7 @@ export async function GET(
     if (!recordingPath || !isOwnerStoragePath(recordingPath, user.id)) {
       throw new AppError("DELIVERY_AUDIO_UNAVAILABLE", "That take has no playable audio.", 404);
     }
+    const camera = await cameraResponse("delivery", deliveryId, request); if (camera) return camera;
     const { data: signed, error: signError } = await admin.storage
       .from("delivery-audio")
       .createSignedUrl(recordingPath, 5 * 60);

@@ -11,7 +11,7 @@ const supabaseOrigin = originOf(process.env.NEXT_PUBLIC_SUPABASE_URL);
 // Cloud selects regional endpoints at connection time. These fixed provider
 // origins also work when server-only credentials are injected after the build.
 const livekitSources = ["https://*.livekit.cloud", "wss://*.livekit.cloud"];
-const connectSources = ["'self'", ...livekitSources, ...(supabaseOrigin ? [supabaseOrigin, supabaseOrigin.replace("https://", "wss://")] : []), ...(!production ? ["ws:", "http:"] : [])];
+const connectSources = ["'self'", "blob:", ...livekitSources, ...(supabaseOrigin ? [supabaseOrigin, supabaseOrigin.replace("https://", "wss://")] : []), ...(!production ? ["ws:", "http:"] : [])];
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${production ? "" : " 'unsafe-eval'"}`,
@@ -54,7 +54,7 @@ const nextConfig: NextConfig = {
         ...(secureDeployment ? [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }] : []),
         {
           key: "Permissions-Policy",
-          value: "camera=(), microphone=(self), geolocation=()",
+          value: "camera=(self), microphone=(self), geolocation=()",
         },
       ],
     },

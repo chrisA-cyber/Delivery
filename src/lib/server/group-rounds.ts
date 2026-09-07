@@ -1,3 +1,4 @@
+import { cameraResponse } from "@/lib/server/camera-media";
 import "server-only";
 
 import { createHash, createHmac, randomUUID } from "node:crypto";
@@ -590,6 +591,7 @@ export async function groupAudioResponse(token: string, viewer: GroupViewer, req
   if (!take || (row.community && selector.memberId && target.id !== member?.id && !take.broadcast_consent_at) || isExpired(take.expires_at) || (selector.memberId && !["approved", "unreviewed"].includes(String(take.moderation_state)))) throw notFound();
   if (take.mode === "classic") {
     if (!validGroupStoragePath(String(take.recording_path), target, String(row.id))) throw notFound();
+    const camera = await cameraResponse("group_take", String(take.id), request); if (camera) return camera;
     return streamAudio(String(take.recording_path), String(take.audio_mime), request);
   }
   if (take.mode === "switch") {
@@ -604,17 +606,19 @@ export async function groupAudioResponse(token: string, viewer: GroupViewer, req
   return streamSayRow(attempt.data, request);
 }
 
-function streamSwitchRow(attempt: Row, request: Request): Promise<Response> {
+async function streamSwitchRow(attempt: Row, request: Request): Promise<Response> {
   const path = String(attempt.recording_path);
   const valid = attempt.user_id ? isOwnerStoragePath(path, String(attempt.user_id)) : /^guests\/[a-f0-9]{64}\/switch\/[a-f0-9-]{36}\.(wav|mp3)$/.test(path) && path.split("/")[1] === attempt.guest_owner_hash;
   if (!valid) throw notFound();
+  const camera = await cameraResponse("switch_attempt", String(attempt.id), request); if (camera) return camera;
   return streamAudio(path, String(attempt.audio_mime), request);
 }
 
-function streamSayRow(attempt: Row, request: Request): Promise<Response> {
+async function streamSayRow(attempt: Row, request: Request): Promise<Response> {
   const path = String(attempt.recording_path);
   const valid = attempt.user_id ? isOwnerStoragePath(path, String(attempt.user_id)) : /^guests\/[a-f0-9]{64}\/say\/[a-f0-9-]{36}\.(wav|mp3)$/.test(path) && path.split("/")[1] === attempt.guest_owner_hash;
   if (!valid) throw notFound();
+  const camera = await cameraResponse("say_attempt", String(attempt.id), request); if (camera) return camera;
   return streamAudio(path, String(attempt.audio_mime), request);
 }
 

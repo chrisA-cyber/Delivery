@@ -1,9 +1,11 @@
+import { cameraResponse } from "@/lib/server/camera-media";
+import { cameraQuery } from "@/lib/camera";
 import "server-only";
 // Sharp 0.35 ships declarations but omits them from its ESM export map.
 // @ts-expect-error Upstream package export map; runtime import is supported.
 import sharp from "sharp";
 import { z } from "zod";
-import { clipEditSettingsSchema, clipAvatarSchema, defaultClipEditSettings, migrateClipEditSettings, type ClipAvatar, type ClipEditSettings } from "@/lib/video-composition";
+import { clipEditSettingsSchema, clipAvatarSchema, defaultCameraSettings, defaultClipEditSettings, migrateClipEditSettings, type ClipAvatar, type ClipEditSettings } from "@/lib/video-composition";
 import type { ContentRating } from "@/lib/content/types";
 import type { SwitchViewer } from "@/lib/server/switch";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -28,7 +30,7 @@ export async function readBoundedClipBody(request: Request, max: number): Promis
     for (;;) {
       const chunk = await reader.read(); if (chunk.done) break;
       size += chunk.value.length;
-      if (size > max) { await reader.cancel(); throw new AppError("PAYLOAD_TOO_LARGE", "Choose a smaller avatar image.", 413); }
+      if (size > max) { await reader.cancel(); throw new AppError("PAYLOAD_TOO_LARGE", "This upload is too large.", 413); }
       parts.push(chunk.value);
     }
   } finally { reader.releaseLock(); }
@@ -92,6 +94,7 @@ export function sourceDuration(source: ExportSource): number {
 export async function validateClipSettings(value: unknown, source: ExportSource): Promise<ClipEditSettings> {
   const settings = migrateClipEditSettings(source.input.assignment.mode, clipEditSettingsSchema.parse(value));
   await validateClipAvatar(settings.avatar);
+  if (settings.performer === "camera" && !source.input.camera?.length) throw new AppError("CAMERA_REQUIRED", "This take has no saved camera footage. Choose Avatar or retry saving the camera take.", 409);
   const duration = sourceDuration(source), end = settings.trimEnd ?? duration;
   if (settings.trimStart < 0 || end > duration + 0.05 || end - settings.trimStart < minClipLength(duration) || settings.trimStart >= duration) {
     throw new AppError("CLIP_TRIM_INVALID", "Keep at least a half-second inside your original recording.", 400);
@@ -103,7 +106,7 @@ export async function loadClipSettings(source: ExportSource, avatar: ClipAvatar)
   const result = await createSupabaseAdminClient().from("performance_clip_edits").select("settings").eq("source_kind", source.kind).eq("attempt_id", String(source.row.id)).eq("owner_key", source.ownerKey).maybeSingle();
   checkedExport(result.error);
   const saved = clipEditSettingsSchema.safeParse(result.data?.settings);
-  return saved.success ? migrateClipEditSettings(source.input.assignment.mode, saved.data) : { ...defaultClipEditSettings(source.input.assignment.mode), avatar };
+  return saved.success ? migrateClipEditSettings(source.input.assignment.mode, saved.data) : { ...(source.input.camera?.length ? defaultCameraSettings(source.input.assignment.mode) : defaultClipEditSettings(source.input.assignment.mode)), avatar };
 }
 
 export async function saveClipSettings(source: ExportSource, value: unknown): Promise<ClipEditSettings> {
@@ -121,12 +124,15 @@ export async function getClipEditor(mode: ExportMode, attemptId: string, maxRati
   const { assignment, recordingOffsetMs, displayName, score, invitationUrl } = source.input;
   const duration = sourceDuration(source);
   const scene = { mode, duration, displayName, score, invitationUrl, ...(assignment.mode === "classic" ? { classic: { phrase: assignment.promptText, direction: assignment.energy } } : assignment.mode === "switch" ? { switch: assignment.challenge } : { say: { clip: assignment.clip, roleId: assignment.roleId } }) };
-  return { settings, preferredAvatar, source: { assignment, recordingOffsetMs, displayName, score, invitationUrl, duration, scene, recordingUrl: `/api/exports/editor/audio?mode=${mode}&attemptId=${attemptId}&maxRating=${maxRating}` } };
+  const recordingUrl = `/api/exports/editor/audio?mode=${mode}&attemptId=${attemptId}&maxRating=${maxRating}`;
+  const camera = (source.input.camera ?? []).map((s, index) => ({ start: s.start, end: s.end, sourceStart: s.sourceStart, mirror: s.mirror, hash: s.hash, url: cameraQuery(recordingUrl, String(index)) }));
+  return { settings, preferredAvatar, source: { camera, assignment, recordingOffsetMs, displayName, score, invitationUrl, duration, scene, recordingUrl } };
 }
 
 /** Every audio request rechecks source ownership and containment, including range seeks. */
 export async function clipEditorAudioResponse(mode: ExportMode, attemptId: string, maxRating: ContentRating, viewer: SwitchViewer, request: Request): Promise<Response> {
   const source = await resolveExportSource(mode, attemptId, viewer, maxRating);
+  const camera = await cameraResponse(source.kind, attemptId, request); if (camera) return camera;
   const result = await createSupabaseAdminClient().storage.from("delivery-audio").createSignedUrl(source.input.recordingPath, 60);
   checkedExport(result.error); if (!result.data?.signedUrl) throw exportUnavailable();
   const range = request.headers.get("range");

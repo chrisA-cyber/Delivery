@@ -1,3 +1,4 @@
+import { cameraResponse } from "@/lib/server/camera-media";
 import "server-only";
 
 import { createHash, randomBytes, randomUUID } from "node:crypto";
@@ -205,6 +206,7 @@ function assertRecordingPath(row: Row): string {
 export async function getSwitchAudioResponse(id: string, viewer: SwitchViewer, request: Request, token?: string): Promise<Response> {
   const row = await getSwitchAttemptRow(id, viewer, token);
   const path = assertRecordingPath(row);
+  const camera = await cameraResponse("switch_attempt", id, request); if (camera) return camera;
   const signed = await createSupabaseAdminClient().storage.from("delivery-audio").createSignedUrl(path, 60);
   checked(signed.error);
   if (!signed.data?.signedUrl) throw notFound();

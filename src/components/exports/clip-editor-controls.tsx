@@ -5,17 +5,18 @@ import { useApp } from "@/components/providers/app-provider";
 import { Check, Captions, LayoutTemplate, Scissors, UserRound } from "lucide-react";
 import { AvatarPicker } from "@/components/avatars/avatar-picker";
 import { usePreferredAvatar } from "@/hooks/use-preferred-avatar";
-import { layoutClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
+import { cameraLayoutSettings, layoutClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
 import type { VideoExportMode } from "./video-export";
 import { clipTime } from "./clip-preview";
 
 const tabs = [{ id: "layout", label: "Layout", icon: LayoutTemplate }, { id: "avatar", label: "Avatar", icon: UserRound }, { id: "text", label: "Text", icon: Captions }, { id: "trim", label: "Trim", icon: Scissors }] as const;
-export function ClipEditorControls({ mode, settings, onChange, duration, hasScore, disabled }: {
+export function ClipEditorControls({ mode, settings, onChange, duration, hasScore, hasCamera = false, disabled }: {
   mode: VideoExportMode;
   settings: ClipEditSettings;
   onChange: (patch: Partial<ClipEditSettings>) => void;
   duration: number;
   hasScore: boolean;
+  hasCamera?: boolean;
   disabled?: boolean;
 }) {
   const { reducedMotion } = useApp();
@@ -26,14 +27,15 @@ export function ClipEditorControls({ mode, settings, onChange, duration, hasScor
   const end = Math.min(settings.trimEnd ?? duration, duration);
   return <div className="flex h-full min-h-0 flex-col">
     <div className="grid shrink-0 grid-cols-4 gap-1 border-b border-white/10 bg-surface p-2" role="tablist" aria-label="Clip adjustments">
-      {tabs.map(({ id, label, icon: Icon }) => <button key={id} type="button" role="tab" tabIndex={tab === id ? 0 : -1} onKeyDown={(event) => { const index = tabs.findIndex((item) => item.id === tab); const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : -1; if (next >= 0) { event.preventDefault(); const target = tabs[next]!.id; setTab(target); document.getElementById(`clip-tab-${target}`)?.focus(); } }} aria-selected={tab === id} aria-controls={`clip-panel-${id}`} id={`clip-tab-${id}`} onClick={() => setTab(id)} className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg text-xs font-bold ${tab === id ? "bg-electric text-ink" : "text-white/60 hover:bg-white/5"}`}><Icon className="size-3.5" />{label}</button>)}
+      {tabs.map(({ id, label, icon: Icon }) => <button key={id} type="button" role="tab" tabIndex={tab === id ? 0 : -1} onKeyDown={(event) => { const index = tabs.findIndex((item) => item.id === tab); const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : -1; if (next >= 0) { event.preventDefault(); const target = tabs[next]!.id; setTab(target); document.getElementById(`clip-tab-${target}`)?.focus(); } }} aria-selected={tab === id} aria-controls={`clip-panel-${id}`} id={`clip-tab-${id}`} onClick={() => setTab(id)} className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg text-xs font-bold ${tab === id ? "bg-electric text-ink" : "text-white/60 hover:bg-white/5"}`}><Icon className="size-3.5" />{id === "avatar" && hasCamera ? "Performer" : label}</button>)}
     </div>
     <div role="tabpanel" aria-labelledby={`clip-tab-${tab}`} id={`clip-panel-${tab}`} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5">
       <fieldset disabled={disabled} className="space-y-4">
         <legend className="sr-only">{tabs.find((item) => item.id === tab)?.label} settings</legend>
         {tab === "layout" && <>
+          {hasCamera && <div className="flex gap-2" role="group" aria-label="Clip performer">{(["avatar", "camera"] as const).map(performer => <button type="button" key={performer} aria-pressed={settings.performer === performer} className={settings.performer === performer ? "button-primary min-h-10 text-xs" : "button-secondary min-h-10 text-xs"} onClick={() => onChange({ performer, ...(performer === "camera" ? cameraLayoutSettings(mode, settings.layout) : layoutClipEditSettings(mode, settings.layout)) })}>{performer === "camera" ? "Camera" : "Avatar"}</button>)}</div>}
           <div className="grid grid-cols-2 gap-3">
-            {(["spotlight", "duet"] as const).map((layout) => <button type="button" key={layout} aria-pressed={settings.layout === layout} onClick={() => onChange(layoutClipEditSettings(mode, layout))} className={`rounded-xl border p-3 text-left transition-colors ${settings.layout === layout ? "border-electric bg-electric/10" : "border-white/15 bg-black/20 hover:border-white/35"}`}>
+            {(["spotlight", "duet"] as const).map((layout) => <button type="button" key={layout} aria-pressed={settings.layout === layout} onClick={() => onChange(settings.performer === "camera" ? cameraLayoutSettings(mode, layout) : layoutClipEditSettings(mode, layout))} className={`rounded-xl border p-3 text-left transition-colors ${settings.layout === layout ? "border-electric bg-electric/10" : "border-white/15 bg-black/20 hover:border-white/35"}`}>
               <div className={`relative mx-auto h-24 w-14 overflow-hidden rounded-md border border-white/20 bg-ink ${mode === "say-it-back" ? "" : "pt-5"}`} aria-hidden="true">
                 {mode === "say-it-back" ? <><div className={`absolute inset-x-1 bg-white/25 ${layout === "spotlight" ? "top-4 h-14" : "top-3 h-10"}`} /><div className={`absolute size-4 rounded-full bg-electric ${layout === "spotlight" ? "bottom-5 right-1" : "bottom-5 left-5"}`} /></> : <><div className={`mx-auto rounded-full bg-electric ${layout === "spotlight" ? "size-7" : "mt-5 size-5"}`} /><div className={`absolute inset-x-2 h-1 rounded bg-white/50 ${layout === "spotlight" ? "bottom-6" : "top-5"}`} /></>}
                 <div className="absolute bottom-2 left-2 right-2 h-0.5 rounded bg-white/20" />
@@ -41,14 +43,21 @@ export function ClipEditorControls({ mode, settings, onChange, duration, hasScor
               <span className="mt-2 flex items-center justify-between text-sm font-bold">{layout === "spotlight" ? mode === "say-it-back" ? "Scene" : "Spotlight" : mode === "say-it-back" ? "Companion" : "Split"}{settings.layout === layout && <Check className="size-3.5 text-electric" />}</span>
             </button>)}
           </div>
-          <p className="text-xs leading-5 text-white/55">{mode === "say-it-back" ? "Your scene keeps its original framing. Drag the avatar in the preview to place it." : "Drag your avatar in the preview. Keep key content clear of the edges."}</p>
+          <p className="text-xs leading-5 text-white/55">{mode === "say-it-back" ? "Your scene keeps its original framing. Drag your performer in the preview to place it." : "Drag your performer in the preview. Keep key content clear of the edges."}</p>
         </>}
         {tab === "avatar" && <>
-          <label className="flex min-h-10 items-center gap-2 text-sm"><input type="checkbox" checked={settings.avatarVisible} onChange={(event) => onChange({ avatarVisible: event.target.checked })} className="size-4 accent-electric" />Show avatar</label>
+          {settings.performer === "camera" && <>
+            <label className="block text-xs font-bold">Camera zoom<input type="range" min={1} max={3} step={0.01} value={settings.cameraZoom} onChange={e => onChange({ cameraZoom: Number(e.target.value) })} className="mt-2 h-8 w-full accent-electric" /></label>
+            <div className="grid grid-cols-2 gap-3">{(["cameraCropX", "cameraCropY"] as const).map((field, i) => <label key={field} className="text-xs">{i ? "Crop vertical" : "Crop horizontal"}<input type="range" min={0} max={1} step={0.01} value={settings[field]} onChange={e => onChange({ [field]: Number(e.target.value) })} className="mt-1 h-8 w-full accent-electric" /></label>)}</div>
+            <label className="block text-xs">Orientation<select aria-label="Camera orientation" value={settings.cameraMirror === undefined ? "recorded" : settings.cameraMirror ? "mirror" : "natural"} onChange={e => onChange({ cameraMirror: e.target.value === "recorded" ? undefined : e.target.value === "mirror" })} className="mt-2 min-h-10 w-full rounded-lg bg-surface px-2"><option value="recorded">As recorded</option><option value="natural">Natural</option><option value="mirror">Mirrored</option></select></label>
+          </>}
+          <label className="flex min-h-10 items-center gap-2 text-sm"><input type="checkbox" checked={settings.avatarVisible} onChange={(event) => onChange({ avatarVisible: event.target.checked })} className="size-4 accent-electric" />{settings.performer === "camera" ? "Show camera" : "Show avatar"}</label>
+          {settings.performer !== "camera" && <>
           <label className="flex min-h-10 items-center gap-2 text-xs text-white/65"><input type="checkbox" checked={settings.reducedMotion} disabled={prefersReduced} onChange={(event) => onChange({ reducedMotion: event.target.checked })} className="size-4 accent-electric" />Reduced motion in clip</label>
           <AvatarPicker compact value={settings.avatar} onChange={(avatar) => onChange({ avatar, avatarVisible: true })} disabled={disabled} />
           <div className="flex flex-wrap items-center justify-between gap-2"><button type="button" className="button-ghost min-h-10 px-0 text-xs" disabled={sameAvatar || preference.saving || disabled} onClick={() => void preference.setAvatar(settings.avatar)}>{sameAvatar ? <><Check className="size-3.5" />Your default avatar</> : preference.saving ? "Saving avatar…" : "Use for future clips"}</button></div>
           {preference.error && <p role="alert" className="text-xs text-orange-200">{preference.error}</p>}
+          </>}
           <label className="block text-xs font-bold">Size <span className="float-right font-normal tabular-nums text-white/55">{Math.round(settings.avatarSize * 100)}%</span><input type="range" min={0.14} max={0.7} step={0.01} value={settings.avatarSize} onChange={(event) => onChange({ avatarSize: Number(event.target.value) })} className="mt-2 h-8 w-full accent-electric" /></label>
           <div className="grid grid-cols-2 gap-3">
             <label className="block text-xs text-white/65">Horizontal<input type="range" min={settings.avatarSize / 2} max={1 - settings.avatarSize / 2} step={0.01} value={settings.avatarX} onChange={(event) => onChange({ avatarX: Number(event.target.value) })} className="mt-1 h-8 w-full accent-electric" /></label>

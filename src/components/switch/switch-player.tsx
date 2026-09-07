@@ -4,16 +4,20 @@ import { forwardRef, useId, useCallback, useEffect, useImperativeHandle, useRef,
 import { AudioLines, Pause, Play, RotateCcw } from "lucide-react";
 import type { SwitchChallenge } from "@/lib/switch/types";
 import { cn } from "@/lib/utils";
+import { CameraPlayback, useCameraSegments } from "@/components/recording/camera-playback";
+import type { CameraSegment } from "@/lib/camera";
 import { PerformerAvatar } from "@/components/avatars/performer-avatar";
 import { useMediaSpeechLevel } from "@/hooks/use-media-speech-level";
 
 export interface SwitchPlayerHandle { play(): Promise<void>; pause(): void; seek(seconds: number): void; replay(): Promise<void> }
 export const SwitchPlayer = forwardRef<SwitchPlayerHandle, {
+  cameraSegments?: CameraSegment[];
   challenge: SwitchChallenge; audioUrl: string; className?: string; takeLabel?: string; performerAvatar?: boolean;
   externalCommand?: { revision: number; command: "play" | "pause" | "replay" };
   onPlaybackError?: () => void | Promise<void>;
-}>(function SwitchPlayer({ challenge, audioUrl, className, takeLabel = "Your take", performerAvatar = false, externalCommand, onPlaybackError }, ref) {
+}>(function SwitchPlayer({ cameraSegments, challenge, audioUrl, className, takeLabel = "Your take", performerAvatar = false, externalCommand, onPlaybackError }, ref) {
   const audio = useRef<HTMLAudioElement>(null);
+  const camera = useCameraSegments(audioUrl, cameraSegments);
   const voiceLevel = useMediaSpeechLevel(audio, performerAvatar ? audioUrl : null);
   const seekId = useId();
   const [time, setTime] = useState(0);
@@ -64,7 +68,7 @@ export const SwitchPlayer = forwardRef<SwitchPlayerHandle, {
       <div className="mt-2 grid gap-1" style={{ gridTemplateColumns: `repeat(${challenge.cues.length}, minmax(0, 1fr))` }} aria-label="Jump to a cue">
         {challenge.cues.map((item) => <button type="button" key={item.id} onClick={() => seek(item.start)} aria-label={`Jump to ${item.directionLabel}`} aria-current={cue.id === item.id ? "step" : undefined} title={`${item.directionLabel} · ${item.start}–${item.end}s`} className={cn("flex min-h-11 items-center justify-center rounded-lg border text-lg font-bold", cue.id === item.id ? "border-acid/35 bg-acid/10 text-acid" : "border-transparent text-white/45 hover:bg-white/5 hover:text-paper")}><span aria-hidden="true">{challenge.kind === "speed" ? `${item.speed ?? 1}×` : item.emoji}</span></button>)}
       </div>
-      <div className="flex min-h-36 items-center gap-4 py-4 sm:gap-6">{performerAvatar && <PerformerAvatar size={128} level={voiceLevel} />}<p className="min-w-0 flex-1 text-2xl font-black leading-snug tracking-tight text-paper sm:text-3xl">“{cue.text}”</p></div>
+      <div className="flex min-h-36 items-center gap-4 py-4 sm:gap-6">{camera.length ? <CameraPlayback segments={camera} clockRef={audio} onError={pause} /> : performerAvatar && <PerformerAvatar size={128} level={voiceLevel} />}<p className="min-w-0 flex-1 text-2xl font-black leading-snug tracking-tight text-paper sm:text-3xl">“{cue.text}”</p></div>
     </div>
     <div className="border-t border-white/10 px-4 pb-3 pt-2 sm:px-5"><div className="flex items-center gap-2"><button type="button" className="button-primary min-h-11 shrink-0 px-4 text-xs" onClick={() => playing ? pause() : void play()}>{playing ? <Pause className="size-4" /> : <Play className="size-4" />}{playing ? "Pause" : "Play take"}</button><label className="sr-only" htmlFor={seekId}>Seek through take</label><input id={seekId} aria-label="Seek through take" type="range" min={0} max={challenge.duration} step={0.05} value={Math.min(time, challenge.duration)} onChange={(event) => seek(Number(event.target.value))} className="h-11 min-w-0 flex-1 accent-acid" /><button type="button" className="icon-button shrink-0 border-transparent" onClick={() => void replay()} aria-label="Replay from beginning"><RotateCcw className="size-4" /></button></div>{buffering && <p role="status" className="mt-2 text-xs text-white/50">Loading audio…</p>}{error && <p className="mt-2 text-sm text-hot" role="alert">{error}</p>}</div>
   </section>;

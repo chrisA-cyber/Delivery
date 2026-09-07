@@ -14,6 +14,9 @@ import { validGroupStoragePath } from "@/lib/server/group-rounds";
 import { ensurePublicAssignment } from "@/lib/server/public-assignments";
 import type { ClipEditSettings } from "@/lib/video-composition";
 
+import { loadCamera } from "@/lib/server/camera-media";
+import type { CameraSegment } from "@/lib/camera";
+
 type Row = Record<string, unknown>;
 export type ExportMode = "classic" | "switch" | "say-it-back";
 export type ExportSourceKind = "delivery" | "classic_video_attempt" | "switch_attempt" | "say_attempt" | "group_take";
@@ -22,6 +25,7 @@ export interface ExportInput {
   assignment: GroupAssignment; invitationUrl: string; displayName: string | null; avatarPath: string | null;
   score: {value: number; label: string; beta?: boolean} | null;
   settings?: ClipEditSettings;
+  camera?: CameraSegment[];
 }
 export interface ExportSource { kind: ExportSourceKind; row: Row; ownerKey: string; userId: string | null; input: ExportInput }
 export const exportUnavailable = () => new AppError("EXPORT_UNAVAILABLE", "This performance is private, expired, or unavailable. Open a take you recorded to create its video.", 404);
@@ -46,7 +50,7 @@ export async function assertExportAccount(userId: string | null): Promise<void> 
   if (challengeHasActiveProfileContainment((restrictions.data ?? []) as {user_id:string;kind:string;starts_at:string;ends_at:string|null}[], [userId])) throw exportUnavailable();
 }
 
-export async function resolveExportSource(mode: ExportMode, id: string, viewer: SwitchViewer, maxRating: ContentRating, options: {includeName?:boolean;includeScore?:boolean;invitation?:boolean} = {}): Promise<ExportSource> {
+export async function resolveExportSource(mode: ExportMode, id: string, viewer: SwitchViewer, maxRating: ContentRating, options: {includeName?:boolean;includeScore?:boolean;invitation?:boolean;mediaOnly?:boolean} = {}): Promise<ExportSource> {
   const admin = createSupabaseAdminClient();
   let kind: ExportSourceKind = mode === "switch" ? "switch_attempt" : mode === "say-it-back" ? "say_attempt" : "delivery";
   let result = await admin.from(mode === "switch" ? "switch_attempts" : mode === "say-it-back" ? "say_attempts" : "deliveries").select("*").eq("id", id).maybeSingle();
@@ -103,8 +107,10 @@ export async function resolveExportSource(mode: ExportMode, id: string, viewer: 
   if (assignment.mode !== mode) throw exportUnavailable();
   const privateOnly = isMatureTake(assignment.rating, Array.isArray(row.moderation_labels) ? row.moderation_labels as string[] : []);
   assertContentRating(privateOnly ? "mature" : assignment.rating, maxRating);
-  if (!privateOnly) assertPublicContentAllowed(assignment.rating);
-  assertSceneExportEligible(assignment);
+  if (!options.mediaOnly) {
+    if (!privateOnly) assertPublicContentAllowed(assignment.rating);
+    assertSceneExportEligible(assignment);
+  }
   let displayName: string | null = null, avatarPath: string | null = null;
   if (options.includeName) {
     displayName = String(member?.display_name ?? row.display_name ?? "").trim().slice(0,64) || null;
@@ -115,5 +121,5 @@ export async function resolveExportSource(mode: ExportMode, id: string, viewer: 
   }
   // The stable Netlify hostname already redirects paths and query strings to the playable app.
   const invitation = options.invitation && !privateOnly && !(assignment.mode === "say-it-back" && assignment.clip.id.startsWith("custom-")) ? await ensurePublicAssignment(assignment,"https://deliverygame.netlify.app") : null;
-  return {kind,row,ownerKey,userId,input:{recordingPath:path,audioHash:row.audio_hash ? String(row.audio_hash) : null,durationMs:Number(row.duration_ms),recordingOffsetMs:Number(row.recording_offset_ms ?? 0),assignment,invitationUrl:invitation?.url ?? "",displayName,avatarPath,score:options.includeScore ? score : null}};
+  return {kind,row,ownerKey,userId,input:{camera:await loadCamera(kind,id),recordingPath:path,audioHash:row.audio_hash ? String(row.audio_hash) : null,durationMs:Number(row.duration_ms),recordingOffsetMs:Number(row.recording_offset_ms ?? 0),assignment,invitationUrl:invitation?.url ?? "",displayName,avatarPath,score:options.includeScore ? score : null}};
 }

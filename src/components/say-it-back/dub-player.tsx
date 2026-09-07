@@ -4,6 +4,8 @@ import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef,
 import { Captions, Headphones, LoaderCircle, Pause, Play, RotateCcw, Square, Volume2, VolumeX } from "lucide-react";
 import type { SayClip, SayRole } from "@/lib/say-it-back/types";
 import { cn } from "@/lib/utils";
+import { CameraPlayback, useCameraSegments } from "@/components/recording/camera-playback";
+import type { CameraSegment } from "@/lib/camera";
 import { PerformerAvatar } from "@/components/avatars/performer-avatar";
 import { useMediaSpeechLevel } from "@/hooks/use-media-speech-level";
 
@@ -36,6 +38,8 @@ function playbackSource(url: string) {
 
 /** The video is the only playback clock. The take keeps its recorded timing. */
 export const DubPlayer = forwardRef<DubPlayerHandle, {
+  cameraSegments?: CameraSegment[];
+  mediaRef?: React.RefObject<HTMLVideoElement | null>;
   externalCommand?: { revision: number; command: "play" | "pause" | "replay" };
   clip: SayClip;
   role: SayRole;
@@ -54,9 +58,11 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
   performerAvatar?: boolean;
   presentationOnly?: boolean;
   onPlayingChange?: (playing: boolean) => void;
-}> (function DubPlayer({ externalCommand, clip, role, takeUrl, recordingOffsetMs = 0, recording = false, countdown, onEnded, onTime, onAudioError, onInterruption, onPlaybackStart, onCancelCountdown, takeLabel = "Your take", compact = false, performerAvatar = false, presentationOnly = false, onPlayingChange }, forwardedRef) {
+}> (function DubPlayer({ mediaRef, cameraSegments, externalCommand, clip, role, takeUrl, recordingOffsetMs = 0, recording = false, countdown, onEnded, onTime, onAudioError, onInterruption, onPlaybackStart, onCancelCountdown, takeLabel = "Your take", compact = false, performerAvatar = false, presentationOnly = false, onPlayingChange }, forwardedRef) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const useVideoRef = useCallback((node: HTMLVideoElement | null) => { videoRef.current = node; if (mediaRef) mediaRef.current = node; }, [mediaRef]);
   const voiceRef = useRef<HTMLAudioElement>(null);
+  const camera = useCameraSegments(presentationOnly ? null : takeUrl, cameraSegments);
   const voiceLevel = useMediaSpeechLevel(voiceRef, presentationOnly || !performerAvatar ? null : takeUrl);
   const bedRef = useRef<HTMLAudioElement>(null);
   const [kind, setKind] = useState<"original" | "dub">(takeUrl ? "dub" : "original");
@@ -417,7 +423,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
         </div>}
       </div>}
       <div className={cn("say-player-picture relative w-full bg-black", presentationOnly ? "h-full" : "aspect-video")}>
-        <video ref={videoRef} src={clip.videoUrl} poster={clip.posterUrl} preload="auto" playsInline aria-label={`${clip.title} scene`} className="h-full w-full object-contain" disablePictureInPicture
+        <video ref={useVideoRef} src={clip.videoUrl} poster={clip.posterUrl} preload="auto" playsInline aria-label={`${clip.title} scene`} className="h-full w-full object-contain" disablePictureInPicture
           onLoadedMetadata={(event) => { const pending = previewStart.current; if (pending && pending.requestId === playbackRequest.current) { event.currentTarget.currentTime = pending.time; previewStart.current = null; setCurrentTime(pending.time); } }}
           onLoadedData={() => setLoaded(true)} onCanPlay={(event) => { setLoaded(true); resumeBuffered(event.currentTarget); }}
           onPlay={() => { setPlaying(true); onPlaybackStart?.(); }} onPlaying={(event) => { waitingFor.current.delete(event.currentTarget); if (!waitingFor.current.size) setBuffering(false); playCompanions(); armRangeStop(); }}
@@ -436,7 +442,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
         </div>}
       </div>
       {!presentationOnly && <div className="say-player-transport bg-surface px-3 pb-3 pt-2 sm:px-4">
-        {isDub && !busy && performerAvatar && <div className="mb-1 flex items-center gap-3"><PerformerAvatar level={voiceLevel} size={64} /><span className="text-xs font-bold text-white/65">Your dub</span></div>}
+        {isDub && !busy && (performerAvatar || camera.length > 0) && <div className="mb-1 flex items-center gap-3">{camera.length ? <CameraPlayback segments={camera} clockRef={videoRef} className="aspect-square w-24 shrink-0 overflow-hidden rounded-lg" onError={pause} /> : <PerformerAvatar level={voiceLevel} size={64} />}<span className="text-xs font-bold text-white/65">Your dub</span></div>}
         <input type="range" min={0} max={clip.duration} step={0.01} value={Math.min(currentTime, clip.duration)} disabled={busy || !loaded} aria-label="Scene playback position" aria-valuetext={`${timeLabel(currentTime)} of ${timeLabel(clip.duration)}`} onChange={(event) => seek(Number(event.target.value))} className="h-6 w-full cursor-pointer accent-acid" />
         <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0">
           <div className="flex items-center gap-1">

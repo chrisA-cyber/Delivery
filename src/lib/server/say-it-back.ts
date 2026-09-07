@@ -1,3 +1,4 @@
+import { cameraResponse } from "@/lib/server/camera-media";
 import { claimSayImports } from "@/lib/server/say-imports";
 import "server-only";
 
@@ -210,6 +211,7 @@ function assertRecordingPath(row: Row): string {
 export async function getSayAudioResponse(id: string, viewer: SayViewer, request: Request, token?: string): Promise<Response> {
   const row = await getSayAttemptRow(id, viewer, token);
   const path = assertRecordingPath(row);
+  const camera = await cameraResponse("say_attempt", id, request); if (camera) return camera;
   const signed = await createSupabaseAdminClient().storage.from("delivery-audio").createSignedUrl(path, 60);
   checked(signed.error);
   if (!signed.data?.signedUrl) throw notFound();

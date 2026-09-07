@@ -1,3 +1,4 @@
+import { cameraResponse } from "@/lib/server/camera-media";
 import "server-only";
 
 import { randomUUID } from "node:crypto";
@@ -146,6 +147,8 @@ export async function createClassicExportAttempt(input: CreateClassicExportAttem
 
 export async function getClassicExportAudioResponse(id: string, viewer: ClassicExportViewer, request: Request): Promise<Response> {
   const row = await getClassicExportAttemptRow(id, viewer);
+  assertClassicRecordingPath(row);
+  const camera = await cameraResponse("classic_video_attempt", id, request); if (camera) return camera;
   const signed = await createSupabaseAdminClient().storage.from("delivery-audio").createSignedUrl(assertClassicRecordingPath(row), 60);
   checked(signed.error);
   if (!signed.data?.signedUrl) throw notFound();
