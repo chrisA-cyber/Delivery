@@ -15,7 +15,7 @@ await Promise.all([
   ),
   sharp(mark)
     .resize(320, 320)
-    .extend({ top: 96, bottom: 96, left: 96, right: 96, background: "#ff745c" })
+    .extend({ top: 96, bottom: 96, left: 96, right: 96, background: "#ffc266" })
     .png()
     .toFile(
       new URL("../public/icon-maskable-512.png", import.meta.url).pathname,

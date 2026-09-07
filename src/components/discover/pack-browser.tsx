@@ -9,7 +9,7 @@ import { useApp } from "@/components/providers/app-provider";
 import { ContentControl } from "@/components/content/content-control";
 
 const filters = ["all", "free", "pro", "rotating"] as const;
-const colors = ["#f4f0e7", "#c9b7ef", "#c9edbc", "#ff745c", "#f0caa4", "#d9d9cd"];
+const colors = ["#eef2ff", "#c4b5fd", "#8eb8ff", "#ffc266", "#d6e4ff", "#dbd3ff"];
 
 export function PackBrowser({ packs }: { packs: readonly ContentPack[]; promptCounts?: Record<string, number> }) {
   const { tier, billing, contentRating, updatePreferences } = useApp();
@@ -40,7 +40,7 @@ export function PackBrowser({ packs }: { packs: readonly ContentPack[]; promptCo
           const color = colors[Math.max(0, packs.findIndex((candidate) => candidate.id === pack.id)) % colors.length];
           const locked = pack.access === "pro" && tier !== "pro";
           return <article key={pack.id} className="flex flex-col overflow-hidden rounded-2xl border border-white/15 bg-white/[.025]">
-            <div className="flex min-h-52 flex-col p-5 text-[#171715] sm:p-6" style={{ background: color }}>
+            <div className="flex min-h-52 flex-col p-5 text-ink sm:p-6" style={{ background: color }}>
               <div className="flex items-center justify-between gap-3"><p className="mono-label text-black/65">{pack.eyebrow}</p>{pack.access === "pro" && <Crown className="size-4 shrink-0" />}</div>
               <h2 className="display-type mt-auto pt-8 text-4xl leading-none">{pack.name}</h2>
             </div>

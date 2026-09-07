@@ -4,7 +4,7 @@
   "private": true,
   "description": "The voice performance game where you get a line, deliver it, and get judged.",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "node scripts/dev.mjs",
     "build": "next build",
     "start": "node scripts/start.mjs",
     "lint": "eslint .",

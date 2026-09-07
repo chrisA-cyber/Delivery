@@ -2,6 +2,7 @@ import { Award, Lock } from "lucide-react";
 
 import type { EarnedBadge } from "@/types/game";
 import { formatDate } from "@/lib/utils";
+import { VISUAL_THEME } from "@/lib/visual-theme";
 
 const badgeGlyphs: Record<string, string> = {
   mic: "🎙️",
@@ -11,7 +12,7 @@ const badgeGlyphs: Record<string, string> = {
   repeat: "🔁",
   calendar: "📅",
   crown: "👑",
-  heart: "💚",
+  heart: "💜",
   versus: "⚔️",
   spectrum: "🌈",
 };
@@ -32,12 +33,12 @@ export function BadgeShelf({ badges, publicView = false }: { badges: EarnedBadge
             <article
               key={badge.id}
               className="rounded-xl border bg-white/[0.025] p-5"
-              style={{ borderColor: `${badge.color}55` }}
+              style={{ borderColor: `${badge.rarity === "legendary" ? VISUAL_THEME.amber : badge.rarity === "rare" ? VISUAL_THEME.lavender : VISUAL_THEME.blue}55` }}
             >
               <span className="text-3xl" aria-hidden="true">{badgeGlyphs[badge.icon] ?? "🏆"}</span>
               <p className="mt-5 text-sm font-black">{badge.name}</p>
               <p className="mt-1 text-xs leading-5 text-white/65">{badge.description}</p>
-              <p className="mono-label mt-4" style={{ color: badge.color }}>{badge.rarity}</p>
+              <p className="mono-label mt-4" style={{ color: badge.rarity === "legendary" ? VISUAL_THEME.amber : badge.rarity === "rare" ? VISUAL_THEME.lavender : VISUAL_THEME.blue }}>{badge.rarity}</p>
               <p className="mt-1 text-[10px] font-bold text-white/55">Earned {formatDate(badge.awardedAt)}</p>
             </article>
           ))}

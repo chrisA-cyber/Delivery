@@ -81,7 +81,7 @@ async function loadAccount() {
       name: String(badge.name ?? "Mystery badge"),
       description: String(badge.description ?? "A documented act of commitment."),
       icon: String(badge.icon ?? "spark"),
-      color: String(badge.color ?? "#D7FF3F"),
+      color: String(badge.color ?? "#ffc266"),
       rarity: String(badge.rarity ?? "common"),
       awardedAt: String(award.awarded_at),
     }];

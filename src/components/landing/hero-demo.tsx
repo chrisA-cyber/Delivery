@@ -17,20 +17,21 @@ export function HeroDemo() {
     <div className="relative mx-auto w-full max-w-[520px]">
       <div className="hero-cue">
         <div className="hero-cue-line">
-          <div className="mb-7 flex items-center justify-between gap-3">
-            <p className="mono-label">Classic / a real playable line</p>
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <p className="mono-label">Your next Classic line</p>
             <button
+              type="button"
               onClick={() => setIndex((value) => (value + 1) % samples.length)}
-              className="grid size-11 shrink-0 place-items-center rounded-lg border border-ink/25 hover:bg-ink/5"
+              className="group/refresh grid size-11 shrink-0 place-items-center rounded-lg border border-ink/20 transition-colors hover:bg-ink/5"
               aria-label="Show another prompt"
             >
-              <RotateCw className="size-4" />
+              <RotateCw className="size-4 transition-transform duration-300 group-hover/refresh:rotate-90" />
             </button>
           </div>
           <blockquote aria-live="polite">“{prompt.line}”</blockquote>
         </div>
         <div className="hero-direction">
-          <p className="mono-label mb-2">Now deliver it like this</p>
+          <p className="mono-label mb-2">The direction</p>
           <p className="text-xl font-bold tracking-tight">
             {energy.shortLabel}
           </p>
@@ -38,15 +39,12 @@ export function HeroDemo() {
         </div>
         <Link
           href={`/play?prompt=${promptId}&energy=${energyId}`}
-          className="flex min-h-16 items-center justify-between gap-3 px-7 text-sm font-bold hover:bg-ink/5"
+          className="group flex min-h-14 items-center justify-between gap-3 px-7 text-sm font-bold transition-colors hover:bg-ink/5"
         >
-          Try this exact combination
-          <ArrowRight className="size-4" />
+          Play this line
+          <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
         </Link>
       </div>
-      <p className="mono-label mt-7 text-center text-white/60">
-        The joke needs a voice. Yours will do.
-      </p>
     </div>
   );
 }

@@ -233,8 +233,8 @@ export function PerformerMedia({ media, identity, name, active = false, blocked 
   const video = publication?.track;
   const speaking = participant?.isSpeaking && !blocked;
   const microphone = participant?.getTrackPublication(Track.Source.Microphone);
-  return <div className={`relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border bg-slate-950 ${active ? "border-orange-400" : "border-white/10"}`} data-speaking={speaking ? "true" : "false"}>
-    {video && !publication?.isMuted && !blocked ? <VideoTrack track={video} mirrored={local} label={`${name}'s live camera`} /> : <div className={`flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-orange-500/30 to-fuchsia-500/20 text-4xl font-black text-orange-100 ${speaking ? "ring-4 ring-orange-400" : "ring-1 ring-white/10"}`} aria-label={speaking ? `${name} is speaking` : `${name}, voice only`}>{name.slice(0, 1).toUpperCase() || "?"}</div>}
+  return <div className={`relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border bg-ink ${active ? "border-acid" : "border-white/10"}`} data-speaking={speaking ? "true" : "false"}>
+    {video && !publication?.isMuted && !blocked ? <VideoTrack track={video} mirrored={local} label={`${name}'s live camera`} /> : <div className={`flex h-20 w-20 items-center justify-center rounded-full bg-hot/15 text-4xl font-black text-paper ${speaking ? "ring-4 ring-acid" : "ring-1 ring-white/10"}`} aria-label={speaking ? `${name} is speaking` : `${name}, voice only`}>{name.slice(0, 1).toUpperCase() || "?"}</div>}
     <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/90 to-transparent px-4 pb-3 pt-9"><span className="truncate font-semibold text-white">{name}{local ? " (you)" : ""}</span><span className="shrink-0 text-xs text-white/70">{blocked ? "Blocked" : !participant ? "Connecting…" : speaking ? "Speaking" : active && microphone && !microphone.isMuted ? "Mic live" : "Mic off"}</span></div>
   </div>;
 }
@@ -248,7 +248,7 @@ function MicrophoneMeter({ track }: { track: LocalAudioTrack }) {
       return () => { window.clearInterval(timer); void analyser.cleanup(); };
     } catch { return; }
   }, [track]);
-  return <div><p className="mb-2 text-xs text-white/60">Say something. Your microphone stays private until you accept the stage.</p><div role="meter" aria-label="Microphone input" aria-valuemin={0} aria-valuemax={100} aria-valuenow={level} className="h-2 overflow-hidden rounded bg-white/10"><div className="h-full bg-emerald-400" style={{ width: `${level}%` }} /></div></div>;
+  return <div><p className="mb-2 text-xs text-white/60">Say something. Your microphone stays private until you accept the stage.</p><div role="meter" aria-label="Microphone input" aria-valuemin={0} aria-valuemax={100} aria-valuenow={level} className="h-2 overflow-hidden rounded bg-white/10"><div className="h-full bg-electric" style={{ width: `${level}%` }} /></div></div>;
 }
 
 export function RoastMediaPreparation({ media }: { media: RoastMedia }) {
@@ -256,25 +256,25 @@ export function RoastMediaPreparation({ media }: { media: RoastMedia }) {
   const [microphoneDeviceId, setMicrophoneDeviceId] = useState("");
   const [cameraDeviceId, setCameraDeviceId] = useState("");
   return <div className="space-y-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-    <div><h3 className="font-bold text-white">Your private device check</h3><p className="mt-1 text-sm text-white/60">Headphones help avoid echoes. Voice-only is welcome. Nothing here is sent to the stage.</p></div>
+    <div><h3 className="font-bold text-white">Your private device check</h3><p className="mt-1 text-sm text-white/60">Voice only is welcome. This preview stays private.</p></div>
     {media.localVideoTrack && <div className="aspect-video overflow-hidden rounded-xl"><VideoTrack track={media.localVideoTrack} mirrored label="Your private camera preview" /></div>}
     {media.localAudioTrack && <MicrophoneMeter track={media.localAudioTrack} />}
     <label className="flex items-center gap-2 text-sm text-white/80"><input type="checkbox" checked={camera} onChange={(event) => setCamera(event.target.checked)} />Include my camera in the check</label>
     {(["audioinput", "videoinput"] as const).map((kind) => {
       const available = media.devices.filter((device) => device.kind === kind);
       if (available.length < 2 || (kind === "videoinput" && !camera)) return null;
-      return <label key={kind} className="block text-sm text-white/70">{kind === "audioinput" ? "Microphone" : "Camera"}<select className="mt-1 w-full rounded-lg border border-white/15 bg-slate-900 p-2 text-white" value={kind === "audioinput" ? microphoneDeviceId : cameraDeviceId} onChange={(event) => (kind === "audioinput" ? setMicrophoneDeviceId : setCameraDeviceId)(event.target.value)}><option value="">System default</option>{available.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Device ${index + 1}`}</option>)}</select></label>;
+      return <label key={kind} className="block text-sm text-white/70">{kind === "audioinput" ? "Microphone" : "Camera"}<select className="mt-1 w-full rounded-lg border border-white/15 bg-ink p-2 text-white" value={kind === "audioinput" ? microphoneDeviceId : cameraDeviceId} onChange={(event) => (kind === "audioinput" ? setMicrophoneDeviceId : setCameraDeviceId)(event.target.value)}><option value="">System default</option>{available.map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Device ${index + 1}`}</option>)}</select></label>;
     })}
-    <div className="flex flex-wrap gap-2"><button type="button" disabled={media.preparing} className="rounded-xl bg-orange-400 px-4 py-2 font-semibold text-black disabled:opacity-50" onClick={() => { void media.prepare({ camera, microphoneDeviceId, cameraDeviceId }); }}>{media.preparing ? "Checking…" : media.ready ? "Check selected devices again" : "Check microphone & preview"}</button>{media.ready && <button type="button" className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white" onClick={media.stopPreview}>Turn devices off</button>}</div>
-    {media.ready && <p className="text-sm text-emerald-300">Microphone ready. Accept the stage invite to let the room hear you during your turns.</p>}
-    {media.error && <p role="alert" className="text-sm text-amber-200">{media.error}</p>}
+    <div className="flex flex-wrap gap-2"><button type="button" disabled={media.preparing} className="button-primary" onClick={() => { void media.prepare({ camera, microphoneDeviceId, cameraDeviceId }); }}>{media.preparing ? "Checking…" : media.ready ? "Check again" : "Check microphone"}</button>{media.ready && <button type="button" className="button-secondary" onClick={media.stopPreview}>Turn devices off</button>}</div>
+    {media.ready && <p className="text-sm text-electric">Microphone ready. Accept a stage invite to let the room hear you.</p>}
+    {media.error && <p role="alert" className="text-sm text-acid">{media.error}</p>}
   </div>;
 }
 
 export function RoastMediaControls({ media, isPerformer = false }: { media: RoastMedia; isPerformer?: boolean }) {
   return <div className="flex flex-wrap items-center gap-2 text-sm">
-    <span className={media.connectionState === ConnectionState.Connected ? "text-emerald-300" : "text-amber-200"}>{media.connectionState === ConnectionState.Connected ? "Live connection" : media.connectionState === ConnectionState.Reconnecting ? "Reconnecting media…" : media.connectionState === ConnectionState.Connecting ? "Connecting media…" : "Media disconnected"}</span>
-    {media.audioBlocked && <button type="button" className="rounded-lg bg-orange-400 px-3 py-2 font-semibold text-black" onClick={() => { void media.unlockAudio(); }}>Tap to hear the stage</button>}
-    {isPerformer && media.ready && <><button type="button" className="rounded-lg border border-white/20 px-3 py-2 text-white" onClick={() => { void media.toggleMicrophone(); }}>{media.microphoneEnabled ? "Mute my mic" : "Enable my mic"}</button><button type="button" className="rounded-lg border border-white/20 px-3 py-2 text-white" onClick={() => { void media.toggleCamera(); }}>{media.localVideoTrack ? "Camera off" : "Enable camera"}</button></>}
+    <span className={media.connectionState === ConnectionState.Connected ? "text-electric" : "text-acid"}>{media.connectionState === ConnectionState.Connected ? "Live connection" : media.connectionState === ConnectionState.Reconnecting ? "Reconnecting media…" : media.connectionState === ConnectionState.Connecting ? "Connecting media…" : "Media disconnected"}</span>
+    {media.audioBlocked && <button type="button" className="button-primary" onClick={() => { void media.unlockAudio(); }}>Tap to hear the stage</button>}
+    {isPerformer && media.ready && <><button type="button" className="button-secondary" onClick={() => { void media.toggleMicrophone(); }}>{media.microphoneEnabled ? "Mute my mic" : "Enable my mic"}</button><button type="button" className="button-secondary" onClick={() => { void media.toggleCamera(); }}>{media.localVideoTrack ? "Camera off" : "Enable camera"}</button></>}
   </div>;
 }

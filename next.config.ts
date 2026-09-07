@@ -29,6 +29,8 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // Keep the interactive preview separate from production build artifacts.
+  distDir: production ? ".next" : ".next-dev",
   poweredByHeader: false,
   devIndicators: false,
   compress: true,

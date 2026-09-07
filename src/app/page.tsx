@@ -4,8 +4,8 @@ import {
   ArrowRight,
   AudioLines,
   CalendarDays,
+  Clapperboard,
   Flame,
-  Headphones,
   Radio,
   Shuffle,
   Users,
@@ -16,29 +16,73 @@ import { SiteFooter } from "@/components/shell/site-footer";
 export const metadata: Metadata = {
   title: "Delivery — Terrible lines. Incredible commitment.",
 };
+
+const modes = [
+  {
+    href: "/play",
+    icon: AudioLines,
+    title: "Classic",
+    label: "One line. All you.",
+    copy: "Get a ridiculous line and a direction. Make it convincing.",
+    cue: "Give it everything.",
+    color: "text-acid",
+    surface: "border-acid/25 bg-acid/5 hover:border-acid/60",
+  },
+  {
+    href: "/say-it-back",
+    icon: Clapperboard,
+    title: "Say It Back",
+    label: "Your voice. Their scene.",
+    copy: "Watch a scene, record the dialogue, and play your dub.",
+    cue: "You’re in the scene.",
+    color: "text-electric",
+    surface: "border-electric/25 bg-electric/5 hover:border-electric/60",
+  },
+  {
+    href: "/switch",
+    icon: Shuffle,
+    title: "Switch",
+    label: "Same phrase. New energy.",
+    copy: "Repeat one phrase as the emotion or speaking speed changes.",
+    cue: "😄  😢  😠  😳",
+    badge: "Beta",
+    color: "text-hot",
+    surface: "border-hot/25 bg-hot/5 hover:border-hot/60",
+  },
+  {
+    href: "/roast-off",
+    icon: Flame,
+    title: "Roast Off",
+    label: "A live stage. A loud crowd.",
+    copy: "Watch, chat, and vote. Or step up and take the mic.",
+    cue: "Step up or spectate.",
+    badge: "18+",
+    color: "text-acid",
+    surface: "border-acid/25 bg-acid/5 hover:border-acid/60",
+  },
+];
+
 const ways = [
+  {
+    href: "/rounds",
+    icon: Users,
+    title: "Play with friends",
+    copy: "One invite. Everyone brings a take.",
+  },
   {
     href: "/daily",
     icon: CalendarDays,
-    number: "01",
-    title: "The Daily",
-    copy: "One line. One direction. Everyone gets the same assignment. Your first signed-in score counts.",
-  },
-  {
-    href: "/challenge",
-    icon: Users,
-    number: "02",
-    title: "Make it personal",
-    copy: "Choose a line and direction for a friend. Send a challenge. Let the performances settle it.",
+    title: "Try today’s line",
+    copy: "Same assignment. A fresh leaderboard.",
   },
   {
     href: "/stream",
     icon: Radio,
-    number: "03",
-    title: "Take it on stream",
-    copy: "Choose a round, collect community performances, and host the showcase. Classic, Say It Back, and Switch.",
+    title: "Host your community",
+    copy: "Collect performances. Run the show.",
   },
 ];
+
 export default function HomePage() {
   return (
     <>
@@ -53,218 +97,96 @@ export default function HomePage() {
               <h1 className="display-type home-headline">
                 Terrible lines.
                 <br />
-                <span className="text-acid">
-                  Incredible
-                  <br />
-                  commitment.
-                </span>
+                <span className="text-acid">Incredible commitment.</span>
               </h1>
-              <p className="mt-6 max-w-md text-base leading-7 text-white/70 sm:text-lg">
-                Get a ridiculous line. Sell the delivery. Face the verdict. Your
-                voice is the whole show.
+              <p className="mt-5 max-w-md text-base leading-7 text-white/70 sm:text-lg">
+                Make a scene with just your voice. Record, replay, and share your best take.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/play" className="button-primary min-h-14 px-7">
-                <AudioLines className="size-5" />
-                Play Classic
-                <ArrowRight className="size-4" />
-              </Link>
-              <Link href="/say-it-back" className="button-secondary min-h-14">
-                Say It Back
-                <ArrowRight className="size-4" />
-              </Link>
-              <Link href="/switch" className="button-secondary min-h-14">
-                <Shuffle className="size-4" />Switch <span className="rounded bg-hot/15 px-1.5 py-0.5 text-[9px] text-hot">BETA</span>
-                <ArrowRight className="size-4" />
-              </Link>
+                <Link href="/play" className="button-primary min-h-14 px-7">
+                  <AudioLines className="size-5" />
+                  Play Classic
+                  <ArrowRight className="size-4" />
+                </Link>
+                <Link href="#games" className="button-secondary min-h-14">
+                  Choose a mode
+                </Link>
               </div>
               <p className="mt-4 text-xs leading-6 text-white/60">
-                No account needed. Retakes encouraged. Private until you share.
+                No account needed. Private until you share.
               </p>
             </div>
             <HeroDemo />
           </div>
         </section>
-        <div className="home-wrap">
-          <div className="hero-strip">
-            <span className="mono-label text-electric">
-              Your voice. Your interpretation.
-            </span>
-            <span className="mono-label">20 seconds per take</span>
-            <span className="mono-label">Zero camera pressure</span>
-            <span className="mono-label">Clean → Spicy → Mature 18+</span>
-          </div>
-        </div>
-        <section className="home-wrap pt-10" aria-labelledby="switch-mode-title">
-          <Link href="/switch" className="group grid gap-6 rounded-2xl border border-hot/30 bg-hot/5 p-6 sm:p-8 md:grid-cols-[1.2fr_1fr] md:items-center">
-            <div><p className="mono-label flex items-center gap-2 text-hot"><Shuffle className="size-4" />New mode · Unranked beta</p><h2 id="switch-mode-title" className="display-type mt-4 text-5xl sm:text-6xl">One phrase.<br />Keep switching.</h2><p className="mt-4 max-w-lg text-sm leading-7 text-white/70">One short phrase. Repeat it as the emojis change your emotion or the cues change your speaking speed. One uninterrupted take. Solo or with the group chat.</p></div>
-            <div><div className="rounded-xl border border-white/15 bg-white/5 p-5"><p className="mono-label text-white/55">Same phrase. New energy.</p><div className="mt-5 flex flex-wrap justify-between gap-2 text-4xl" aria-label="Switch emotions: happy, sad, angry, surprised, sleepy">{["😄", "😢", "😠", "😳", "😴"].map((emoji) => <span key={emoji} aria-hidden="true">{emoji}</span>)}</div><p className="mt-5 text-xs leading-6 text-white/60">Or switch speaking speed: normal · 0.5× · 0.25× · 2× · 4×</p></div><span className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-hot">Play Switch<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span></div>
-          </Link>
-        </section>
-        <section className="home-wrap pt-6" aria-labelledby="roast-off-mode-title">
-          <Link href="/roast-off" className="group grid gap-6 rounded-2xl border border-acid/35 bg-acid/5 p-6 sm:p-8 md:grid-cols-[1.2fr_1fr] md:items-center">
-            <div><p className="mono-label flex items-center gap-2 text-acid"><Flame className="size-4" />Roast Off · Live stage · 18+</p><h2 id="roast-off-mode-title" className="display-type mt-4 text-5xl sm:text-6xl">Take the mic.<br />Take the heat.</h2><p className="mt-4 max-w-lg text-sm leading-7 text-white/70">Two people roasting. A crowd with opinions. Watch, chat, and vote, or queue for your turn. Voice only is welcome. Cameras are optional.</p></div>
-            <div className="rounded-xl border border-acid/20 bg-ink/60 p-5"><div className="flex items-center gap-3"><Headphones className="size-6 text-electric" /><p className="text-sm font-bold">Hanging out counts as playing.</p></div><p className="mt-3 text-sm leading-6 text-white/60">Enter as a spectator without enabling any devices. An authorized host runs the main stage. Invite your own crowd to a private room.</p><span className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-acid">Find the stage<ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span></div>
-          </Link>
-        </section>
-        <section className="home-wrap home-section" id="how-to-play">
-          <div className="mb-10 grid gap-5 md:grid-cols-2 md:items-end">
-            <h2 className="display-type text-5xl sm:text-7xl">
-              It’s all
-              <br />
-              in the delivery.
+
+        <section className="home-wrap scroll-mt-24 pb-10" id="games" aria-labelledby="games-title">
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <h2 id="games-title" className="display-type text-4xl sm:text-5xl">
+              Pick your performance.
             </h2>
-            <p className="max-w-md text-base leading-7 text-white/70 md:justify-self-end">
-              The line is only half the joke. Whisper the meltdown. Fight tears
-              during the victory speech. Mean every terrible word.
-            </p>
+            <span className="mono-label text-white/55">Solo, with friends, or live</span>
           </div>
-          {[
-            [
-              "01",
-              "Read the room. Badly.",
-              "Your line comes with a playable direction. Take a breath, rehearse privately, and find your version of the bit.",
-            ],
-            [
-              "02",
-              "Give us the performance.",
-              "Record your voice in the browser. Listen back immediately. Keep it, or take another swing before you submit.",
-            ],
-            [
-              "03",
-              "Collect your consequences.",
-              "Get a verdict and a note for your next take. Try the same direction again, draw another line, or challenge a friend.",
-            ],
-          ].map(([n, title, copy]) => (
-            <article className="feature-row" key={n}>
-              <span className="display-type text-4xl text-acid">{n}</span>
-              <h3 className="text-xl font-bold tracking-tight sm:text-2xl">
-                {title}
-              </h3>
-              <p className="text-sm leading-7 text-white/70">{copy}</p>
-            </article>
-          ))}
-        </section>
-        <section className="border-y border-white/15 bg-[#20201d]">
-          <div className="home-wrap home-section">
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
-              <div>
-                <p className="mono-label mb-3 text-hot">
-                  Six new packs. Many questionable choices.
-                </p>
-                <h2 className="display-type text-5xl sm:text-7xl">
-                  The group chat
-                  <br />
-                  has evidence.
-                </h2>
-              </div>
-              <Link href="/discover" className="button-secondary">
-                Find your next line
-                <ArrowRight className="size-4" />
-              </Link>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {[
-                [
-                  "Public Apology",
-                  "Confessions and delusions. Somehow, the apology makes it worse.",
-                  "internet-originals",
-                  "bg-electric",
-                ],
-                [
-                  "Clip That",
-                  "Familiar phrases and streamer meltdowns. The microphone was definitely on.",
-                  "stream-gremlins",
-                  "bg-hot",
-                ],
-                [
-                  "Do Not Forward",
-                  "Voice notes with no plausible deniability. Keep the receipts.",
-                  "group-chat-evidence",
-                  "bg-acid",
-                ],
-              ].map(([name, copy, id, color]) => (
-                <Link
-                  key={id}
-                  href={`/discover/${id}`}
-                  className={`group rounded-2xl p-6 text-ink ${color}`}
-                >
-                  <p className="mono-label mb-12">Classic line pack</p>
-                  <h3 className="display-type text-4xl">{name}</h3>
-                  <p className="mt-3 text-sm leading-6">{copy}</p>
-                  <span className="mt-7 inline-flex min-h-11 items-center gap-2 text-xs font-bold">
-                    Open pack
-                    <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-                  </span>
-                </Link>
-              ))}
-            </div>
-            <p className="mt-6 max-w-2xl text-sm leading-6 text-white/65">
-              Start Clean. Turn up to Spicy for sharper lines, or explicitly opt
-              in to Mature (18+) for profanity and adult jokes. Hosts get a
-              separate Clean default.
-            </p>
-          </div>
-        </section>
-        <section className="home-wrap home-section">
-          <div className="mb-10">
-            <p className="mono-label mb-3 text-electric">
-              Bring someone into the bit
-            </p>
-            <h2 className="display-type text-5xl sm:text-7xl">
-              Your mic. More possibilities.
-            </h2>
-          </div>
-          <div className="grid gap-5 md:grid-cols-3">
-            {ways.map(({ href, icon: Icon, number, title, copy }) => (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {modes.map(({ href, icon: Icon, title, label, copy, cue, badge, color, surface }) => (
               <Link
                 href={href}
                 key={href}
-                className="panel group flex flex-col p-6"
+                className={`group flex flex-col rounded-2xl border p-5 transition-colors ${surface}`}
               >
-                <div className="flex items-center justify-between">
-                  <Icon className="size-6 text-acid" />
-                  <span className="mono-label text-white/55">{number}</span>
+                <div className="mb-6 flex items-center justify-between gap-3">
+                  <Icon className={`size-6 ${color}`} />
+                  {badge && <span className={`mono-label rounded-full border border-white/15 px-2 py-1 ${color}`}>{badge}</span>}
                 </div>
-                <h3 className="mt-10 text-2xl font-bold tracking-tight">
-                  {title}
-                </h3>
-                <p className="mb-6 mt-3 flex-1 text-sm leading-6 text-white/70">
-                  {copy}
-                </p>
-                <span className="inline-flex min-h-11 items-center gap-2 text-xs font-bold">
-                  {title === "The Daily"
-                    ? "Play today’s line"
-                    : title === "Make it personal"
-                      ? "Create a challenge"
-                      : "Set up your stage"}
-                  <ArrowRight className="size-4" />
-                </span>
+                <p className="text-xs text-white/60">{label}</p>
+                <h3 className="mt-2 text-2xl font-bold tracking-tight">{title}</h3>
+                <p className="mb-5 mt-3 flex-1 text-sm leading-6 text-white/70">{copy}</p>
+                <div className={`flex min-h-11 items-center justify-between gap-3 border-t border-white/10 pt-4 ${color}`}>
+                  <span className={title === "Switch" ? "text-xl" : "text-xs font-bold"} aria-hidden={title === "Switch" ? true : undefined}>{cue}</span>
+                  <ArrowRight className="size-4 shrink-0 transition-transform group-hover:translate-x-1" />
+                </div>
               </Link>
             ))}
           </div>
         </section>
-        <section className="home-wrap pb-16">
-          <div className="rounded-2xl bg-paper p-7 text-ink sm:p-12">
-            <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
-              <div>
-                <Headphones className="mb-5 size-7" />
-                <h2 className="display-type text-5xl sm:text-7xl">
-                  Say it like
-                  <br />
-                  you mean it.
-                </h2>
-                <p className="mt-5 max-w-md text-sm leading-6 text-ink/70">
-                  One ridiculous line is a good place to start.
-                </p>
-              </div>
-              <Link
-                href="/play"
-                className="button-primary min-h-14 self-start px-7 md:self-end"
-              >
-                Take the mic
-                <ArrowRight className="size-4" />
+
+        <section className="home-wrap pb-12" aria-label="More ways to play">
+          <div className="grid gap-3 md:grid-cols-3">
+            {ways.map(({ href, icon: Icon, title, copy }) => (
+              <Link href={href} key={href} className="panel group flex items-center gap-4 p-5 transition-colors hover:border-electric/40">
+                <Icon className="size-5 shrink-0 text-electric" />
+                <div className="flex-1">
+                  <h2 className="text-sm font-bold">{title}</h2>
+                  <p className="mt-1 text-xs leading-5 text-white/60">{copy}</p>
+                </div>
+                <ArrowRight className="size-4 shrink-0 text-white/50 transition-transform group-hover:translate-x-1" />
               </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="border-t border-white/10 bg-surface/50">
+          <div className="home-wrap py-10 sm:py-12">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+              <h2 className="display-type text-3xl sm:text-4xl">Find your next line.</h2>
+              <Link href="/discover" className="button-secondary">
+                All packs <ArrowRight className="size-4" />
+              </Link>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {[
+                ["Public Apology", "Confessions and delusions.", "internet-originals", "bg-electric"],
+                ["Clip That", "The microphone was definitely on.", "stream-gremlins", "bg-hot"],
+                ["Do Not Forward", "Keep the voice notes. Keep the receipts.", "group-chat-evidence", "bg-acid"],
+              ].map(([name, copy, id, color]) => (
+                <Link key={id} href={`/discover/${id}`} className={`group rounded-xl p-5 text-ink ${color}`}>
+                  <div className="flex items-center justify-between gap-4">
+                    <h3 className="text-xl font-bold tracking-tight">{name}</h3>
+                    <ArrowRight className="size-4 shrink-0 transition-transform group-hover:translate-x-1" />
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-ink/75">{copy}</p>
+                </Link>
+              ))}
             </div>
           </div>
         </section>

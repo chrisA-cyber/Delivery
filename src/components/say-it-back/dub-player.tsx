@@ -376,7 +376,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-white/15 bg-black">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 bg-[#242421] px-3 py-2 sm:px-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 bg-surface px-3 py-2 sm:px-4">
         <div className="flex items-center gap-2 text-xs font-bold">
           <span className={cn("size-2 rounded-full", recording ? "animate-pulse bg-acid" : isDub ? "bg-electric" : "bg-hot")} />
           {recording ? "Recording your scene" : isDub ? (takeLabel === "Your take" ? "Your voice. Their scene." : "Your friend’s voice. Their scene.") : "The original scene"}
@@ -404,7 +404,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
           {activeCues.map((cue) => <p key={cue.id} className={cn("max-w-full rounded-md px-3 py-1.5 text-center text-sm font-bold leading-snug shadow-lg sm:text-xl", cue.roleId === role.id ? "bg-paper/95 text-ink" : "bg-black/85 text-white")}><span className="mr-1.5 text-[10px] uppercase tracking-wide opacity-60 sm:text-xs">{cue.roleId === role.id ? (takeLabel === "Your take" ? "You" : "Friend") : clip.roles.find((item) => item.id === cue.roleId)?.name ?? "Scene"}</span>{cue.text}</p>)}
         </div>}
       </div>
-      <div className="bg-[#242421] px-3 pb-3 pt-2 sm:px-4">
+      <div className="bg-surface px-3 pb-3 pt-2 sm:px-4">
         <input type="range" min={0} max={clip.duration} step={0.01} value={Math.min(currentTime, clip.duration)} disabled={busy || !loaded} aria-label="Scene playback position" aria-valuetext={`${timeLabel(currentTime)} of ${timeLabel(clip.duration)}`} onChange={(event) => seek(Number(event.target.value))} className="h-6 w-full cursor-pointer accent-acid" />
         <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0">
           <div className="flex items-center gap-1">

@@ -7,10 +7,12 @@ const groups: Array<{ title: string; links: Array<[string, string]> }> = [
     links: [
       ["Classic", "/play"],
       ["Say It Back", "/say-it-back"],
-      ["Switch · Beta", "/switch"],
+      ["Switch", "/switch"],
+      ["Roast Off", "/roast-off"],
+      ["Friends", "/rounds"],
       ["Daily", "/daily"],
       ["Impossible", "/impossible"],
-      ["Stream mode", "/stream"],
+      ["For hosts", "/stream"],
     ],
   },
   {
@@ -24,7 +26,7 @@ const groups: Array<{ title: string; links: Array<[string, string]> }> = [
     ],
   },
   {
-    title: "Keep it good",
+    title: "About",
     links: [
       ["Guidelines", "/guidelines"],
       ["Safety", "/guidelines#safety"],
@@ -36,21 +38,21 @@ const groups: Array<{ title: string; links: Array<[string, string]> }> = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-white/10 px-5 pb-28 pt-14 md:pb-12">
-      <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1.4fr_2fr]">
+    <footer className="border-t border-white/10 px-5 pb-28 pt-10 md:pb-10">
+      <div className="mx-auto grid max-w-[1184px] gap-8 lg:grid-cols-[1.4fr_2fr]">
         <div>
           <Logo />
-          <p className="mt-5 max-w-sm text-sm leading-6 text-white/50">
-            A line, a direction, and the voice only you can bring.
+          <p className="mt-4 max-w-sm text-sm leading-6 text-white/60">
+            Make a scene with your voice.
           </p>
-          <p className="mono-label mt-8 text-white/25">
+          <p className="mono-label mt-5 text-white/50">
             © {new Date().getFullYear()} Delivery Game
           </p>
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           {groups.map((group) => (
             <div key={group.title}>
-              <p className="mono-label mb-4 text-white/35">{group.title}</p>
+              <p className="mono-label mb-3 text-white/55">{group.title}</p>
               <div className="grid gap-1">
                 {group.links.map(([label, href]) => (
                   <Link

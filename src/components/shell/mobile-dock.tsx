@@ -30,7 +30,7 @@ export function MobileDock() {
 
   return (
     <nav
-      className="fixed inset-x-3 bottom-3 z-50 flex h-16 items-center justify-around rounded-2xl border border-white/10 bg-ink/95 px-2 shadow-2xl backdrop-blur-2xl md:hidden"
+      className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 flex h-16 items-center justify-around rounded-2xl border border-white/15 bg-surface/95 px-2 shadow-2xl backdrop-blur-2xl md:hidden"
       aria-label="Mobile navigation"
     >
       {items.map(({ href, label, icon: Icon, primary }) => {
@@ -40,15 +40,17 @@ export function MobileDock() {
           <Link
             href={href}
             key={href}
+            aria-current={active ? "page" : undefined}
             className={cn(
               "relative flex min-h-12 min-w-12 justify-center flex-col items-center gap-1 text-[9px] font-black uppercase tracking-wide",
-              active ? "text-white" : "text-white/55",
+              active ? "text-paper" : "text-white/65",
             )}
           >
             <span
               className={cn(
-                "grid size-8 place-items-center rounded-full",
-                primary && "size-8 rounded-lg bg-acid text-black",
+                "grid size-8 place-items-center rounded-lg transition-colors",
+                active && !primary && "bg-electric/15 text-electric",
+                primary && "bg-acid text-ink",
               )}
             >
               <Icon className={cn(primary ? "size-5" : "size-4")} />

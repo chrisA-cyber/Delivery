@@ -12,7 +12,7 @@ export function PackDetail({ pack }: { pack: ContentPack }) {
   const prompts = queryPrompts({ packIds: [pack.id], maxRating: contentRating });
   return <main className="min-h-screen px-4 pb-28 pt-28 sm:px-6 lg:px-8"><div className="mx-auto max-w-6xl">
     <Link href="/discover" className="button-ghost mb-6 px-0"><ArrowLeft className="size-4" /> All packs</Link>
-    <header className="grid gap-6 rounded-2xl bg-[#f4f0e7] p-6 text-[#171715] sm:p-9 lg:grid-cols-[1.2fr_1fr] lg:items-end">
+    <header className="grid gap-6 rounded-2xl bg-paper p-6 text-ink sm:p-9 lg:grid-cols-[1.2fr_1fr] lg:items-end">
       <div><p className="mono-label flex items-center gap-2 text-black/60">{pack.access === "pro" && <Crown className="size-4" />}{pack.eyebrow}</p><h1 className="display-type mt-6 text-[clamp(2.8rem,7vw,5.5rem)] leading-none">{pack.name}</h1></div>
       <div><p className="max-w-lg text-base leading-7 text-black/70">{pack.description}</p>{prompts.length > 0 && <ProPlayLink href={`/play?pack=${pack.id}`} requiresPro={pack.access === "pro"} className="button-primary mt-6">{pack.access === "pro" ? "Unlock or play" : "Play this pack"}<ArrowRight className="size-4" /></ProPlayLink>}</div>
     </header>

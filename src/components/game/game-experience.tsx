@@ -933,13 +933,13 @@ export function GameExperience({
                       <span className="inline-block size-2 rounded-full bg-white/30" />
                       {recorder.status === "requesting"
                         ? "Waiting for microphone permission"
-                        : "Your mic is off. The stage is yours."}
+                        : "Ready when you are."}
                     </p>
                     <p className="mt-2 max-w-md text-sm leading-6 text-white/65">
-                      Read it once. Find the bit.{" "}
+
                       {rehearsal
-                        ? "Rehearsal stays on this device until you choose to send it."
-                        : "Record, listen back, then decide whether to send it."}
+                        ? "Practice stays on this device."
+                        : "Record, listen back, then submit."}
                     </p>
                   </div>
                   <button
@@ -970,7 +970,7 @@ export function GameExperience({
                     <Headphones className="size-4" />
                     {rehearsal
                       ? "Private rehearsal on"
-                      : "Try a private rehearsal"}
+                      : "Private rehearsal"}
                   </button>
                   {recorder.status === "requesting" ? (
                     <button
@@ -983,7 +983,7 @@ export function GameExperience({
                     <p className="text-xs text-white/60">
                       {rehearsal
                         ? "No upload. No score. Just practice."
-                        : "Private by default. Retakes encouraged."}
+                        : "Private until you share."}
                     </p>
                   )}
                 </div>

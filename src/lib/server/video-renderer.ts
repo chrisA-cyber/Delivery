@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 // Sharp 0.35 ships declarations but omits them from its ESM export map.
 // @ts-expect-error Upstream package export map; runtime import is supported.
 import sharp from "sharp";
+import { VISUAL_THEME } from "@/lib/visual-theme";
 import type { SwitchChallenge } from "@/lib/switch/types";
 import type { SayClip } from "@/lib/say-it-back/types";
 
@@ -14,7 +15,7 @@ export const VIDEO_RENDER_LIMITS = Object.freeze({ durationSeconds: 22, outputBy
 const W = 1080;
 const H = 1920;
 const FPS = 30;
-const C = { ink: "#171715", paper: "#f4f0e7", muted: "#b3afa6", accent: "#ff745c", green: "#c9edbc", border: "#44443d", panel: "#23231f" };
+const C = { ...VISUAL_THEME, accent: VISUAL_THEME.amber, panel: VISUAL_THEME.surface };
 
 export interface VideoRenderCommon {
   layoutVersion: typeof VIDEO_LAYOUT_VERSION;
@@ -117,7 +118,7 @@ function footer(input: VideoRenderInput): string {
   const url = new URL(input.invitationUrl);
   if (url.protocol !== "https:" || !/^\/a\/[A-Za-z0-9_-]{6,64}$/.test(url.pathname) || url.search || url.hash || url.username || url.password) throw new VideoRenderError("RENDER_INVITATION", "The playable invitation is unavailable. Try creating the video again.");
   let body = rect(86, 1532, 864, 2, C.border) + text("Your turn.", 86, 1618, 52) + text(url.host, 86, 1672, 27, C.muted, 500);
-  body += fitText(url.pathname, 86, 1690, 864, 62, 37, 26, C.green);
+  body += fitText(url.pathname, 86, 1690, 864, 62, 37, 26, C.blue);
   if (input.mode === "say-it-back") {
     const source = input.say.clip.source;
     body += fitText(`${source.title} · ${source.creator} · ${source.license}\nShortened, dubbed adaptation. ${source.license === "CC BY 3.0" ? "creativecommons.org/licenses/by/3.0/" : ""}`, 86, 1790, 864, 90, 18, 16, C.muted);
@@ -135,7 +136,7 @@ async function identity(input: VideoRenderInput): Promise<string> {
     body += fitText(input.displayName, 178, 1418, input.score ? 478 : 758, 70, 32, 24);
   } else body += text("One take. All you.", 86, 1468, 31, C.muted, 500);
   if (input.score && Number.isFinite(input.score.value) && input.score.value >= 0 && input.score.value <= 100) {
-    body += text(`${Math.round(input.score.value)}`, 950, 1454, 43, C.green, 700, "end");
+    body += text(`${Math.round(input.score.value)}`, 950, 1454, 43, C.accent, 700, "end");
     body += text(input.score.beta || input.mode === "switch" ? "BETA SCORE" : input.score.label.slice(0, 18).toUpperCase(), 950, 1488, 19, C.muted, 500, "end");
   }
   return body;
@@ -147,7 +148,7 @@ function waveformBody(peaks: number[], x: number, y: number, width: number, heig
     // Visual scaling only. These peaks are decoded from this recording; the
     // performance stream never passes through gain/normalization filters.
     const barHeight = Math.max(3, Math.sqrt(peak / max) * height);
-    return rect(x + i * step, y + (height - barHeight) / 2, Math.max(2, step - 3), barHeight, C.green, 2);
+    return rect(x + i * step, y + (height - barHeight) / 2, Math.max(2, step - 3), barHeight, C.blue, 2);
   }).join("");
 }
 export function measureVideoPeaks(pcm: Buffer, bars = 108): number[] {
@@ -212,9 +213,9 @@ export async function renderPerformanceVideo(input: VideoRenderInput, options: {
           // stored emoji through Pango's RGBA text path before composing the card.
           const emojiPng = await sharp({ text: { text: xml(cue.emoji), font: "Noto Color Emoji", fontfile: process.env.VIDEO_EMOJI_FONT_PATH || "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf", rgba: true, width: 160, height: 160 } }).resize(160, 160, { fit: "contain", background: "#00000000" }).png().toBuffer();
           card += `<image href="data:image/png;base64,${emojiPng.toString("base64")}" x="352" y="91" width="160" height="160"/>`;
-          card += fitText(cue.directionLabel, 28, 260, 808, 94, challenge.kind === "speed" ? 53 : 61, 39, C.green, true);
+          card += fitText(cue.directionLabel, 28, 260, 808, 94, challenge.kind === "speed" ? 53 : 61, 39, C.lavender, true);
           card += text(next ? `NEXT: ${next.directionLabel}` : "THE FINAL SWITCH", 432, 391, 23, C.muted, 500, "middle");
-          challenge.cues.forEach((_, dot) => { card += rect(46 + dot * (772 / challenge.cues.length), 438, 772 / challenge.cues.length - 10, 7, dot === index ? C.accent : dot < index ? C.green : C.border, 3); });
+          challenge.cues.forEach((_, dot) => { card += rect(46 + dot * (772 / challenge.cues.length), 438, 772 / challenge.cues.length - 10, 7, dot === index ? C.accent : dot < index ? C.blue : C.border, 3); });
           await png(cuePath, card, 864, 495);
           parts.push({ path: cuePath, x: 86, y: 654, start: cue.start, end: index === challenge.cues.length - 1 ? duration + 1 : cue.end });
         }
@@ -225,8 +226,8 @@ export async function renderPerformanceVideo(input: VideoRenderInput, options: {
     } else {
       const { clip, roleId } = input.say;
       const role = clip.roles.find((item) => item.id === roleId)!;
-      body += text("SAY IT BACK", 86, 312, 28, C.accent) + fitText(clip.title, 86, 333, 864, 124, 43, 29) + text(`THE VOICE OF ${role.name.toUpperCase()}`, 86, 476, 23, C.green, 500);
-      body += rect(60, 524, 960, 704, "#090908", 20, C.border);
+      body += text("SAY IT BACK", 86, 312, 28, C.accent) + fitText(clip.title, 86, 333, 864, 124, 43, 29) + text(`THE VOICE OF ${role.name.toUpperCase()}`, 86, 476, 23, C.blue, 500);
+      body += rect(60, 524, 960, 704, C.ink, 20, C.border);
       // Phrase-level cues are the exact stored manifest intervals, including
       // retained speakers; no ASR request or fabricated word timing is involved.
       const boundaries = [...new Set([0, clip.duration, ...clip.cues.flatMap((cue) => [Math.max(0, cue.start - 0.12), Math.min(clip.duration, cue.end + 0.12)])])].sort((a, b) => a - b);

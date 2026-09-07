@@ -9,6 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        surface: "rgb(var(--surface-rgb) / <alpha-value>)",
         ink: "rgb(var(--ink-rgb) / <alpha-value>)",
         paper: "rgb(var(--paper-rgb) / <alpha-value>)",
         acid: "rgb(var(--acid-rgb) / <alpha-value>)",
@@ -22,8 +23,8 @@ const config: Config = {
         mono: ["JetBrains Mono", "SFMono-Regular", "Consolas", "monospace"],
       },
       boxShadow: {
-        acid: "0 8px 28px rgba(255,116,92,.12)",
-        hot: "0 8px 28px rgba(201,183,239,.12)",
+        acid: "0 8px 28px rgba(255,194,102,.15)",
+        hot: "0 8px 28px rgba(196,181,253,.15)",
       },
       animation: {
         marquee: "marquee 28s linear infinite",

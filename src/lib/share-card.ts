@@ -1,3 +1,4 @@
+import { VISUAL_THEME } from "@/lib/visual-theme";
 import type { JudgeResult, Prompt } from "@/types/game";
 
 export function wrapCardText(
@@ -60,33 +61,33 @@ export async function createResultCard(prompt: Prompt, result: JudgeResult) {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas is not available");
   const fixture = result.source === "fallback";
-  ctx.fillStyle = "#171715";
+  ctx.fillStyle = VISUAL_THEME.ink;
   ctx.fillRect(0, 0, 1200, 800);
-  ctx.fillStyle = "#f4f0e7";
+  ctx.fillStyle = VISUAL_THEME.paper;
   ctx.font = '700 40px "Barlow Condensed", Arial';
   ctx.fillText("DELIVERY", 48, 67);
   ctx.font = '700 15px "DM Sans", Arial';
   ctx.textAlign = "right";
-  ctx.fillStyle = "#c9edbc";
+  ctx.fillStyle = VISUAL_THEME.blue;
   ctx.fillText(
     fixture ? "LOCAL FIXTURE · NOT A LIVE SCORE" : "THE VOICE PERFORMANCE GAME",
     1152,
     59,
   );
   ctx.textAlign = "left";
-  ctx.fillStyle = "#f4f0e7";
+  ctx.fillStyle = VISUAL_THEME.paper;
   ctx.beginPath();
   ctx.roundRect(40, 104, 1120, 400, 20);
   ctx.fill();
-  ctx.fillStyle = "#171715";
+  ctx.fillStyle = VISUAL_THEME.ink;
   ctx.font = '700 14px "DM Sans", Arial';
   ctx.fillText("THE LINE", 72, 142);
   fitText(ctx, `“${prompt.line}”`, 72, 160, 750, 290, 48);
-  ctx.fillStyle = "#ff745c";
+  ctx.fillStyle = VISUAL_THEME.amber;
   ctx.beginPath();
   ctx.roundRect(872, 136, 256, 330, 14);
   ctx.fill();
-  ctx.fillStyle = "#171715";
+  ctx.fillStyle = VISUAL_THEME.ink;
   ctx.font = '700 15px "DM Sans", Arial';
   ctx.textAlign = "center";
   ctx.fillText(fixture ? "FIXTURE SCORE" : "DELIVERY SCORE", 1000, 181);
@@ -96,26 +97,26 @@ export async function createResultCard(prompt: Prompt, result: JudgeResult) {
   ctx.fillText("/ 100", 1000, 376);
   ctx.textAlign = "left";
   fitText(ctx, result.title, 894, 405, 212, 35, 20);
-  ctx.fillStyle = "#c9edbc";
+  ctx.fillStyle = VISUAL_THEME.blue;
   ctx.beginPath();
   ctx.roundRect(40, 522, 1120, 158, 16);
   ctx.fill();
-  ctx.fillStyle = "#171715";
+  ctx.fillStyle = VISUAL_THEME.ink;
   ctx.font = '700 14px "DM Sans", Arial';
   ctx.fillText("THE DIRECTION", 72, 559);
   fitText(ctx, prompt.energy, 72, 572, 1056, 80, 27);
-  ctx.fillStyle = "#b5b3aa";
+  ctx.fillStyle = VISUAL_THEME.muted;
   ctx.font = '500 15px "DM Sans", Arial';
   ctx.fillText(
     `Commitment ${result.scores.commitment}  /  Comedy ${result.scores.comedy}  /  Accuracy ${result.scores.accuracy}  /  Chaos ${result.scores.chaos}`,
     48,
     719,
   );
-  ctx.fillStyle = "#f4f0e7";
+  ctx.fillStyle = VISUAL_THEME.paper;
   ctx.font = '700 16px "DM Sans", Arial';
   ctx.fillText("SAME LINE. YOUR INTERPRETATION?", 48, 763);
   ctx.textAlign = "right";
-  ctx.fillStyle = "#b5b3aa";
+  ctx.fillStyle = VISUAL_THEME.muted;
   ctx.font = '500 14px "DM Sans", Arial';
   ctx.fillText(
     prompt.rating === "mature" ? "MATURE · 18+" : "AUDIO NOT INCLUDED",

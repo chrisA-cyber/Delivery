@@ -1,3 +1,4 @@
+import { VISUAL_THEME } from "@/lib/visual-theme";
 import { ImageResponse } from "next/og";
 export const runtime = "edge";
 export const alt = "Delivery — Terrible lines. Incredible commitment.";
@@ -13,8 +14,8 @@ export default function OpenGraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#171715",
-          color: "#f4f0e7",
+          background: VISUAL_THEME.ink,
+          color: VISUAL_THEME.paper,
           padding: 58,
           fontFamily: "Arial, sans-serif",
         }}
@@ -27,7 +28,7 @@ export default function OpenGraphImage() {
           }}
         >
           <span style={{ fontSize: 30, fontWeight: 900 }}>DELIVERY</span>
-          <span style={{ fontSize: 18, color: "#c9edbc" }}>
+          <span style={{ fontSize: 18, color: VISUAL_THEME.blue }}>
             THE VOICE PERFORMANCE GAME
           </span>
         </div>
@@ -42,20 +43,20 @@ export default function OpenGraphImage() {
           }}
         >
           <span>Terrible lines.</span>
-          <span style={{ color: "#ff745c" }}>Incredible commitment.</span>
+          <span style={{ color: VISUAL_THEME.amber }}>Incredible commitment.</span>
         </div>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            borderTop: "1px solid #55554c",
+            borderTop: `1px solid ${VISUAL_THEME.border}`,
             paddingTop: 24,
             fontSize: 22,
           }}
         >
           <span>One line. One direction. Your interpretation.</span>
-          <span style={{ color: "#c9edbc" }}>PLAY CLASSIC →</span>
+          <span style={{ color: VISUAL_THEME.blue }}>PLAY CLASSIC →</span>
         </div>
       </div>
     ),
