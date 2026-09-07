@@ -34,9 +34,11 @@ let heartbeatFailure = null, requestChain = Promise.resolve(), lastPhase = null,
 let stage = "preflight", wroteReport = false;
 
 function totalCalls() { return Object.values(evidence.httpCalls).reduce((sum, count) => sum + count, 0); }
-function guard() {
-  if (Date.now() >= hardDeadline || (!cleanup && (stopping || Date.now() >= workDeadline))) throw new Error("VERIFY_TIME_LIMIT");
-  if (totalCalls() >= (cleanup ? 400 : 380)) throw new Error("VERIFY_HTTP_LIMIT");
+function guard(cleanupMode = false) {
+  // Cancellation remains permanent for the main flow. Only explicitly marked
+  // cleanup calls may proceed after an unexpected native callback failure.
+  if (Date.now() >= hardDeadline || (!cleanupMode && (stopping || Date.now() >= workDeadline))) throw new Error("VERIFY_TIME_LIMIT");
+  if (totalCalls() >= (cleanupMode ? 400 : 380)) throw new Error("VERIFY_HTTP_LIMIT");
 }
 function check(name, condition, detail) {
   assert.ok(condition, name);
@@ -69,20 +71,21 @@ const target = new URL(process.env.ROAST_VERIFY_BASE_URL || `http://127.0.0.1:${
 assert.ok(["localhost", "127.0.0.1", "[::1]"].includes(target.hostname) && target.protocol === "http:" && target.pathname === "/" && !target.username && !target.password, "Verifier target must be this app's loopback origin");
 const base = target.origin;
 const origin = new URL(process.env.NEXT_PUBLIC_APP_URL || base).origin;
-const authFetch = async (input, init = {}) => {
-  guard(); evidence.httpCalls.auth++;
+const makeAuthFetch = (cleanupMode = false) => async (input, init = {}) => {
+  guard(cleanupMode); evidence.httpCalls.auth++;
   return fetch(input, { ...init, signal: AbortSignal.timeout(Math.min(10_000, hardDeadline - Date.now())) });
 };
+const authFetch = makeAuthFetch();
 function absorbCookies(person, response) {
   for (const cookie of response.headers.getSetCookie()) {
     const pair = cookie.split(";", 1)[0]; const equals = pair.indexOf("=");
     if (equals > 0) person.jar.set(pair.slice(0, equals), pair.slice(equals + 1));
   }
 }
-async function request(person, path, body, expected = [200], { raw = false } = {}) {
+async function request(person, path, body, expected = [200], { raw = false, cleanupMode = false } = {}) {
   const execute = async () => {
     for (let attempt = 0; attempt < 3; attempt++) {
-      guard(); evidence.httpCalls.application++;
+      guard(cleanupMode); evidence.httpCalls.application++;
       const headers = { Origin: origin, "Content-Type": "application/json" };
       if (person?.jar.size) headers.Cookie = [...person.jar].map(([key, value]) => `${key}=${value}`).join("; ");
       const response = await fetch(`${base}${path}`, { method: body ? "POST" : "GET", headers,
@@ -111,10 +114,10 @@ async function read(person = host) {
   return result.room;
 }
 async function signedPerson(label) {
-  const email = `roast-verify-${randomUUID()}@example.invalid`;
+  const email = `roast-verify-${runId}-${label.toLowerCase()}@example.invalid`;
   const password = randomBytes(32).toString("base64url");
   const created = await admin.auth.admin.createUser({ email, password, email_confirm: true,
-    user_metadata: { display_name: `Roast verify ${label}`, full_name: `Roast verify ${label}` } });
+    user_metadata: { display_name: `Roast verify ${label}`, full_name: `Roast verify ${label}`, roast_verify_run_id: runId } });
   if (created.error || !created.data?.user) throw new Error("VERIFY_FIXTURE_CREATE_FAILED");
   fixtures.push({ id: created.data.user.id, deleted: false }); evidence.cleanup.usersCreated++;
   const person = { label, userId: created.data.user.id, jar: new Map(), memberId: null, active: false, rtc: null, camera: label !== "B" && label !== "Host" };
@@ -187,8 +190,8 @@ function distribution(samples) {
   if (!values.length) return { samples: 0 };
   return { samples: values.length, minMs: values[0], medianMs: values[Math.floor(values.length / 2)], p95Ms: values[Math.min(values.length - 1, Math.floor(values.length * .95))], maxMs: values.at(-1) };
 }
-async function providerRooms() {
-  guard(); evidence.httpCalls.providerRead++;
+async function providerRooms(cleanupMode = false) {
+  guard(cleanupMode); evidence.httpCalls.providerRead++;
   const endpoint = new URL(process.env.LIVEKIT_URL); endpoint.protocol = endpoint.protocol === "ws:" ? "http:" : "https:";
   const client = new RoomServiceClient(endpoint.origin, process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET, { requestTimeout: 4, failover: false });
   return client.listRooms([mediaRoomName]);
@@ -308,11 +311,32 @@ async function main() {
     method: "Generated pulse source to native receiver decoded PCM, same process clock; includes encoder, SFU, decode and source buffering; excludes browser/speaker playback." };
   evidence.estimatedParticipantMinutes = Number((5 * (Date.now() - beganAt) / 60_000).toFixed(2));
   evidence.limitations = ["Native RTC and HTTP sessions are not independent browsers.", "HTTP state restoration is not a browser refresh test.", "No physical microphone, camera, phone audio, browser autoplay or human enjoyment was verified."];
+  suite.assertHealthy();
   evidence.success = true;
 }
 
+let rejectUnexpected;
+const unexpectedFailure = new Promise((_, reject) => { rejectUnexpected = reject; });
+function unexpected(kind) {
+  // Async native callbacks run outside main()'s promise. Suppress their raw SDK
+  // errors, cancel main permanently and funnel through the same bounded cleanup.
+  evidence.success = false;
+  evidence.failure ??= { stage, code: kind };
+  if (cleanup) { evidence.cleanup.unexpectedFailure = kind; return; }
+  stopping = true;
+  clearInterval(heartbeatTimer);
+  rejectUnexpected(new Error(kind));
+}
+const unexpectedException = () => unexpected("VERIFY_UNCAUGHT_CALLBACK");
+const unexpectedRejection = () => unexpected("VERIFY_UNHANDLED_REJECTION");
+const interrupted = () => unexpected("VERIFY_PROCESS_INTERRUPTED");
+process.on("uncaughtException", unexpectedException);
+process.on("unhandledRejection", unexpectedRejection);
+process.on("SIGTERM", interrupted);
+process.on("SIGINT", interrupted);
+
 try {
-  await main();
+  await Promise.race([main(), unexpectedFailure]);
 } catch (error) {
   evidence.failure = { stage, ...safeError(error) };
   evidence.success = false;
@@ -321,7 +345,7 @@ try {
   await heartbeatWork.catch(() => {});
   if (host && roomId) {
     try {
-      const closed = await action(host, "host_end");
+      const closed = await action(host, "host_end", {}, [200], { cleanupMode: true });
       evidence.cleanup.roomClosed = closed.room.phase === "closed";
     } catch { evidence.cleanup.roomCloseFailed = true; }
   }
@@ -336,15 +360,18 @@ try {
   if (mediaRoomName) {
     try {
       for (let attempt = 0; attempt < 5; attempt++) {
-        if ((await providerRooms()).length === 0) { evidence.cleanup.mediaRoomReleased = true; break; }
+        if ((await providerRooms(true)).length === 0) { evidence.cleanup.mediaRoomReleased = true; break; }
         await delay(1000);
       }
     } catch { evidence.cleanup.mediaReleaseCheckFailed = true; }
   }
   if (admin) {
+    const cleanupAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false }, global: { fetch: makeAuthFetch(true) },
+    });
     for (const fixture of fixtures) {
       try {
-        const result = await admin.auth.admin.deleteUser(fixture.id);
+        const result = await cleanupAdmin.auth.admin.deleteUser(fixture.id);
         if (!result.error) { fixture.deleted = true; evidence.cleanup.usersDeleted++; }
       } catch { /* Report exact disposable IDs still needing cleanup, without credentials. */ }
     }

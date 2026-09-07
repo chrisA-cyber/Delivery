@@ -44,6 +44,7 @@ export function RoastRoom({ id, inviteToken }: { id: string; inviteToken?: strin
     identity: credentials?.identity,
     enabled: joined && Boolean(credentials),
     blockedIdentities: room?.viewer.blockedIds ?? [],
+    hostMuted: Boolean(room?.stage.find((member) => member?.id === room.viewer.id)?.muted),
     onCameraChange: async (enabled) => { await act("camera", { enabled }); },
   });
   const isPerformer = Boolean(room?.viewer.id && room.stage.some((member) => member?.id === room.viewer.id));
