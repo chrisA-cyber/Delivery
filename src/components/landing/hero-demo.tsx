@@ -26,7 +26,7 @@ export function HeroDemo() {
         <h1 className="display-type home-headline">
           Same phrase.
           <br />
-          <span className="text-mint">Different energy.</span>
+          <span className="text-gradient">Different energy.</span>
         </h1>
         <p className="mt-3 max-w-md text-base leading-7 text-white/75 sm:mt-5 sm:text-lg">
           Say it again. Change the emotion or speed. See how far you can take it.

@@ -1,15 +1,15 @@
-/** Shared palette for the app, canvas cards and finished video overlays. */
+/** Shared colors for canvas, video, and social images that cannot read CSS tokens. */
 export const VISUAL_THEME = {
-  ink: "#10141f",
-  surface: "#182031",
-  paper: "#f7f4ec",
-  accent: "#91efbc",
-  yellow: "#f5d477",
-  pink: "#ff9b91",
-  blue: "#94baff",
-  violet: "#c5abff",
-  orange: "#ffbb7c",
-  muted: "#b5bed0",
-  border: "#39465e",
-  paperMuted: "#4d586e",
+  ink: "#070707",
+  surface: "#0e0e10",
+  paper: "#f5f2e8",
+  accent: "#ffdc66",
+  yellow: "#ffdc66",
+  pink: "#ff4cc8",
+  blue: "#5d7cff",
+  violet: "#a96cff",
+  orange: "#ff7a2f",
+  muted: "#aaa7b3",
+  border: "#393642",
+  paperMuted: "#534d61",
 };

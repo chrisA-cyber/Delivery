@@ -14,8 +14,8 @@
     "entertainment",
     "social"
   ],
-  "background_color": "#10141f",
-  "theme_color": "#10141f",
+  "background_color": "#070707",
+  "theme_color": "#070707",
   "icons": [
     {
       "src": "/icon.svg",

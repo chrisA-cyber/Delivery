@@ -5,7 +5,7 @@ import type { SwitchChallenge } from "./switch/types";
 import type { SayClip } from "./say-it-back/types";
 import emojiImages from "./video-emoji.json";
 
-export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v7-studio" as const;
+export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v8-neon" as const;
 export const COMPOSITION_WIDTH = 1080;
 export const COMPOSITION_HEIGHT = 1920;
 export const AUDIO_LEVEL_FPS = 15;

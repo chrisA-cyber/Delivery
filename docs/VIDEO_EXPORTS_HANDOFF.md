@@ -1,3 +1,13 @@
+# Original neon palette restored — September 8, 2026
+
+Restores the palette and spectrum logo from `1bd5a03`: near-black surfaces, yellow actions, hot pink, electric blue, violet and orange. Shared CSS, canvas/video colors, social branding, PWA icons and browser theme color agree. Switch retains the current primary placement, layout, navigation and gameplay. The compatibility `mint` tokens now resolve to the original yellow action color. Typography and compact recording layouts remain unchanged.
+
+New exports use `delivery-vertical-v8-neon` so the existing exact-version check distinguishes the restored palette from studio-theme files. Earlier clips stay downloadable and no existing videos are regenerated automatically. No geometry, audio, camera defaults, storage or database changes.
+
+Verification: production build, scoped ESLint and 21 existing composition/export UI checks passed. The cloud browser cannot open this workspace's localhost; visual release verification uses the hosted application.
+
+---
+
 # Switch-first product polish — September 8, 2026
 
 Switch is the primary arrival and play experience. The shared theme now uses navy surfaces, mint for Switch, warm yellow for Classic and blue for Say It Back, with coral and violet supporting cues and states. The clip editor uses shorter, camera-neutral copy and clearer Preview, Finished video and Create video actions.
