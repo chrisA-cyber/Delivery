@@ -1,8 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const routes = [
-  { path: "/", copy: /terrible lines/i },
-  { path: "/play", copy: /your mic is off/i },
+  { path: "/", copy: /same phrase/i },
+  { path: "/play", copy: /make the direction your own/i },
   { path: "/daily", copy: /same line worldwide/i },
   { path: "/discover", copy: /pick your poison/i },
   { path: "/feed", copy: /fresh deliveries/i },
@@ -56,7 +56,7 @@ test.describe("public route smoke", () => {
     const reroll = page.getByRole("button", { name: /reroll/i });
     await reroll.click();
     await expect(reroll).toBeEnabled();
-    await expect(page.getByText("Your mic is off. The stage is yours.", { exact: true })).toBeVisible();
+    await expect(page.getByText("Your take", { exact: true })).toBeVisible();
     expect(pageErrors).toEqual([]);
   });
 });

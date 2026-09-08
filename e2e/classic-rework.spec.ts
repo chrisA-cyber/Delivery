@@ -132,7 +132,7 @@ test("submission failure preserves playback and retries the same private take ex
     /prompt=v2-favorite-child&energy=v2-confidence-tears/,
   );
   await page
-    .getByRole("button", { name: "Retry same direction", exact: true })
+    .getByRole("button", { name: "Another take", exact: true })
     .click();
   await expect(page.getByTestId("prompt-line")).toContainText(
     "my own emergency contact",
@@ -154,7 +154,7 @@ test("private rehearsal never uploads until the player explicitly submits", asyn
   });
   await page.goto(fixedPath);
   await page
-    .getByRole("button", { name: "Try a private rehearsal", exact: true })
+    .getByRole("button", { name: "Private rehearsal", exact: true })
     .click();
   await record(page);
   await expect(
@@ -169,7 +169,7 @@ test("private rehearsal never uploads until the player explicitly submits", asyn
     .getByRole("button", { name: "Judge this take", exact: true })
     .click();
   await expect(
-    page.getByText("Judgment delivered", { exact: true }),
+    page.getByText("Your result", { exact: true }),
   ).toBeVisible();
   expect(count).toBe(1);
 });
@@ -209,7 +209,7 @@ test("next-round failures preserve result and successful draws exclude recent li
     .getByRole("button", { name: "Judge this take", exact: true })
     .click();
   await expect(
-    page.getByText("Judgment delivered", { exact: true }),
+    page.getByText("Your result", { exact: true }),
   ).toBeVisible();
   let draws = 0;
   await page.route("**/api/prompts/random?**", async (route) => {
@@ -229,14 +229,14 @@ test("next-round failures preserve result and successful draws exclude recent li
     else await route.continue();
   });
   await page
-    .getByRole("button", { name: "One more round", exact: true })
+    .getByRole("button", { name: "New line", exact: true })
     .click();
   await expect(
     page.getByRole("alert").filter({ hasText: "Catalog offline" }),
   ).toContainText("Catalog offline");
   await expect(page.locator("audio")).toBeVisible();
   await page
-    .getByRole("button", { name: "One more round", exact: true })
+    .getByRole("button", { name: "New line", exact: true })
     .click();
   await expect(
     page.getByRole("button", { name: "Start recording", exact: true }),
@@ -305,9 +305,10 @@ for (const width of [320, 390, 768, 1440])
     ).toBeVisible();
     await capture("judging");
     await expect(
-      page.getByText("Judgment delivered", { exact: true }),
+      page.getByText("Your result", { exact: true }),
     ).toBeVisible();
     await capture("result");
+    await page.getByText("Card, audio & public sharing", { exact: true }).click();
     const download = page.waitForEvent("download");
     await page.getByRole("button", { name: "Save card", exact: true }).click();
     const file = await download;
@@ -459,8 +460,9 @@ test("retired Classic links stop before recording and preserved Daily results sh
     .getByRole("button", { name: "Judge this take", exact: true })
     .click();
   await expect(
-    page.getByText("Judgment delivered", { exact: true }),
+    page.getByText("Your result", { exact: true }),
   ).toBeVisible();
+  await page.getByText("Card, audio & public sharing", { exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Copy Daily link", exact: true }),
   ).toBeVisible();
@@ -500,9 +502,9 @@ test("silence stays local and cannot be submitted", async ({ page }) => {
   );
   expect(submissions).toBe(0);
   await expect(
-    page.getByRole("button", { name: "Save take", exact: true }),
+    page.getByRole("button", { name: "Save audio", exact: true }),
   ).toBeEnabled();
-  await page.getByRole("button", { name: "Retake", exact: true }).click();
+  await page.getByRole("button", { name: "Another take", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Start recording", exact: true }),
   ).toBeEnabled();

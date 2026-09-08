@@ -4,7 +4,7 @@ import { Check, Clapperboard, Download, Film, LoaderCircle, RefreshCw, RotateCcw
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "@/components/providers/app-provider";
-import { VIDEO_LAYOUT_VERSION, fullFrameCamera, defaultCameraSettings, defaultClipEditSettings, type ClipAvatar, type ClipEditSettings } from "@/lib/video-composition";
+import { VIDEO_LAYOUT_VERSION, defaultCameraSettings, defaultClipEditSettings, type ClipAvatar, type ClipEditSettings } from "@/lib/video-composition";
 import { ClipEditorControls } from "./clip-editor-controls";
 import { ClipPreview, type ClipEditorSource } from "./clip-preview";
 import Link from "next/link";
@@ -137,7 +137,9 @@ export function VideoExport({ mode, attemptId, prepareAttempt, hasScore = false,
   }, [opened, portalReady]);
 
   const currentKey = clipSettingsKey(settings);
-  const selected = exports.find((item) => item.settings && (!fullFrameCamera(settings) || item.layoutVersion === VIDEO_LAYOUT_VERSION) && clipSettingsKey(item.settings) === currentKey
+  // Every presentation shares the current artwork. Older finished files stay in
+  // Earlier clips, but must not appear as a matching preview of the new theme.
+  const selected = exports.find((item) => item.settings && item.layoutVersion === VIDEO_LAYOUT_VERSION && clipSettingsKey(item.settings) === currentKey
     && (!settings.includeName || (item.displayName ?? null) === (editor?.source.scene.displayName ?? null))
     && (!settings.includeScore || (item.score?.value === editor?.source.scene.score?.value && item.score?.label === editor?.source.scene.score?.label && Boolean(item.score?.beta) === Boolean(editor?.source.scene.score?.beta))));
   const selectedId = selected?.id;
@@ -221,7 +223,7 @@ export function VideoExport({ mode, attemptId, prepareAttempt, hasScore = false,
   async function save() {
     if (savingRef.current || creatingRef.current) return;
     savingRef.current = true; setSaving(true); setError("");
-    try { await persist(); if (mounted.current) setNotice("Edits saved. Reopen this performance to keep editing."); }
+    try { await persist(); if (mounted.current) setNotice("Edits saved."); }
     catch (cause) { if (mounted.current) setError(cause instanceof Error ? cause.message : "Your edits could not be saved. Try again."); }
     finally { savingRef.current = false; if (mounted.current) setSaving(false); }
   }
@@ -245,8 +247,8 @@ export function VideoExport({ mode, attemptId, prepareAttempt, hasScore = false,
 
   return <section className={compact ? "mt-4" : "rounded-2xl border border-electric/25 bg-electric/[.045] p-5"} aria-label="Performance video">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      {!compact && <div><h2 className="text-lg font-bold">Make it a clip</h2><p className="mt-1 text-sm text-white/55">Your avatar. Your performance.</p></div>}
-      <button type="button" className="button-secondary min-h-12" disabled={disabled} onClick={() => setOpened(true)}><Clapperboard className="size-4" />{exports.length ? "Edit clip" : "Create video"}</button>
+      {!compact && <div><h2 className="text-lg font-bold">Make it a clip</h2><p className="mt-1 text-sm text-white/65">Trim, frame and share your take.</p></div>}
+      <button type="button" className="button-secondary min-h-12" disabled={disabled} onClick={() => setOpened(true)}><Clapperboard className="size-4" />{opened || exports.length ? "Edit clip" : "Create video"}</button>
     </div>
     {opened && portalReady && createPortal(<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-0 backdrop-blur-sm sm:p-4" onPointerDown={(event) => { if (event.target === event.currentTarget) setOpened(false); }}>
       <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby={headingId} className="flex h-[100dvh] max-h-[100dvh] w-full max-w-5xl flex-col overflow-hidden border border-white/15 bg-surface shadow-2xl sm:h-[min(90dvh,850px)] sm:rounded-2xl">
@@ -256,7 +258,7 @@ export function VideoExport({ mode, attemptId, prepareAttempt, hasScore = false,
         </header>
         {!eligible ? <div className="flex flex-1 items-center p-6"><p className="text-sm leading-6 text-white/70">{reason || "This performance is unavailable for video export."}</p></div> : editor ? <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1.15fr)_minmax(0,1fr)] sm:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] sm:grid-rows-1">
           <div className="flex min-h-0 flex-col border-b border-white/10 bg-ink/65 p-3 sm:border-b-0 sm:border-r sm:p-5">
-            {ready && <div className="mb-2 flex shrink-0 items-center justify-center gap-1"><button type="button" aria-pressed={!finishedPreview} className={`min-h-8 rounded-lg px-3 text-xs font-bold ${!finishedPreview ? "bg-white/10 text-white" : "text-white/50"}`} onClick={() => setFinishedPreview(false)}>Edit preview</button><button type="button" aria-pressed={finishedPreview} className={`min-h-8 rounded-lg px-3 text-xs font-bold ${finishedPreview ? "bg-electric/15 text-electric" : "text-white/50"}`} onClick={() => setFinishedPreview(true)}>Finished MP4</button></div>}
+            {ready && <div className="mb-2 flex shrink-0 items-center justify-center gap-1"><button type="button" aria-pressed={!finishedPreview} className={`min-h-8 rounded-lg px-3 text-xs font-bold ${!finishedPreview ? "bg-white/10 text-white" : "text-white/50"}`} onClick={() => setFinishedPreview(false)}>Preview</button><button type="button" aria-pressed={finishedPreview} className={`min-h-8 rounded-lg px-3 text-xs font-bold ${finishedPreview ? "bg-electric/15 text-electric" : "text-white/50"}`} onClick={() => setFinishedPreview(true)}>Finished video</button></div>}
             {ready && finishedPreview ? <div className="flex min-h-0 flex-1 flex-col items-center gap-2"><video key={`${selected.id}:${previewRevision}`} className="min-h-0 w-full flex-1 object-contain" controls playsInline preload="metadata" src={`${videoPath}?v=${previewRevision}`} aria-label="Finished performance video" onError={() => setPreviewError(true)} />{previewError && <p role="alert" className="text-xs text-orange-200">Preview could not load. <button type="button" className="underline" onClick={() => { setPreviewError(false); setPreviewRevision((current) => current + 1); }}>Reload video</button> or download below.</p>}</div> : <ClipPreview source={editor.source} settings={settings} onChange={changeSettings} disabled={busy} />}
           </div>
           <ClipEditorControls hasCamera={Boolean(editor.source.camera?.length)} mode={mode} settings={settings} onChange={changeSettings} duration={editor.source.duration} hasScore={Boolean(editor.source.scene.score)} disabled={busy} />
@@ -268,11 +270,11 @@ export function VideoExport({ mode, attemptId, prepareAttempt, hasScore = false,
           {error && <div role="alert" className="mb-2 flex flex-wrap items-center justify-between gap-x-3 text-xs leading-5 text-orange-200"><p>{error}</p><button type="button" className="inline-flex min-h-9 items-center gap-1 underline" onClick={() => setRefresh((current) => current + 1)}><RefreshCw className="size-3" />Check video status</button></div>}
           {notice && <p role="status" className="mb-2 text-xs leading-5 text-white/65">{notice}</p>}
           {eligible && <div className="flex flex-wrap items-center justify-between gap-2">
-            <button type="button" disabled={busy || !editor || savedKey === currentKey} className="button-secondary min-h-11 px-3 text-xs sm:px-4" onClick={() => void save()}>{saving ? <LoaderCircle className="size-3.5 animate-spin" /> : savedKey === currentKey ? <Check className="size-3.5" /> : <Save className="size-3.5" />}{saving ? "Saving…" : savedKey === currentKey ? "Edits saved" : "Save edits"}</button>
-            <div className="flex flex-wrap gap-2">{ready ? <><a href={`${videoPath}?download=1`} download={filename} className="button-primary min-h-11 px-3 text-xs sm:px-4"><Download className="size-4" />Download video</a>{nativeSharing && (shareFile || preparingShare) ? <button type="button" className="button-secondary min-h-11 px-3 text-xs" disabled={!shareFile || sharing} onClick={() => void share()}>{preparingShare || sharing ? <LoaderCircle className="size-4 animate-spin" /> : <Share2 className="size-4" />}{preparingShare ? "Preparing…" : "Share video"}</button> : <a className="button-secondary min-h-11 px-3 text-xs" href={`${videoPath}?download=1`} download={filename} onClick={() => setNotice("Download the video, then share it from your files or photos.")}><Share2 className="size-4" /><span className="sr-only sm:not-sr-only">Save to share</span></a>}</> : <button type="button" className="button-primary min-h-11 px-4 text-xs" disabled={busy || disabled || !editor || rendering} onClick={() => void create()}>{creating || rendering ? <LoaderCircle className="size-4 animate-spin" /> : <Clapperboard className="size-4" />}{creating ? "Preparing…" : rendering ? "Rendering…" : selected ? "Retry video" : "Generate video"}</button>}</div>
+            <button type="button" disabled={busy || !editor || savedKey === currentKey} className="button-secondary min-h-11 px-3 text-xs sm:px-4" onClick={() => void save()}>{saving ? <LoaderCircle className="size-3.5 animate-spin" /> : savedKey === currentKey ? <Check className="size-3.5" /> : <Save className="size-3.5" />}{saving ? "Saving…" : savedKey === currentKey ? "Saved" : "Save edits"}</button>
+            <div className="flex flex-wrap gap-2">{ready ? <><a href={`${videoPath}?download=1`} download={filename} className="button-primary min-h-11 px-3 text-xs sm:px-4"><Download className="size-4" />Download video</a>{nativeSharing && (shareFile || preparingShare) ? <button type="button" className="button-secondary min-h-11 px-3 text-xs" disabled={!shareFile || sharing} onClick={() => void share()}>{preparingShare || sharing ? <LoaderCircle className="size-4 animate-spin" /> : <Share2 className="size-4" />}{preparingShare ? "Preparing…" : "Share video"}</button> : <a className="button-secondary min-h-11 px-3 text-xs" href={`${videoPath}?download=1`} download={filename} onClick={() => setNotice("Download the video, then share it from your files or photos.")}><Share2 className="size-4" /><span className="sr-only sm:not-sr-only">Save to share</span></a>}</> : <button type="button" className="button-primary min-h-11 px-4 text-xs" disabled={busy || disabled || !editor || rendering} onClick={() => void create()}>{creating || rendering ? <LoaderCircle className="size-4 animate-spin" /> : <Clapperboard className="size-4" />}{creating ? "Preparing…" : rendering ? "Creating…" : selected ? "Retry video" : "Create video"}</button>}</div>
           </div>}
           {exports.some((item) => item.status === "ready" && item.id !== selectedId) && <details className="mt-2 text-xs text-white/60"><summary className="cursor-pointer py-1">Earlier clips</summary><div className="flex flex-wrap gap-x-4">{exports.filter((item) => item.status === "ready" && item.id !== selectedId).map((item, index) => <a key={item.id} className="inline-flex min-h-9 items-center gap-1 underline" href={`/api/exports/${encodeURIComponent(item.id)}/video?download=1`} download={item.filename}><Download className="size-3" />Clip {index + 1}{item.settings ? "" : " · original layout"}</a>)}</div></details>}
-          {ready && <p className="mt-2 text-[10px] leading-4 text-white/45">Private MP4 · {selected.assignmentUrl ? "Its invitation opens the same challenge, without your recording." : "This download has no public challenge link."}</p>}
+          {ready && <p className="mt-2 text-[10px] leading-4 text-white/45">1080p video · {selected.assignmentUrl ? "The challenge link does not include your recording." : "No challenge link included."}</p>}
         </footer>
       </div>
     </div>, document.body)}

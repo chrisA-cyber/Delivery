@@ -13,6 +13,7 @@ const config: Config = {
         ink: "rgb(var(--ink-rgb) / <alpha-value>)",
         paper: "rgb(var(--paper-rgb) / <alpha-value>)",
         acid: "rgb(var(--acid-rgb) / <alpha-value>)",
+        mint: "rgb(var(--mint-rgb) / <alpha-value>)",
         hot: "rgb(var(--hot-rgb) / <alpha-value>)",
         electric: "rgb(var(--electric-rgb) / <alpha-value>)",
         violet: "rgb(var(--violet-rgb) / <alpha-value>)",
@@ -23,8 +24,8 @@ const config: Config = {
         mono: ["JetBrains Mono", "SFMono-Regular", "Consolas", "monospace"],
       },
       boxShadow: {
-        acid: "0 8px 28px rgba(255,220,102,.15)",
-        hot: "0 8px 28px rgba(255,76,200,.15)",
+        acid: "0 8px 28px rgb(var(--acid-rgb) / .15)",
+        hot: "0 8px 28px rgb(var(--hot-rgb) / .15)",
       },
       animation: {
         marquee: "marquee 28s linear infinite",

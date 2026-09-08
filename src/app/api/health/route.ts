@@ -17,6 +17,9 @@ export async function GET(request: Request) {
       {
         status: "ok" as const,
         environment: env.NODE_ENV,
+        commit: /^[a-f0-9]{40}$/i.test(process.env.RAILWAY_GIT_COMMIT_SHA ?? "")
+          ? process.env.RAILWAY_GIT_COMMIT_SHA
+          : null,
         services: {
           supabase: isSupabaseConfigured(),
           supabaseAdmin: isSupabaseAdminConfigured(),

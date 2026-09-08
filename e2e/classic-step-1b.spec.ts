@@ -70,7 +70,7 @@ for (const width of [320, 390, 768, 1440]) {
       .getByRole("button", { name: "Judge this take", exact: true })
       .click();
     const next = page.getByRole("button", {
-      name: "One more round",
+      name: "New line",
       exact: true,
     });
     await expect(next).toBeEnabled();
@@ -90,7 +90,7 @@ for (const width of [320, 390, 768, 1440]) {
       page.getByText("How clearly you sold the direction", { exact: true }),
     ).toBeHidden();
     await page
-      .getByText("Score breakdown · four dimensions", { exact: true })
+      .getByText("Score breakdown", { exact: true })
       .click();
     await expect(
       page.getByText("How clearly you sold the direction", { exact: true }),

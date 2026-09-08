@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { audioLevelAt, cameraFrame, cameraCrop, defaultCameraSettings, avatarFrame, avatarSpeechPose, avatarSvg, clipEditSettingsSchema, compositionSvg, contentFrame, defaultClipEditSettings, layoutClipEditSettings, measureAudioLevels, sceneFrame, waveformSvg, type CompositionScene } from "./video-composition";
 import { SWITCH_CHALLENGES } from "./switch/catalog";
 import { SAY_CLIPS } from "./say-it-back/catalog";
+import { VISUAL_THEME as C } from "./visual-theme";
 
 describe("saved clip composition", () => {
   it("fills the camera canvas with a matching portrait crop while retaining a framed option", () => {
@@ -81,12 +82,13 @@ describe("saved clip composition", () => {
     const frame = (time: number, audioOffset = 0) => waveformSvg(scene, settings, levels, { time, audioOffset });
     expect(frame(0.4).match(/<rect/g)).toHaveLength(32);
     expect(frame(0.4)).not.toBe(frame(0.7));
-    expect(frame(0.7)).toContain('fill="#5d7cff"');
-    expect(frame(1.5)).not.toMatch(/fill="#(?:5d7cff|ffe16a)"/);
-    expect(frame(0.7, 1)).not.toContain('fill="#5d7cff"');
+    expect(frame(0.7)).toContain(`fill="${C.blue}"`);
+    expect(frame(1.5)).not.toContain(`fill="${C.blue}"`);
+    expect(frame(1.5)).not.toContain(`fill="${C.accent}"`);
+    expect(frame(0.7, 1)).not.toContain(`fill="${C.blue}"`);
     const discarded = Array.from({ length: 45 }, (_, i) => i < 3 ? 1 : 0);
-    expect(waveformSvg(scene, settings, discarded, { time: 0.4 })).not.toContain('fill="#5d7cff"');
-    expect(compositionSvg(scene, { ...settings, avatarVisible: false }, { time: 0.7, audioLevels: levels })).toContain('fill="#5d7cff"');
+    expect(waveformSvg(scene, settings, discarded, { time: 0.4 })).not.toContain(`fill="${C.blue}"`);
+    expect(compositionSvg(scene, { ...settings, avatarVisible: false }, { time: 0.7, audioLevels: levels })).toContain(`fill="${C.blue}"`);
   });
   it("labels stored Say dialogue honestly and keeps it off outside its interval", () => {
     const clip = SAY_CLIPS.find((item) => item.id === "hgf-perfect-fiance")!;

@@ -50,7 +50,7 @@ test("a guest can record, review, and receive a complete judgment", async ({ pag
   });
 
   await page.goto("/play", { waitUntil: "domcontentloaded" });
-  await expect(page.getByText("Your mic is off. The stage is yours.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Your take", { exact: true })).toBeVisible();
 
   const recordButton = page.getByRole("button", { name: "Start recording" });
   const recordBounds = await recordButton.boundingBox();
@@ -70,7 +70,7 @@ test("a guest can record, review, and receive a complete judgment", async ({ pag
 
   await expect(page.getByText("Recording stopped. Review your take.", { exact: true })).toBeAttached();
   await expect(page.getByRole("button", { name: "Judge this take" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Retake" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Another take" })).toBeVisible();
 
   await page.getByRole("button", { name: "Judge this take" }).click();
 
@@ -78,8 +78,9 @@ test("a guest can record, review, and receive a complete judgment", async ({ pag
   await expect(resultHeading).toHaveAttribute("aria-label", /Score \d+ out of 100/i, {
     timeout: 20_000,
   });
-  await expect(page.getByText("Judgment delivered", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: /One more round/i })).toBeVisible();
+  await expect(page.getByText("Your result", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /New line/i })).toBeVisible();
+  await page.getByText("Card, audio & public sharing", { exact: true }).click();
   await expect(page.getByRole("button", { name: /Share card/i })).toBeVisible();
   expect(judgeRequests).toBe(1);
   expect(browserErrors).toEqual([]);

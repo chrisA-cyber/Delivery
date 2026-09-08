@@ -91,6 +91,16 @@ describe("Switch take recovery and immutable playback", () => {
     expect(screen.getAllByText("“I'm fine.”")).toHaveLength(1);
   });
 
+  it("keeps the final cue visible while a paired take finishes", async () => {
+    mocks.recorder = { status: "finalizing", durationMs: 20_000 };
+    vi.stubGlobal("fetch", vi.fn(async () => ok({ challenges: [challenge] })));
+    render(<SwitchExperience initialChallengeId={challenge.id} />);
+    const stage = await screen.findByRole("region", { name: "Switch recording stage" });
+    expect(within(stage).getByRole("heading", { name: "👽 Alien" })).toBeInTheDocument();
+    expect(within(stage).getByText("Finishing…")).toBeInTheDocument();
+    expect(within(stage).queryByRole("button", { name: "Stop early" })).not.toBeInTheDocument();
+  });
+
   it.each(["denied", "cancelled"])("keeps a saved take available after a %s full-take retry", async (outcome) => {
     mocks.requestPermission.mockResolvedValue(outcome !== "denied");
     vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("/catalog") ? ok({ challenges: [challenge] }) : ok({ attempt: attempt() })));
@@ -114,6 +124,7 @@ describe("Switch take recovery and immutable playback", () => {
     vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("/catalog") ? ok({ challenges: [editedCatalog] }) : ok({ attempt: attempt({ status: "scored", score }) })));
     const { container } = render(<SwitchExperience initialAttemptId="saved-take" />);
     const result = await screen.findByRole("region", { name: "Your Switch result" });
+    fireEvent.click(within(result).getByText("Hear each switch"));
     fireEvent.click(within(result).getByRole("button", { name: /Feedback for 🤖 Robot/ }));
     const player = screen.getByRole("region", { name: "Your take with Switch cues" });
     expect(within(player).getByRole("heading", { name: "🤖 Robot" })).toBeInTheDocument();

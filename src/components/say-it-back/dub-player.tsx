@@ -413,7 +413,7 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
 
   return (
     <div className={cn("overflow-hidden rounded-2xl border border-white/15 bg-black", compact && "say-player-compact", presentationOnly && "h-full !rounded-none !border-0")}>
-      {!presentationOnly && <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/15 bg-surface px-3 py-2 sm:px-4">
+      {!presentationOnly && <div className="say-player-heading flex flex-wrap items-center justify-between gap-2 border-b border-white/15 bg-surface px-3 py-2 sm:px-4">
         <div className="flex items-center gap-2 text-xs font-bold">
           <span className={cn("size-2 rounded-full", recording ? "animate-pulse bg-acid" : isDub ? "bg-electric" : "bg-hot")} />
           {recording ? "Recording your scene" : isDub ? (takeLabel === "Your take" ? "Your voice. Their scene." : "Your friend’s voice. Their scene.") : "The original scene"}
@@ -442,9 +442,9 @@ export const DubPlayer = forwardRef<DubPlayerHandle, {
         </div>}
       </div>
       {!presentationOnly && <div className="say-player-transport bg-surface px-3 pb-3 pt-2 sm:px-4">
-        {isDub && !busy && (performerAvatar || camera.length > 0) && <div className="mb-1 flex items-center gap-3">{camera.length ? <CameraPlayback segments={camera} clockRef={videoRef} className="aspect-square w-24 shrink-0 overflow-hidden rounded-lg" onError={pause} /> : <PerformerAvatar level={voiceLevel} size={64} />}<span className="text-xs font-bold text-white/65">Your dub</span></div>}
-        <input type="range" min={0} max={clip.duration} step={0.01} value={Math.min(currentTime, clip.duration)} disabled={busy || !loaded} aria-label="Scene playback position" aria-valuetext={`${timeLabel(currentTime)} of ${timeLabel(clip.duration)}`} onChange={(event) => seek(Number(event.target.value))} className="h-6 w-full cursor-pointer accent-acid" />
-        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0">
+        {isDub && !busy && (performerAvatar || camera.length > 0) && <div className="say-player-performer mb-1 flex items-center gap-3">{camera.length ? <CameraPlayback segments={camera} clockRef={videoRef} className="aspect-square w-24 shrink-0 overflow-hidden rounded-lg" onError={pause} /> : <PerformerAvatar level={voiceLevel} size={64} />}<span className="text-xs font-bold text-white/65">Your dub</span></div>}
+        <input type="range" min={0} max={clip.duration} step={0.01} value={Math.min(currentTime, clip.duration)} disabled={busy || !loaded} aria-label="Scene playback position" aria-valuetext={`${timeLabel(currentTime)} of ${timeLabel(clip.duration)}`} onChange={(event) => seek(Number(event.target.value))} className="say-player-scrubber h-6 w-full cursor-pointer accent-acid" />
+        <div className="say-player-transport-controls flex flex-wrap items-center justify-between gap-x-2 gap-y-0">
           <div className="flex items-center gap-1">
             {recording ? <button type="button" className="icon-button border-acid bg-acid text-ink" onClick={onEnded} aria-label="Stop recording scene"><Square className="size-4 fill-current" /></button> : <button type="button" className="icon-button border-transparent" onClick={() => void togglePlay()} disabled={busy || !loaded} aria-label={playing ? "Pause scene" : "Play scene"}>{playing ? <Pause className="size-4" /> : <Play className="size-4" />}</button>}
             <button type="button" className="icon-button border-transparent" onClick={() => seek(0)} disabled={busy || !loaded} aria-label="Replay from the start"><RotateCcw className="size-4" /></button>

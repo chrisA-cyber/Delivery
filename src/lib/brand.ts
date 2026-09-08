@@ -4,10 +4,9 @@ import { VISUAL_THEME } from "./visual-theme";
 export const BRAND_MARK_PATH = "M12 8H32C45.3 8 56 17.4 56 30S45.3 52 32 52H27L12 62V8ZM22 24V36H26V24H22ZM31 18V42H35V18H31ZM40 22V38H44V22H40Z";
 
 export const BRAND_GRADIENT_STOPS = [
-  [0, VISUAL_THEME.blue],
-  [0.45, VISUAL_THEME.violet],
-  [0.8, VISUAL_THEME.pink],
-  [1, VISUAL_THEME.orange],
+  [0, VISUAL_THEME.accent],
+  [0.55, VISUAL_THEME.blue],
+  [1, VISUAL_THEME.violet],
 ] as const;
 
 /** SVG exports share the same spectrum as the in-app mark and canvas cards. */

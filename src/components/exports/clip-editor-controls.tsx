@@ -43,7 +43,7 @@ export function ClipEditorControls({ mode, settings, onChange, duration, hasScor
               <span className="mt-2 flex items-center justify-between text-sm font-bold">{settings.performer === "camera" ? layout === "spotlight" ? "Full frame" : mode === "say-it-back" ? "Scene focus" : "Framed" : layout === "spotlight" ? mode === "say-it-back" ? "Scene" : "Spotlight" : mode === "say-it-back" ? "Companion" : "Split"}{settings.layout === layout && <Check className="size-3.5 text-electric" />}</span>
             </button>)}
           </div>
-          <p className="text-xs leading-5 text-white/55">{fullFrameCamera(settings) ? "Drag the video to frame your face. Adjust zoom in Performer." : mode === "say-it-back" ? "Your scene keeps its original framing. Drag your performer in the preview to place it." : "Drag your performer in the preview. Keep key content clear of the edges."}</p>
+          <p className="text-xs leading-5 text-white/55">{fullFrameCamera(settings) ? "Drag to frame your face. Find zoom in Performer." : mode === "say-it-back" ? "Drag to place your performer. The scene keeps its framing." : "Drag your performer to place it."}</p>
         </>}
         {tab === "avatar" && <>
           {settings.performer === "camera" && <>
@@ -67,8 +67,7 @@ export function ClipEditorControls({ mode, settings, onChange, duration, hasScor
           </>}
         </>}
         {tab === "text" && <>
-          {[{ field: "captions" as const, label: mode === "say-it-back" ? "Scripted dialogue" : "Challenge text", note: mode === "say-it-back" ? "Original scene lines, at their saved times." : "The line you were asked to perform." }, { field: "includeName" as const, label: "Display name", note: "Your name, when available." }, { field: "includeScore" as const, label: mode === "switch" ? "Beta score" : "Score", note: hasScore ? "The original full-performance score." : "This take is unscored." }].map(({ field, label, note }) => <label key={field} className="flex min-h-12 cursor-pointer items-start gap-3"><input type="checkbox" checked={settings[field]} disabled={field === "includeScore" && !hasScore} onChange={(event) => onChange({ [field]: event.target.checked })} className="mt-1 size-4 accent-electric" /><span className="text-sm font-bold">{label}<span className="mt-0.5 block text-xs font-normal leading-5 text-white/55">{note}</span></span></label>)}
-          <p className="border-t border-white/10 pt-3 text-xs leading-5 text-white/50">Scripted text is not a transcript of your recording.</p>
+          {[{ field: "captions" as const, label: mode === "say-it-back" ? "Scripted dialogue" : "Challenge text", note: mode === "say-it-back" ? "Original scene lines, timed to the scene." : "Your challenge line, not a transcript." }, { field: "includeName" as const, label: "Display name", note: "Your name on the clip." }, { field: "includeScore" as const, label: mode === "switch" ? "Beta score" : "Score", note: hasScore ? "Your full-take score." : "This take is unscored." }].map(({ field, label, note }) => <label key={field} className="flex min-h-12 cursor-pointer items-start gap-3"><input type="checkbox" checked={settings[field]} disabled={field === "includeScore" && !hasScore} onChange={(event) => onChange({ [field]: event.target.checked })} className="mt-1 size-4 accent-electric" /><span className="text-sm font-bold">{label}<span className="mt-0.5 block text-xs font-normal leading-5 text-white/55">{note}</span></span></label>)}
         </>}
         {tab === "trim" && <>
           <div className="flex items-baseline justify-between"><h3 className="text-sm font-bold">Keep the best part</h3><span className="text-xs tabular-nums text-electric">{clipTime(end - settings.trimStart)}</span></div>

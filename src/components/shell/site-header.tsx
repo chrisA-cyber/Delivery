@@ -1,20 +1,21 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronDown, Menu, Settings, X } from "lucide-react";
+import { ChevronDown, Menu, Settings, Shuffle, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/shell/logo";
 import { useApp } from "@/components/providers/app-provider";
 import { cn } from "@/lib/utils";
 
 const mainLinks = [
+  { href: "/switch", label: "Switch" },
   { href: "/play", label: "Classic" },
   { href: "/say-it-back", label: "Say It Back" },
-  { href: "/switch", label: "Switch" },
   { href: "/roast-off", label: "Roast Off" },
   { href: "/rounds", label: "Friends" },
 ];
 const moreLinks = [
+  { href: "/profile", label: "Saved performances" },
   { href: "/daily", label: "Daily" },
   { href: "/discover", label: "Packs" },
   { href: "/stream", label: "For hosts" },
@@ -66,7 +67,7 @@ export function SiteHeader() {
 
   const navClass = (href: string) => cn(
     "inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-bold transition-colors",
-    isActive(href) ? "bg-paper text-ink" : "text-white/70 hover:bg-white/10 hover:text-white",
+    isActive(href) ? href === "/switch" ? "bg-mint text-ink" : "bg-white/10 text-paper" : href === "/switch" ? "text-mint hover:bg-mint/10" : "text-white/70 hover:bg-white/10 hover:text-white",
   );
 
   return (
@@ -77,6 +78,7 @@ export function SiteHeader() {
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Main navigation">
             {mainLinks.map((link) => (
               <Link key={link.href} href={link.href} aria-current={isActive(link.href) ? "page" : undefined} className={navClass(link.href)}>
+                {link.href === "/switch" && <Shuffle className="mr-1.5 size-3.5" />}
                 {link.label}
               </Link>
             ))}
@@ -120,7 +122,7 @@ export function SiteHeader() {
           {!authReady ? (
             <span className="size-11 rounded-lg bg-white/5" aria-label="Checking account" />
           ) : authenticated ? (
-            <Link href="/profile" className="grid size-11 place-items-center rounded-lg bg-hot text-sm font-bold text-ink" aria-label="Your profile">
+            <Link href="/profile" className="grid size-11 place-items-center rounded-xl bg-violet text-sm font-bold text-ink" aria-label="Your profile">
               {profile.avatar}
             </Link>
           ) : (

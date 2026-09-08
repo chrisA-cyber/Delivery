@@ -5,14 +5,14 @@ import type { SwitchChallenge } from "./switch/types";
 import type { SayClip } from "./say-it-back/types";
 import emojiImages from "./video-emoji.json";
 
-export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v6-full-camera" as const;
+export const VIDEO_LAYOUT_VERSION = "delivery-vertical-v7-studio" as const;
 export const COMPOSITION_WIDTH = 1080;
 export const COMPOSITION_HEIGHT = 1920;
 export const AUDIO_LEVEL_FPS = 15;
 export const BUILTIN_AVATARS = [
   { id: "fox", name: "Fox", color: C.orange, imageUrl: "/avatars/fox.webp" },
   { id: "cloud", name: "Cloud", color: C.blue, imageUrl: "/avatars/cloud.webp" },
-  { id: "star", name: "Star", color: C.accent, imageUrl: "/avatars/star.webp" },
+  { id: "star", name: "Star", color: C.yellow, imageUrl: "/avatars/star.webp" },
   { id: "robot", name: "Robot", color: C.violet, imageUrl: "/avatars/robot.webp" },
   { id: "alien", name: "Alien", color: "#ace89b", imageUrl: "/avatars/alien.webp" },
   { id: "cat", name: "Cat", color: C.pink, imageUrl: "/avatars/cat.webp" },
@@ -159,20 +159,21 @@ export function compositionFooter(scene: CompositionScene): string {
 }
 function baseBody(scene: CompositionScene, settings: ClipEditSettings): string {
   if (fullFrameCamera(settings)) return cameraOverlayBody(scene, settings);
+  const modeColor = scene.mode === "classic" ? C.yellow : scene.mode === "switch" ? C.accent : C.blue;
   let body = rect(0, 0, COMPOSITION_WIDTH, COMPOSITION_HEIGHT, C.ink)
-    + `<defs><radialGradient id="stage-wash"><stop stop-color="${C.violet}" stop-opacity="0.10"/><stop offset="1" stop-color="${C.ink}" stop-opacity="0"/></radialGradient></defs><ellipse cx="540" cy="750" rx="700" ry="850" fill="url(#stage-wash)"/>`
+    + `<defs><radialGradient id="stage-wash"><stop stop-color="${modeColor}" stop-opacity="0.10"/><stop offset="1" stop-color="${C.ink}" stop-opacity="0"/></radialGradient></defs><ellipse cx="540" cy="750" rx="700" ry="850" fill="url(#stage-wash)"/>`
     + brandGradientSvg("clip-brand") + `<path d="${BRAND_MARK_PATH}" transform="translate(75 94) scale(.78)" fill="url(#clip-brand)" fill-rule="evenodd"/>` + text("delivery", 137, 136, 34)
-    + text(scene.mode === "classic" ? "CLASSIC" : scene.mode === "switch" ? "SWITCH" : "SAY IT BACK", 970, 133, 23, C.muted, 700, "end")
+    + text(scene.mode === "classic" ? "CLASSIC" : scene.mode === "switch" ? "SWITCH" : "SAY IT BACK", 970, 133, 23, modeColor, 700, "end")
     + compositionFooter(scene);
   if (settings.includeName && scene.displayName) body += fitText(scene.displayName, 86, 1531, settings.includeScore && scene.score ? 650 : 884, 52, 28, 21);
   if (settings.includeScore && scene.score && Number.isFinite(scene.score.value)) {
     body += text(`${Math.round(scene.score.value)}`, 970, 1556, 40, C.accent, 700, "end") + text(scene.score.beta || scene.mode === "switch" ? "BETA SCORE" : scene.score.label.toUpperCase().slice(0, 22), 970, 1584, 15, C.muted, 500, "end");
   }
   if (scene.mode === "classic") {
-    body += text("ONE LINE. YOUR DELIVERY.", 540, 260, 26, C.accent, 700, "middle");
+    body += text("ONE LINE. YOUR DELIVERY.", 540, 260, 26, C.yellow, 700, "middle");
     const duet = settings.layout === "duet", x = duet ? 564 : 86, width = duet ? 422 : 884;
     if (settings.captions) body += text("CHALLENGE LINE", x, duet ? 572 : 1040, 20, C.muted, 500) + fitText(scene.classic.phrase, x, duet ? 600 : 1070, width, duet ? 390 : 225, duet ? 52 : 65, 28);
-    body += text("DELIVERED AS", x, duet ? 1110 : 1351, 19, C.muted, 500) + fitText(scene.classic.direction, x, duet ? 1138 : 1374, width, duet ? 250 : 139, duet ? 34 : 32, 19, C.accent);
+    body += text("DELIVERED AS", x, duet ? 1110 : 1351, 19, C.muted, 500) + fitText(scene.classic.direction, x, duet ? 1138 : 1374, width, duet ? 250 : 139, duet ? 34 : 32, 19, C.yellow);
   } else if (scene.mode === "switch") {
     if (settings.captions) body += text("CHALLENGE LINE", 86, 1370, 19, C.muted, 500) + fitText(scene.switch.cues[0]?.text ?? "", 86, 1391, 884, 121, 61, 27);
   } else {
@@ -189,7 +190,7 @@ function cameraOverlayBody(scene: CompositionScene, settings: ClipEditSettings):
     + brandGradientSvg("clip-brand") + `<path d="${BRAND_MARK_PATH}" transform="translate(75 94) scale(.78)" fill="url(#clip-brand)" fill-rule="evenodd"/>` + text("delivery", 137, 136, 34)
     + text(scene.mode === "classic" ? "CLASSIC" : scene.mode === "switch" ? "SWITCH" : "SAY IT BACK", 970, 133, 23, C.paper, 700, "end");
   if (scene.mode === "classic") {
-    body += text("DELIVERED AS", 86, 220, 18, C.paper, 500) + fitText(scene.classic.direction, 86, 240, 884, 210, 43, 24, C.accent);
+    body += text("DELIVERED AS", 86, 220, 18, C.paper, 500) + fitText(scene.classic.direction, 86, 240, 884, 210, 43, 24, C.yellow);
     if (settings.captions) body += text("CHALLENGE LINE", 86, 1208, 18, C.paper, 500) + fitText(scene.classic.phrase, 86, 1230, 884, 260, 66, 28);
   } else if (scene.mode === "switch") {
     if (settings.captions) body += text("CHALLENGE LINE", 86, 1230, 18, C.paper, 500) + fitText(scene.switch.cues[0]?.text ?? "", 86, 1250, 884, 240, 72, 28);

@@ -10,7 +10,7 @@ export function CameraControls({ camera, disabled = false }: { camera?: CameraCo
   return <div className="space-y-1.5">
     <div className="flex flex-wrap items-center gap-2">
       <div className="inline-flex rounded-xl border border-white/15 bg-black/15 p-1" role="group" aria-label="Recording appearance">
-        {(["avatar", "camera"] as const).map(mode => <button key={mode} type="button" disabled={disabled || (camera.opening && mode === "camera")} aria-pressed={camera.mode === mode} onClick={() => camera.select(mode)} className={`flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-bold ${camera.mode === mode ? "bg-electric text-ink" : "text-white/65"}`}>{mode === "camera" ? <Camera className="size-4" /> : <UserRound className="size-4" />}{mode === "camera" ? "Camera" : "Avatar"}</button>)}
+        {(["avatar", "camera"] as const).map(mode => <button key={mode} type="button" disabled={disabled || (camera.opening && mode === "camera")} aria-pressed={camera.mode === mode} onClick={() => camera.select(mode)} className={`flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-bold ${camera.mode === mode ? "bg-mint text-ink" : "text-white/65"}`}>{mode === "camera" ? <Camera className="size-4" /> : <UserRound className="size-4" />}{mode === "camera" ? "Camera" : "Avatar"}</button>)}
       </div>
       {camera.mode === "camera" && !camera.stream && <button type="button" disabled={disabled || camera.opening} className="button-ghost min-h-10 px-2 text-xs" onClick={() => void camera.open()}>{camera.opening ? "Opening…" : "Enable camera"}</button>}
       {camera.mode === "camera" && camera.stream && <>

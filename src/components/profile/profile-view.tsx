@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Bookmark, Crown, EyeOff, Flame, Globe2, Headphones, LoaderCircle, Share2, Sparkles, Trash2, Trophy, Zap } from "lucide-react";
+import { BarChart3, Bookmark, Crown, EyeOff, Flame, Globe2, Headphones, LoaderCircle, Share2, Shuffle, Trash2, Trophy, Zap } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -114,10 +114,10 @@ export function ProfileView() {
   return (
     <div>
       <section className="panel-solid relative overflow-hidden p-6 sm:p-8">
-        <div className="absolute inset-x-0 top-0 h-1 bg-hot" />
+        <div className="absolute inset-x-0 top-0 h-1 bg-violet" />
         <div className="relative flex flex-col gap-7 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 flex-col items-start gap-4 sm:flex-row sm:items-center">
-            <div className="grid size-16 shrink-0 place-items-center rounded-2xl bg-hot text-2xl font-bold text-black sm:size-20">{profile.avatar}</div>
+            <div className="grid size-16 shrink-0 place-items-center rounded-2xl bg-violet text-2xl font-bold text-ink sm:size-20">{profile.avatar}</div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="break-words text-3xl font-bold tracking-tight">{profile.displayName}</h1>
@@ -142,29 +142,40 @@ export function ProfileView() {
             <span className="mono-label text-acid">{xpInLevel} / 450 XP</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full rounded-full bg-hot" style={{ width: `${(xpInLevel / 450) * 100}%` }} />
+            <div className="h-full rounded-full bg-violet" style={{ width: `${(xpInLevel / 450) * 100}%` }} />
           </div>
         </div>
       </section>
 
       {notice && <p role="status" className="mt-4 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-center text-sm font-bold text-white/65">{notice}</p>}
 
-      <p className="mt-6 text-sm leading-6 text-white/65">{authenticated ? "Your saved performance history. Every new take starts private." : history.some((item) => item.source === "fallback") ? "Local preview history includes synthetic judging results. These are not live performance scores." : "History on this device. Sign in to keep your takes across devices."}</p>
+      <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Your performances</h2>
+          <p className="mt-2 text-sm leading-6 text-white/65">{authenticated ? "Replay, edit, or share a saved take." : <>Takes on this device. <Link href="/login?next=/profile" className="font-bold text-mint underline underline-offset-4">Sign in to keep them.</Link></>}</p>
+        </div>
+        <Link href="/switch" className="button-primary"><Shuffle className="size-4" />Play Switch</Link>
+      </div>
+      {!authenticated && history.some((item) => item.source === "fallback") && <p className="mt-3 text-xs leading-6 text-white/60">Local preview history includes synthetic judging results. These are not live performance scores.</p>}
+
+      <SwitchHistory />
+      <SayHistory />
+      <ClassicVideoHistory />
+
+      {(history.length > 0 || best > 0 || profile.streak > 0) && <section className="mt-10" aria-labelledby="classic-stats-title">
+      <h2 id="classic-stats-title" className="text-xl font-bold tracking-tight">Classic stats</h2>
       <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[{ label: "Average", value: average || "—", icon: BarChart3, color: "text-electric" }, { label: "Personal best", value: best || "—", icon: Trophy, color: "text-acid" }, { label: "Chaos rating", value: chaos || "—", icon: Zap, color: "text-hot" }, { label: "Daily streak", value: profile.streak, icon: Flame, color: "text-orange-400" }].map(({ label, value, icon: Icon, color }) => <div key={label} className="panel p-5"><Icon className={`size-4 ${color}`} /><p className="display-type mt-5 text-4xl">{value}</p><p className="mono-label mt-2 text-white/60">{label}</p></div>)}
       </div>
 
       {tier === "pro" && comparableHistory.length > 0 && <section className="mt-8 overflow-hidden rounded-2xl border border-white/20 bg-white/[.025] p-6 sm:p-8"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="mono-label flex items-center gap-2 text-acid"><Crown className="size-3.5" /> Pro performance fingerprint</p><h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">Your strongest signal is {strongestAxis.toLowerCase()}.</h2></div><span className="mono-label text-white/60">{comparableHistory.length} comparable AI takes</span></div><div className="mt-7 grid gap-5 sm:grid-cols-2">{scoreAxes.map(([key, label, color]) => <div key={key}><div className="mb-2 flex justify-between"><span className="mono-label text-white/65">{label}</span><span className="font-mono text-sm font-black">{axisAverages[key]}</span></div><div className="h-2 overflow-hidden rounded-full bg-white/10"><div className={`h-full rounded-full ${color}`} style={{ width: `${axisAverages[key]}%` }} /></div></div>)}</div>{categoryStats.length > 0 && <div className="mt-7 border-t border-white/10 pt-5"><p className="mono-label text-white/60">Best rooms</p><div className="mt-3 flex flex-wrap gap-2">{categoryStats.map((item) => <span key={item.category} className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs font-black capitalize">{item.category} · {item.average} <span className="text-white/60">({item.count})</span></span>)}</div></div>}</section>}
 
-      <BadgeShelf badges={badges} />
-
-      <ClassicVideoHistory />
-      <SayHistory />
-      <SwitchHistory />
+      </section>}
+      {badges.length > 0 && <BadgeShelf badges={badges} />}
 
       {favoritePrompts.length > 0 && <section className="mt-10"><div className="mb-5"><p className="mono-label text-electric">Saved lines</p><h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">Run the bit back</h2></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{favoritePrompts.map((prompt) => <article key={prompt.id} className="panel flex flex-col p-4"><p className="mono-label text-electric">{prompt.category.replaceAll("-", " ")}</p><p className="mt-3 flex-1 text-sm font-black leading-5">“{prompt.line}”</p><div className="mt-4 flex gap-2"><Link href={`/play?prompt=${encodeURIComponent(prompt.id)}`} className="button-secondary min-h-11 flex-1 px-3 text-xs">Replay</Link><button onClick={() => toggleFavorite(prompt.id)} className="button-ghost min-h-11 px-3 text-xs" aria-label={`Remove ${prompt.line} from favorites`}>Remove</button></div></article>)}</div></section>}
 
-      <section className="mt-10"><div className="mb-5 flex flex-wrap items-end justify-between gap-3"><div><p className="mono-label text-acid">Your tape</p><h2 className="mt-2 text-2xl font-bold">Delivery history</h2></div><span className="flex items-center gap-2 text-sm text-white/65"><Bookmark className="size-4" />{favorites.length} saved lines</span></div>
+      <section className="mt-10"><div className="mb-5 flex flex-wrap items-end justify-between gap-3"><div><p className="mono-label text-acid">Your scored takes</p><h2 className="mt-2 text-2xl font-bold">Classic history</h2></div><span className="flex items-center gap-2 text-sm text-white/65"><Bookmark className="size-4" />{favorites.length} saved lines</span></div>
         {history.length ? <div className="grid gap-4 md:grid-cols-2">{history.map((delivery) => {
           const manageable = authenticated && Boolean(delivery.visibility);
           const busy = busyId === delivery.id;
@@ -177,7 +188,7 @@ export function ProfileView() {
           {manageable && <div className="mt-5 flex flex-wrap gap-2 border-t border-white/15 pt-4">{(canPublish || delivery.visibility === "public") && <button onClick={() => void setVisibility(delivery, delivery.visibility === "public" ? "private" : "public")} disabled={busy} className="button-ghost px-3 text-xs">{delivery.visibility === "public" ? <EyeOff className="size-4" /> : <Globe2 className="size-4" />}{delivery.visibility === "public" ? "Unpublish" : "Publish"}</button>}{delivery.visibility === "public" && <Link href={`/d/${delivery.id}`} className="button-ghost px-3 text-xs">View public take</Link>}{confirmDeleteId === delivery.id ? <><button onClick={() => void deleteDelivery(delivery)} disabled={busy} className="min-h-11 rounded-lg bg-red-500 px-3 text-xs font-bold">Delete permanently</button><button onClick={() => setConfirmDeleteId(null)} className="button-ghost px-3 text-xs">Cancel</button></> : <button onClick={() => setConfirmDeleteId(delivery.id)} className="button-ghost px-3 text-xs text-red-200"><Trash2 className="size-4" />Delete</button>}</div>}
           {manageable && !canPublish && <p className="mt-3 text-xs leading-5 text-white/60">Mature takes stay private. Public sharing is not available for this content.</p>}
           </div></article>;
-        })}</div> : <div className="grid min-h-72 place-content-center rounded-2xl bg-paper px-6 py-8 text-center text-ink"><Sparkles className="mx-auto size-7" /><h2 className="mt-5 text-2xl font-bold">Your first take goes here.</h2><p className="mt-3 max-w-sm text-sm leading-6 text-black/65">Get a line, commit to the direction, and see what happens. You choose what leaves this room.</p><Link href="/play" className="button-primary mx-auto mt-6">Play Classic</Link></div>}
+        })}</div> : <div className="panel p-6 text-sm leading-6 text-white/65">Your scored Classic takes will appear here. <Link href="/play" className="font-bold text-acid underline underline-offset-4">Try a Classic line.</Link></div>}
       </section>
     </div>
   );

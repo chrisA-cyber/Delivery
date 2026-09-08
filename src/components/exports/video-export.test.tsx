@@ -2,7 +2,7 @@ import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VideoExport, type ExportVideo } from "./video-export";
-import { defaultCameraSettings, defaultClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
+import { VIDEO_LAYOUT_VERSION, defaultCameraSettings, defaultClipEditSettings, type ClipEditSettings } from "@/lib/video-composition";
 
 vi.mock("@/components/providers/app-provider", () => ({ useApp: () => ({ contentRating: "everyone", reducedMotion: false }) }));
 vi.mock("@/hooks/use-preferred-avatar", () => ({ usePreferredAvatar: () => ({ avatar: { kind: "builtin", id: "fox" }, setAvatar: vi.fn(), loading: false, saving: false, error: "" }) }));
@@ -11,7 +11,7 @@ vi.mock("./clip-preview", () => ({ ClipPreview: ({ settings }: { settings: ClipE
 const settings = { ...defaultClipEditSettings("classic"), includeName: false };
 const scene = { mode: "classic", duration: 5, classic: { phrase: "I was being dramatic.", direction: "A little too confidently" }, score: { value: 82, label: "Delivery score" }, displayName: "Chris" };
 const editor = { settings, preferredAvatar: settings.avatar, source: { recordingUrl: "/private-audio", recordingOffsetMs: 0, duration: 5, scene } };
-const video: ExportVideo = { id: "video-1", status: "ready", includeScore: true, includeName: false, settings, score: scene.score, displayName: null, filename: "delivery-classic.mp4", assignmentUrl: "https://delivery.example/a/public1234" };
+const video: ExportVideo = { id: "video-1", layoutVersion: VIDEO_LAYOUT_VERSION, status: "ready", includeScore: true, includeName: false, settings, score: scene.score, displayName: null, filename: "delivery-classic.mp4", assignmentUrl: "https://delivery.example/a/public1234" };
 function ok(data: unknown) { return new Response(JSON.stringify({ ok: true, data }), { headers: { "Content-Type": "application/json" } }); }
 function setup({ saved = editor, exports = [video], eligible = true }: { saved?: typeof editor; exports?: ExportVideo[]; eligible?: boolean } = {}) {
   let edits = saved;
@@ -36,13 +36,28 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("compact clip editor and finished video workflow", () => {
+  it.each([
+    ["classic", "avatar", "spotlight"],
+    ["switch", "avatar", "duet"],
+    ["say-it-back", "avatar", "spotlight"],
+    ["switch", "camera", "duet"],
+  ] as const)("keeps an earlier-theme %s %s %s download separate from the current preview", async (mode, performer, layout) => {
+    const currentSettings = { ...defaultClipEditSettings(mode), includeName: false, performer, layout };
+    setup({ saved: { ...editor, settings: currentSettings }, exports: [{ ...video, settings: currentSettings, layoutVersion: "delivery-vertical-v6-full-camera" }] });
+    render(<VideoExport mode={mode} attemptId="earlier-theme-take" hasScore initialOpen />);
+    await screen.findByLabelText("Editable clip preview");
+    expect(screen.getByRole("button", { name: "Create video" })).toBeEnabled();
+    expect(screen.queryByRole("link", { name: "Download video" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Clip 1" })).toHaveAttribute("href", "/api/exports/video-1/video?download=1");
+  });
+
   it("regenerates old camera layouts and makes phrase text opt-in", async () => {
     const cameraSettings = { ...defaultCameraSettings("classic"), includeName: false };
     const saved = { ...editor, settings: cameraSettings, source: { ...editor.source, camera: [{ start: 0, end: 5, sourceStart: 0, mirror: true, url: "/camera" }] } };
     setup({ saved, exports: [{ ...video, settings: cameraSettings, layoutVersion: "delivery-vertical-v4" }] });
     render(<VideoExport mode="classic" attemptId="camera-take" hasScore initialOpen />);
     await screen.findByLabelText("Editable clip preview");
-    expect(screen.getByRole("button", { name: "Generate video" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Create video" })).toBeEnabled();
     expect(screen.queryByRole("link", { name: "Download video" })).toBeNull();
     expect(screen.getByText("Earlier clips")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "Text" }));
@@ -59,13 +74,13 @@ describe("compact clip editor and finished video workflow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create video" }));
     await screen.findByRole("link", { name: "Download video" });
     expect(screen.getByRole("dialog", { name: "Edit your clip" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Finished MP4" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finished video" }));
     expect(screen.getByLabelText("Finished performance video")).toHaveAttribute("src", "/api/exports/video-1/video?v=0");
     fireEvent.click(screen.getByRole("tab", { name: "Text" }));
     fireEvent.click(screen.getByRole("checkbox", { name: /Display name/ }));
     expect(screen.queryByLabelText("Finished performance video")).toBeNull();
     expect(screen.queryByRole("link", { name: "Download video" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Generate video" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Create video" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Save edits" })).toBeEnabled();
     expect(screen.getByText("Earlier clips")).toBeInTheDocument();
   });
@@ -82,14 +97,14 @@ describe("compact clip editor and finished video workflow", () => {
     fireEvent.change(screen.getByRole("spinbutton", { name: "Trim start seconds" }), { target: { value: "1.2" } });
     fireEvent.change(screen.getByRole("spinbutton", { name: "Trim end seconds" }), { target: { value: "4.2" } });
     fireEvent.click(screen.getByRole("button", { name: "Save edits" }));
-    await screen.findByText("Edits saved. Reopen this performance to keep editing.");
+    await screen.findByText("Edits saved.");
     first.unmount();
     render(<VideoExport mode="switch" attemptId="saved-local" initialOpen />);
     await screen.findByLabelText("Editable clip preview");
     fireEvent.click(screen.getByRole("tab", { name: "Trim" }));
     expect(screen.getByRole("spinbutton", { name: "Trim start seconds" })).toHaveValue(1.2);
     expect(screen.getByRole("spinbutton", { name: "Trim end seconds" })).toHaveValue(4.2);
-    fireEvent.click(screen.getByRole("button", { name: "Generate video" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create video" }));
     await screen.findByText("Your video is queued.");
     const posted = JSON.parse(fetchMock.mock.calls.find(([, init]) => init?.method === "POST")![1]!.body as string);
     expect(posted).toMatchObject({ mode: "switch", attemptId: "saved-local", includeScore: false, settings: { trimStart: 1.2, trimEnd: 4.2, avatar: settings.avatar }, maxRating: "everyone" });
@@ -114,7 +129,7 @@ describe("compact clip editor and finished video workflow", () => {
     setup({ saved: { ...editor, settings: namedSettings }, exports: [{ ...video, settings: namedSettings, includeName: true, displayName: "Old name" }, { ...video, id: "legacy", settings: null }] });
     render(<VideoExport mode="classic" attemptId="owned" hasScore initialOpen />);
     await screen.findByLabelText("Editable clip preview");
-    expect(screen.getByRole("button", { name: "Generate video" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Create video" })).toBeEnabled();
     expect(screen.queryByRole("link", { name: "Download video" })).toBeNull();
     expect(screen.getByText("Clip 2 · original layout")).toHaveAttribute("href", "/api/exports/legacy/video?download=1");
   });
@@ -145,7 +160,7 @@ describe("compact clip editor and finished video workflow", () => {
     const fetchMock = setup({ eligible: false, exports: [] });
     render(<VideoExport mode="say-it-back" attemptId="restricted" initialOpen />);
     await screen.findByText("This scene is available for in-app replay only.");
-    expect(screen.queryByRole("button", { name: "Generate video" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Create video" })).toBeNull();
     expect(fetchMock.mock.calls.every(([, init]) => !init?.method)).toBe(true);
   });
 });

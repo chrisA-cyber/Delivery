@@ -1,0 +1,150 @@
+{
+  "layoutVersion": "delivery-vertical-v7-studio",
+  "physicalDevice": false,
+  "source": "Existing local FFmpeg stock speech and browser MediaRecorder fixtures from simulated camera/audio inputs. No judging or device share sheet exercised.",
+  "renders": [
+    {
+      "mode": "classic",
+      "path": "/tmp/delivery-studio-video/classic.mp4",
+      "bytes": 448981,
+      "duration": 3.415,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 5748,
+      "audioCopied": false
+    },
+    {
+      "mode": "switch",
+      "path": "/tmp/delivery-studio-video/emotion.mp4",
+      "bytes": 321532,
+      "duration": 8,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 8789,
+      "audioCopied": false
+    },
+    {
+      "mode": "switch",
+      "path": "/tmp/delivery-studio-video/speed.mp4",
+      "bytes": 386351,
+      "duration": 7,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 8503,
+      "audioCopied": false
+    },
+    {
+      "mode": "say-it-back",
+      "path": "/tmp/delivery-studio-video/say-retake.mp4",
+      "bytes": 2691361,
+      "duration": 11,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 13308,
+      "audioCopied": false
+    },
+    {
+      "mode": "switch",
+      "performer": "camera",
+      "path": "/tmp/delivery-studio-video/switch-camera.mp4",
+      "bytes": 424827,
+      "duration": 8.166667,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 8695,
+      "audioCopied": false
+    },
+    {
+      "mode": "say-it-back",
+      "performer": "camera",
+      "path": "/tmp/delivery-studio-video/say-it-back-camera.mp4",
+      "bytes": 1499744,
+      "duration": 10.4,
+      "width": 1080,
+      "height": 1920,
+      "videoCodec": "h264",
+      "audioCodec": "aac",
+      "renderMs": 15789,
+      "audioCopied": false
+    }
+  ],
+  "mediaChecks": [
+    {
+      "sample": "classic",
+      "fullDecode": true,
+      "audioGain": 0.9995026588439941,
+      "audioRmsError": 0.0010883387876674533
+    },
+    {
+      "sample": "emotion",
+      "fullDecode": true,
+      "audioGain": 0.9996976256370544,
+      "audioRmsError": 0.0001514004688942805
+    },
+    {
+      "sample": "speed",
+      "fullDecode": true,
+      "audioGain": 0.9996124505996704,
+      "audioRmsError": 0.00021516851847991347
+    },
+    {
+      "sample": "say-retake",
+      "fullDecode": true,
+      "audioGain": 0.998198390007019,
+      "audioRmsError": 0.0014069722965359688
+    },
+    {
+      "sample": "switch-camera",
+      "fullDecode": true,
+      "audioGain": 0.9995993375778198,
+      "audioRmsError": 0.00036119483411312103,
+      "decodedAudioIdenticalToPreviousTheme": true
+    },
+    {
+      "sample": "say-it-back-camera",
+      "fullDecode": true,
+      "audioGain": 0.9993153810501099,
+      "audioRmsError": 0.001263769925571978,
+      "decodedAudioIdenticalToPreviousTheme": true
+    }
+  ],
+  "previewAgreement": {
+    "method": "Shared preview SVG raster versus decoded 1080x1920 MP4 frames at an exact Switch cue boundary and during speech. Mean absolute 8-bit RGB distance includes the animated avatar and waveform.",
+    "frames": [
+      {
+        "sample": "emotion",
+        "outputSeconds": 0.5,
+        "originalSeconds": 4.0,
+        "meanAbsoluteRgbError": 1.7553911072530863
+      },
+      {
+        "sample": "emotion",
+        "outputSeconds": 1.5,
+        "originalSeconds": 5.0,
+        "meanAbsoluteRgbError": 1.9657933063271604
+      },
+      {
+        "sample": "speed",
+        "outputSeconds": 0.5,
+        "originalSeconds": 4.0,
+        "meanAbsoluteRgbError": 1.8948191550925926
+      },
+      {
+        "sample": "speed",
+        "outputSeconds": 1.5,
+        "originalSeconds": 5.0,
+        "meanAbsoluteRgbError": 2.093156828703704
+      }
+    ]
+  }
+}

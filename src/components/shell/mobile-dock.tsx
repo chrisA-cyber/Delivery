@@ -6,9 +6,9 @@ import { AudioLines, Clapperboard, Shuffle, UserRound, Users } from "lucide-reac
 import { cn } from "@/lib/utils";
 
 const items = [
-  { href: "/switch", label: "Switch", icon: Shuffle },
+  { href: "/play", label: "Classic", icon: AudioLines },
   { href: "/rounds", label: "Friends", icon: Users },
-  { href: "/play", label: "Classic", icon: AudioLines, primary: true },
+  { href: "/switch", label: "Switch", icon: Shuffle, primary: true },
   { href: "/say-it-back", label: "Say It Back", icon: Clapperboard },
   { href: "/profile", label: "You", icon: UserRound },
 ];
@@ -49,8 +49,8 @@ export function MobileDock() {
             <span
               className={cn(
                 "grid size-8 place-items-center rounded-lg transition-colors",
-                active && !primary && "bg-electric/15 text-electric",
-                primary && "bg-acid text-ink",
+                active && !primary && (href === "/play" ? "bg-acid/15 text-acid" : href === "/say-it-back" ? "bg-electric/15 text-electric" : "bg-violet/15 text-violet"),
+                primary && "bg-mint text-ink",
               )}
             >
               <Icon className={cn(primary ? "size-5" : "size-4")} />

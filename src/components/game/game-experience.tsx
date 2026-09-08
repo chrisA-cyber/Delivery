@@ -749,7 +749,7 @@ export function GameExperience({
             ? "View matchup"
             : mode === "daily" || mode === "challenge"
               ? "Play a fresh line"
-              : "One more round"
+              : "New line"
         }
         cleanStage={cleanStage}
         nextLoading={promptLoading}
@@ -759,7 +759,7 @@ export function GameExperience({
     );
 
   return (
-    <section className="game-experience pb-5">
+    <section className="game-experience pb-5" data-mode="classic" data-stage={stage}>
       <p className="sr-only" role="status" aria-live="polite">
         {stage === "recording"
           ? "Recording in progress"
@@ -886,7 +886,7 @@ export function GameExperience({
             <div className="cue-grid">
               <div className="line-cue">
                 <div className="mb-5 flex items-center justify-between gap-3">
-                  <span className="mono-label">01 / Say this line</span>
+                  <span className="mono-label">Say this</span>
                   {stage === "prompt" && !fixedRound && !cleanStage && (
                     <button
                       onClick={() => void nextPrompt()}
@@ -907,7 +907,7 @@ export function GameExperience({
                 </h1>
               </div>
               <div className="direction-cue">
-                <p className="mono-label mb-4">02 / Deliver it like this</p>
+                <p className="mono-label mb-4">Like this</p>
                 <h2>{prompt.directionLabel ?? "Commit to the direction"}</h2>
                 <p className="mt-3" data-testid="prompt-direction">
                   {prompt.energy}
@@ -919,13 +919,11 @@ export function GameExperience({
                 {prompt.pack ?? "Delivery Originals"} ·{" "}
                 {CONTENT_LABELS[prompt.rating ?? "everyone"]}
               </span>
-              <span className="flex items-center gap-1.5">
-                <Headphones className="size-3.5" /> Camera optional · 20s max
-              </span>
+              <span>20s max</span>
+              {!roundContext && !cleanStage && prompt.rating !== "mature" && stage === "prompt" && <Link className="inline-flex min-h-9 items-center gap-1.5 font-bold underline decoration-ink/30 underline-offset-4 hover:decoration-ink" href={`/rounds?mode=classic&prompt=${encodeURIComponent(prompt.id)}&energy=${encodeURIComponent(prompt.energyId ?? "")}`}>Challenge a friend</Link>}
             </div>
           </div>
 
-          {!roundContext && prompt.rating !== "mature" && stage === "prompt" && <div className="mt-4 flex justify-end"><Link className="button-ghost text-xs" href={`/rounds?mode=classic&prompt=${encodeURIComponent(prompt.id)}&energy=${encodeURIComponent(prompt.energyId ?? "")}`}>Start a group round with this line</Link></div>}
           <div className="recording-desk">
             <div className="mb-3"><CameraControls camera={recorder.camera} disabled={stage === "recording" || recorder.status === "requesting" || recorder.status === "finalizing" || roundSaving} /></div>
             {recorder.error && stage === "prompt" && (
@@ -947,13 +945,13 @@ export function GameExperience({
                       <span className="inline-block size-2 rounded-full bg-white/30" />
                       {recorder.status === "requesting"
                         ? "Waiting for microphone permission"
-                        : "Ready when you are."}
+                        : "Your take"}
                     </p>
                     <p className="mt-2 max-w-md text-sm leading-6 text-white/65">
 
                       {rehearsal
                         ? "Practice stays on this device."
-                        : "Record, listen back, then submit."}
+                        : "Make the direction your own."}
                     </p>
                     </div>
                   </div>
@@ -1044,7 +1042,7 @@ export function GameExperience({
                     {recorder.isClipping
                       ? "Signal is clipping. Move a little farther from the mic."
                       : recorder.level > 0.015
-                        ? "Mic is receiving audio. Quiet acting counts too."
+                        ? "Mic is picking you up."
                         : "Listening for your voice…"}
                   </p>
                 </div>
@@ -1080,12 +1078,11 @@ export function GameExperience({
                   <div>
                     <p className="text-lg font-bold tracking-tight">
                       {rehearsal
-                        ? "No audience. Just you and the bit."
-                        : "Listen back. Own the delivery."}
+                        ? "Review your rehearsal"
+                        : "Review your take"}
                     </p>
                     <p className="mt-1 text-xs text-white/65">
-                      Take {take} · {formatTime(recorder.durationMs)} · Stored
-                      on this device
+                      Take {take} · {formatTime(recorder.durationMs)}
                     </p>
                   </div>
                   <button
@@ -1099,7 +1096,7 @@ export function GameExperience({
                     className="button-ghost px-2 text-xs"
                   >
                     <Download className="size-4" />
-                    Save take
+                    Save audio
                   </button>
                 </div>
                 <audio
@@ -1132,7 +1129,7 @@ export function GameExperience({
                   </p>
                 )}
                 {roundContext && <div className="mt-5 rounded-xl border border-acid/30 bg-acid/5 p-4">
-                  <p className="text-sm leading-6 text-white/70">Choose your performance when you’re happy with it. Sharing is confirmed on the round page; a score is optional.</p>
+                  <p className="text-sm leading-6 text-white/70">Confirm sharing on the round page. A score is optional.</p>
                   <button onClick={() => void chooseRoundTake()} disabled={!recorder.canSubmit || roundSaving} className="button-primary mt-3 w-full">{roundSaving ? "Saving your take…" : "Use this take in round"}</button>
                 </div>}
                 <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
@@ -1140,7 +1137,7 @@ export function GameExperience({
                     <button
                       onClick={() => setRehearsal(false)}
                       disabled={!recorder.canSubmit || roundSaving}
-                      className="button-primary min-h-12"
+                      className={`${roundContext ? "button-secondary" : "button-primary"} min-h-12`}
                     >
                       <Check className="size-4" />
                       Ready for judgment
@@ -1149,7 +1146,7 @@ export function GameExperience({
                     <button
                       onClick={() => void submit()}
                       disabled={!recorder.canSubmit || roundSaving}
-                      className="button-primary min-h-12"
+                      className={`${roundContext ? "button-secondary" : "button-primary"} min-h-12`}
                     >
                       <Check className="size-4" />
                       {submitError ? "Retry judgment" : "Judge this take"}
@@ -1161,7 +1158,7 @@ export function GameExperience({
                     className="button-secondary min-h-12"
                   >
                     <RotateCcw className="size-4" />
-                    Retake
+                    Another take
                   </button>
                 </div>
                 <p className="mt-3 text-center text-xs leading-5 text-white/65">

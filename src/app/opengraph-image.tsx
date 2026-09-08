@@ -2,7 +2,7 @@ import { BrandMark } from "@/components/shell/brand-mark";
 import { VISUAL_THEME } from "@/lib/visual-theme";
 import { ImageResponse } from "next/og";
 export const runtime = "edge";
-export const alt = "Delivery — Terrible lines. Incredible commitment.";
+export const alt = "Delivery — Same phrase. Different energy.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export default function OpenGraphImage() {
@@ -30,7 +30,7 @@ export default function OpenGraphImage() {
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}><BrandMark size={44} /><span style={{ fontSize: 34, fontWeight: 700, letterSpacing: -2 }}>delivery</span></div>
           <span style={{ fontSize: 18, color: VISUAL_THEME.blue }}>
-            THE VOICE PERFORMANCE GAME
+            PLAY SWITCH
           </span>
         </div>
         <div
@@ -43,8 +43,8 @@ export default function OpenGraphImage() {
             letterSpacing: -4,
           }}
         >
-          <span>Terrible lines.</span>
-          <span style={{ color: VISUAL_THEME.accent }}>Incredible commitment.</span>
+          <span>Same phrase.</span>
+          <span style={{ color: VISUAL_THEME.accent }}>Different energy.</span>
         </div>
         <div
           style={{
@@ -56,8 +56,8 @@ export default function OpenGraphImage() {
             fontSize: 22,
           }}
         >
-          <span>One line. One direction. Your interpretation.</span>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, color: VISUAL_THEME.blue }}><span>PLAY CLASSIC</span><svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 12h16M13 5l7 7-7 7" fill="none" stroke={VISUAL_THEME.blue} strokeWidth="2" /></svg></div>
+          <span>One phrase. Five emotions or speeds. Your take.</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, color: VISUAL_THEME.blue }}><span>PLAY SWITCH</span><svg width="22" height="22" viewBox="0 0 24 24"><path d="M4 12h16M13 5l7 7-7 7" fill="none" stroke={VISUAL_THEME.blue} strokeWidth="2" /></svg></div>
         </div>
       </div>
     ),

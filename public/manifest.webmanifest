@@ -1,21 +1,45 @@
 {
   "name": "Delivery",
   "short_name": "Delivery",
-  "description": "Say the line. Get judged.",
+  "description": "One phrase. Five emotions or speeds. Your take.",
   "id": "/",
-  "start_url": "/play",
+  "start_url": "/switch",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
   "lang": "en",
   "dir": "ltr",
-  "categories": ["games", "entertainment", "social"],
-  "background_color": "#070707",
-  "theme_color": "#070707",
+  "categories": [
+    "games",
+    "entertainment",
+    "social"
+  ],
+  "background_color": "#10141f",
+  "theme_color": "#10141f",
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

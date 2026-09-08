@@ -1,3 +1,19 @@
+# Switch-first product polish — September 8, 2026
+
+Switch is the primary arrival and play experience. The shared theme now uses navy surfaces, mint for Switch, warm yellow for Classic and blue for Say It Back, with coral and violet supporting cues and states. The clip editor uses shorter, camera-neutral copy and clearer Preview, Finished video and Create video actions.
+
+The authoritative shared renderer/export-job version is `delivery-vertical-v7-studio`. Its version participates in the export hash, and the editor requires an exact version and settings match for **every** mode and presentation before showing a finished file as the current preview. Older finished files remain downloadable under Earlier clips; they are regenerated only when requested.
+
+Avatar remains the default recording mode. Remembering Camera does not activate a device. Camera clips retain full-frame vertical footage, top cues and optional phrase/script text off by default. Avatar animation, speech-driven waveforms, crop/zoom/repositioning, saved presentation settings and camera-to-avatar export remain. This release changes no composition geometry, source-clock timing, judging/scoring, recorded audio or Say It Back scene framing, original mix or matching camera retakes.
+
+Verification: 34 focused composition, editor, preview and renderer tests plus scoped lint passed. Six actual 1080×1920 H.264/AAC MP4s cover Classic, emotion/speed Switch and Say It Back avatars, plus full-frame Switch and Say It Back camera clips. All decode fully. Four decoded Switch frames match the shared preview within 1.76–2.09 mean 8-bit RGB levels, including cue changes, speaking avatars and waveforms. Both camera outputs have decoded audio identical to their previous-theme counterparts; all six audio gains are within 0.2% of the existing source/mix. See [render and media checks](evidence/studio-theme/render-results.json) and the visually inspected [contact sheet](evidence/studio-theme/render-contact-sheet.webp).
+
+Browser inspection exercised desktop and 390×844 layouts with simulated microphone/camera input and scores: Switch recording, camera/avatar replay, results and clip editing; Classic recording, results and replay; Say It Back full-scene recording, replay, a camera line retake and match results. Actual bundled scenes and the existing capture hooks ran. A cloud-browser interruption retained the prior take; a clean retry succeeded. Inspection led to compact recording stages, automatic result/scene positioning and enough homepage spacing to clear the mobile dock. These checks do not establish physical-phone camera, microphone or native-share acceptance; those remain unverified.
+
+The release report identifies the final main revision and Railway deployment. The existing Delivery service requires an explicit `source.commitSha` update; pushing main alone does not update that pin. `/api/health` now reports Railway's commit SHA so the served revision can be verified. Clipping remains untouched.
+
+---
+
 # Full-frame camera clips — September 7, 2026
 
 Camera clips now default to edge-to-edge 9:16 footage. Emoji/speed cues sit at the top, with a quiet center for the player's face and translucent shading behind text. The existing waveform, optional name/score and invitation overlay the footage. Say It Back keeps the full reference scene in a small inset. A framed/scene-focus alternative remains available; avatar layouts are unchanged.

@@ -5,9 +5,9 @@ const groups: Array<{ title: string; links: Array<[string, string]> }> = [
   {
     title: "Play",
     links: [
+      ["Switch", "/switch"],
       ["Classic", "/play"],
       ["Say It Back", "/say-it-back"],
-      ["Switch", "/switch"],
       ["Roast Off", "/roast-off"],
       ["Friends", "/rounds"],
       ["Daily", "/daily"],
@@ -18,6 +18,7 @@ const groups: Array<{ title: string; links: Array<[string, string]> }> = [
   {
     title: "Explore",
     links: [
+      ["Saved performances", "/profile"],
       ["Packs", "/discover"],
       ["Submit a line", "/submit"],
       ["Feed", "/feed"],
@@ -43,7 +44,7 @@ export function SiteFooter() {
         <div>
           <Logo gradientId="delivery-footer-spectrum" />
           <p className="mt-4 max-w-sm text-sm leading-6 text-white/60">
-            Make a scene with your voice.
+            Same phrase. Different energy.
           </p>
           <p className="mono-label mt-5 text-white/50">
             © {new Date().getFullYear()} Delivery Game
@@ -58,7 +59,7 @@ export function SiteFooter() {
                   <Link
                     key={href}
                     href={href}
-                    className="inline-flex min-h-11 items-center text-sm font-bold text-white/65 transition hover:text-acid"
+                    className="inline-flex min-h-11 items-center text-sm font-bold text-white/65 transition hover:text-mint"
                   >
                     {label}
                   </Link>

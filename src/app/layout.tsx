@@ -14,11 +14,11 @@ const appUrl = getAppUrl();
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "Delivery — Say the line. Get judged.",
+    default: "Delivery — Same phrase. Different energy.",
     template: "%s · Delivery",
   },
   description:
-    "The voice performance game where you get a line, deliver it, and get judged.",
+    "Play Switch: one phrase, five emotions or speeds. Record with an avatar or camera, replay your take, and challenge a friend.",
   applicationName: "Delivery",
   keywords: [
     "voice game",
@@ -32,22 +32,22 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Delivery",
-    title: "Delivery — Say the line. Get judged.",
-    description: "A microphone, a line, and one shot at main-character energy.",
+    title: "Delivery — Same phrase. Different energy.",
+    description: "One phrase. Five emotions or speeds. Your take.",
     url: appUrl,
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Delivery voice performance game",
+        alt: "Delivery — Switch performance game",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Delivery — Say the line. Get judged.",
-    description: "A microphone, a line, and one shot at main-character energy.",
+    title: "Delivery — Same phrase. Different energy.",
+    description: "One phrase. Five emotions or speeds. Your take.",
     images: ["/opengraph-image"],
   },
   icons: {
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#070707",
+  themeColor: "#10141f",
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,

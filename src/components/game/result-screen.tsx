@@ -51,7 +51,7 @@ export function ResultScreen({
   onNext,
   onRetry,
   canRetry = true,
-  nextLabel = "One more round",
+  nextLabel = "New line",
   cleanStage = false,
   nextLoading = false,
   nextError,
@@ -284,14 +284,14 @@ export function ResultScreen({
   }
 
   return (
-    <section className="game-experience pb-8">
+    <section className="game-experience pb-8" data-mode="classic" data-stage="result">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="mono-label text-electric">
           {delivery?.dailyRanked === true
             ? (dailyStanding ?? "Ranked Daily · first score locked")
             : delivery?.dailyRanked === false
               ? "Daily practice · first score stays locked"
-              : "Judgment delivered"}
+              : "Your result"}
         </p>
         <span className="mono-label text-white/60">
           {fixture
@@ -306,8 +306,7 @@ export function ResultScreen({
           className="mb-4 rounded-xl border border-hot/30 bg-hot/10 px-4 py-3 text-xs leading-5 text-paper"
           role="note"
         >
-          Practice judge: this is a deterministic local fixture. It checks the
-          flow, not how your performance sounded. It is not a ranked score.
+          Practice preview: this sample score does not assess your recording or count toward rankings.
         </div>
       )}
       <div className="result-main">
@@ -343,48 +342,44 @@ export function ResultScreen({
       </div>
 
       {!cleanStage && (
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <button
-            onClick={() => void onNext()}
-            disabled={nextLoading}
-            className="button-primary min-h-14"
-          >
-            {nextLoading ? (
-              <LoaderCircle className="size-4 animate-spin" />
-            ) : (
-              <ArrowRight className="size-4" />
-            )}
-            {nextLoading ? "Drawing your next line…" : nextLabel}
-          </button>
+        <div className="result-actions mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {canRetry && (
+            <button
+              onClick={onRetry}
+              disabled={nextLoading}
+              className="button-primary min-h-12"
+            >
+              <RotateCcw className="size-4" />
+              Another take
+            </button>
+          )}
           {audioUrl && (
             <button
               onClick={() => playWord(0)}
-              className="button-secondary min-h-14"
+              className="button-secondary min-h-12"
               aria-label="Replay take"
             >
               <Headphones className="size-4" /> Replay take
               {muted ? " · muted" : ""}
             </button>
           )}
-          {canRetry && (
-            <button
-              onClick={onRetry}
-              disabled={nextLoading}
-              className="button-secondary min-h-14"
-            >
-              <RotateCcw className="size-4" />
-              Retry same direction
-            </button>
-          )}
           {!retired && prompt.rating !== "mature" && (
             <Link
               href={`/rounds?mode=classic&${inviteParams}`}
-              className="button-secondary min-h-14"
+              className="button-secondary min-h-12"
             >
               <Users className="size-4" />
-              Start a group round
+              Challenge a friend
             </Link>
           )}
+          <button
+            onClick={() => void onNext()}
+            disabled={nextLoading}
+            className={`${canRetry ? "button-secondary" : "button-primary"} min-h-12`}
+          >
+            {nextLoading ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
+            {nextLoading ? "Finding a line…" : nextLabel}
+          </button>
         </div>
       )}
       {audioUrl && (
@@ -412,18 +407,14 @@ export function ResultScreen({
       {result.coachNote && (
         <div className="mt-4 grid gap-3 rounded-xl bg-electric p-5 text-ink sm:grid-cols-[160px_1fr]">
           <p className="mono-label">
-            Director’s note
-            <br />
-            <span className="normal-case tracking-normal">
-              For your next take
-            </span>
+            For your next take
           </p>
           <p className="text-sm font-medium leading-6">{result.coachNote}</p>
         </div>
       )}
       <details className="result-breakdown mt-4 rounded-xl bg-paper px-5 py-4 text-ink">
         <summary className="cursor-pointer text-sm font-bold">
-          Score breakdown · four dimensions
+          Score breakdown
         </summary>
         <div className="mt-4 grid grid-cols-2 gap-5 sm:grid-cols-4">
           {dimensions.map(([key, label, description]) => (
@@ -470,13 +461,11 @@ export function ResultScreen({
           </p>
         </div>
         <div className="panel-solid p-5">
-          <p className="mono-label text-white/60">Your receipt</p>
+          <p className="mono-label text-white/60">Your words</p>
           {result.transcription ? (
             <>
-              <p className="mt-3 text-sm font-bold">Scribe v2 transcript</p>
               <p className="mt-1 text-xs leading-5 text-white/60">
-                {audioUrl ? "Tap a word to replay that moment. " : ""}
-                Transcription is separate from the performance score.
+                {audioUrl ? "Tap a word to replay that moment." : "Transcript"}
               </p>
               <p className="mt-3 text-sm leading-7">
                 {result.transcription.words.length && audioUrl
@@ -523,7 +512,8 @@ export function ResultScreen({
         </div>
       </div>
       {!cleanStage && (
-        <>
+        <details className="mt-4 rounded-xl border border-white/15 px-5 py-4">
+          <summary className="cursor-pointer text-sm font-bold">Card, audio & public sharing</summary>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
               disabled={sharing}
@@ -591,8 +581,7 @@ export function ResultScreen({
             )}
           {prompt.rating === "mature" && (
             <p className="mt-4 text-xs leading-5 text-white/65">
-              Mature takes stay private. Public publishing for adult content
-              awaits the launch audience policy.
+              Mature takes stay private and cannot be published to the feed.
             </p>
           )}
           {resultPath && (
@@ -600,7 +589,7 @@ export function ResultScreen({
               View public result <ArrowRight className="size-4" />
             </Link>
           )}
-        </>
+        </details>
       )}
       {cleanStage && (
         <p className="mono-label mt-5 text-white/60">
