@@ -1,0 +1,54 @@
+{
+  "name": "Delivery",
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$className": "Workspace",
+      "Floor": {
+        "$className": "Part",
+        "$properties": {
+          "Anchored": true,
+          "Size": [
+            100,
+            1,
+            100
+          ],
+          "Position": [
+            0,
+            -0.5,
+            0
+          ],
+          "Color": [
+            0.14,
+            0.14,
+            0.16
+          ]
+        }
+      }
+    },
+    "ReplicatedStorage": {
+      "Delivery": {
+        "$path": "src/shared"
+      }
+    },
+    "ServerScriptService": {
+      "Delivery": {
+        "$path": "src/server"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Delivery": {
+          "$path": "src/client"
+        }
+      }
+    },
+    "VoiceChatService": {
+      "$className": "VoiceChatService",
+      "$properties": {
+        "EnableDefaultVoice": false,
+        "UseAudioApi": "Enabled"
+      }
+    }
+  }
+}

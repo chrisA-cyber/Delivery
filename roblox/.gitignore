@@ -1,0 +1,6 @@
+.tools/
+build/
+*.rbxl.lock
+.env*
+!*.example.invalid
+roblox.yml
