@@ -20,6 +20,7 @@ local Measure = require(shared.Measure)
 local features = require(shared.Features)
 local audio = require(script.Parent.StageVoice).new(features.StageVoice)
 local captions = {}
+local host = require(script.Parent.Host).new(require(shared.HostLines), features)
 local function claim(p, data, simulated)
 	local now = clock()
 	if
@@ -81,6 +82,7 @@ local function send(player: Player)
 		cues = state.cues,
 		cue = state.cue,
 		result = state.result,
+		hostLine = if state.phase == "host" or state.phase == "reveal" then state.hostLine else nil,
 		queued = table.find(state.queue, id),
 		directed = state.ballots[id],
 		rated = state.ratings[id],
@@ -105,6 +107,15 @@ local function publish()
 		else "DELIVERY"
 end
 local function phaseChanged()
+	if state.phase == "vote" then
+		host.prepare(state)
+	elseif state.phase == "host" then
+		host.speak(state.hostLine or "The room has spoken.", 1.5)
+	elseif state.phase == "take" and state.actor == 0 then
+		host.speak(state.line.text, 4)
+	elseif state.phase == "direct" or state.phase == "read" or state.phase == "intermission" then
+		host.silence()
+	end
 	if state.phase ~= "take" then
 		audio.stop()
 	end

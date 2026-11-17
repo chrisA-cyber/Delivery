@@ -101,7 +101,10 @@ local function render(s)
 				action(label, "rate", 25 * i, i == 3)
 			end
 		end
-	elseif s.phase == "reveal" or s.phase == "host" then
+	elseif s.phase == "host" then
+		ui.card.Text = s.hostLine or "The room has spoken."
+		ui.note.Text = "House host"
+	elseif s.phase == "reveal" then
 		local result = s.result
 		if result then
 			ui.card.Text = if result.overall

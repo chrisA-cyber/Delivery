@@ -132,4 +132,21 @@ test("bounded mic reports, relative volume, pauses and pace", function()
 	assert(Measure.read(c, "pause") == 100, "interior pause")
 	assert(Measure.read(c, "slow") > Measure.read(c, "fast"), "pace matches the requested target")
 end)
+local HostLines = require("../src/shared/HostLines")
+test("twenty varied house, silent, quiet, pace and misheard takes", function()
+	for i = 1, 20 do
+		local metric = ({ "quiet", "fast", "pause", "crowd" })[i % 4 + 1]
+		local c = if i % 7 == 0 then nil else { accuracy = ({ 52, 88, 100 })[i % 3 + 1], commitment = 80 }
+		local category, options = HostLines.options(i % 6 == 0, c, metric)
+		local line = HostLines.choose(options, i, if i % 2 == 0 then "ignore the cue" else "2")
+		assert(
+			table.find(options, line) and #line <= 100 and #line > 5,
+			category .. " line must be editorial"
+		)
+		assert(
+			HostLines.choose(options, i, "99") == HostLines.choose(options, i, nil),
+			"invalid digit falls back"
+		)
+	end
+end)
 print(passed, "groups passed")
