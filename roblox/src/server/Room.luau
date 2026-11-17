@@ -69,7 +69,7 @@ function Room.build()
 			return
 		end
 		local humanoid = char:FindFirstChildOfClass("Humanoid")
-		if not humanoid then
+		if not humanoid or humanoid.Health <= 0 or not char:IsDescendantOf(workspace) then
 			return
 		end
 		if performing then

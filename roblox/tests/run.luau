@@ -114,4 +114,22 @@ test("offer timeout, forfeit and fresh reconnect consent", function()
 		"Failed: s.phase == 'intermission' and s.queue[1] == 1 and s.actor == 0"
 	)
 end)
+local Measure = require("../src/shared/Measure")
+test("bounded mic reports, relative volume, pauses and pace", function()
+	local c = Measure.synthetic("one two three four five six seven eight")
+	assert(Measure.valid(c, 5), "normal finite claim")
+	assert(not Measure.valid(c, 1), "future duration")
+	c.levels[2] = 0 / 0
+	assert(not Measure.valid(c, 5), "NaN rejected")
+	c.levels = table.create(25, 0.038)
+	local quiet = Measure.read(c, "quiet")
+	c.levels = table.create(25, 0.19)
+	assert(quiet == 100 and Measure.read(c, "quiet") < quiet, "quiet is relative and louder can lose")
+	c.levels = table.create(25, 0.075)
+	for i = 8, 11 do
+		c.levels[i] = 0
+	end
+	assert(Measure.read(c, "pause") == 100, "interior pause")
+	assert(Measure.read(c, "slow") > Measure.read(c, "fast"), "pace matches the requested target")
+end)
 print(passed, "groups passed")

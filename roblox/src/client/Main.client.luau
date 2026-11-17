@@ -7,6 +7,21 @@ local ui = require(script.Parent.Hud).new(player:WaitForChild("PlayerGui") :: Pl
 local state
 local title = ""
 local notice = false
+local micNote = ""
+local lastPhase = ""
+local mic = require(script.Parent.Microphone).new(
+	player,
+	require(Storage.Delivery.Features).SpeechInput,
+	function(turn, data)
+		stage:FireServer("claim", turn, data)
+	end,
+	function(msg)
+		micNote = msg
+		if state and state.actor == player.UserId then
+			ui.note.Text = msg
+		end
+	end
+)
 local function act(verb: string, arg: any?)
 	if state then
 		stage:FireServer(verb, state.turn, arg)
@@ -16,6 +31,19 @@ local function render(s)
 	state = s
 	local mine = s.actor == player.UserId
 	local house = s.actor == 0
+	local step = tostring(s.turn) .. "/" .. s.phase
+	if lastPhase ~= step then
+		lastPhase = step
+		if mine and s.phase == "direct" then
+			micNote = ""
+			mic.check()
+		elseif mine and s.phase == "take" then
+			mic.take(s.turn, s.deadline)
+		elseif not mine or (s.phase ~= "countdown" and s.phase ~= "read") then
+			mic.stop()
+			micNote = ""
+		end
+	end
 	local p = Players:GetPlayerByUserId(s.actor)
 	local performer = if house
 		then "House rehearsal"
@@ -88,6 +116,23 @@ local function render(s)
 					tostring(result.comedy or "—"),
 					tostring(result.chaos or "—")
 				)
+		end
+	end
+	if mine and micNote ~= "" and (s.phase == "direct" or s.phase == "take") then
+		ui.note.Text = micNote
+	end
+	if s.phase == "read" then
+		ui.note.Text = if s.heard
+			then "Heard: " .. s.heard
+			elseif s.actor == 0 then "House rehearsal · crowd score only"
+			else "Reading the take…"
+		if s.pace then
+			ui.card.Text = string.format(
+				"%s%.1f words/sec   ·   %.2f× mic check",
+				if s.simulated then "Simulated   ·   " else "",
+				s.pace,
+				s.relative
+			)
 		end
 	end
 	if mine and s.phase ~= "lineup" then
