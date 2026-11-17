@@ -4,6 +4,7 @@ local Storage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 local stage = Storage:WaitForChild("Delivery"):WaitForChild("Stage") :: RemoteEvent
 local ui = require(script.Parent.Hud).new(player:WaitForChild("PlayerGui") :: PlayerGui)
+local fx = require(script.Parent.ShowFX).new(ui.gui, Storage.Delivery)
 local state
 local title = ""
 local notice = false
@@ -33,14 +34,15 @@ end
 local function render(s)
 	state = s
 	local mine = s.actor == player.UserId
+	fx.update(s, backstage and not mine)
 	local house = s.actor == 0
 	local step = tostring(s.turn) .. "/" .. s.phase
 	if lastPhase ~= step then
 		lastPhase = step
-		if mine and s.phase == "direct" then
+		if mine and s.useMic and s.phase == "direct" then
 			micNote = ""
 			mic.check()
-		elseif mine and s.phase == "take" then
+		elseif mine and s.useMic and s.phase == "take" then
 			mic.take(s.turn, s.deadline)
 		elseif not mine or (s.phase ~= "countdown" and s.phase ~= "read") then
 			mic.stop()
@@ -68,6 +70,7 @@ local function render(s)
 		end, primary)
 	end
 	if backstage and not mine then
+		title = "BACKSTAGE   /   Daily show"
 		local row = s.standing
 		ui.card.Text = s.dailyLine or "Daily show"
 		ui.note.Text = string.format(
@@ -82,6 +85,9 @@ local function render(s)
 			backstage = false
 			render(s)
 		end, true)
+		ui.button("Camera motion", function()
+			ui.note.Text = if fx.toggle() then "Reduced motion on." else "Show camera on."
+		end)
 		ui.button("Invite a friend", function()
 			local social = game:GetService("SocialService")
 			local ok, can = pcall(social.CanSendGameInviteAsync, social, player)
@@ -131,7 +137,10 @@ local function render(s)
 		ui.card.Text = "Take the stage?"
 		ui.note.Text =
 			"During your mic check and take, Delivery listens for volume and words. Nothing you say is kept."
-		action("Accept seat", "accept", nil, true)
+		if s.studio then
+			action("Studio rehearsal", "accept", "rehearsal", true)
+		end
+		action("Accept · use my mic", "accept", "mic", not s.studio)
 		action("Pass", "leave")
 	elseif s.phase == "direct" then
 		if not mine and not s.directed then
@@ -176,8 +185,9 @@ local function render(s)
 			ui.card.Text = if result.overall
 				then tostring(result.overall) .. "   " .. result.band
 				else "Another take?"
-			ui.note.Text = if result.miss
-				then "No words came through. Queue again for a fresh take."
+			ui.note.Text = if s.simulated
+				then "Studio rehearsal · simulated words and volume."
+				elseif result.miss then "No words came through. Queue again for a fresh take."
 				else string.format(
 					"Words %s   ·   Commitment %s   ·   Comedy %s   ·   Chaos %s",
 					tostring(result.accuracy or "—"),
@@ -305,8 +315,3 @@ task.spawn(function()
 		task.wait(0.2)
 	end
 end)
-local camera = workspace.CurrentCamera
-if camera then
-	camera.CameraType = Enum.CameraType.Scriptable
-	camera.CFrame = CFrame.lookAt(Vector3.new(16, 13, 24), Vector3.new(0, 4, -10))
-end

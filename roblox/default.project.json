@@ -4,26 +4,8 @@
     "$className": "DataModel",
     "Workspace": {
       "$className": "Workspace",
-      "Floor": {
-        "$className": "Part",
-        "$properties": {
-          "Anchored": true,
-          "Size": [
-            100,
-            1,
-            100
-          ],
-          "Position": [
-            0,
-            -0.5,
-            0
-          ],
-          "Color": [
-            0.14,
-            0.14,
-            0.16
-          ]
-        }
+      "ShowSet": {
+        "$path": "art/ShowSet.model.json"
       }
     },
     "ReplicatedStorage": {
@@ -48,6 +30,34 @@
       "$properties": {
         "EnableDefaultVoice": false,
         "UseAudioApi": "Enabled"
+      }
+    },
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "ClockTime": 20,
+        "Brightness": 2.2,
+        "Ambient": [
+          0.32,
+          0.27,
+          0.38
+        ],
+        "OutdoorAmbient": [
+          0.26,
+          0.23,
+          0.35
+        ],
+        "EnvironmentDiffuseScale": 0.5,
+        "EnvironmentSpecularScale": 0.8,
+        "GlobalShadows": true
+      },
+      "SoftLenses": {
+        "$className": "BloomEffect",
+        "$properties": {
+          "Intensity": 0.24,
+          "Size": 20,
+          "Threshold": 1.12
+        }
       }
     }
   }

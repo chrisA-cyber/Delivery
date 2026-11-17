@@ -107,6 +107,10 @@ remote.Parent = shared
 local clock = function()
 	return workspace:GetServerTimeNow()
 end
+local wave = Instance.new("RemoteEvent")
+wave.Name = "Meter"
+wave.Parent = shared
+local lastWave = 0
 local limits = {}
 local Measure = require(shared.Measure)
 local features = require(shared.Features)
@@ -172,6 +176,7 @@ local function send(player: Player)
 	remote:FireClient(player, {
 		phase = state.phase,
 		mode = state.mode,
+		useMic = state.useMic,
 		predicted = state.predictions[id],
 		duel = state.duel and { first = state.duel.first, second = state.duel.second },
 		duelVoted = state.duelVotes[id],
@@ -206,12 +211,15 @@ local function publish()
 	for _, player in Players:GetPlayers() do
 		send(player)
 	end
+	local today, cue = daily()
+	room.daily.Text = "DAILY SHOW\n" .. today.text .. "\n" .. cue.label
 	local line = state.line
 	room.sign.Text = if state.phase == "reveal" and state.result
 		then (state.result.band .. "   " .. tostring(state.result.overall or "—"))
 		elseif line then line.text
 		else "DELIVERY"
 end
+local lastPerformer: Player? = nil
 local function phaseChanged()
 	if state.phase == "reveal" then
 		award()
@@ -233,7 +241,7 @@ local function phaseChanged()
 	if state.phase == "lobby" or state.phase == "intermission" then
 		table.clear(captions)
 	end
-	if state.phase == "take" and state.actor ~= 0 then
+	if state.phase == "take" and state.actor ~= 0 and state.useMic then
 		local p = Players:GetPlayerByUserId(state.actor)
 		if p then
 			audio.start(p)
@@ -242,11 +250,13 @@ local function phaseChanged()
 	if state.phase == "countdown" and state.actor ~= 0 then
 		local p = Players:GetPlayerByUserId(state.actor)
 		if p then
+			lastPerformer = p
 			room.place(p, true)
 		end
-	elseif state.phase == "intermission" and state.actor ~= 0 then
-		local p = Players:GetPlayerByUserId(state.actor)
-		if p then
+	elseif state.phase == "lobby" and lastPerformer then
+		local p = lastPerformer
+		lastPerformer = nil
+		if p and p.Parent == Players then
 			room.place(p, false)
 		end
 	elseif state.phase == "take" and state.actor == 0 then
@@ -301,6 +311,21 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 	if turn ~= state.turn then
 		return
 	end
+	if verb == "wave" then
+		if
+			state.phase == "take"
+			and state.actor == id
+			and now < state.untilTime
+			and now - lastWave >= 0.24
+			and type(arg) == "number"
+			and arg >= 0
+			and arg <= 1
+		then
+			lastWave = now
+			wave:FireAllClients(state.turn, arg)
+		end
+		return
+	end
 	if verb == "troupe" then
 		if not bucket.troupe then
 			bucket.troupe = true
@@ -317,7 +342,7 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 		return
 	end
 	if verb == "claim" then
-		if features.SpeechInput and claim(p, arg, false) then
+		if state.useMic and features.SpeechInput and claim(p, arg, false) then
 			send(p)
 		end
 		return

@@ -105,7 +105,12 @@ function Microphone.new(player: Player, enabled: boolean, submit, message)
 			local start = workspace:GetServerTimeNow()
 			local levels = {}
 			while token == session and workspace:GetServerTimeNow() < deadline and #levels < 50 do
-				table.insert(levels, math.clamp(meter.RmsLevel, 0, 1))
+				local level = math.clamp(meter.RmsLevel, 0, 1)
+				table.insert(levels, level)
+				if #levels % 2 == 0 then
+					local stage = game:GetService("ReplicatedStorage").Delivery.Stage
+					stage:FireServer("wave", turn, math.clamp(level / reference / 2, 0, 1))
+				end
 				task.wait(0.2)
 			end
 			if token ~= session then

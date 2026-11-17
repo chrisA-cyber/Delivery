@@ -38,6 +38,7 @@ local function clearRound(s)
 	s.duelVotes = {}
 	s.day = nil
 	s.hostLine = nil
+	s.useMic = false
 	s.duelWinner = nil
 end
 
@@ -258,6 +259,10 @@ function Show.action(s, id: number, action: string, arg: any, now: number): bool
 		if s.phase ~= "lineup" or id ~= s.actor then
 			return false
 		end
+		if arg ~= nil and arg ~= "mic" and arg ~= "rehearsal" then
+			return false
+		end
+		s.useMic = arg == "mic"
 		enter(s, "direct", now)
 	elseif id == s.actor then
 		return false
