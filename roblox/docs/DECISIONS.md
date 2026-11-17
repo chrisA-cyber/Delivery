@@ -7,3 +7,4 @@
 | 0 | Fill an empty room with a clearly labelled house act so the first arrival can play crowd immediately. Disable the house turn to return to a queue-only room. |
 | 0 | Keep even filtered captions private to the speaker to avoid broadcasting player speech across chat eligibility groups. The authored prompt stays on the shared screen. |
 | 1 | Use a fingerprint for the exact screened catalogue. Re-review changed words before updating the lock. Include 23 web lines, 100 new lines and 36 directions. |
+| 2 | Consent expires with the seat offer. Reconnecting restores an offer opportunity for 12 seconds and requires fresh acceptance. Reaction influence is capped at one per spectator/take. |
