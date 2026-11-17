@@ -10,3 +10,4 @@
 | 2 | Consent expires with the seat offer. Reconnecting restores an offer opportunity for 12 seconds and requires fresh acceptance. Reaction influence is capped at one per spectator/take. |
 | 3 | Use a private three-second calibration and short-lived allow-listed stage route. Voice groups plus pairwise communication checks fail closed. Keep words private to their speaker. No client claims enter a global board. |
 | 4 | Let TextGenerator program the host from an outcome-specific set. Only an allowed index can reach a caption or speaker. Remove the selector to run a fully scripted show. |
+| 5 | Use original obby, roleplay, emote, tycoon and avatar jokes plus a preset writer. Preserve the no-free-text rule. Switch uses four measurable level windows. Only explicit re-entry can defend a face-off win. |

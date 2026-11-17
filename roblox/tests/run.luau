@@ -149,4 +149,50 @@ test("twenty varied house, silent, quiet, pace and misheard takes", function()
 		)
 	end
 end)
+local Modes = require("../src/shared/Modes")
+test("pair waits for two volunteers, shares the card and accepts two fresh offers", function()
+	local s = Show.new(Deck.new(Catalogue, "duel"), Score, Modes, function()
+		return Deck.daily(Catalogue, "2026-11-17")
+	end)
+	for i = 1, 3 do
+		Show.join(s, i, 0)
+	end
+	for i = 1, 2 do
+		assert(Show.action(s, i, "queue", { mode = "Face-off" }, 0), "opt in")
+	end
+	Show.tick(s, 0)
+	Show.action(s, 1, "accept", nil, 0)
+	local text = s.line.text
+	Show.tick(s, s.untilTime)
+	local cue = s.cue.id
+	while s.phase ~= "lobby" do
+		Show.tick(s, s.untilTime)
+	end
+	Show.tick(s, s.untilTime)
+	assert(s.actor == 2 and s.phase == "lineup", "fresh second offer")
+	Show.action(s, 2, "accept", nil, s.untilTime - 1)
+	assert(s.line.text == text and s.cues[1].id == cue, "same line and cue")
+	while s.phase ~= "vote" do
+		Show.tick(s, s.untilTime)
+	end
+	assert(not Show.action(s, 1, "duelVote", 1, s.untilTime - 1), "contestants cannot vote")
+	assert(Show.action(s, 3, "duelVote", 2, s.untilTime - 1), "crowd pick")
+	Show.tick(s, s.untilTime)
+	assert(s.duelWinner == 2, "crowd decided winner")
+end)
+test("nine reviewed custom combinations and four switch windows", function()
+	for i = 1, 9 do
+		local s = { mode = "Custom", custom = { [3] = i }, actor = 3 }
+		Modes.card(s, nil)
+		assert(
+			#string.split(s.line.text, " ") >= 10 and #string.split(s.line.text, " ") <= 18,
+			"custom line timing"
+		)
+	end
+	local c = { levels = {}, baseline = 0.1 }
+	for i = 1, 50 do
+		c.levels[i] = ({ 0.1, 0.038, 0.14, 0.038 })[math.min(4, math.floor((i - 1) * 0.2 / 2.5) + 1)]
+	end
+	assert(Modes.switchMeasure(c) == 100, "all cues matched")
+end)
 print(passed, "groups passed")

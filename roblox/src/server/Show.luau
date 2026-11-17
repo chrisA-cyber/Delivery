@@ -35,9 +35,13 @@ local function clearRound(s)
 	s.cue = nil
 	s.lastReaction = nil
 	s.predictions = {}
+	s.duelVotes = {}
+	s.day = nil
+	s.hostLine = nil
+	s.duelWinner = nil
 end
 
-function Show.new(draw, score)
+function Show.new(draw, score, modes, daily)
 	local s = {
 		phase = "lobby",
 		untilTime = 0,
@@ -49,6 +53,11 @@ function Show.new(draw, score)
 		score = score,
 		grace = {},
 		revision = 0,
+		modes = modes,
+		daily = daily,
+		choices = {},
+		custom = {},
+		mode = "Main stage",
 	}
 	clearRound(s)
 	return s
@@ -60,6 +69,9 @@ local function enter(s, phase: string, now: number)
 	s.revision += 1
 	if phase == "direct" then
 		s.line, s.cues = s.draw()
+		if s.modes then
+			s.modes.card(s, s.daily)
+		end
 		for id in s.online do
 			if id ~= s.actor then
 				s.observers[id] = true
@@ -77,6 +89,10 @@ local function enter(s, phase: string, now: number)
 			end
 		end
 		s.cue = s.cues[best]
+		if s.duel and s.duel.first == s.actor then
+			s.duel.line = s.line
+			s.duel.cue = s.cue
+		end
 	elseif phase == "take" then
 		s.started = now
 	elseif phase == "host" then
@@ -94,6 +110,14 @@ local function enter(s, phase: string, now: number)
 			audience
 		)
 		s.result.miss = not c
+		if s.duel and s.duel.second == s.actor then
+			local score = 0
+			for _, v in s.duelVotes do
+				score += if v == 1 then 1 else -1
+			end
+			s.duelWinner = if score > 0 then s.duel.first elseif score < 0 then s.duel.second else nil
+			s.champion = s.duelWinner
+		end
 		if not c and s.result.voters == 0 then
 			s.result.overall = nil
 			s.result.band = "Take it again"
@@ -117,6 +141,12 @@ end
 
 function Show.leave(s, id: number, now: number)
 	s.online[id] = nil
+	if s.champion == id then
+		s.champion = nil
+	end
+	if s.duel and (id == s.duel.first or id == s.duel.second) then
+		s.duel = nil
+	end
 	local pos = table.find(s.queue, id)
 	if pos then
 		table.remove(s.queue, pos)
@@ -141,9 +171,42 @@ function Show.tick(s, now: number)
 		end
 		clearRound(s)
 		s.turn += 1
-		s.actor = table.remove(s.queue, 1) or 0
+		s.actor = 0
+		if s.duel and s.duel.line then
+			local pos = table.find(s.queue, s.duel.second)
+			if pos and s.online[s.duel.second] then
+				s.actor = table.remove(s.queue, pos)
+			else
+				s.duel = nil
+			end
+		end
+		if s.actor == 0 then
+			s.duel = nil
+			for index, id in s.queue do
+				if s.choices[id] ~= "Face-off" then
+					s.actor = table.remove(s.queue, index)
+					break
+				end
+				local other = nil
+				for j = index + 1, #s.queue do
+					if s.choices[s.queue[j]] == "Face-off" then
+						other = s.queue[j]
+						break
+					end
+				end
+				if other then
+					s.duel = { first = id, second = other }
+					s.actor = table.remove(s.queue, index)
+					break
+				end
+			end
+		end
+		s.mode = if s.actor == 0 then "Main stage" else s.choices[s.actor] or "Main stage"
 		enter(s, if s.actor == 0 then "direct" else "lineup", now)
 	elseif now >= s.untilTime then
+		if s.phase == "lineup" or (s.phase == "intermission" and s.duel and s.actor == s.duel.second) then
+			s.duel = nil
+		end
 		enter(s, if s.phase == "lineup" then "lobby" else nextPhase[s.phase], now)
 	else
 		return false
@@ -159,7 +222,26 @@ function Show.action(s, id: number, action: string, arg: any, now: number): bool
 		if id == s.actor or table.find(s.queue, id) then
 			return false
 		end
-		table.insert(s.queue, id)
+		local mode = "Main stage"
+		if arg ~= nil then
+			if not s.modes or type(arg) ~= "table" or not table.find(s.modes.names, arg.mode) then
+				return false
+			end
+			mode = arg.mode
+			if
+				mode == "Custom"
+				and (type(arg.mix) ~= "number" or not table.find({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }, arg.mix))
+			then
+				return false
+			end
+			s.custom[id] = if mode == "Custom" then arg.mix else nil
+		end
+		s.choices[id] = mode
+		if mode == "Face-off" and s.champion == id then
+			table.insert(s.queue, 1, id)
+		else
+			table.insert(s.queue, id)
+		end
 	elseif action == "leave" then
 		local index = table.find(s.queue, id)
 		if index then
@@ -179,6 +261,27 @@ function Show.action(s, id: number, action: string, arg: any, now: number): bool
 		enter(s, "direct", now)
 	elseif id == s.actor then
 		return false
+	elseif action == "predict" then
+		if
+			(s.phase ~= "take" and s.phase ~= "read")
+			or s.predictions[id]
+			or not table.find({ 1, 2, 3 }, arg)
+		then
+			return false
+		end
+		s.predictions[id] = arg
+	elseif action == "duelVote" then
+		if
+			s.phase ~= "vote"
+			or not s.duel
+			or s.actor ~= s.duel.second
+			or id == s.duel.first
+			or s.duelVotes[id]
+			or not table.find({ 1, 2 }, arg)
+		then
+			return false
+		end
+		s.duelVotes[id] = arg
 	elseif action == "direct" then
 		if s.phase ~= "direct" or s.ballots[id] or not table.find({ 1, 2, 3 }, arg) or not s.cues[arg] then
 			return false

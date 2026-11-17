@@ -8,7 +8,74 @@ local catalogue = require(shared.Catalogue)
 local Score = require(shared.Score)
 local Show = require(script.Parent.Show)
 local room = require(script.Parent.Room).build()
-local state = Show.new(Deck.new(catalogue, tostring(os.time())), Score)
+local Modes = require(shared.Modes)
+local function daily()
+	local day = os.date("!%Y-%m-%d")
+	local line, cue = Deck.daily(catalogue, day)
+	return line, cue, day
+end
+local state = Show.new(Deck.new(catalogue, tostring(os.time())), Score, Modes, daily)
+local standings = {}
+local lastAward = 0
+local honours = ""
+local function award()
+	if state.turn == lastAward then
+		return
+	end
+	lastAward = state.turn
+	local result = state.result
+	for id in state.online do
+		local row = standings[id]
+		if not row then
+			continue
+		end
+		if id == state.actor then
+			if result.overall and not result.miss then
+				row.stage += 10
+				row.best = math.max(row.best, result.overall)
+				row.streak = if result.overall >= 70 then row.streak + 1 else 0
+				row.roses = math.max(row.roses, state.reactionCount)
+			end
+		else
+			local xp = (if state.ballots[id] then 2 else 0) + (if state.reactions[id] then 1 else 0)
+			if state.ratings[id] then
+				xp += 3
+				if result.voters >= 2 and math.abs(state.ratings[id] - result.comedy) <= 15 then
+					xp += 2
+				end
+			end
+			if
+				result.overall
+				and state.predictions[id]
+					== (if result.overall < 60 then 1 elseif result.overall < 90 then 2 else 3)
+			then
+				xp += 3
+				row.calls += 1
+			end
+			row.crowd += xp
+		end
+	end
+	if state.turn % 4 == 0 then
+		local function leader(key)
+			local high = 0
+			local name = "—"
+			for id, r in standings do
+				local p = Players:GetPlayerByUserId(id)
+				if p and r[key] > high then
+					high = r[key]
+					name = p.DisplayName
+				end
+			end
+			return name
+		end
+		honours = "Best take: "
+			.. leader("best")
+			.. "   ·   Sharpest call: "
+			.. leader("calls")
+			.. "   ·   Most reactions: "
+			.. leader("roses")
+	end
+end
 local remote = Instance.new("RemoteEvent")
 remote.Name = "Stage"
 remote.Parent = shared
@@ -34,8 +101,11 @@ local function claim(p, data, simulated)
 	if not Measure.valid(data, now - state.started) then
 		return false
 	end
-	local accuracy = Score.accuracy(state.line.text, data.words)
+	local accuracy = Score.accuracy(Modes.expected(state), data.words)
 	local measured, pace, relative = Measure.read(data, state.cue.measure)
+	if state.mode == "Switch" then
+		measured = Modes.switchMeasure(data)
+	end
 	if accuracy == nil or pace == nil then
 		return false
 	end
@@ -75,6 +145,13 @@ local function send(player: Player)
 	local id = player.UserId
 	remote:FireClient(player, {
 		phase = state.phase,
+		mode = state.mode,
+		predicted = state.predictions[id],
+		duel = state.duel and { first = state.duel.first, second = state.duel.second },
+		duelVoted = state.duelVotes[id],
+		winner = state.duelWinner,
+		standing = standings[id],
+		honours = honours,
 		deadline = state.untilTime,
 		turn = state.turn,
 		actor = state.actor,
@@ -107,7 +184,12 @@ local function publish()
 		else "DELIVERY"
 end
 local function phaseChanged()
-	if state.phase == "vote" then
+	if state.phase == "reveal" then
+		award()
+	end
+	if state.phase == "direct" and state.mode == "Echo" then
+		host.speak(state.line.text, 2)
+	elseif state.phase == "vote" then
 		host.prepare(state)
 	elseif state.phase == "host" then
 		host.speak(state.hostLine or "The room has spoken.", 1.5)
@@ -145,6 +227,7 @@ local function phaseChanged()
 	publish()
 end
 local function join(p: Player)
+	standings[p.UserId] = { stage = 0, crowd = 0, best = 0, streak = 0, roses = 0, calls = 0 }
 	Show.join(state, p.UserId, clock())
 	p.CharacterAdded:Connect(function(char)
 		char:WaitForChild("Humanoid", 8)
@@ -160,6 +243,7 @@ for _, p in Players:GetPlayers() do
 end
 Players.PlayerRemoving:Connect(function(p)
 	Show.leave(state, p.UserId, clock())
+	standings[p.UserId] = nil
 	limits[p.UserId] = nil
 	captions[p.UserId] = nil
 	phaseChanged()
@@ -200,7 +284,7 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 			and now < state.untilTime
 			and not state.claim
 		then
-			local sample = Measure.synthetic(state.line.text)
+			local sample = Measure.synthetic(Modes.expected(state))
 			-- A fixture follows the same duration and validation path as a real report.
 			local key = state.turn
 			task.delay(math.max(0, 5 - (now - state.started)), function()

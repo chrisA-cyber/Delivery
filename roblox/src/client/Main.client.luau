@@ -7,6 +7,8 @@ local ui = require(script.Parent.Hud).new(player:WaitForChild("PlayerGui") :: Pl
 local state
 local title = ""
 local notice = false
+local Modes = require(Storage.Delivery.Modes)
+local modeIndex, setup, ending = 1, 1, 1
 local micNote = ""
 local lastPhase = ""
 local mic = require(script.Parent.Microphone).new(
@@ -50,7 +52,10 @@ local function render(s)
 		elseif mine then "Your take"
 		elseif p then p.DisplayName
 		else "On stage"
-	title = string.upper(s.phase) .. "   /   " .. performer
+	title = string.upper(s.phase)
+		.. "   /   "
+		.. performer
+		.. (if s.mode and s.mode ~= "Main stage" then "   ·   " .. s.mode else "")
 	ui.card.Text = if s.line then s.line.text else "The next seat is open."
 	ui.note.Text = if s.cue
 		then s.cue.label .. "  ·  " .. s.cue.text
@@ -121,6 +126,38 @@ local function render(s)
 				)
 		end
 	end
+	if not mine and (s.phase == "read" or (s.phase == "take" and s.reacted)) and not s.predicted then
+		for i, name in { "Under 60", "60–89", "90+" } do
+			action("Call it: " .. name, "predict", i)
+		end
+	end
+	if
+		s.phase == "vote"
+		and s.duel
+		and s.actor == s.duel.second
+		and player.UserId ~= s.duel.first
+		and not mine
+		and not s.duelVoted
+	then
+		action("First take wins", "duelVote", 1)
+		action("Second take wins", "duelVote", 2)
+	end
+	if s.phase == "intermission" and s.standing then
+		ui.card.Text = string.format(
+			"Stage %d   ·   Crowd %d",
+			1 + math.floor(s.standing.stage / 40),
+			1 + math.floor(s.standing.crowd / 20)
+		)
+		ui.note.Text = if s.honours ~= ""
+			then s.honours
+			else "Crowd points: " .. s.standing.crowd .. "   ·   Hot streak: " .. s.standing.streak
+	end
+	if s.phase == "reveal" and s.duel and s.actor == s.duel.second then
+		local winner = s.winner and Players:GetPlayerByUserId(s.winner)
+		ui.note.Text = if winner
+			then winner.DisplayName .. " wins the face-off! Join again to defend."
+			else "Face-off · split decision."
+	end
 	if mine and micNote ~= "" and (s.phase == "direct" or s.phase == "take") then
 		ui.note.Text = micNote
 	end
@@ -146,9 +183,24 @@ local function render(s)
 		if notice then
 			ui.note.Text =
 				"During your mic check and take, Delivery listens for volume and words. Nothing you say is kept."
+			ui.button("Mode · " .. Modes.names[modeIndex], function()
+				modeIndex = modeIndex % #Modes.names + 1
+				render(s)
+			end)
+			if Modes.names[modeIndex] == "Custom" then
+				ui.card.Text = Modes.setups[setup] .. " " .. Modes.ends[ending]
+				ui.button("Change setup", function()
+					setup = setup % 3 + 1
+					render(s)
+				end)
+				ui.button("Change ending", function()
+					ending = ending % 3 + 1
+					render(s)
+				end)
+			end
 			ui.button("Join performer queue", function()
 				notice = false
-				act("queue")
+				act("queue", { mode = Modes.names[modeIndex], mix = (setup - 1) * 3 + ending })
 			end, true)
 			ui.button("Stay in crowd", function()
 				notice = false
@@ -167,6 +219,14 @@ stage:FireServer("sync", 0)
 task.spawn(function()
 	while ui.panel.Parent do
 		if state then
+			if state.phase == "take" and state.mode == "Switch" then
+				local idx = math.clamp(
+					1 + math.floor((10 - state.deadline + workspace:GetServerTimeNow()) / 2.5),
+					1,
+					4
+				)
+				ui.note.Text = "Cue " .. idx .. "/4   ·   " .. Modes.switchCues[idx]
+			end
 			ui.phase.Text = title
 				.. "   ·   "
 				.. math.max(0, math.ceil(state.deadline - workspace:GetServerTimeNow()))
