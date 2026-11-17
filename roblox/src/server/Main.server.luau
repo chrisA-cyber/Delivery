@@ -33,6 +33,30 @@ local function daily()
 end
 local state = Show.new(Deck.new(catalogue, tostring(os.time())), Score, Modes, daily)
 local standings = {}
+local Market = game:GetService("MarketplaceService")
+local Analytics = game:GetService("AnalyticsService")
+local wardrobe = require(shared.Wardrobe)
+local shelf = require(script.Parent.Shelf).new(wardrobe, function(p, pass)
+	return Market:UserOwnsGamePassAsync(p.UserId, pass)
+end, RunService:IsStudio())
+local metrics = require(script.Parent.Metrics).new(function(p, key)
+	if RunService:IsStudio() then
+		print("Delivery metric", key)
+	else
+		task.spawn(function()
+			pcall(Analytics.LogCustomEvent, Analytics, p, "delivery_" .. key, 1)
+		end)
+	end
+end)
+local participation = {}
+local function observed(p, turn)
+	local entry = participation[p]
+	if not entry then
+		participation[p] = { turn = turn }
+	elseif entry.turn ~= turn then
+		metrics.once(p, "second_round")
+	end
+end
 local Profiles = require(script.Parent.Profiles)
 local saves = require(script.Parent.Saves).new(standings)
 local lastAward = 0
@@ -49,6 +73,19 @@ local function award()
 			continue
 		end
 		local before = row.stage + row.crowd
+		local player = Players:GetPlayerByUserId(id)
+		if player and row.returned then
+			metrics.once(player, "next_day_return")
+		end
+		if id == state.actor and player then
+			observed(player, state.turn)
+			if state.useMic then
+				metrics.take(player, result.miss)
+				if not result.miss then
+					metrics.once(player, "first_take")
+				end
+			end
+		end
 		if id == state.actor then
 			local day = if state.day
 				then math.floor(DateTime.fromIsoDate(state.day .. "T00:00:00Z").UnixTimestamp / 86400)
@@ -173,10 +210,15 @@ end
 local function send(player: Player)
 	local id = player.UserId
 	local today, dailyCue = daily()
+	local actor = Players:GetPlayerByUserId(state.actor)
+	local reactor = state.lastReactor and Players:GetPlayerByUserId(state.lastReactor)
 	remote:FireClient(player, {
 		phase = state.phase,
 		mode = state.mode,
 		useMic = state.useMic,
+		skin = shelf.active[player],
+		actorSkin = if actor then shelf.active[actor] else nil,
+		reactionSkin = if reactor then shelf.active[reactor] else nil,
 		predicted = state.predictions[id],
 		duel = state.duel and { first = state.duel.first, second = state.duel.second },
 		duelVoted = state.duelVotes[id],
@@ -266,6 +308,11 @@ local function phaseChanged()
 	publish()
 end
 local function join(p: Player)
+	metrics.once(p, "join")
+	local arrival = p:GetJoinData()
+	if (arrival.ReferredByPlayerId or 0) > 0 then
+		metrics.once(p, "invite_join")
+	end
 	standings[p.UserId] = Profiles.blank()
 	saves.load(p)
 	Show.join(state, p.UserId, clock())
@@ -282,6 +329,9 @@ for _, p in Players:GetPlayers() do
 	join(p)
 end
 Players.PlayerRemoving:Connect(function(p)
+	metrics.leave(p)
+	shelf.leave(p)
+	participation[p] = nil
 	Show.leave(state, p.UserId, clock())
 	standings[p.UserId] = nil
 	task.spawn(saves.close, p)
@@ -309,6 +359,30 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 		return
 	end
 	if turn ~= state.turn then
+		return
+	end
+	if verb == "micChecked" then
+		if state.useMic and state.actor == id and (state.phase == "direct" or state.phase == "countdown") then
+			metrics.once(p, "mic_checked")
+		end
+		return
+	end
+	if verb == "inviteOpened" then
+		metrics.once(p, "invite_opened")
+		return
+	end
+	if verb == "style" or verb == "stylePreview" then
+		if verb == "stylePreview" and not RunService:IsStudio() then
+			return
+		end
+		if not bucket.style then
+			bucket.style = true
+			task.spawn(function()
+				if shelf.equip(p, arg, verb == "stylePreview") and p.Parent == Players then
+					send(p)
+				end
+			end)
+		end
 		return
 	end
 	if verb == "wave" then
@@ -369,10 +443,25 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 	end
 	local prior = state.phase
 	if Show.action(state, id, verb, arg, now) then
+		if verb == "rate" or verb == "direct" then
+			metrics.once(p, "first_vote")
+			observed(p, state.turn)
+		end
 		if prior ~= state.phase then
 			phaseChanged()
 		else
 			publish()
+		end
+	end
+end)
+Market.PromptGamePassPurchaseFinished:Connect(function(p, pass, success)
+	if not success then
+		return
+	end
+	for _, item in wardrobe do
+		if item.passId == pass and pass > 0 and shelf.equip(p, item.key, false) and p.Parent == Players then
+			send(p)
+			break
 		end
 	end
 end)

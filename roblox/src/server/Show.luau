@@ -34,6 +34,7 @@ local function clearRound(s)
 	s.cues = {}
 	s.cue = nil
 	s.lastReaction = nil
+	s.lastReactor = nil
 	s.predictions = {}
 	s.duelVotes = {}
 	s.day = nil
@@ -307,6 +308,7 @@ function Show.action(s, id: number, action: string, arg: any, now: number): bool
 		end
 		s.reactions[id] = arg
 		s.lastReaction = arg
+		s.lastReactor = id
 		s.reactionCount += 1
 	else
 		return false

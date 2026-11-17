@@ -104,7 +104,11 @@ function ShowFX.new(gui: ScreenGui, shared)
 			"Reaction",
 			Vector3.one * 0.45,
 			start,
-			if reaction == "Tomato" then pink elseif reaction == "Gasp" then blue else gold
+			if reaction == "Rose" and s.reactionSkin == "rose-gold"
+				then gold
+				elseif reaction == "Rose" or reaction == "Tomato" then pink
+				elseif reaction == "Gasp" then blue
+				else gold
 		)
 		icon.Shape = Enum.PartType.Ball
 		local board = Instance.new("BillboardGui")
@@ -140,7 +144,10 @@ function ShowFX.new(gui: ScreenGui, shared)
 				"Confetti",
 				Vector3.new(0.19, 0.35, 0.06),
 				Vector3.new(5 + math.random(-4, 4), 11 + math.random(), -9),
-				({ pink, blue, gold })[i % 3 + 1]
+				if s.actorSkin == "blue-finale"
+					then blue
+					elseif s.actorSkin == "gold-entrance" and s.phase == "countdown" then gold
+					else ({ pink, blue, gold })[i % 3 + 1]
 			)
 			Tween:Create(p, TweenInfo.new(0.75 + i % 5 * 0.13), {
 				Position = p.Position + Vector3.new(math.random(-3, 3), -8, math.random(-2, 2)),
@@ -173,6 +180,9 @@ function ShowFX.new(gui: ScreenGui, shared)
 			ring.Visible = s.phase == "reveal" and s.result and s.result.overall ~= nil
 			if s.phase == "countdown" then
 				sound("places", 0.4, 1.2)
+				if s.actorSkin == "gold-entrance" then
+					celebrate()
+				end
 			elseif s.phase == "vote" then
 				sound("roll", 0.22, 0.75)
 			elseif ring.Visible then
@@ -227,8 +237,16 @@ function ShowFX.new(gui: ScreenGui, shared)
 		end
 		lastFrame = now
 		local amplitude = if now - meterAt < 0.65 then meter else 0
+		keyLight.Color = if s
+				and s.actorSkin == "violet-key"
+				and s.phase == "take"
+			then Color3.fromRGB(177, 127, 255)
+			else Color3.fromRGB(255, 222, 179)
 		keyLight.Brightness = 2 + amplitude * 0.6
 		for i, bar in bars do
+			bar.Color = if s and s.actorSkin == "rose-marquee"
+				then pink
+				else (if i % 3 == 0 then pink else gold)
 			bar.Size = Vector3.new(
 				0.17,
 				0.10 + amplitude * (0.3 + math.abs(math.sin(i * 1.3 + now * 7)) * 0.85),

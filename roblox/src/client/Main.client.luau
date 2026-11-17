@@ -9,6 +9,9 @@ local state
 local title = ""
 local notice = false
 local backstage = false
+local shopping = false
+local Shop = require(script.Parent.Shop)
+local Capture = require(script.Parent.Capture)
 local Modes = require(Storage.Delivery.Modes)
 local modeIndex, setup, ending = 1, 1, 1
 local micNote = ""
@@ -41,7 +44,7 @@ local function render(s)
 		lastPhase = step
 		if mine and s.useMic and s.phase == "direct" then
 			micNote = ""
-			mic.check()
+			mic.check(s.turn)
 		elseif mine and s.useMic and s.phase == "take" then
 			mic.take(s.turn, s.deadline)
 		elseif not mine or (s.phase ~= "countdown" and s.phase ~= "read") then
@@ -72,6 +75,13 @@ local function render(s)
 	if backstage and not mine then
 		title = "BACKSTAGE   /   Daily show"
 		local row = s.standing
+		if shopping then
+			Shop.draw(ui, s, player, require(Storage.Delivery.Wardrobe), act, function()
+				shopping = false
+				render(s)
+			end)
+			return
+		end
 		ui.card.Text = s.dailyLine or "Daily show"
 		ui.note.Text = string.format(
 			"Daily · %s   |   Stage %d · Crowd %d   |   Troupe %d/50   |   %s",
@@ -85,6 +95,10 @@ local function render(s)
 			backstage = false
 			render(s)
 		end, true)
+		ui.button("Dressing room", function()
+			shopping = true
+			render(s)
+		end)
 		ui.button("Camera motion", function()
 			ui.note.Text = if fx.toggle() then "Reduced motion on." else "Show camera on."
 		end)
@@ -92,7 +106,10 @@ local function render(s)
 			local social = game:GetService("SocialService")
 			local ok, can = pcall(social.CanSendGameInviteAsync, social, player)
 			if ok and can then
-				pcall(social.PromptGameInvite, social, player)
+				local opened = pcall(social.PromptGameInvite, social, player)
+				if opened then
+					act("inviteOpened")
+				end
 			else
 				ui.note.Text = "Invites are unavailable in this session."
 			end
@@ -222,6 +239,13 @@ local function render(s)
 		ui.note.Text = if s.honours ~= ""
 			then s.honours
 			else "Crowd points: " .. s.standing.crowd .. "   ·   Hot streak: " .. s.standing.streak
+	end
+	if s.phase == "reveal" and s.result and (s.result.overall or 0) >= 75 then
+		ui.button("Capture the reveal", function()
+			Capture.reveal(function(msg)
+				ui.note.Text = msg
+			end)
+		end)
 	end
 	if s.phase == "reveal" and s.duel and s.actor == s.duel.second then
 		local winner = s.winner and Players:GetPlayerByUserId(s.winner)

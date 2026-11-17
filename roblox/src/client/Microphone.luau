@@ -24,7 +24,7 @@ function Microphone.new(player: Player, enabled: boolean, submit, message)
 		analyzer = nil
 		baseline = 0
 	end
-	local function check()
+	local function check(turn: number)
 		stop()
 		if not enabled then
 			message("Speech input is off. The audience can still rate this take.")
@@ -73,6 +73,7 @@ function Microphone.new(player: Player, enabled: boolean, submit, message)
 				return
 			end
 			baseline = samples[math.ceil(#samples / 2)]
+			game:GetService("ReplicatedStorage").Delivery.Stage:FireServer("micChecked", turn)
 			message("Mic checked. Watch for the take.")
 		end)
 	end

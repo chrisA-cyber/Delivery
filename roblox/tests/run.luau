@@ -238,4 +238,49 @@ test("session lease, first daily, save on release and stale writer fencing", fun
 	)
 	assert(Profiles.contribute(store, "team", 2, 4) == 12, "friends share the weekly total")
 end)
+local Shelf = require("../src/server/Shelf")
+local Metrics = require("../src/server/Metrics")
+test("cosmetic ownership and simulated Studio preview are isolated", function()
+	local items = { { key = "rose-gold", passId = 15 } }
+	local live = Shelf.new(items, function(_, pass)
+		return pass == 123
+	end, false)
+	assert(not live.equip(1, "rose-gold", true) and not live.active[1], "unauthorized preview rejected")
+	local owned = Shelf.new(items, function(_, pass)
+		return pass == 15
+	end, false)
+	assert(owned.equip(2, "rose-gold", false) and owned.active[2] == "rose-gold", "verified pass grants")
+	local localShop = Shelf.new(items, function()
+		return false
+	end, true)
+	assert(
+		localShop.equip(3, "rose-gold", true) and localShop.active[3] == "rose-gold",
+		"explicit Studio fixture"
+	)
+end)
+test("privacy-safe funnel adapters emit distinct observed milestones", function()
+	local counts = {}
+	local m = Metrics.new(function(_, k)
+		counts[k] = (counts[k] or 0) + 1
+	end)
+	for _, k in
+		{
+			"join",
+			"first_vote",
+			"first_take",
+			"second_round",
+			"invite_opened",
+			"invite_join",
+			"next_day_return",
+			"mic_checked",
+		}
+	do
+		m.once(5, k)
+		m.once(5, k)
+		assert(counts[k] == 1, "milestone deduplication " .. k)
+	end
+	m.take(5, true)
+	m.take(5, false)
+	assert(counts.voice_take == 2 and counts.transcription_miss == 1, "take denominator")
+end)
 print(passed, "groups passed")
