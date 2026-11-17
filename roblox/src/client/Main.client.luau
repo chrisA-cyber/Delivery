@@ -7,6 +7,7 @@ local ui = require(script.Parent.Hud).new(player:WaitForChild("PlayerGui") :: Pl
 local state
 local title = ""
 local notice = false
+local backstage = false
 local Modes = require(Storage.Delivery.Modes)
 local modeIndex, setup, ending = 1, 1, 1
 local micNote = ""
@@ -65,6 +66,66 @@ local function render(s)
 		ui.button(label, function()
 			act(verb, value)
 		end, primary)
+	end
+	if backstage and not mine then
+		local row = s.standing
+		ui.card.Text = s.dailyLine or "Daily show"
+		ui.note.Text = string.format(
+			"Daily · %s   |   Stage %d · Crowd %d   |   Troupe %d/50   |   %s",
+			s.dailyCue or "",
+			row and row.stage or 0,
+			row and row.crowd or 0,
+			row and math.max(row.troupeTotal, row.weekly) or 0,
+			s.saveStatus or "Session play"
+		)
+		ui.button("Back to the show", function()
+			backstage = false
+			render(s)
+		end, true)
+		ui.button("Invite a friend", function()
+			local social = game:GetService("SocialService")
+			local ok, can = pcall(social.CanSendGameInviteAsync, social, player)
+			if ok and can then
+				pcall(social.PromptGameInvite, social, player)
+			else
+				ui.note.Text = "Invites are unavailable in this session."
+			end
+		end)
+		if row then
+			local badges = {}
+			for name in row.badges do
+				table.insert(badges, name)
+			end
+			table.sort(badges)
+			ui.button("My progress", function()
+				ui.card.Text = if #badges > 0
+					then table.concat(badges, " · ")
+					else "Your first badge is one take away."
+				ui.note.Text = string.format(
+					"Daily streak %d   ·   Last Daily %s   ·   Best %d",
+					row.dailyRun,
+					if row.lastDaily > 0 then tostring(row.firstDailyScore) else "—",
+					row.best
+				)
+			end)
+			if not s.queued then
+				ui.button("Play today's card", function()
+					backstage = false
+					notice = true
+					modeIndex = table.find(Modes.names, "Daily")
+					render(s)
+				end)
+			end
+			for _, other in Players:GetPlayers() do
+				if other ~= player then
+					ui.button("Troupe · " .. other.DisplayName, function()
+						act("troupe", other.UserId)
+						ui.note.Text = "Troupes form with friends before your first points this week."
+					end)
+				end
+			end
+		end
+		return
 	end
 	if s.phase == "lineup" and mine then
 		ui.card.Text = "Take the stage?"
@@ -175,6 +236,12 @@ local function render(s)
 			)
 		end
 	end
+	if not mine and not notice then
+		ui.button("Backstage", function()
+			backstage = true
+			render(s)
+		end)
+	end
 	if mine and s.phase ~= "lineup" then
 		action("Leave stage", "leave")
 	elseif s.queued then
@@ -184,7 +251,10 @@ local function render(s)
 			ui.note.Text =
 				"During your mic check and take, Delivery listens for volume and words. Nothing you say is kept."
 			ui.button("Mode · " .. Modes.names[modeIndex], function()
-				modeIndex = modeIndex % #Modes.names + 1
+				repeat
+					modeIndex = modeIndex % #Modes.names + 1
+				until Modes.names[modeIndex] ~= "Pack night"
+					or (s.standing and s.standing.packs["Pack night"])
 				render(s)
 			end)
 			if Modes.names[modeIndex] == "Custom" then

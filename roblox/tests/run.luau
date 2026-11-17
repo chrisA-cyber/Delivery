@@ -195,4 +195,47 @@ test("nine reviewed custom combinations and four switch windows", function()
 	end
 	assert(Modes.switchMeasure(c) == 100, "all cues matched")
 end)
+local Profiles = require("../src/server/Profiles")
+test("session lease, first daily, save on release and stale writer fencing", function()
+	local records = {}
+	local store = {
+		UpdateAsync = function(_, key, fn)
+			local nextValue = fn(records[key])
+			if nextValue then
+				records[key] = nextValue
+			end
+			return nextValue
+		end,
+	}
+	local now = 500
+	local function clock()
+		return now
+	end
+	local a = Profiles.open(store, "p", "A", clock)
+	assert(a and not Profiles.open(store, "p", "B", clock), "active lease excludes second server")
+	local round = {
+		result = { overall = 82, commitment = 90 },
+		mode = "Daily",
+		reactionCount = 1,
+		line = {
+			pack = "Backstage",
+		},
+	}
+	Profiles.record(a.row, round, 20)
+	round.result.overall = 99
+	Profiles.record(a.row, round, 20)
+	assert(a.row.firstDailyScore == 82 and a.row.dailyRun == 1, "first take is immutable")
+	a.row.crowd = 12
+	assert(a.save(true), "shutdown release")
+	local b = Profiles.open(store, "p", "B", clock)
+	assert(b.row.crowd == 12 and b.row.badges["first-take"], "rejoin restores values")
+	now += 125
+	local c = Profiles.open(store, "p", "C", clock)
+	assert(c and not b.save(false), "expired writer fenced")
+	assert(
+		Profiles.contribute(store, "team", 1, 8) == 8 and Profiles.contribute(store, "team", 1, 8) == 8,
+		"retry does not duplicate troupe credit"
+	)
+	assert(Profiles.contribute(store, "team", 2, 4) == 12, "friends share the weekly total")
+end)
 print(passed, "groups passed")

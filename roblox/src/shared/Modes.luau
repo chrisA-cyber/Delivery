@@ -1,6 +1,6 @@
 --!strict
 local Modes = {}
-Modes.names = { "Main stage", "Switch", "Echo", "Face-off", "Daily", "Custom" }
+Modes.names = { "Main stage", "Switch", "Echo", "Face-off", "Daily", "Custom", "Pack night" }
 Modes.setups = { "I missed the checkpoint.", "My pet ran the tycoon.", "My avatar did the dance." }
 Modes.ends = {
 	"The replay is currently under review.",
@@ -10,7 +10,12 @@ Modes.ends = {
 local phrases = { "Not my problem.", "I'm the manager.", "Please send help.", "I am cooked." }
 Modes.switchCues = { "Normal", "Whisper", "Project", "Whisper" }
 function Modes.card(s, daily)
-	if s.mode == "Daily" then
+	if s.mode == "Pack night" then
+		local _, _, _, weekly = daily()
+		if weekly then
+			s.line = weekly[s.turn % #weekly + 1]
+		end
+	elseif s.mode == "Daily" then
 		local line, cue, day = daily()
 		s.line = line
 		s.cues = { cue }

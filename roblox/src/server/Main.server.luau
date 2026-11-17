@@ -9,13 +9,32 @@ local Score = require(shared.Score)
 local Show = require(script.Parent.Show)
 local room = require(script.Parent.Room).build()
 local Modes = require(shared.Modes)
+local dailyCache = {}
 local function daily()
 	local day = os.date("!%Y-%m-%d")
-	local line, cue = Deck.daily(catalogue, day)
-	return line, cue, day
+	if dailyCache.day ~= day then
+		local line, cue = Deck.daily(catalogue, day)
+		local featured = ({
+			"Spawn Point",
+			"Checkpoint Drama",
+			"Tycoon Problems",
+			"Control Room",
+			"Backstage",
+		})[math.floor((os.time() / 86400 + 3) / 7) % 5 + 1]
+		local weekly = {}
+		for _, item in catalogue.lines do
+			if item.pack == featured then
+				table.insert(weekly, item)
+			end
+		end
+		dailyCache = { day = day, line = line, cue = cue, weekly = weekly }
+	end
+	return dailyCache.line, dailyCache.cue, day, dailyCache.weekly
 end
 local state = Show.new(Deck.new(catalogue, tostring(os.time())), Score, Modes, daily)
 local standings = {}
+local Profiles = require(script.Parent.Profiles)
+local saves = require(script.Parent.Saves).new(standings)
 local lastAward = 0
 local honours = ""
 local function award()
@@ -29,7 +48,12 @@ local function award()
 		if not row then
 			continue
 		end
+		local before = row.stage + row.crowd
 		if id == state.actor then
+			local day = if state.day
+				then math.floor(DateTime.fromIsoDate(state.day .. "T00:00:00Z").UnixTimestamp / 86400)
+				else math.floor(os.time() / 86400)
+			Profiles.record(row, state, day)
 			if result.overall and not result.miss then
 				row.stage += 10
 				row.best = math.max(row.best, result.overall)
@@ -54,6 +78,7 @@ local function award()
 			end
 			row.crowd += xp
 		end
+		Profiles.week(row, math.floor((os.time() / 86400 + 3) / 7), row.stage + row.crowd - before)
 	end
 	if state.turn % 4 == 0 then
 		local function leader(key)
@@ -143,6 +168,7 @@ local function claim(p, data, simulated)
 end
 local function send(player: Player)
 	local id = player.UserId
+	local today, dailyCue = daily()
 	remote:FireClient(player, {
 		phase = state.phase,
 		mode = state.mode,
@@ -151,6 +177,9 @@ local function send(player: Player)
 		duelVoted = state.duelVotes[id],
 		winner = state.duelWinner,
 		standing = standings[id],
+		saveStatus = saves.status[player],
+		dailyLine = today.text,
+		dailyCue = dailyCue.label,
 		honours = honours,
 		deadline = state.untilTime,
 		turn = state.turn,
@@ -227,7 +256,8 @@ local function phaseChanged()
 	publish()
 end
 local function join(p: Player)
-	standings[p.UserId] = { stage = 0, crowd = 0, best = 0, streak = 0, roses = 0, calls = 0 }
+	standings[p.UserId] = Profiles.blank()
+	saves.load(p)
 	Show.join(state, p.UserId, clock())
 	p.CharacterAdded:Connect(function(char)
 		char:WaitForChild("Humanoid", 8)
@@ -244,6 +274,7 @@ end
 Players.PlayerRemoving:Connect(function(p)
 	Show.leave(state, p.UserId, clock())
 	standings[p.UserId] = nil
+	task.spawn(saves.close, p)
 	limits[p.UserId] = nil
 	captions[p.UserId] = nil
 	phaseChanged()
@@ -268,6 +299,21 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 		return
 	end
 	if turn ~= state.turn then
+		return
+	end
+	if verb == "troupe" then
+		if not bucket.troupe then
+			bucket.troupe = true
+			task.spawn(saves.troupe, p, arg)
+		end
+		return
+	end
+	if
+		verb == "queue"
+		and type(arg) == "table"
+		and arg.mode == "Pack night"
+		and (not standings[id] or not standings[id].packs["Pack night"])
+	then
 		return
 	end
 	if verb == "claim" then
