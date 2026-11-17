@@ -1,4 +1,6 @@
 --!strict
+-- Live postcard proof beside the gallery press: skyline, ink and greeting update as they are picked.
+local Style = require(script.Parent.GuideStyle)
 local Preview = {}
 local paper = Color3.fromRGB(251, 238, 211)
 local swatches = {
@@ -17,16 +19,50 @@ local function slab(parent, name, x, y, w, h, color, angle)
 	f.Parent = parent
 	return f
 end
-function Preview.new(gui)
-	local card = slab(gui, "GalleryPostcard", 0, 0, 0, 0, paper)
-	card.Position = UDim2.fromOffset(12, 6)
-	card.BackgroundColor3 = paper
-	card.Visible = false
+function Preview.new(root: Instance, gui: ScreenGui)
+	local holder = slab(root, "GalleryPostcardHolder", 0, 0, 0, 0, paper)
+	holder.BackgroundTransparency = 1
+	holder.AnchorPoint = Vector2.new(0, 0)
+	holder.Position = UDim2.fromOffset(14, 10)
+	holder.Visible = false
+	local shadow = slab(holder, "Shadow", 0, 0, 1, 1, Color3.fromRGB(8, 9, 22))
+	shadow.Position = UDim2.fromOffset(4, 6)
+	shadow.BackgroundTransparency = 0.55
+	shadow.Rotation = -2.5
+	Style.corner(shadow, 6)
+	local card = slab(holder, "GalleryPostcard", 0, 0, 1, 1, paper)
+	card.Rotation = -2.5
+	Style.corner(card, 6)
 	local outline = Instance.new("UIStroke")
-	outline.Color = Color3.fromRGB(86, 66, 72)
-	outline.Thickness = 1
+	outline.Color = Style.color.champagne
+	outline.Thickness = 2
 	outline.Parent = card
-	local art = slab(card, "Illustration", 0.035, 0.065, 0.93, 0.67, paper)
+	-- Stamp and postmark in the corner.
+	local stamp = slab(card, "Stamp", 0.84, 0.06, 0.12, 0.2, Style.accent.gallery)
+	Style.corner(stamp, 2)
+	local perf = Instance.new("UIStroke")
+	perf.Color = paper
+	perf.Thickness = 2
+	perf.Parent = stamp
+	local postmark = slab(card, "Postmark", 0.7, 0.1, 0.16, 0.26, paper)
+	postmark.BackgroundTransparency = 1
+	postmark.Rotation = -12
+	local ring = Instance.new("UIStroke")
+	ring.Color = Color3.fromRGB(120, 100, 110)
+	ring.Thickness = 1.5
+	ring.Transparency = 0.35
+	ring.Parent = postmark
+	Style.corner(postmark, 999)
+	local markText = Instance.new("TextLabel")
+	markText.BackgroundTransparency = 1
+	markText.Size = UDim2.fromScale(1, 1)
+	markText.FontFace = Style.font.title
+	markText.TextScaled = true
+	markText.TextColor3 = Color3.fromRGB(120, 100, 110)
+	markText.TextTransparency = 0.3
+	markText.Text = "DELIVERY"
+	markText.Parent = postmark
+	local art = slab(card, "Illustration", 0.035, 0.065, 0.64, 0.67, paper)
 	art.ClipsDescendants = true
 	local tintParts = {}
 	local function printShape(layer, name, x, y, w, h, angle)
@@ -92,24 +128,41 @@ function Preview.new(gui)
 	caption.BackgroundTransparency = 1
 	caption.Position = UDim2.fromScale(0.035, 0.735)
 	caption.Size = UDim2.fromScale(0.93, 0.23)
+	-- Address lines on the right half, like the back of a real card.
+	for i = 0, 2 do
+		local line =
+			slab(card, "AddressLine", 0.7, 0.44 + i * 0.1, 0.26, 0.012, Color3.fromRGB(170, 150, 140))
+		line.BackgroundTransparency = 0.3
+	end
 	caption.TextScaled = true
-	caption.Font = Enum.Font.GothamBold
+	caption.FontFace = Style.font.heavy
 	caption.Parent = card
 	local cap = Instance.new("UITextSizeConstraint")
-	cap.MinTextSize = 10
-	cap.MaxTextSize = 16
+	cap.MinTextSize = 12
+	cap.MaxTextSize = 20
 	cap.Parent = caption
+	-- Fits the space above the counter sheet (TownSheetTop) in the top-left corner.
 	local function layout()
 		local size = gui.AbsoluteSize
-		local w = math.min(250, size.X * 0.49, math.max(132, (size.Y - 172) * 1.7))
-		card.Size = UDim2.fromOffset(w, math.floor(w * 0.48))
+		local top = gui:GetAttribute("TownSheetTop")
+		local room = (if type(top) == "number" then top else size.Y * 0.6) - 24
+		local w = math.clamp(math.min(300, size.X * 0.36, room / 0.62), 150, 300)
+		holder.Size = UDim2.fromOffset(w, math.floor(w * 0.62))
 	end
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
+	gui:GetAttributeChangedSignal("TownSheetTop"):Connect(layout)
 	layout()
+	local shown = ""
 	return function(visible, scene, ink, greeting)
-		card.Visible = visible
+		holder.Visible = visible
 		if not visible then
+			shown = ""
 			return
+		end
+		local key = tostring(scene) .. "/" .. tostring(ink) .. "/" .. tostring(greeting)
+		if key ~= shown then
+			shown = key
+			Style.pop(card, 0.9)
 		end
 		local color = swatches[ink or ""] or Color3.fromRGB(115, 101, 91)
 		for _, part in tintParts do

@@ -43,3 +43,13 @@ Lantern Street has an enterable post office on the waterfront side and a listeni
 The post office sends parcels to another business, the record deck plays a short sequence for the listener to reproduce, the bakehouse serves a recipe ticket, and the gallery prints a three-layer postcard. Replacing a job is an explicit choice. Each completed ticket awards a souvenir or increases that business's personal count. The gallery restores the latest printed design.
 
 Clock Court is a second pedestrian route between record row and Market Walk. Its four clock faces show UTC. Three bell pulls play different nearby notes, and the court benches offer a seat. Four local residents walk routes between the shopfronts and pause when asked for directions.
+
+## Polish pass: town and show as one place
+
+Players now arrive in Broadcast Plaza facing the theatre. A three-row ticket stub (Catch the show, Run an errand, Ride the Lot Line) sets an on-screen objective arrow and never blocks movement or teleports. Hints use landmark names, never compass words.
+
+The town follows the show through `ReplicatedStorage.ShowStatus` (phase, end time, format, performer, card line, direction, last score and band, round, watchers). Poster cases on Lantern Street and the plaza and the Clock Court relay board show the live card in controlled catalogue text. Clock Court bells strike the verdict, and its benches count as audience seats. Players waiting to perform also count as audience. Residents gather at the theatre doors at lineup and celebrate an encore across town. A labelled house crowd fills empty seats when fewer than three people watch; it never votes. A carried parcel is visible on the avatar, and the record a player completes at Needle Drop becomes their stage entrance.
+
+The catalogue is now authored inside `roblox/tools` (`lines.txt` and `directions.txt`): 175 Roblox-native lines in seven packs and 47 directions, screened by `tools/import.py` and `tests/content.luau`. Flip has 108 lines with a per-bucket shuffle bag and catalogue-only slots.
+
+The art pass uses built-in materials only: cobbled streets, pavements with kerbs, glass windows, green foliage (Fabric is kept for cloth only), stage-door frontage, a 42-stud DELIVERY blade sign, a terrace stair to the Night Market, and interactive `ActiveRing` markers. The town is lit at dusk (ClockTime 17.8) with an Atmosphere, colour grading and a pooled set of lamp lights. Ambience and stings use free Creator Store audio from Roblox's licensed partners (ProSoundEffects, APMOfficial), listed in `src/shared/SoundIds.luau`; the owner can replace any of them.

@@ -28,18 +28,35 @@ palette = {
     "Aubergine":("301d35","Fabric",.06,.78), "Champagne":("ddb481","Metal",.66,.30),
     "Drape":("763356","Fabric",.02,.81), "Bulb":("ffdc9e","Neon",.05,.22),
     "Cobalt":("415ba8","SmoothPlastic",.18,.3), "Bakelite":("202033","SmoothPlastic",.36,.23),
-    "Rosewood":("422936","Wood",.08,.44), "Leather":("9e5867","SmoothPlastic",.19,.42),
-    "Stone":("a7959c","Concrete",.04,.70), "Limestone":("d9c4b0","Concrete",.08,.54),
-    "Brick":("9b5964","Brick",.04,.68), "Tile":("595776","Slate",.07,.66),
+    "Rosewood":("422936","Wood",.08,.44), "Leather":("9e5867","Leather",.19,.42),
+    "Stone":("b3a3a6","Pavement",.04,.70), "Limestone":("d9c4b0","Limestone",.08,.54),
+    "Brick":("9b5964","Brick",.04,.68), "Tile":("6a6679","Cobblestone",.07,.66),
     "Powder":("929acb","SmoothPlastic",.05,.46), "Ochre":("b68455","Wood",.08,.50),
-    "Lilac":("a16a93","Fabric",.08,.60), "EveningPane":("7387b0","SmoothPlastic",.08,.37),
-    "ApricotPane":("c39680","SmoothPlastic",.10,.36), "BalletPane":("a979a3","SmoothPlastic",.06,.38),
+    "Lilac":("a16a93","SmoothPlastic",.08,.60), "EveningPane":("7387b0","Glass",.08,.37),
+    "ApricotPane":("c39680","Glass",.10,.36), "BalletPane":("a979a3","Glass",.06,.38),
     "BlueCove":("83a7ff","Neon",.10,.34), "RoseCove":("ff94c6","Neon",.10,.34),
-    "Meadow":("b29761","Grass",.01,.89), "Petal":("d58ca5","SmoothPlastic",.02,.79),
+    "Meadow":("93a05c","Grass",.01,.89), "Petal":("d58ca5","SmoothPlastic",.02,.79),
     "Mulberry":("815a83","SmoothPlastic",.02,.78), "Harbor":("42838e","SmoothPlastic",.18,.30),
-    "DeckPlank":("a17859","WoodPlanks",.04,.69), "Sand":("d0ae87","Sand",.02,.86),
+    "DeckPlank":("a17859","WoodPlanks",.04,.69), "Sand":("d0ae87","Pavement",.02,.86),
+    # Plaza and Lantern Street kit (art-plaza). Foliage is smooth and green; lit glass is Neon behind Glass.
+    "Leaf":("4f8f4e","SmoothPlastic",.0,.72), "LeafDeep":("2f6a45","SmoothPlastic",.0,.78),
+    "LeafLight":("86b866","SmoothPlastic",.0,.70), "Marble":("e8dfd2","Marble",.05,.28),
+    "Paver":("c9b9a6","Pavement",.02,.74), "WarmWindow":("f4b36c","Neon",.0,.4),
+    "RedLamp":("ff3f3a","Neon",.0,.3), "PosterGlass":("d6e2ff","SmoothPlastic",.2,.1),
+    "TreadPlate":("8e909b","DiamondPlate",.75,.35), "Shutter":("515873","Metal",.6,.42),
+    "CrateWood":("a97c51","WoodPlanks",.02,.7), "Mirror":("c7d1e4","Glass",.6,.08),
+    "StudioPlaster":("5e5b7c","Plaster",.02,.80), "RosePlaster":("a77496","Plaster",.02,.80),
     "IvoryCanvas":("e3c5a5","Fabric",.01,.75),
+    # Town streets, park and market kit (art-town).
+    "BlossomPale":("f0c2d2","SmoothPlastic",.0,.74), "Bark":("5f4334","Wood",.02,.72),
+    "PostRed":("b5373c","SmoothPlastic",.2,.35), "Roadway":("57536a","Cobblestone",.02,.86),
+    "RoofTile":("94514a","ClayRoofTiles",.02,.7), "Plaster":("e4d3bf","Plaster",.02,.8),
+    "Cobble":("8a7c84","Cobblestone",.02,.82), "Rug":("7c3452","Carpet",.0,.92),
 }
+# Optional surface finish per palette entry: glass sheen and see-through poster glazing.
+finish = {"Glass":{"Reflectance":.25}, "EveningPane":{"Reflectance":.18}, "ApricotPane":{"Reflectance":.12},
+          "BalletPane":{"Reflectance":.12}, "Mirror":{"Reflectance":.45},
+          "PosterGlass":{"Reflectance":.25,"Transparency":.86}}
 materials = {}
 for name,(hexcolor,kind,metal,rough) in palette.items():
     rgb=[int(hexcolor[i:i+2],16)/255 for i in (0,2,4)]
@@ -49,6 +66,9 @@ for name,(hexcolor,kind,metal,rough) in palette.items():
     bs.inputs["Metallic"].default_value=metal;bs.inputs["Roughness"].default_value=rough
     if kind=="Neon":
         bs.inputs["Emission Color"].default_value=(*rgb,1);bs.inputs["Emission Strength"].default_value=1.2
+    if "Transparency" in finish.get(name,{}):
+        bs.inputs["Alpha"].default_value=1-finish[name]["Transparency"]
+        m.surface_render_method="BLENDED"
     materials[name]=m
 
 # Unit meshes share UVs and materials across repeated objects.
@@ -85,6 +105,7 @@ def piece(name,size,pos,mat,shape="Block",rot=None,solid=False):
     props={"Anchored":True,"CanCollide":solid,"CanTouch":False,"CanQuery":solid,
            "CastShadow":solid or min(size)>.8,"Size":list(size),"Color":list(rgb),
            "Material":palette[mat][1],"CFrame":[*pos,*[round(v,6) for row in rot for v in row]]}
+    props.update(finish.get(mat,{}))
     children=[]
     if shape=="Ball" and max(size)/min(size)>1.3:
         children=[{"Name":"Silhouette","ClassName":"SpecialMesh","Properties":{"MeshType":"Sphere","Scale":[1,1,1]}}]

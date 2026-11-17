@@ -3,6 +3,25 @@
 local Zoom = {}
 local groups = { "DocksidePost", "NeedleDrop", "CopperKettle", "PocketGallery" }
 local limit = 5.5
+
+-- Tilts a camera down just enough that a world point (the avatar's head) projects at or above
+-- `limitY` (viewport pixels from the top), e.g. the top edge of a bottom sheet. Pure: returns the
+-- adjusted CFrame without touching the camera. The tilt is capped at 18 degrees.
+function Zoom.frameAbove(camera: Camera, point: Vector3, limitY: number): CFrame
+	local base = camera.CFrame
+	local screen = camera:WorldToViewportPoint(point)
+	local view = camera.ViewportSize
+	if screen.Z <= 0 or screen.X < 0 or screen.X > view.X or screen.Y <= limitY or view.Y < 2 then
+		return base
+	end
+	local focal = (view.Y / 2) / math.tan(math.rad(camera.FieldOfView) / 2)
+	local centre = view.Y / 2
+	local current = math.atan((screen.Y - centre) / focal)
+	local wanted = math.atan((math.max(limitY, 24) - centre) / focal)
+	local pitch = math.clamp(current - wanted, 0, math.rad(18))
+	return base * CFrame.Angles(-pitch, 0, 0)
+end
+
 function Zoom.new(player, set)
 	local floors = {}
 	local savedMaximum: number? = nil
@@ -47,11 +66,10 @@ function Zoom.new(player, set)
 		if not arrivalChecked then
 			firstRootAt = firstRootAt or os.clock()
 			local pos = root.Position
-			if math.abs(pos.X - 99) <= 5 and math.abs(pos.Z - 80) <= 5 and pos.Y < 12 then
-				-- Let the default camera accept the shorter spawn distance, then restore its full range.
-				arrivalFrames = 2
-				arrivalChecked = true
-			elseif os.clock() - firstRootAt > 1 then
+			-- Fresh arrivals spawn in Broadcast Plaza; ShowFX frames that first shot at full distance,
+			-- so the zoom is never clamped there.
+			local atArrival = math.abs(pos.X) <= 5 and math.abs(pos.Z - 58) <= 5 and pos.Y < 12
+			if atArrival or os.clock() - firstRootAt > 1 then
 				arrivalChecked = true
 			end
 		end

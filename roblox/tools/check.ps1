@@ -7,6 +7,10 @@ try {
     if ($LASTEXITCODE) { throw 'Pure logic tests failed' }
     & ./.tools/lune.exe run tests/marquee
     if ($LASTEXITCODE) { throw 'Marquee puzzle tests failed' }
+    & ./.tools/lune.exe run tests/town
+    if ($LASTEXITCODE) { throw 'Town and show status tests failed' }
+    & ./.tools/lune.exe run tests/content
+    if ($LASTEXITCODE) { throw 'Content safety tests failed' }
     & ./.tools/stylua.exe --check src tests
     if ($LASTEXITCODE) { throw 'Format failed' }
     & ./.tools/selene.exe src tests

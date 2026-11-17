@@ -29,10 +29,12 @@ function Business.start(v, catalog, kind, row, time, near)
 		r.total = 1
 		r.parcel = parcel.label
 		r.recipient = recipient.title
+		r.recipientId = parcel.recipient
 		r.target = recipient.anchor
 		r.notice = "Carry the parcel to " .. recipient.title .. ". Walk up to its marked counter."
 	elseif kind == "records" then
-		local record = catalog.records[count % #catalog.records + 1]
+		r.recordIndex = count % #catalog.records + 1
+		local record = catalog.records[r.recordIndex]
 		r.recordName = record.name
 		r.notes = record.notes
 		r.choices = catalog.sounds
@@ -67,7 +69,10 @@ local function finish(v, r, catalog, row, time)
 	row.badges[shop.badge] = true
 	local track = if r.kind == "records" then "stage" else "crowd"
 	row[track] += r.xp
-	if r.kind == "gallery" then
+	if r.kind == "records" then
+		-- The completed riff becomes this player's entrance sting on their next stage turn.
+		row.lastRecord = r.recordIndex
+	elseif r.kind == "gallery" then
 		row.postcard = catalog.encode(r.picks)
 		r.print = catalog.print(row.postcard)
 	end

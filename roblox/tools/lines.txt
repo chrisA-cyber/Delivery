@@ -1,106 +1,195 @@
+# Delivery stage lines. Screened by hand, then fingerprinted with: python tools/import.py --approve
+# Format: [Pack name] starts a pack. Each line is "text" or "text | noun".
+# The noun is a short phrase copied exactly from the line; Flip may call back to it.
+# Rules (enforced by tools/import.py): first person, 6 to 18 words, no digits, no banned words.
+# The five packs Main.server.luau features for Pack night must keep these exact names:
+# Spawn Point, Checkpoint Drama, Tycoon Problems, Control Room, Backstage.
+
 [Spawn Point]
-I joined the wrong server and somehow became the mayor of a staircase.
-My spawn point is inside the meeting about moving the spawn point.
-I asked for directions in the lobby. Six people started spinning.
-I said follow me before checking which one was my avatar.
-The loading screen gave me a tip about patience. Twice.
-My friend said join the quiet server. Everybody there was my friend.
-I spent forty minutes choosing an outfit for a game played in first person.
-I bought enormous wings. The door has requested a smaller bird.
-I accidentally equipped the victory dance during my very sincere apology.
-My avatar has shoulder pets. Both have applied for better shoulders.
-I wore my tallest hat and the elevator counted me as two people.
-The dress code said formal. My traffic cone is wearing a tie.
-I put on tiny sunglasses. My face loaded about three seconds later.
-My walk animation is confident because it has never met my steering.
-The group photo looks great if you crop out my loading square.
-I finally matched my outfit. Then I spawned on the opposite team.
-I used the thinking emote. Please give me time to start thinking.
-I waved at the mirror for ten minutes. Great community in there.
-The invisible wall accepted my friend request and still refused to move.
-My entrance would have worked if the stage had finished loading.
+I joined a full server and spawned directly on top of the leaderboard. | leaderboard
+My bacon hair is not a phase. It is a lifestyle with no budget. | bacon hair
+I spent an hour on my avatar. The game put me in a cardboard box. | cardboard box
+I said follow me before checking which one was my avatar. | avatar
+The loading screen gave me a tip about patience. Twice. | loading screen
+I waved at a new player. Now they follow me everywhere like a pet. | new player
+I joined my friend's server. My friend left to join my server. | server
+My spawn point is inside a wall, but the wall is very welcoming. | spawn point
+I typed brb in the lobby and came back three servers later. | lobby
+Every new server, I spawn facing the wall like I am in trouble. | wall
+I finally got the rare hat. It covers my entire face. | rare hat
+My avatar has tiny wings. They do not work, but they believe. | tiny wings
+I sat at spawn so long the new players thought I was an NPC. | NPC
+The server said one player. It was me and a very suspicious chair. | suspicious chair
+I bought a private server so nobody could watch me practice. My little brother joined. | private server
+I wore my best outfit. Somebody still asked if I was a noob. I am. | best outfit
+My username has seven underscores and I remember none of them. | username
+I hummed the lobby music during a test. Three classmates hummed the next part. | lobby music
+I hit rejoin so fast I arrived before I left. | rejoin
+I tried to look cool at spawn. The spawn shield made me sparkle. | spawn shield
+I clicked play, Mom called me for dinner, and the game loaded right then. | dinner
+I joined a server called chill vibes. Everyone was running in circles yelling. | chill vibes
+My default walk has more confidence than I will ever have. | default walk
+I changed my display name to look cool. Now nobody knows it is me. | display name
+I turned on shift lock and forgot how to be a person. | shift lock
+
 [Checkpoint Drama]
-The checkpoint is right there. Please stop using the word technically.
-I missed the first jump so often the lobby considers me furniture.
-The disappearing platform stayed just long enough to hear my entire plan.
-Somebody said the tower was easy. I would like their definition of up.
-The moving platform and I have agreed to see other platforms.
-I finally cleared the obby. My camera has completed a different obby.
-I touched the checkpoint with my hat. Apparently the hat gets to continue.
-My speed coil works beautifully. Stopping is apparently a separate department.
-I told everyone this was the shortcut. Please enjoy the scenic respawn.
-I turned around to help my friend. My friend waved from the finish.
-The wall jump tutorial keeps assuming a friendly relationship with the wall.
-I held the jump button for emotional support more than practical reasons.
-My little brother finished the tower while explaining why my plan was smart.
-I thought the conveyor was broken. I was walking very confidently backwards.
-The spinning bar and I have now been introduced eleven times.
-I made the final jump in practice. The floor remembers it differently.
-Please stop calling this the easy route while carrying me along it.
-The finish line is decorative. I learned this through extensive public celebration.
-My avatar landed perfectly. The rest of the server saw something else.
-I reached the top just in time to watch the timer reset.
+I touched the lava to check if it was real lava. It was. | lava
+My checkpoint is right there. Please stop using the word technically. | checkpoint
+I made the hardest jump in the obby. Then I walked off the edge celebrating. | hardest jump
+Somebody said the tower was easy. I would like their definition of up. | tower
+I am not bad at obbies. The obbies are just very good at me. | obbies
+My little brother beat the obby while asking me what an obby is. | little brother
+I said one more try at breakfast. It is now dinner. | one more try
+I held the jump button for emotional support more than practical reasons. | jump button
+I wall hopped past three stages, then fell all the way to the first checkpoint. | first checkpoint
+My speedrun was perfect until I stopped to collect one shiny coin. | shiny coin
+I finished the obby at midnight and whispered W so nobody would wake up. | midnight
+The spinning bar and I have now been introduced eleven times. | spinning bar
+I found the secret shortcut. It was a shortcut back to the start. | secret shortcut
+I glitched through the wall and landed in the developers' lunch room. | lunch room
+The final stage took me an hour. The reward was a sign saying thanks. | final stage
+Every time I say this is easy, the floor turns into lava. | floor
+I did perfect parkour for ten minutes alone. Then my friends joined and I fell. | parkour
+The disappearing platform stayed just long enough to hear my entire plan. | disappearing platform
+I finally cleared the obby. My camera has completed a different obby. | camera
+My friend said trust me and jumped. I trusted him. We both respawned. | trust me
+I do not trust the truss. The truss has never earned it. | truss
+I beat the obby on a phone with a cracked screen. Infinite aura. | cracked screen
+The checkpoint saved my progress, but it did not save my dignity. | progress
+I fell off the last jump and gasped so loud my dog left the room. | last jump
+I asked for a boost on the hard stage. My friend boosted me into the lava. | boost
+
 [Tycoon Problems]
-My tycoon makes a million buttons. So far none of them make money.
-The dropper is working perfectly. All the cash is going into the ceiling.
-I rebirthed for extra speed and immediately ran past my own house.
-I hatched a common pet with the confidence of a royal announcement.
-My legendary pet collects coins. I collect apologies from the legendary pet.
-I spent my entire budget on a sign that says grand opening.
-I hired myself as manager. My first mistake was trusting management.
-My farm grows one enormous carrot. The delivery truck has resigned.
-I built an automatic bakery. It has promoted the dough to supervisor.
-I upgraded the conveyor until the sandwiches started arriving before the bread.
-The rare egg hatched another egg. Our family has decided to wait.
-I offered a fair trade. My pet declined on its own behalf.
-Our cafe has twelve cashiers and a single potato doing all the cooking.
-I volunteered to drive the roleplay bus. We now offer underwater tours.
-The emergency meeting is about whoever keeps scheduling emergency meetings upstairs.
-I built a mansion with sixteen bathrooms and nowhere to put the front door.
-My factory's grand opening has been delayed by an unusually confident duck.
-I named my pet Loading and now everyone keeps waiting politely.
-My restaurant earned five stars. They all came from the ceiling decoration.
-I closed my shop for renovations and accidentally upgraded the closed sign.
+I rebirthed for extra speed and immediately ran past my own house. | own house
+I hatched a common pet with the confidence of a royal announcement. | common pet
+My tycoon has endless buttons and not one of them makes any money. | tycoon
+My dropper works perfectly. All my cash is going into the ceiling. | dropper
+I grinded all night for a pet that follows me slower than I walk. | pet
+I traded my best pet for two worse pets. My math teacher would be upset. | math teacher
+I opened eggs all weekend. My friend opened one egg. Guess who got the legendary. | legendary
+My legendary pet floats behind me looking disappointed in my choices. | legendary pet
+I hit rebirth by accident and lost everything except my pride. Actually, that too. | pride
+I left my tycoon running while I was AFK. It is doing better without me. | AFK
+I bought the upgrade that makes upgrades faster. Now I need another upgrade. | upgrade
+My simulator says I have infinite strength. I still cannot open the pickle jar. | pickle jar
+I clicked so fast for coins that my mouse asked for a day off. | mouse
+I said one more rebirth at bedtime. Now the birds are awake. | bedtime
+The rare egg hatched another egg. Our family has decided to wait. | rare egg
+My trade offer was so bad the other player sent me a hug emote. | trade offer
+I named my pet Loading and now everyone keeps waiting politely. | Loading
+I built the tallest tower on the map and forgot to add stairs. | stairs
+I am rich in the game and owe my sister three cookies in real life. | cookies
+I spent all my gems on a golden shovel. It digs exactly as fast. | golden shovel
+My tycoon has a giant statue of me. The statue has better posture. | statue
+I finally maxed every upgrade. The game said congratulations, now rebirth. | rebirth
+I let my little sister press one button. She owns the tycoon now. | little sister
+Trading tip: if someone says trust me, do not trust them. That includes me. | trading tip
+My pet leveled up while I did homework. It is now smarter than me. | homework
+
+[Control Room]
+I did not abandon the team. I heard a chest. | chest
+The boss has a second phase. I have a bedtime. | boss
+I lagged so hard my character is still standing in last week. | last week
+My ping is so high I see things before they happen. Wait, no, after. | ping
+The admin turned me into a chair. Honestly, I have never felt so useful. | chair
+The datastore wiped my progress. I have chosen to see it as a fresh start. | fresh start
+I clicked skip tutorial and immediately searched how to move. | tutorial
+I talked to the NPC. Same line for three years. Honestly, respect. | same line
+I asked the shopkeeper for a discount. He blinked once and kept standing there. | shopkeeper
+I glitched under the map and found a whole second, quieter game down there. | map
+My game froze in the middle of a jump, so in my heart I am still flying. | jump
+I played upside down for an hour. Turns out my phone was upside down. | phone
+The tutorial gave me a medal for reading half the tutorial. | medal
+I mashed every button to open the menu. Now I am dancing, sitting and crouching. | menu
+I reported a bug. The bug was me standing in the wrong place. | bug
+My character can double jump but still needs help with stairs. | double jump
+My phone hit low battery right as the final boss appeared. We both panicked. | final boss
+The training dummy is studying my mistakes. I can feel it getting confident. | training dummy
+I disconnected right before the reward. The game knew. It always knows. | reward
+The server shut down for an update, so we all did one last sad dance. | update
+My Wi-Fi drops every time I am about to win. It is protecting my humility. | humility
+I saved the game immediately before making the exact same mistake. | mistake
+I accepted a trade during a lag spike. I now own a single rock. | single rock
+The quest giver said it would take five minutes. That was my entire summer. | quest giver
+My camera got stuck inside my own head. The view is mostly thoughts. | thoughts
 
 [Backstage]
-I practiced my bow so long the audience went home during rehearsal.
-That was our dramatic pause. The curtain is still thinking.
-My understudy is a coat rack with a much better hat.
-I asked for one spotlight. The moon is clearly overqualified.
-The orchestra tuned up and accidentally played my entire entrance.
-I can do the trick again if everyone returns their spoons.
-My cape arrived early and took the good dressing room.
-The cue card says look natural. I have forgotten how elbows work.
-We tested the trapdoor. The announcement will continue from downstairs.
-The applause sign is upside down. Please clap toward the floor.
-I hired a fog machine. It has made the chairs mysterious.
-The drumroll went on so long the prize changed seasons.
-I thought that was my cue. It was somebody unwrapping crackers.
-The stage is perfectly level. My shoes are telling different stories.
-My puppet forgot its lines and now expects me to improvise.
-The spotlight follows me everywhere except the part where I dance.
-Our grand finale needs one volunteer who can fold a fitted sheet.
-That sound effect was expensive. Please look surprised a little longer.
-The disappearing act worked beautifully. Has anyone seen the instructions?
-The costume has eight sleeves and I only rehearsed two.
-[Control Room]
-I reached the secret level by leaning on the wrong button.
-The tutorial gave me a medal for reading half the tutorial.
-I saved the game immediately before making the exact same mistake.
-My racing strategy depends on the finish line coming toward me.
-The practice dummy just requested a more challenging training partner.
-I brought the map. Unfortunately the map brought absolutely no confidence.
-I cleaned my controller and accidentally sorted the entire village by height.
-The final puzzle requires teamwork. My teammates are all decorative lamps.
-The door needs three keys. I have collected thirty decorative spoons.
-Our speed record includes a short break to admire the loading screen.
-I beat the invisible maze by following the very visible maintenance crew.
-I upgraded my inventory until there was no room for upgrades.
-The scoreboard has my name correct. Everything after that seems negotiable.
-Our team mascot has scored twice and refuses to explain the controls.
-I switched to easy mode and the puzzle thanked me for volunteering.
-I followed the glowing arrow. It pointed to the arrow settings.
-My character can double jump but still needs help with stairs.
-I built a bridge across the river. The river filed an appeal.
-I collected every coin except the one paying for the return trip.
-The checkpoint is right behind us. It would like to remain anonymous.
+I accidentally equipped the victory dance during my very sincere apology. | victory dance
+I used the thinking emote. Please give me time to start thinking. | thinking emote
+I did the default dance at the talent show. The judges did it back. | default dance
+I practiced my bow so long the audience went home during rehearsal. | bow
+My entrance would have worked if the stage had finished loading. | entrance
+I tried to leave dramatically. The door said pull. I gave it everything. | door
+I bought a new emote just to wave at people who already left. | new emote
+I spammed the laugh emote until everyone thought my joke was good. | laugh emote
+The spotlight follows me everywhere except the part where I dance. | spotlight
+I opened the mystery box live on stage. It contained a smaller mystery box. | mystery box
+I did my big unboxing voice for a box of cereal. The cereal deserved it. | cereal
+I told my grandma to smash that like button. She rang the doorbell. | like button
+My dramatic pause was so long the server restarted. | dramatic pause
+I practiced my villain laugh in the bathroom. My dad clapped from the hallway. | villain laugh
+The cue card says look natural. I have forgotten how elbows work. | cue card
+I asked for one spotlight. The moon is clearly overqualified. | moon
+My understudy is a coat rack with a much better hat. | understudy
+I did the worm at a family party and my aura has not recovered. | worm
+I rehearsed my winning speech. I came fifth. I gave the speech anyway. | winning speech
+I hung the applause sign upside down. Please clap toward the floor. | applause sign
+I froze on stage, so I told everyone it was a statue challenge. | statue challenge
+My drumroll went on so long the prize changed seasons. | drumroll
+I gave my best speech on mute. Everyone agreed it was my best speech. | best speech
+I did a dramatic spin for the finale and kept spinning into the curtain. | finale
+I tried a backflip emote in a tiny room. Now I live in the ceiling. | backflip emote
+
+[Group Chat]
+I am my own emergency contact. We are both panicking. | emergency contact
+Mom said dinner in five minutes. I said cool, three more rebirths. | five minutes
+I left the group chat for one hour and missed an entire friendship arc. | group chat
+My little brother watched me play for one minute and became my coach. | coach
+I told my parents this game is educational. I am learning how to lose. | parents
+My teacher said show your work. I showed her my tycoon. | teacher
+I promised to stay up all night at the sleepover. I was asleep by nine. | sleepover
+My cat walked across the keyboard and finished my obby run. Respect. | cat
+My dad asked what an obby is. I have been explaining for three days. | dad
+It is midnight and I am whispering in a game with no voice chat. | voice chat
+My sister watched one video and now she corrects my parkour. | sister
+I made a group chat for my birthday. They started planning without me. | birthday
+My dog barks every time my character jumps. He is a backseat gamer. | backseat gamer
+Mom asked who I was talking to. I said the NPC. She looked concerned. | Mom
+I told my teacher I was late because of lag. She did not accept lag. | lag
+Grandma asked if I am famous in my game. I said no, but I own a hat. | grandma
+My brother says I am bad at this game. He is four. He is right. | brother
+I did my chores at speedrun pace. Mom asked me to redo them at normal pace. | chores
+My hamster runs on his wheel with more commitment than my entire team. | hamster
+I told a scary story at the sleepover. It was about a datastore wipe. | scary story
+Dad tried to join our server. He spent ten minutes looking at the sky. | sky
+I said brb to do my homework. My friends have been waiting since September. | brb
+I opened my homework so fast when Mom walked in that I accidentally finished it. | homework
+I waved back at someone. They were waving at the person behind me. I kept waving. | waving
+Mom made pancakes. I said W. Now she says W about everything. | pancakes
+
+[Main Character]
+I lost the race and said skill issue. It was my skill. My issue. | skill issue
+I touched grass today. It was fine. I have some notes for the developers. | grass
+No cap, I beat the obby. Okay, small cap. A tiny little hat. | tiny little hat
+I walked into class with main character energy and sat in the wrong room. | main character energy
+Lowkey I am the best player here. Highkey, I just fell off the map. | best player
+I tripped in front of everyone. Minus aura. Then I bowed. Double aura. | aura
+It is giving tutorial NPC, and I am the tutorial NPC. | tutorial NPC
+I said six seven in the lobby and the whole server answered. | six seven
+My brain has so much brainrot it buffers before every sentence. | brainrot
+I took the L with grace. Then I took another L with less grace. | grace
+Bro really walked into the lava to show me a shortcut. It was not one. | shortcut
+I said I am the main character. The NPC behind me said same. | main character
+My friend said touch grass, so I found a grass texture and clicked it. | grass texture
+I got one W today and I have mentioned it nine times. | one W
+I walked into school like I had a speed coil equipped. I did not. | speed coil
+I am not lost. I am doing side quests in the wrong building. | side quests
+They called me an NPC, so I stood very still and said hello, adventurer. | adventurer
+My villain origin story is someone standing on my checkpoint. | villain origin story
+I said it is giving winner. Then I lost. Now it is giving rematch. | rematch
+I have main character energy and side character luck. | side character luck
+I put on sunglasses indoors and walked into a glass door with full aura. | glass door
+My brainrot is so bad I said oof when I dropped a spoon. | spoon
+I tried to be mysterious in the lobby. Everyone could see my username floating above me. | username
+That was cringe, but it was my cringe, and I am proud of it. | cringe
+I posed for the group photo and my avatar was still loading in. | group photo

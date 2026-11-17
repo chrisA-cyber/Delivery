@@ -90,17 +90,22 @@ def main():
       "Needle Drop Records": [(99,80),(99,74.5),(85,74.5),(85,82),(85,90),(85,92.25)],
       "Copper Kettle Bakehouse": [(-31,100),(-31,121),(-43,121),(-52,121),(-53.65,121)],
       "Pocket Print Gallery": [(31,148),(31,130),(43,130),(52,130),(54.34,130)],
-      "Clock Court passage": [(99,91),(99,115),(82,125),(82,150),(32,151)],
+      "Clock Court passage": [(99,80),(99,115),(82,125),(82,150),(32,151)],
+      "Clock Court audience": [(82,130),(77.4,130),(77.4,122),(72.0,122)],
       "Clock Court bells": [(82,125),(88,125.45),(89,125.45),(89,128.45),(89,131.45)],
-      "Park gateway": [(99,80),(102,80),(109,80),(119,76),(120,74)],
-      "Signal Park": [(0,62), (0,74.5),(120,74.5),(120,74)],
+      "Park gateway": [(99,80),(102,80),(109,80),(116,88),(122.2,92.7),(126.6,90.6)],
+      "Signal Park": [(0,62),(0,74.5),(108,74.5),(110,80),(116,88),(122.2,92.7),(126.6,90.6)],
       "Night Market via west": [(0,62),(0,74.5),(-30.8,74.5),(-30.8,151),(0,151),(0,171)],
       "Night Market via east": [(0,62),(0,74.5),(29.1,74.5),(29.1,80),(31.6,82),(31.6,92),(30.8,94),(30.8,151),(0,151),(0,171)],
-      "Signal running loop": [(120,74),(109,55),(140,67),(116,96),(120,74)],
+      "Signal running loop": [(126.6,90.6),(122.2,92.7),(116,88),(112,80),(110,66),(109,55),(140,67),
+                              (116,96),(122.2,92.7),(126.6,90.6)],
       "Paper stall": [(0,171),(0,161),(-15,161),(-15,162)],
       "Ribbon stall": [(0,171),(16,171),(16,182)],
       "Coastal lighthouse": [(-122,74),(-140,74),(-140,108),(-154,108)],
       "Loft reading landing": [(-51,89),(-51,81.28),(-60.62,81.28),(-60.62,97)],
+      "Terrace stair to market": [(0,62),(0,84),(0,108),(0,118),(0,134),(0,146.5),(0,151),(0,171)],
+      "Lantern pavement west": [(-34.6,69.5),(-71.4,69.5)],
+      "Lantern pavement east": [(34.6,69.5),(71.4,69.5)],
     }
     total=sum(route(name,pts) for name,pts in routes.items())
     arrivals={name for name,_ in objects if name.startswith("Venue") or name.startswith("ParkGate") and name[-1].isdigit() or name in ("PropBell","PropLantern","PropHat","MarketPaper","MarketRibbon","ParkArrival")}
@@ -132,6 +137,41 @@ def main():
                 assert not (hi>.44 and lo<6.90), f"Static obstacle in tram clearance at {x}, {z}: {name}, {lo}–{hi}"
             tram_count+=1
     print(f"PASS streetcar envelope: {tram_count} positions, 222 × 8 studs, overhead clearance 6.9 studs.")
+    # Counter cameras: four sight rays per shop (centre, both sides, above) must reach the counter unobstructed.
+    visible_named=[(name,p) for name,p in objects if p.get("Transparency",0)<.99 and "Size" in p]
+    def blocks(p,a,b):
+        cf,size=p["CFrame"],p["Size"]
+        lo,hi=0.0,1.0
+        for axis in range(3):
+            col=(cf[3+axis],cf[6+axis],cf[9+axis])
+            pa=sum(col[k]*(a[k]-cf[k]) for k in range(3))
+            pb=sum(col[k]*(b[k]-cf[k]) for k in range(3))
+            half=size[axis]/2
+            if abs(pb-pa)<1e-9:
+                if abs(pa)>half: return False
+                continue
+            t0,t1=(-half-pa)/(pb-pa),(half-pa)/(pb-pa)
+            lo,hi=max(lo,min(t0,t1)),min(hi,max(t0,t1))
+            if lo>hi: return False
+        return True
+    cameras={"post":((-83.4,5.75,63.8),(-86.40,3.20,51.35)),"records":((89.1,5.65,83.20),(84.65,3.25,95.65)),
+             "cafe":((-44.35,5.75,124.6),(-57.20,3.20,120.65)),"gallery":((44.35,5.75,126.55),(57.35,3.35,130.65))}
+    rays=0
+    for shop,(eye,target) in cameras.items():
+        dx,dz=target[0]-eye[0],target[2]-eye[2]
+        n=math.hypot(dx,dz); side=(-dz/n,dx/n)
+        for off in ((0,0,0),(side[0]*2.5,0,side[1]*2.5),(-side[0]*2.5,0,-side[1]*2.5),(0,1.6,0)):
+            aim=tuple(target[k]+off[k] for k in range(3))
+            end=tuple(eye[k]+(aim[k]-eye[k])*.72 for k in range(3))
+            hit=[n2 for n2,p in visible_named if blocks(p,eye,end)]
+            assert not hit, f"{shop} counter camera blocked by {hit}"
+            rays+=1
+    print(f"PASS {rays} counter-camera clearances across four shops.")
+    rings=[p["CFrame"][:3] for name,p in objects if name=="ActiveRing"]
+    assert len(rings)==12, f"Expected twelve ActiveRing markers, found {len(rings)}"
+    board=[p for name,p in objects if name=="CourtRelayBoard"]
+    assert len(board)==1 and board[0]["CFrame"][5]>.99, "CourtRelayBoard must be unique and face +X toward the benches"
+    print(f"PASS {len(rings)} ActiveRing markers; CourtRelayBoard faces the Clock Court benches.")
     print(f"{len(routes)} walkable corridors; {total} sampled stations; {len(arrivals)} collision-clear anchors.")
 if __name__=="__main__":
     main()

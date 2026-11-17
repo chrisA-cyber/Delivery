@@ -502,10 +502,11 @@ end)
 test("walkable venue map, earned fits and stamped writer cards survive profile load", function()
 	local visitor = Activities.new()
 	assert(
-		visitor.room == "park"
+		visitor.room == "lobby"
 			and not visitor.watching
-			and Venues.arrival(visitor.room, visitor.openRevision) == "ParkArrival",
-		"first arrival is free at the park gateway"
+			and Venues.arrival(visitor.room, visitor.openRevision) == "PlazaArrival"
+			and Venues.fallbackArrival == "ParkArrival",
+		"first arrival is in Broadcast Plaza facing the theatre, with the park gateway as fallback"
 	)
 	Activities.open(visitor, "lobby", false)
 	assert(

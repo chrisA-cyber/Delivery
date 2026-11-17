@@ -14,8 +14,8 @@ Venues.rooms = {
 	park = {
 		title = "Signal Park",
 		anchor = "VenuePark",
-		x = 120,
-		z = 74,
+		x = 126.6,
+		z = 90.6,
 		action = "Enter the signal circuit",
 	},
 	market = {
@@ -105,9 +105,13 @@ function Venues.zone(x: number, z: number, y: number): string
 	end
 	return "lobby"
 end
+-- A fresh visitor arrives in Broadcast Plaza facing the theatre doors. Venue falls back to the older
+-- ParkArrival anchor when a place file predates PlazaArrival.
+Venues.firstArrival = "PlazaArrival"
+Venues.fallbackArrival = "ParkArrival"
 function Venues.arrival(room, openRevision)
-	if room == "park" and openRevision == 0 then
-		return "ParkArrival"
+	if openRevision == 0 and (room == "lobby" or room == "park") then
+		return Venues.firstArrival
 	end
 	return Venues.rooms[room].anchor
 end

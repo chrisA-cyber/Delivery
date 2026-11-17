@@ -5,6 +5,8 @@ local Social = game:GetService("SocialService")
 local player = Players.LocalPlayer
 local shared = Storage:WaitForChild("Delivery")
 local stage = shared:WaitForChild("Stage") :: RemoteEvent
+local GuiService = game:GetService("GuiService")
+local UITheme = require(script.Parent.UITheme)
 local ui = require(script.Parent.Hud).new(player:WaitForChild("PlayerGui") :: PlayerGui)
 ui.panel.Visible = false
 ui.nav.Visible = false
@@ -23,9 +25,14 @@ local setup, ending = 1, 1
 local phaseKey = ""
 local clockStart = 0
 local micNote = ""
-local toast = ""
-local toastUntil = 0
 local fixtureTurn = -1
+-- A3: a player who queued from town walks again once their turn (or their place in the queue) ends.
+local queueRequestedAt = -math.huge
+local performedTurn = -1
+local rewardedTurn = -1
+local liveKey = ""
+local scoreShown = false
+local barOn = false
 local padPending = {}
 local padButtons = {}
 local render
@@ -38,26 +45,89 @@ local function showPage(nextPage: string)
 	page = if nextPage == "return"
 		then (if state and state.venue and not state.venue.watching then "explore" else "show")
 		else nextPage
-	toast = ""
 	shopPage = nil
 	if state then
 		render(state)
 	end
 end
 local function notify(message: string)
-	toast = message
-	toastUntil = os.clock() + 4
-	ui.note.Text = message
+	UITheme.toast(message)
+end
+local function plural(n: number, one: string, many: string?): string
+	return string.format("%d %s", n, if n == 1 then one else (many or one .. "s"))
 end
 local function venue(payload)
 	act("venue", payload)
 end
 local guide = require(script.Parent.VenueGuide).new(ui, venue, showPage, notify)
+-- C4: joining from town offers a seat in the house or watching on screen from where you stand.
 local function watch()
 	if state.venue and not state.venue.watching then
-		venue({ op = "travel", room = if guide.roomId() == "balcony" then "balcony" else "theatre" })
+		showPage("audience")
 	else
 		showPage("show")
+	end
+end
+local barPhases = { direct = true, take = true, read = true, vote = true }
+local function phaseLabel(seconds: number): string
+	local whole = math.max(0, math.ceil(seconds))
+	return string.format("%d:%02d", whole // 60, whole % 60)
+end
+-- B4: the walking "Live show" pill reads the live phase from ReplicatedStorage.ShowStatus
+-- (falls back to the last show state when the folder is missing).
+local livePhases = {
+	direct = true,
+	countdown = true,
+	take = true,
+	read = true,
+	vote = true,
+	host = true,
+	reveal = true,
+}
+local function updateLive(force: boolean?)
+	local folder = Storage:FindFirstChild("ShowStatus")
+	local phase, endsAt, format
+	if folder then
+		phase = folder:GetAttribute("Phase")
+		endsAt = folder:GetAttribute("PhaseEndsAt")
+		format = folder:GetAttribute("Format")
+		if folder:GetAttribute("House") == true and (type(format) ~= "string" or format == "") then
+			format = "Flip's act"
+		end
+	elseif state then
+		phase = state.phase
+		endsAt = state.deadline
+		format = state.mode
+	end
+	if type(phase) ~= "string" then
+		phase = "idle"
+	end
+	if type(format) ~= "string" or format == "" then
+		format = "Live show"
+	end
+	local remaining = if type(endsAt) == "number" and endsAt > 0
+		then endsAt - workspace:GetServerTimeNow()
+		else 0
+	local pillState
+	if phase == "lineup" and remaining > 0 then
+		pillState = {
+			text = "STARTS IN " .. phaseLabel(remaining),
+			icon = "clock",
+			pulse = true,
+			variant = "primary",
+		}
+	elseif livePhases[phase] then
+		pillState = {
+			text = "ON NOW · " .. format,
+			dot = if phase == "take" or phase == "vote" then "pulse" else "live",
+		}
+	else
+		pillState = { text = "Live show", icon = "play" }
+	end
+	local key = pillState.text .. "/" .. tostring(pillState.dot) .. "/" .. tostring(pillState.icon)
+	if force or key ~= liveKey then
+		liveKey = key
+		ui.pill(ui.navRole, pillState)
 	end
 end
 local mic = require(script.Parent.Microphone).new(
@@ -103,6 +173,7 @@ local phaseNames = {
 local function queue(nextMode: string)
 	mode = nextMode
 	page = "show"
+	queueRequestedAt = os.clock()
 	act("queue", { mode = mode, mix = (setup - 1) * 3 + ending })
 	render(state)
 	notify("Requesting your stage invitation…")
@@ -145,7 +216,7 @@ end
 local function menu(s)
 	local row = s.standing
 	if page == "welcome" then
-		ui.phase.Text = "DELIVERY   /   LIVE SHOW"
+		ui.phase.Text = "DELIVERY  ·  LIVE SHOW"
 		copy("Main Theatre", "Choose your part", "Sound pads work with your mic off.")
 		ui.button("Play with sound pads", function()
 			queue("Sound booth")
@@ -157,8 +228,24 @@ local function menu(s)
 		ui.button("Explore the district", function()
 			showPage("explore")
 		end, false, "radio")
+	elseif page == "audience" then
+		ui.phase.Text = "LIVE SHOW  ·  JOIN THE AUDIENCE"
+		copy(
+			"Audience",
+			"Where would you like to watch?",
+			"Take a seat in the house, or stay where you are and watch on screen. Both can vote and react."
+		)
+		ui.button("Take a seat", function()
+			venue({ op = "travel", room = if guide.roomId() == "balcony" then "balcony" else "theatre" })
+		end, true, "users")
+		ui.button("Watch from here", function()
+			venue({ op = "watchHere", active = true })
+		end, false, "eye")
+		ui.button("Keep exploring", function()
+			showPage("explore")
+		end, false, "home")
 	elseif page == "modes" then
-		ui.phase.Text = "CASTING   /   PICK A FORMAT"
+		ui.phase.Text = "CASTING  ·  PICK A FORMAT"
 		copy(
 			"Performer entrance",
 			"Choose your act",
@@ -177,7 +264,7 @@ local function menu(s)
 			end
 		end
 	elseif page == "choose" then
-		ui.phase.Text = "CASTING   /   " .. string.upper(mode)
+		ui.phase.Text = "CASTING  ·  " .. string.upper(mode)
 		copy("Round format", mode, descriptions[mode] or "Join the stage and follow the cue.")
 		if mode == "Custom" then
 			ui.card.Text = Modes.setups[setup] .. " " .. Modes.ends[ending]
@@ -197,7 +284,7 @@ local function menu(s)
 			showPage("modes")
 		end)
 	elseif page == "menu" then
-		ui.phase.Text = "BACKSTAGE   /   SHOW MENU"
+		ui.phase.Text = "BACKSTAGE  ·  SHOW MENU"
 		copy(
 			"Daily show",
 			s.dailyLine or "Today's card",
@@ -234,10 +321,23 @@ local function menu(s)
 		end, false, "users")
 		ui.button(if fx.isReduced() then "Camera motion · off" else "Camera motion · on", function()
 			fx.toggle()
+			-- Street life, the town encore and HUD motion follow this attribute too.
+			player:SetAttribute("ReducedMotion", fx.isReduced())
 			render(state)
-		end)
+		end, false, "settings")
+		-- Read live by the ambience and music systems (true = muted).
+		local ambienceMuted = player:GetAttribute("AmbienceMuted") == true
+		ui.button(if ambienceMuted then "Town sounds · off" else "Town sounds · on", function()
+			player:SetAttribute("AmbienceMuted", not ambienceMuted)
+			render(state)
+		end, false, "radio")
+		local musicMuted = player:GetAttribute("MusicMuted") == true
+		ui.button(if musicMuted then "Music · off" else "Music · on", function()
+			player:SetAttribute("MusicMuted", not musicMuted)
+			render(state)
+		end, false, "music")
 	elseif page == "help" then
-		ui.phase.Text = "DELIVERY   /   PLAYER GUIDE"
+		ui.phase.Text = "DELIVERY  ·  PLAYER GUIDE"
 		copy(
 			"Getting around",
 			"Choose your route",
@@ -256,11 +356,11 @@ local function menu(s)
 			showPage("helpCrowd")
 		end, false, "users")
 	elseif page == "helpWalk" then
-		ui.phase.Text = "DELIVERY   /   DISTRICT GUIDE"
+		ui.phase.Text = "DELIVERY  ·  DISTRICT GUIDE"
 		copy(
 			"Lantern Street",
-			"Pier west. Park east.",
-			"Ride the streetcar between the pier and park. In Town shops, look for Clock Court behind Needle Drop. Follow its bells and benches south to Market Walk."
+			"Pier to park, on foot or by Lot Line",
+			"Dockside Post sits by the pier, Needle Drop by the park. Clock Court's lane behind Needle Drop leads to Market Walk and the Night Market."
 		)
 		ui.button("District map", function()
 			showPage("map")
@@ -275,7 +375,7 @@ local function menu(s)
 			showPage("districtRecords")
 		end, false, "award")
 	elseif page == "districtRecords" and row then
-		ui.phase.Text = "DELIVERY   /   DISTRICT RECORDS"
+		ui.phase.Text = "DELIVERY  ·  DISTRICT RECORDS"
 		local speed = if (row.parkBestMs or 0) > 0
 			then string.format("%.2fs", row.parkBestMs / 1000)
 			else "No finish yet"
@@ -299,17 +399,16 @@ local function menu(s)
 			showPage("townRecords")
 		end, false, "book-open")
 	elseif page == "townRecords" and row then
-		ui.phase.Text = "DELIVERY   /   TOWN LOGBOOK"
+		ui.phase.Text = "DELIVERY  ·  TOWN LOGBOOK"
 		copy(
 			"Completed shop tickets",
 			"Around town",
-			string.format(
-				"%d parcels delivered  ·  %d records played  ·  %d orders served  ·  %d postcards printed",
-				row.postDeliveries or 0,
-				row.recordSides or 0,
-				row.cafeOrders or 0,
-				row.galleryPrints or 0
-			)
+			table.concat({
+				plural(row.postDeliveries or 0, "parcel") .. " delivered",
+				plural(row.recordSides or 0, "record") .. " played",
+				plural(row.cafeOrders or 0, "order") .. " served",
+				plural(row.galleryPrints or 0, "postcard") .. " printed",
+			}, "  ·  ")
 		)
 		ui.button("District map", function()
 			showPage("map")
@@ -318,7 +417,7 @@ local function menu(s)
 			showPage("badges")
 		end, false, "award")
 	elseif page == "helpPads" or page == "helpVoice" or page == "helpCrowd" then
-		ui.phase.Text = "BACKSTAGE   /   HOW TO PLAY"
+		ui.phase.Text = "BACKSTAGE  ·  HOW TO PLAY"
 		if page == "helpPads" then
 			copy(
 				"Sound booth",
@@ -345,7 +444,7 @@ local function menu(s)
 			showPage("help")
 		end)
 	elseif page == "progress" and row then
-		ui.phase.Text = "BACKSTAGE   /   PROGRESS"
+		ui.phase.Text = "BACKSTAGE  ·  PROGRESS"
 		local earned = {}
 		for name in row.badges do
 			table.insert(earned, (name:gsub("-", " ")))
@@ -375,7 +474,7 @@ local function menu(s)
 			table.insert(earned, (name:gsub("-", " ")))
 		end
 		table.sort(earned)
-		ui.phase.Text = "BACKSTAGE   /   BADGES"
+		ui.phase.Text = "BACKSTAGE  ·  BADGES"
 		copy(
 			"Earned badges",
 			if #earned > 0 then table.concat(earned, "  ·  ") else "Your first badge is one take away.",
@@ -385,7 +484,7 @@ local function menu(s)
 			showPage("progress")
 		end, true)
 	elseif page == "record" and row then
-		ui.phase.Text = "BACKSTAGE   /   DAILY RECORD"
+		ui.phase.Text = "BACKSTAGE  ·  DAILY RECORD"
 		copy(
 			"Your Daily",
 			if row.lastDaily > 0 then "Last Daily · " .. row.firstDailyScore else "Your Daily is open",
@@ -403,7 +502,7 @@ local function menu(s)
 			showPage("progress")
 		end)
 	elseif page == "friends" then
-		ui.phase.Text = "BACKSTAGE   /   FRIENDS"
+		ui.phase.Text = "BACKSTAGE  ·  FRIENDS"
 		local total = if row then math.max(row.troupeTotal, row.weekly) else 0
 		copy(
 			"Troupe goal",
@@ -426,7 +525,7 @@ local function menu(s)
 			end)
 		end
 	elseif page == "shop" then
-		ui.phase.Text = "BACKSTAGE   /   DRESSING ROOM"
+		ui.phase.Text = "BACKSTAGE  ·  DRESSING ROOM"
 		ui.kicker.Text = "WARDROBE"
 		Shop.draw(
 			ui,
@@ -496,7 +595,7 @@ local function show(s, mine)
 	local actor = Players:GetPlayerByUserId(s.actor)
 	local house = s.actor == 0
 	local cast = if mine then "YOU" elseif house then "FLIP" elseif actor then actor.DisplayName else "ON STAGE"
-	ui.phase.Text = (phaseNames[s.phase] or "The show"):upper() .. "   /   " .. cast
+	ui.phase.Text = (phaseNames[s.phase] or "The show"):upper() .. "  ·  " .. cast
 	local padAct = s.mode == "Sound booth"
 	local nextStep = {
 		lobby = "A fresh card arrives next.",
@@ -541,7 +640,7 @@ local function show(s, mine)
 				button("Try a scripted take", "accept", "rehearsal", false, "play")
 			end
 		end
-		button("Pass this turn", "leave")
+		button("Pass this turn", "leave", nil, false, "x")
 	elseif s.phase == "direct" then
 		if not mine or (padAct and s.soloStage) then
 			if s.directed then
@@ -586,7 +685,7 @@ local function show(s, mine)
 				elseif house then "React to Flip's house reading."
 				else "Send a reaction while they perform."
 			for _, reaction in { "Rose", "Tomato", "Laugh", "Gasp" } do
-				button(reaction, "react", reaction, reaction == "Rose")
+				button(reaction, "react", reaction, reaction == "Rose", "emoji-" .. string.lower(reaction))
 			end
 		end
 	elseif s.phase == "read" and mine then
@@ -612,8 +711,9 @@ local function show(s, mine)
 		elseif not s.rated then
 			ui.kicker.Text = "YOUR BALLOT"
 			ui.note.Text = "How did this performance land?"
+			local faces = { "emoji-meh", "emoji-smile", "emoji-grin", "emoji-starstruck" }
 			for i, label in { "Warming up", "Got a smile", "That landed", "Encore!" } do
-				button(label, "rate", 25 * i, i == 3)
+				button(label, "rate", 25 * i, i == 3, faces[i])
 			end
 		else
 			ui.note.Text = "Rating received. Flip reveals the score next."
@@ -627,8 +727,8 @@ local function show(s, mine)
 			and not s.duelVoted
 		then
 			ui.note.Text = "Choose the winner of the face-off."
-			button("First performer", "duelVote", 1, true)
-			button("Second performer", "duelVote", 2)
+			button("First performer", "duelVote", 1, true, "award")
+			button("Second performer", "duelVote", 2, false, "award")
 		end
 	elseif s.phase == "host" then
 		copy("Flip · House host", s.hostLine or "The room has spoken.", "The score is coming up.")
@@ -636,11 +736,10 @@ local function show(s, mine)
 		local result = s.result
 		if result then
 			local stats = if padAct
-				then string.format(
-					"%d cues hit · %d perfect",
-					result.foleyHits or 0,
-					result.foleyPerfect or 0
-				)
+				then plural(result.foleyHits or 0, "cue")
+					.. " hit · "
+					.. tostring(result.foleyPerfect or 0)
+					.. " perfect"
 				elseif result.miss then "No words came through. You can try this card again."
 				elseif s.simulated then "Studio rehearsal · simulated words and volume."
 				else string.format(
@@ -650,16 +749,32 @@ local function show(s, mine)
 					tostring(result.comedy or "—"),
 					tostring(result.chaos or "—")
 				)
+			local reward = nil
 			if s.lastAward and s.lastAward.turn == s.turn and s.lastAward.xp > 0 then
-				stats = stats .. "  ·  +" .. s.lastAward.xp .. " " .. s.lastAward.role .. " XP"
+				reward = "+" .. s.lastAward.xp .. " " .. s.lastAward.role .. " XP"
+				if rewardedTurn ~= s.turn then
+					rewardedTurn = s.turn
+					UITheme.reward(s.lastAward.xp, s.lastAward.role .. " XP", "star")
+				end
 			end
 			copy(
 				if mine then "Your result" else "Round result",
 				if result.overall
-					then string.format("%d   %s", result.overall, result.band)
+					then string.format("%d · %s", result.overall, result.band)
 					else "Take it again",
 				stats
 			)
+			if result.overall then
+				local overall = result.overall
+				scoreShown = true
+				ui.score(
+					overall,
+					result.band,
+					if overall >= 90 then 3 elseif overall >= 75 then 2 elseif overall >= 40 then 1 else 0,
+					tostring(s.turn),
+					reward
+				)
+			end
 			if mine and result.miss and not s.queued then
 				button("Retry this card", "retake", nil, true, "play")
 			elseif mine and s.encore and s.phase == "reveal" and not s.queued then
@@ -673,7 +788,12 @@ local function show(s, mine)
 			if s.phase == "reveal" and (result.overall or 0) >= 75 then
 				ui.button("Save show moment", function()
 					Capture.reveal(notify)
-				end)
+				end, false, "star")
+			end
+			if mine and s.venue and not s.venue.watching then
+				ui.button("Back to town", function()
+					showPage("explore")
+				end, true, "home")
 			end
 			if s.winner then
 				local winner = Players:GetPlayerByUserId(s.winner)
@@ -744,14 +864,12 @@ render = function(s)
 			}
 			page = destinations[v.open] or page
 			shopPage = nil
-			toast = ""
 		end
 	end
 	local step = tostring(s.turn) .. "/" .. s.phase
 	if phaseKey ~= step then
 		phaseKey = step
 		clockStart = workspace:GetServerTimeNow()
-		toast = ""
 		table.clear(padPending)
 		if mine then
 			page = "show"
@@ -764,6 +882,35 @@ render = function(s)
 		elseif not mine or (s.phase ~= "countdown" and s.phase ~= "read") then
 			mic.stop()
 			micNote = ""
+		end
+	end
+	if mine then
+		performedTurn = s.turn
+	end
+	-- A3: once a town player's turn is over, or they left the queue, give them their legs back.
+	-- The score reveal and curtain call of their own turn stay on screen first (about 6.5 s).
+	if
+		page == "show"
+		and v
+		and not v.watching
+		and not mine
+		and not s.queued
+		and os.clock() - queueRequestedAt > 4
+		and not (
+			s.turn == performedTurn
+			and (
+				s.phase == "read"
+				or s.phase == "vote"
+				or s.phase == "host"
+				or s.phase == "reveal"
+				or s.phase == "intermission"
+			)
+		)
+	then
+		page = "explore"
+		shopPage = nil
+		if performedTurn == s.turn or performedTurn == s.turn - 1 then
+			UITheme.toast("Back in town · the show keeps running", { icon = "home", key = "back-to-town" })
 		end
 	end
 	local walking = page == "explore"
@@ -780,42 +927,61 @@ render = function(s)
 		page == "welcome",
 		if ShopCatalogue.shops[page] then page else nil
 	)
-	game:GetService("GuiService").TouchControlsEnabled = walking
-	local offstage = page ~= "show"
+	-- E3: only full-screen modals (map, show camera) take the thumbstick away. Counter panels keep it,
+	-- so a touch player can walk away from a counter to close it.
+	local touchFree = not map and (freeCamera or ShopCatalogue.shops[page] ~= nil)
+	GuiService.TouchControlsEnabled = touchFree
+	ui.setTouchFree(touchFree)
+	-- Outdoor audience (Clock Court bench, or waiting in the queue while walking): a compact show sheet.
+	local bar = walking
+		and not mine
+		and (s.audience == "court" or s.audience == "queue")
+		and barPhases[s.phase] == true
+	barOn = bar
+	local offstage = page ~= "show" and not bar
 	ui.begin(if offstage then page .. (shopPage or "") else step, offstage)
-	ui.panel.Visible = not walking and not map
+	ui.showPanel((not walking or bar) and not map)
 	table.clear(padButtons)
+	scoreShown = false
 	ui.nav.Visible = page ~= "welcome" and not map and not (mine and s.phase == "lineup")
 	ui.navMenu.Visible = not mine
-	ui.navMenu.Text = if walking
-		then "Map"
-		elseif offstage then (if v and not v.watching then "Walk" else "Show")
-		else "Menu"
 	ui.navRole.Visible = not offstage or walking
-	ui.navRole.Text = if mine
-		then "Leave stage"
-		elseif s.queued then "Leave queue #" .. s.queued
-		elseif walking then "Live show"
-		else "Perform"
-	local compactWalk = walking and ui.gui.AbsoluteSize.X < 500
-	local roleWidth = if compactWalk then 88 else 124
-	ui.navRole.Size = UDim2.fromOffset(roleWidth, 44)
-	ui.navMenu.Size = UDim2.fromOffset(if compactWalk then 48 else 80, 44)
-	ui.nav.Size = UDim2.fromOffset(
-		if offstage and not walking then 84 elseif mine then 128 elseif compactWalk then 142 else 210,
-		48
-	)
-	ui.navMenu.Position = UDim2.fromOffset(if offstage and not walking then 2 else roleWidth + 4, 2)
+	ui.navTown.Visible = page == "show" and not mine and v ~= nil and not v.watching
+	local narrow = ui.gui.AbsoluteSize.X / ui.scale() < 520
+	if walking then
+		ui.pill(ui.navMenu, { text = "Map", icon = "map", compact = narrow })
+	elseif offstage then
+		local town = v ~= nil and not v.watching
+		ui.pill(
+			ui.navMenu,
+			{ text = if town then "Back to town" else "Back to show", icon = if town then "home" else "play" }
+		)
+	else
+		ui.pill(ui.navMenu, { text = "Menu", icon = "settings", compact = narrow and ui.navTown.Visible })
+	end
+	ui.pill(ui.navTown, { text = "Town", icon = "home" })
+	if mine then
+		liveKey = ""
+		ui.pill(ui.navRole, { text = "Leave stage", icon = "x", variant = "danger" })
+	elseif s.queued then
+		liveKey = ""
+		ui.pill(ui.navRole, { text = "Leave queue #" .. s.queued, icon = "x" })
+	elseif walking then
+		updateLive(true)
+	else
+		liveKey = ""
+		ui.pill(ui.navRole, { text = "Perform", icon = "mic" })
+	end
 	guide.setView(page, s)
-	if not guide.draw(page, s) then
+	if bar or not guide.draw(page, s) then
 		if offstage then
 			menu(s)
 		else
 			show(s, mine)
 		end
 	end
-	if toast ~= "" and os.clock() < toastUntil then
-		ui.note.Text = toast
+	if not scoreShown then
+		ui.score(nil)
 	end
 	ui.finish()
 	ui.clock(
@@ -837,6 +1003,15 @@ ui.navRole.Activated:Connect(function()
 	else
 		showPage("modes")
 	end
+end)
+ui.navTown.Activated:Connect(function()
+	if not state then
+		return
+	end
+	if state.queued then
+		notify("You keep your place in the queue. We'll call you back for your turn.")
+	end
+	showPage("explore")
 end)
 ui.navMenu.Activated:Connect(function()
 	if not state then
@@ -870,7 +1045,7 @@ task.spawn(function()
 		if s then
 			guide.tick(page, s)
 		end
-		if s and page == "show" then
+		if s and (page == "show" or (barOn and page == "explore")) then
 			local remaining = math.max(0, s.deadline - workspace:GetServerTimeNow())
 			ui.clock(remaining, s.deadline - clockStart)
 			if s.phase == "take" and s.actor == player.UserId then
@@ -895,13 +1070,7 @@ task.spawn(function()
 						elseif i and i > 1 then "Last cue missed. Watch the next countdown."
 						else "Press the matching pad as it lights up."
 					for pad, b in padButtons do
-						local active = go and beat.pad == pad
-						b.BackgroundColor3 = if active
-							then Color3.fromRGB(255, 207, 107)
-							else Color3.fromRGB(63, 47, 80)
-						b.TextColor3 = if active
-							then Color3.fromRGB(26, 22, 36)
-							else Color3.fromRGB(251, 240, 221)
+						ui.hot(b, go and beat.pad == pad)
 					end
 				elseif s.mode == "Switch" then
 					local index = math.clamp(1 + math.floor((10 - remaining) / 2.5), 1, 4)
@@ -912,6 +1081,9 @@ task.spawn(function()
 						.. "  —  repeat the phrase."
 				end
 			end
+		end
+		if s and page == "explore" and not s.queued and s.actor ~= player.UserId then
+			updateLive()
 		end
 		task.wait(0.1)
 	end

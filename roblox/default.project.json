@@ -44,29 +44,113 @@
     "Lighting": {
       "$className": "Lighting",
       "$properties": {
-        "ClockTime": 17.25,
-        "Brightness": 2,
+        "Technology": "Future",
+        "ClockTime": 17.8,
+        "GeographicLatitude": 41.733,
+        "Brightness": 2.6,
         "Ambient": [
-          0.388,
-          0.357,
-          0.435
+          0.33,
+          0.3,
+          0.4
         ],
         "OutdoorAmbient": [
+          0.47,
           0.49,
-          0.506,
-          0.565
+          0.64
         ],
-        "EnvironmentDiffuseScale": 0.6,
-        "EnvironmentSpecularScale": 0.43,
+        "ColorShift_Top": [
+          0.3,
+          0.2,
+          0.16
+        ],
+        "ColorShift_Bottom": [
+          0.1,
+          0.12,
+          0.25
+        ],
+        "EnvironmentDiffuseScale": 0.45,
+        "EnvironmentSpecularScale": 0.6,
         "GlobalShadows": true,
-        "ExposureCompensation": -0.2
+        "ShadowSoftness": 0.3,
+        "ExposureCompensation": 0.15
+      },
+      "BlueHour": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.27,
+          "Offset": 0.22,
+          "Color": [
+            0.86,
+            0.66,
+            0.6
+          ],
+          "Decay": [
+            0.31,
+            0.33,
+            0.56
+          ],
+          "Glare": 0.45,
+          "Haze": 1
+        }
+      },
+      "DuskSky": {
+        "$className": "Sky",
+        "$properties": {
+          "CelestialBodiesShown": true,
+          "StarCount": 2600,
+          "SunAngularSize": 14,
+          "MoonAngularSize": 9
+        }
+      },
+      "BlueHourGrade": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Brightness": 0.01,
+          "Contrast": 0.08,
+          "Saturation": 0.05,
+          "TintColor": [
+            1,
+            0.976,
+            0.955
+          ]
+        }
+      },
+      "ShowGrade": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Brightness": 0,
+          "Contrast": 0,
+          "Saturation": 0,
+          "TintColor": [
+            1,
+            1,
+            1
+          ]
+        }
       },
       "SoftLenses": {
         "$className": "BloomEffect",
         "$properties": {
-          "Intensity": 0.09,
-          "Size": 15,
-          "Threshold": 1.46
+          "Intensity": 0.45,
+          "Size": 20,
+          "Threshold": 1.5
+        }
+      },
+      "DuskRays": {
+        "$className": "SunRaysEffect",
+        "$properties": {
+          "Intensity": 0.05,
+          "Spread": 0.5
+        }
+      },
+      "ShowFocus": {
+        "$className": "DepthOfFieldEffect",
+        "$properties": {
+          "Enabled": false,
+          "FarIntensity": 0.25,
+          "FocusDistance": 30,
+          "InFocusRadius": 40,
+          "NearIntensity": 0
         }
       }
     }

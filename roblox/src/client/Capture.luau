@@ -1,9 +1,11 @@
 --!strict
+-- Saves a three-second clip of the score reveal. Messages go to the caller's toast.
 local CaptureService = game:GetService("CaptureService")
 local Capture = {}
 local busy = false
-function Capture.reveal(message)
+function Capture.reveal(message: (string) -> ())
 	if busy then
+		message("Already recording this moment.")
 		return
 	end
 	busy = true
@@ -23,6 +25,7 @@ function Capture.reveal(message)
 			message("Video capture is unavailable here.")
 			return
 		end
+		message("Recording this moment · 3 seconds")
 		task.delay(3, function()
 			if busy then
 				pcall(function()

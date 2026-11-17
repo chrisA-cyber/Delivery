@@ -20,7 +20,9 @@ local function daily()
 			"Tycoon Problems",
 			"Control Room",
 			"Backstage",
-		})[math.floor((os.time() / 86400 + 3) / 7) % 5 + 1]
+			"Group Chat",
+			"Main Character",
+		})[math.floor((os.time() / 86400 + 3) / 7) % 7 + 1]
 		local weekly = {}
 		for _, item in catalogue.lines do
 			if item.pack == featured then
@@ -32,8 +34,35 @@ local function daily()
 	return dailyCache.line, dailyCache.cue, day, dailyCache.weekly
 end
 local venue
+local court = workspace:WaitForChild("ShowSet"):FindFirstChild("ClockCourt")
+-- ClockCourt.server sets CourtAudience on the server; the seat weld is checked again here.
+local function onBench(p: Player): boolean
+	if p:GetAttribute("CourtAudience") ~= true or not court then
+		return false
+	end
+	local char = p.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local seat = hum and hum.SeatPart
+	return seat ~= nil and seat.Name == "BenchSeat" and seat:IsDescendantOf(court)
+end
+local isQueued = function(_: number): boolean
+	return false
+end
+-- Everyone who can vote, react and hear the stage: seated in the house, watching remotely from town,
+-- sitting on a Clock Court bench, or waiting in the performer queue.
+local function audienceOf(p: Player): string?
+	local seated = venue and venue.audience(p)
+	if seated then
+		return seated
+	elseif onBench(p) then
+		return "court"
+	elseif isQueued(p.UserId) then
+		return "queue"
+	end
+	return nil
+end
 local function watching(p)
-	return venue and venue.snapshot(p).watching or false
+	return audienceOf(p) ~= nil
 end
 local function watchesShow(id)
 	local p = Players:GetPlayerByUserId(id)
@@ -47,7 +76,35 @@ local state = Show.new(
 	require(shared.Foley),
 	watchesShow
 )
+isQueued = function(id: number): boolean
+	return table.find(state.queue, id) ~= nil
+end
 local standings = {}
+local TownBroadcast = require(script.Parent.TownBroadcast)
+local ShopCatalogue = require(shared.ShopCatalogue)
+local showRecord = TownBroadcast.newRecord()
+local showStatus = Instance.new("Folder")
+showStatus.Name = "ShowStatus"
+-- Read-only show status for the town. Only catalogue text, fixed labels and display names.
+local function refreshStatus()
+	local actor = if state.actor ~= 0 then Players:GetPlayerByUserId(state.actor) else nil
+	local watchers = 0
+	for _, p in Players:GetPlayers() do
+		if p.UserId ~= state.actor and standings[p.UserId] and watching(p) then
+			watchers += 1
+		end
+	end
+	local fields = TownBroadcast.status(state, showRecord, if actor then actor.DisplayName else "", watchers)
+	for _, key in TownBroadcast.keys do
+		local value = (fields :: any)[key]
+		if showStatus:GetAttribute(key) ~= value then
+			showStatus:SetAttribute(key, value)
+		end
+	end
+end
+refreshStatus()
+showStatus.Parent = Storage
+TownBroadcast.start(showStatus)
 local Market = game:GetService("MarketplaceService")
 local Analytics = game:GetService("AnalyticsService")
 local wardrobe = require(shared.Wardrobe)
@@ -210,6 +267,17 @@ local features = require(shared.Features)
 local audio = require(script.Parent.StageVoice).new(features.StageVoice, watching)
 local captions = {}
 local host = require(script.Parent.Host).new(require(shared.HostLines), features)
+-- Re-evaluates one player's audience membership: observer roll, and live stage microphone routing.
+-- Host speech routing follows on the next send(). Walking or watching never opts anyone into a mic.
+local function audienceChanged(p: Player)
+	Show.attendance(state, p.UserId)
+	if watching(p) then
+		audio.addListener(p)
+	else
+		audio.removeListener(p)
+	end
+	refreshStatus()
+end
 local send
 local function claim(p, data, simulated)
 	local now = clock()
@@ -274,7 +342,12 @@ send = function(player: Player)
 	local today, dailyCue = daily()
 	local actor = Players:GetPlayerByUserId(state.actor)
 	local reactor = state.lastReactor and Players:GetPlayerByUserId(state.lastReactor)
+	local stingRow = actor and standings[actor.UserId]
+	local sting = stingRow and ShopCatalogue.records[stingRow.lastRecord]
 	remote:FireClient(player, {
+		audience = audienceOf(player),
+		entranceSting = if sting and state.phase ~= "lobby" then sting.name else nil,
+		entranceNotes = if sting and state.phase ~= "lobby" then sting.notes else nil,
 		phase = state.phase,
 		venue = venue.snapshot(player),
 		actorLook = if actor then venue.snapshot(actor).look else "house",
@@ -334,6 +407,7 @@ local function publish()
 	for _, player in Players:GetPlayers() do
 		send(player)
 	end
+	refreshStatus()
 	local today, cue = daily()
 	room.daily.Text = "DAILY SHOW\n" .. today.text .. "\n" .. cue.label
 	local line = state.line
@@ -352,6 +426,7 @@ local function phaseChanged()
 	end
 	if state.phase == "reveal" then
 		award()
+		TownBroadcast.reveal(showRecord, state.result)
 	end
 	if state.phase == "direct" and state.mode == "Echo" then
 		host.speak(Modes.beat(state.line.text), 5)
@@ -409,12 +484,7 @@ venue = require(script.Parent.Venue).new({
 	end,
 	changed = send,
 	canExplore = canExplore,
-	attendance = function(p)
-		Show.attendance(state, p.UserId)
-		if not watching(p) then
-			audio.removeListener(p)
-		end
-	end,
+	attendance = audienceChanged,
 	seat = function(p)
 		room.place(p, false)
 	end,
@@ -423,6 +493,7 @@ venue = require(script.Parent.Venue).new({
 		if not Show.action(state, p.UserId, "queue", { mode = "Custom", mix = mix }, clock()) then
 			return false
 		end
+		audienceChanged(p)
 		if prior ~= state.phase then
 			phaseChanged()
 		else
@@ -432,7 +503,8 @@ venue = require(script.Parent.Venue).new({
 	end,
 })
 require(script.Parent.Streetcar).start(function(p)
-	return canExplore(p) and not watching(p)
+	-- Queued performers may ride; players watching from a seat or remotely may not.
+	return canExplore(p) and venue.audience(p) == nil
 end)
 require(script.Parent.Attractions).bind({
 	canExplore = canExplore,
@@ -474,6 +546,12 @@ local function join(p: Player)
 	if p.Character then
 		task.defer(placeCharacter, p.Character)
 	end
+	p:GetAttributeChangedSignal("CourtAudience"):Connect(function()
+		if p.Parent == Players and standings[p.UserId] then
+			audienceChanged(p)
+			publish()
+		end
+	end)
 end
 Players.PlayerAdded:Connect(join)
 for _, p in Players:GetPlayers() do
@@ -652,6 +730,9 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 		return
 	end
 	if Show.action(state, id, verb, arg, now) then
+		if verb == "queue" or verb == "leave" or verb == "retake" or verb == "encore" then
+			audienceChanged(p)
+		end
 		if verb == "predict" and venue.snapshot(p).room == "balcony" then
 			state.balconyPredictions[id] = true
 		end

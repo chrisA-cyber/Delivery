@@ -1,0 +1,67 @@
+# Delivery directions (acting notes the audience votes on). Screened by hand, then: python tools/import.py --approve
+# Format: id | Label | instruction | measure
+# Label: three words or fewer. Instruction: one sentence. Measure is what the take is scored on:
+#   quiet = low steady volume, pause = a real silence in the middle, slow / fast = pace,
+#   rise = louder at the end, fall = softer at the end, crowd = the audience decides.
+# Keep ids stable once a direction ships. Keep crowd at or under forty percent of the list.
+
+# quiet
+cue-parents-asleep | Parents asleep | Whisper every word like your parents just went to bed. | quiet
+cue-library-level | Library level | Speak softly, like you are sneaking through the library stage of an obby. | quiet
+cue-hide-and-seek | Hide and seek | Keep your voice tiny so the seeker walking past never finds you. | quiet
+cue-sleeping-pet | Sleeping pet | Say it gently so your legendary pet stays asleep on your shoulder. | quiet
+cue-secret-code | Secret code | Murmur it like the secret code only your best friend knows. | quiet
+cue-nature-show | Nature documentary | Narrate in a hushed voice, as if a rare wild noob might hear you and run. | quiet
+cue-polite-fury | Whispered fury | Whisper it with very polite fury, keeping every word clear. | quiet
+
+# pause
+cue-lag-spike | Lag spike | Freeze completely in the middle, then finish like nothing happened. | pause
+cue-plot-twist | Plot twist | Hold a big silent beat before the twist, then reveal it. | pause
+cue-buffering | Buffering | Halfway through, stall for a full second like your video is buffering. | pause
+cue-under-oath | Under oath | Give flat, careful testimony and pause before the most embarrassing detail. | pause
+cue-oh-no | Oh no | Start ordinary, stop as the meaning sinks in, then finish horrified. | pause
+
+# slow
+cue-loading-screen | Loading screen | Say each word slowly, like it is still loading in one piece at a time. | slow
+cue-museum-tour | Museum tour | Take your time and give every word its own display case. | slow
+cue-elder-npc | Ancient NPC | Speak slowly, like a wise old NPC who has waited years for a visitor. | slow
+cue-slow-motion | Slow motion | Stretch every word like the replay is running in slow motion. | slow
+cue-final-answer | Final answer | Say it slowly, like a quiz contestant locking in the final answer. | slow
+
+# fast
+cue-speedrun | Speedrun | Rush the whole line like you are chasing a new personal best. | fast
+cue-closing-doors | Closing doors | Get the whole line out before the elevator doors close. | fast
+cue-fine-print | Fine print | Rattle it off at top speed like the fine print at the end of an advert. | fast
+cue-server-shutdown | Server shutdown | Say it fast because the server shuts down in five seconds. | fast
+cue-dinner-ready | Dinner's ready | Blurt it out before Mom calls you for dinner a second time. | fast
+cue-sugar-rush | Sugar rush | Race through it like a little sibling after birthday cake. | fast
+
+# rise
+cue-boss-intro | Boss intro | Start low and spooky, then boom the last words as the boss bar appears. | rise
+cue-back-row | Back row | Start quietly and let the ending reach the very back row of the theatre. | rise
+cue-level-up | Level up | Build the energy with every word until you hit level up. | rise
+cue-countdown | Update countdown | Start calm and grow louder like the whole server counting down to an update. | rise
+cue-admin-notice | Admin announcement | Begin like a polite notice and end at full server-wide volume. | rise
+
+# fall
+cue-after-obby | After the obby | Start strong and fade out, completely out of breath from the obby. | fall
+cue-sleepy-stagehand | Sleepy stagehand | Begin at normal volume and let the last few words fall to a whisper. | fall
+cue-low-battery | Low battery | Start bright, then fade away like your phone is about to switch off. | fall
+cue-walking-away | Walking away | Say it like you are slowly walking away from the camera. | fall
+cue-mic-was-on | Mic was on | Start loud, realize everyone can hear you, and shrink to a mumble. | fall
+
+# crowd
+cue-tutorial-npc | Tutorial NPC | Read it with the endless cheer of a tutorial guide meeting their millionth new player. | crowd
+cue-unboxing | Unboxing streamer | Gasp and hype every word like you are opening the rarest box ever made. | crowd
+cue-sports | Sports commentator | Call it like the final seconds of the biggest championship of the year. | crowd
+cue-villain | Villain monologue | Deliver it like an evil mastermind who has rehearsed this in the mirror for weeks. | crowd
+cue-shopkeeper | Shopkeeper NPC | Say it like a cheerful shopkeeper who only sells one very bad item. | crowd
+cue-breaking-news | Breaking news | Report it with total seriousness, like it is the top story tonight. | crowd
+cue-glitchy-robot | Glitchy robot | Speak like a robot voice that keeps glitching into real feelings. | crowd
+cue-pirate | Pirate captain | Bellow it from the ship deck like you just spotted treasure. | crowd
+cue-proud-parent | Proud parent | Say it like a parent who just watched you finish your very first obby. | crowd
+cue-movie-trailer | Movie trailer | Say it in a deep, epic movie trailer voice. | crowd
+cue-winning-barely | Winning, barely | Sound wildly confident while holding back tears. | crowd
+cue-substitute | Substitute teacher | Read it like a substitute teacher on the very last lesson of the day. | crowd
+cue-totally-casual | Totally casual | Try painfully hard to sound casual and add one tiny nervous laugh. | crowd
+cue-game-show | Game show host | Announce it with a huge grin like the prize is behind door number three. | crowd

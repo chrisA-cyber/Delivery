@@ -39,25 +39,25 @@ Catalogue.shops = {
 	},
 }
 Catalogue.parcels = {
-	{ label = "First pressing in a striped sleeve", recipient = "records" },
-	{ label = "A tin of orange blossom peel", recipient = "cafe" },
-	{ label = "Blue ink from the harbour press", recipient = "gallery" },
-	{ label = "Grand opening invitation", recipient = "cafe" },
-	{ label = "Three lantern-market negatives", recipient = "gallery" },
-	{ label = "Signal Park field recording", recipient = "records" },
+	{ label = "Mystery vinyl marked DO NOT DROP", recipient = "records" },
+	{ label = "Emergency sprinkles, extremely urgent", recipient = "cafe" },
+	{ label = "Sparkly blue ink from the harbour", recipient = "gallery" },
+	{ label = "Invite to the great muffin unboxing", recipient = "cafe" },
+	{ label = "Photos of a gull photobombing everything", recipient = "gallery" },
+	{ label = "A tape of the pier gulls doing harmonies", recipient = "records" },
 }
 Catalogue.sounds = { "Bell", "Thump", "Squeak" }
 Catalogue.records = {
 	{ name = "Last Tram Home", notes = { "Bell", "Thump", "Bell" } },
-	{ name = "The Turnstile", notes = { "Squeak", "Thump", "Bell", "Thump" } },
+	{ name = "Turnstile Shuffle", notes = { "Squeak", "Thump", "Bell", "Thump" } },
 	{ name = "Lantern Parade", notes = { "Bell", "Bell", "Squeak", "Thump", "Bell" } },
-	{ name = "Coffee Break", notes = { "Thump", "Squeak", "Squeak" } },
-	{ name = "Harbour Shuffle", notes = { "Thump", "Bell", "Thump", "Squeak" } },
-	{ name = "The Encore", notes = { "Squeak", "Bell", "Thump", "Thump", "Bell" } },
+	{ name = "Lag Spike Lullaby", notes = { "Thump", "Squeak", "Squeak" } },
+	{ name = "Gull Remix", notes = { "Thump", "Bell", "Thump", "Squeak" } },
+	{ name = "The Encore Drop", notes = { "Squeak", "Bell", "Thump", "Thump", "Bell" } },
 }
 Catalogue.recipes = {
 	{
-		name = "Honey cloud",
+		name = "Legendary honey cloud",
 		recipe = { "Brioche", "Honey", "Cream" },
 		choices = {
 			"Honey",
@@ -67,27 +67,27 @@ Catalogue.recipes = {
 		},
 	},
 	{
-		name = "Dockside swirl",
+		name = "Dockside swirl deluxe",
 		recipe = { "Croissant", "Chocolate", "Cinnamon" },
 		choices = { "Cinnamon", "Berry jam", "Croissant", "Chocolate" },
 	},
 	{
-		name = "Lantern cocoa",
+		name = "Lantern glow cocoa",
 		recipe = { "Cocoa", "Cream", "Orange peel" },
 		choices = { "Cream", "Cocoa", "Honey", "Orange peel" },
 	},
 	{
-		name = "Market morning",
+		name = "Spawn point breakfast",
 		recipe = { "Brioche", "Berry jam", "Orange peel" },
 		choices = { "Chocolate", "Orange peel", "Berry jam", "Brioche" },
 	},
 	{
-		name = "Signal roll",
+		name = "Signal Run roll",
 		recipe = { "Croissant", "Honey", "Cinnamon" },
 		choices = { "Cinnamon", "Honey", "Cream", "Croissant" },
 	},
 	{
-		name = "Midnight cocoa",
+		name = "Final boss cocoa",
 		recipe = { "Cocoa", "Chocolate", "Cream" },
 		choices = { "Cream", "Orange peel", "Cocoa", "Chocolate" },
 	},
@@ -96,7 +96,7 @@ Catalogue.layers = { "Skyline", "Ink", "Greeting" }
 Catalogue.palette = {
 	{ "Harbour crane", "Signal gazebo", "Lantern market" },
 	{ "Sea glass", "Cherry red", "Midnight blue" },
-	{ "Wish you were here!", "Meet me at curtain call.", "Greetings from Signal Park!" },
+	{ "Wish you were here, no cap!", "Meet me at curtain call!", "Touched grass in Signal Park!" },
 }
 function Catalogue.encode(picks)
 	local n = 0

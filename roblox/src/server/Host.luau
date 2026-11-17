@@ -55,9 +55,21 @@ function Host.new(lines, features)
 			end)
 		end)
 	end
+	-- One shuffle bag per server: Flip works through a whole bucket before repeating a verdict.
+	local draw = if lines.bag then lines.bag("host/" .. tostring(os.time())) else nil
+	local function render(template: string, s): string?
+		if lines.fill and lines.slots then
+			return lines.fill(template, lines.slots(s))
+		end
+		return template
+	end
 	local function prepare(s)
 		local category, options = lines.options(s.actor == 0, s.claim, s.cue.measure)
-		s.hostLine = lines.choose(options, s.turn, nil)
+		if draw and lines.slots then
+			s.hostLine = draw(category, options, lines.slots(s))
+		else
+			s.hostLine = render(lines.choose(options, s.turn, nil), s) or s.hostLine
+		end
 		if not features.HostText or pending then
 			return
 		end
@@ -84,7 +96,7 @@ function Host.new(lines, features)
 				and s.phase == "vote"
 				and workspace:GetServerTimeNow() < deadline
 			then
-				s.hostLine = lines.choose(options, turn, reply.GeneratedText)
+				s.hostLine = render(lines.choose(options, turn, reply.GeneratedText), s) or s.hostLine
 			end
 		end)
 	end

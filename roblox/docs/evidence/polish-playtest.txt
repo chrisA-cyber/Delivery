@@ -1,0 +1,33 @@
+Delivery | Polish pass | November 17, 2026
+Local Roblox Studio, one desktop client, keyboard input, no microphone. Not a phone, not a human newcomer, no second player.
+
+Checks
+tools/check.ps1 passed: catalogue (175 lines, 47 directions), tests/run 30 groups, tests/marquee, tests/town 7 groups, tests/content 7 groups, StyLua, Selene 0 errors 0 warnings, place build.
+art/scripts/check-campus.py passed: 29 corridors, 7,633 stations, 23 anchors, streetcar envelope, 16 counter-camera clearances, 12 ActiveRing markers.
+Art export: 5,803 native parts.
+
+Observed in Studio Play
+Spawn in Broadcast Plaza facing the theatre; ticket stub, welcome notice and live-show pill visible on the first frame.
+Lantern Street poster cases displayed the live house act, card line and direction.
+Theatre wide shot, director's choice, pad take with countdown ring, score reveal with band and XP chips, "Back to town".
+All 17 assigned audio ids loaded (PreloadAsync, TimeLength > 0); four ambient sounds playing in town.
+Output log had no script errors.
+
+Fixed during verification
+Pill buttons stretched to half the screen (AutomaticSize feedback through the full-size face): pills now size from their label row.
+Old park-spawn zoom clamp held the plaza camera at 5.5 studs: removed.
+Theatre wide shot sat in the front doorway: moved inside the house.
+House-crowd badges covered the stage: smaller and limited to 14 studs.
+Sky over the harbour read as a flat dark band at ClockTime 18.55: now 17.8 with lighter haze.
+
+Not yet checked
+Physical phone layouts, touch input, voice rounds, two-client acceptance fixtures, frame time with ten avatars, shop doorstep landing spots, every resident route.
+
+Next work (open items left by the polish pass)
+Caption act: a tap-performed line format so players without a microphone can perform lines (audit F1). Only Sound booth works without a mic today.
+Phone pass on a physical device: ticket stub overlaps the thumbstick zone for up to 12 s on the smallest phones; map pins for Studio B and Writers' Room overlap slightly at 685 px; portrait counter sheet's bottom-left button overlaps the thumbstick.
+Named anchors TheatreDoor, LotLineStop_<title> and ClockCourtCentre, to replace hard-coded guide targets in src/client/GuideStub.luau and GuideChevron.luau.
+Streetcar: publish departure time and destination as attributes and tween the car on clients (server CFrame tweening replicates choppily).
+Record of the day as tonight's cue sheet (audit C5, second half) needs ShopCatalogue and Show wiring.
+Unassigned SoundIds (0 = silent or built-in stand-in): AmbTownAir, AmbClockCourt, MusicMarket, ClockTick, AmbTramRun, ShopPost, ShopBakery, ShopGallery, AmbGulls, TramBell, DoorChime, TheatreLaugh, chuckle, roll, stingMiss, scoreTick, confetti, padPerfect, CrewBlip, ConfettiPop, chime, and the Bell/Squeak/Thump pads.
+Run the two-client acceptance fixtures (build-qa.ps1, build-campus-qa.ps1) against this build.

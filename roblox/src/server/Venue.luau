@@ -13,6 +13,102 @@ local Venue = {}
 local function now()
 	return workspace:GetServerTimeNow()
 end
+-- Recipient colours for the parcel a carrier holds; everyone in the server can see the box.
+local parcelColours = {
+	records = Color3.fromRGB(65, 91, 168),
+	cafe = Color3.fromRGB(217, 119, 58),
+	gallery = Color3.fromRGB(213, 140, 165),
+}
+local kraft = Color3.fromRGB(201, 160, 108)
+local cream = Color3.fromRGB(255, 240, 207)
+local champagne = Color3.fromRGB(221, 180, 129)
+local function parcelOf(v)
+	local r = v and v.business
+	return if r and r.kind == "post" and r.status == "active" then r else nil
+end
+local function propPart(
+	name: string,
+	size: Vector3,
+	colour: Color3,
+	material: Enum.Material,
+	parent: Instance
+)
+	local piece = Instance.new("Part")
+	piece.Name = name
+	piece.Size = size
+	piece.Color = colour
+	piece.Material = material
+	piece.Anchored = false
+	piece.CanCollide = false
+	piece.CanTouch = false
+	piece.CanQuery = false
+	piece.Massless = true
+	piece.CastShadow = false
+	piece.TopSurface = Enum.SurfaceType.Smooth
+	piece.BottomSurface = Enum.SurfaceType.Smooth
+	piece.Parent = parent
+	return piece
+end
+-- A kraft box with a cream cord, a bow and an address label in the recipient's colour, held at the chest.
+local function buildParcel(char: Model, recipientId: string?): Model?
+	local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+	if not torso or not torso:IsA("BasePart") then
+		return nil
+	end
+	local colour = parcelColours[recipientId or ""] or champagne
+	local model = Instance.new("Model")
+	model.Name = "CarriedParcel"
+	local base = torso.CFrame * CFrame.new(0, -0.4, -1.08)
+	local box = propPart("ParcelBox", Vector3.new(1.7, 1.05, 1.2), kraft, Enum.Material.Cardboard, model)
+	box.CFrame = base
+	local pieces = {
+		{ "ParcelCord", Vector3.new(0.12, 1.1, 1.25), cream, CFrame.new() },
+		{ "ParcelCord", Vector3.new(1.75, 1.1, 0.12), cream, CFrame.new() },
+		{
+			"ParcelBow",
+			Vector3.new(0.4, 0.2, 0.26),
+			cream,
+			CFrame.new(-0.2, 0.6, 0) * CFrame.Angles(0, 0, 0.45),
+		},
+		{
+			"ParcelBow",
+			Vector3.new(0.4, 0.2, 0.26),
+			cream,
+			CFrame.new(0.2, 0.6, 0) * CFrame.Angles(0, 0, -0.45),
+		},
+		{ "AddressLabel", Vector3.new(0.62, 0.05, 0.44), colour, CFrame.new(0.46, 0.53, 0.3) },
+		{ "AddressTag", Vector3.new(0.66, 0.42, 0.05), colour, CFrame.new(0.42, 0.12, -0.62) },
+		{ "PostStamp", Vector3.new(0.2, 0.2, 0.06), champagne, CFrame.new(-0.55, 0.28, -0.63) },
+	}
+	for _, spec in pieces do
+		local name = spec[1] :: string
+		local piece =
+			propPart(name, spec[2] :: Vector3, spec[3] :: Color3, Enum.Material.SmoothPlastic, model)
+		piece.CFrame = base * (spec[4] :: CFrame)
+		if name == "ParcelBow" then
+			piece.Shape = Enum.PartType.Ball
+		end
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = box
+		weld.Part1 = piece
+		weld.Parent = piece
+	end
+	local hold = Instance.new("WeldConstraint")
+	hold.Part0 = torso
+	hold.Part1 = box
+	hold.Parent = box
+	model.PrimaryPart = box
+	model.Parent = char
+	return model
+end
+-- Map travel with a parcel lands on the pavement outside the shop, facing its door, beyond the counter's reach.
+local function doorstep(anchor: BasePart): CFrame
+	local look = anchor.CFrame.LookVector
+	local flat = Vector3.new(look.X, 0, look.Z)
+	flat = if flat.Magnitude > 0.01 then flat.Unit else Vector3.new(0, 0, -1)
+	local spot = anchor.Position - flat * 15
+	return CFrame.lookAt(spot, spot + flat)
+end
 function Venue.new(options)
 	local sessions = {}
 	local returnSpots = {}
@@ -20,8 +116,95 @@ function Venue.new(options)
 	local travelAt = {}
 	local interactionAt = {}
 	local anchors = {}
+	local carried = {}
 	local set = workspace:WaitForChild("ShowSet")
 	anchors.ParkArrival = set:FindFirstChild("ParkArrival", true)
+	anchors.PlazaArrival = set:FindFirstChild("PlazaArrival", true)
+	local feedback = Instance.new("RemoteEvent")
+	feedback.Name = "TownFeedback"
+	feedback.Parent = Shared
+	-- A connected no-op drains anything a client sends, so nothing queues on the server.
+	feedback.OnServerEvent:Connect(function() end)
+	local function anchorFor(name: string): BasePart?
+		local found = anchors[name]
+		if found and found.Parent then
+			return found
+		end
+		if name == Venues.firstArrival then
+			local late = set:FindFirstChild(name, true)
+			if late and late:IsA("BasePart") then
+				anchors[name] = late
+				return late
+			end
+			return anchors[Venues.fallbackArrival]
+		end
+		return found
+	end
+	-- Server-to-client only: fixed kinds, catalogue titles and numbers. The server never listens on it.
+	local function cheer(p, kind: string, title: string, xp: number, track: string, at: BasePart?, r: any?)
+		feedback:FireAllClients({
+			kind = kind,
+			carrier = p.UserId,
+			title = title,
+			shop = if r then r.recipientId else nil,
+			parcel = if r then r.parcel else nil,
+			xp = xp,
+			track = track,
+			at = if at then at.Position else nil,
+		})
+	end
+	local function dropParcel(p)
+		local held = carried[p]
+		if held then
+			carried[p] = nil
+			if held.died then
+				held.died:Disconnect()
+			end
+			held.model:Destroy()
+		end
+	end
+	-- Keeps the visible prop and the CarryingParcel attribute in step with the authoritative ticket.
+	local function syncParcel(p)
+		local r = parcelOf(sessions[p])
+		local title = if r then r.recipient else ""
+		if p:GetAttribute("CarryingParcel") ~= title then
+			p:SetAttribute("CarryingParcel", title)
+		end
+		local char = p.Character
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		local alive = char ~= nil and hum ~= nil and hum.Health > 0 and char:IsDescendantOf(workspace)
+		local held = carried[p]
+		if r and alive and held and held.run == r.run and held.model.Parent == char then
+			return
+		end
+		dropParcel(p)
+		if r and alive and char and hum then
+			local model = buildParcel(char, r.recipientId)
+			if model then
+				local entry = { model = model, run = r.run, died = nil :: RBXScriptConnection? }
+				entry.died = hum.Died:Connect(function()
+					if carried[p] == entry then
+						dropParcel(p)
+					end
+				end)
+				carried[p] = entry
+			end
+		end
+	end
+	do
+		-- Signal Run copy names the gate, and the bandstand only while the gate actually stands beside it.
+		local gate = set:FindFirstChild(Venues.rooms.park.anchor, true)
+		local stand = set:FindFirstChild("BandstandPad", true)
+		Outdoor.setParkStart(
+			if gate
+					and gate:IsA("BasePart")
+					and stand
+					and stand:IsA("BasePart")
+					and (gate.Position - stand.Position).Magnitude <= 40
+				then "the Signal Run gate by the bandstand"
+				else "the Signal Run gate"
+		)
+	end
 	local function session(p)
 		if not sessions[p] then
 			sessions[p] = Activities.new()
@@ -70,9 +253,19 @@ function Venue.new(options)
 		Profiles.week(row, math.floor((os.time() / 86400 + 3) / 7), result.xp)
 		return true
 	end
-	local function awardOutdoor(v, row)
-		if Outdoor.reward(v.outdoor, row) then
-			Profiles.week(row, math.floor((os.time() / 86400 + 3) / 7), v.outdoor.xp)
+	local function awardOutdoor(p, v, row)
+		local r = v.outdoor
+		if Outdoor.reward(r, row) then
+			Profiles.week(row, math.floor((os.time() / 86400 + 3) / 7), r.xp)
+			local def = Venues.rooms[r.kind]
+			cheer(
+				p,
+				"errand",
+				r.title or def.title,
+				r.xp,
+				if r.kind == "pier" then "stage" else "crowd",
+				anchors[def.anchor]
+			)
 		end
 	end
 	local function outdoorStep(p, v, row, station, time)
@@ -86,22 +279,32 @@ function Venue.new(options)
 		end
 		if r.kind == "park" and r.status == "done" then
 			Activities.open(v, "park", false)
-			awardOutdoor(v, row)
+			awardOutdoor(p, v, row)
 		end
 		return true
 	end
-	local function creditShop(v, row)
+	local function creditShop(p, v, row)
 		local r = v.business
-		if r.status == "done" then
+		if r.status == "done" and not r.cheered then
+			r.cheered = true
 			Profiles.week(row, math.floor((os.time() / 86400 + 3) / 7), r.xp)
+			if r.kind == "post" then
+				local target = ShopCatalogue.shops[r.recipientId]
+				cheer(p, "delivered", r.recipient, r.xp, "crowd", target and anchors[target.anchor], r)
+			else
+				local shop = ShopCatalogue.shops[r.kind]
+				local track = if r.kind == "records" then "stage" else "crowd"
+				cheer(p, "errand", r.title, r.xp, track, shop and anchors[shop.anchor])
+			end
 		end
 	end
 	local function update(p)
 		local v = session(p)
 		v.revision += 1
+		syncParcel(p)
 		options.changed(p)
 	end
-	local function openRoom(p, v, id, teleport, walk)
+	local function openRoom(p, v, id, teleport, walk, landing: CFrame?)
 		local def = Venues.rooms[id]
 		local anchor = def and anchors[def.anchor]
 		if not anchor then
@@ -109,7 +312,7 @@ function Venue.new(options)
 			return false
 		end
 		if teleport or (id == "theatre" and not walk) then
-			if not walkTo(p, anchor.CFrame) then
+			if not walkTo(p, landing or anchor.CFrame) then
 				v.notice = "Wait for your character to arrive."
 				return false
 			end
@@ -120,6 +323,23 @@ function Venue.new(options)
 		end
 		v.notice = def.title
 		Activities.open(v, id, not walk and (id == "theatre" or id == "balcony"))
+		v.remoteWatch = nil
+		options.attendance(p)
+		return true
+	end
+	-- "Watch from here": the visitor joins the audience on screen without moving or sitting anywhere.
+	-- It never touches the microphone; performing still needs a fresh stage invitation and consent.
+	local function watchHere(p, v, active: boolean)
+		if active == (v.remoteWatch == true) or (active and v.watching) then
+			return false
+		end
+		v.watching = active
+		v.remoteWatch = if active then true else nil
+		v.open = "theatre"
+		v.openRevision += 1
+		v.notice = if active
+			then "Watching from here. Take a seat in the theatre any time."
+			else "Back on the street. The show keeps going inside."
 		options.attendance(p)
 		return true
 	end
@@ -154,7 +374,26 @@ function Venue.new(options)
 				return
 			end
 			travelAt[p] = time + 0.6
-			openRoom(p, v, id, not physical or id == "balcony", input.walk == true)
+			if
+				v.remoteWatch
+				and not physical
+				and input.walk == true
+				and (id == "theatre" or id == "balcony")
+			then
+				-- Leaving a remote audience spot never moves the avatar.
+				watchHere(p, v, false)
+				update(p)
+				return
+			end
+			local landing = nil
+			local door = anchors[def.anchor]
+			if parcelOf(v) and not physical and ShopCatalogue.shops[id] and door then
+				landing = doorstep(door)
+			end
+			openRoom(p, v, id, not physical or id == "balcony", input.walk == true, landing)
+			if landing then
+				v.notice = "Parcel in hand. Walk it up to the " .. def.title .. " counter."
+			end
 			if ShopCatalogue.shops[id] and not physical and input.walk == true then
 				v.open = "explore"
 			end
@@ -164,12 +403,20 @@ function Venue.new(options)
 		elseif op == "shopStart" then
 			local kind = input.kind
 			local shop = ShopCatalogue.shops[kind]
+			local holding = parcelOf(v)
+			if shop and holding and kind ~= "post" then
+				-- Starting another counter would replace the ticket, so the parcel is never silently lost.
+				v.notice = "Hand your parcel over at the " .. holding.recipient .. " counter first."
+				update(p)
+				return
+			end
 			if not shop or not Business.start(v, ShopCatalogue, kind, row, time, near(p, shop.anchor, 9)) then
 				return
 			end
 			if kind == "post" then
 				v.open = "explore"
 				v.openRevision += 1
+				cheer(p, "pickup", v.business.recipient, 0, "crowd", anchors[shop.anchor], v.business)
 			end
 		elseif op == "shopPick" or op == "shopReplay" then
 			local r = v.business
@@ -184,7 +431,11 @@ function Venue.new(options)
 			elseif not Business.pick(v, ShopCatalogue, row, input.run, input.choice, time, close) then
 				return
 			end
-			creditShop(v, row)
+			creditShop(p, v, row)
+		elseif op == "watchHere" then
+			if not watchHere(p, v, input.active ~= false) then
+				return
+			end
 		elseif op == "practice" or op == "practicePad" then
 			if not near(p, Venues.rooms.studio.anchor, 14) then
 				v.notice = "Start a sound drill at Studio B's console."
@@ -278,7 +529,7 @@ function Venue.new(options)
 				return
 			end
 			if Outdoor.tick(v, time) then
-				awardOutdoor(v, row)
+				awardOutdoor(p, v, row)
 			end
 			if not Outdoor.start(v, kind, time) and v.outdoor then
 				v.notice = v.outdoor.notice
@@ -292,12 +543,12 @@ function Venue.new(options)
 			if not Outdoor.tap(v, input.run, time, near(p, "VenuePier", 10)) then
 				return
 			end
-			awardOutdoor(v, row)
+			awardOutdoor(p, v, row)
 		elseif op == "outdoorWrap" then
 			if not Outdoor.wrap(v, input.run, input.stamp, time, near(p, "VenueMarket", 9)) then
 				return
 			end
-			awardOutdoor(v, row)
+			awardOutdoor(p, v, row)
 		elseif op == "fit" then
 			if not near(p, Venues.rooms.atelier.anchor, 12) or v.room ~= "atelier" then
 				v.notice = "Choose a fitting at the atelier."
@@ -446,13 +697,16 @@ function Venue.new(options)
 				and options.canExplore(p)
 				and Business.delivery(v, ShopCatalogue, row, time, shop.target, near(p, shop.target, 7))
 			then
-				creditShop(v, row)
+				creditShop(p, v, row)
 				update(p)
+			elseif checkGates and not carried[p] and parcelOf(v) then
+				-- A new character, or one whose torso loaded late, picks the parcel back up.
+				syncParcel(p)
 			end
 			local r = v.outdoor
 			if row and r and r.status == "active" then
 				if Outdoor.tick(v, time) then
-					awardOutdoor(v, row)
+					awardOutdoor(p, v, row)
 					update(p)
 				elseif
 					checkGates
@@ -494,15 +748,25 @@ function Venue.new(options)
 	local function respawn(p)
 		local v = session(p)
 		Outdoor.cancelPark(v)
-		local anchor = anchors[Venues.arrival(v.room, v.openRevision)]
+		local anchor = anchorFor(Venues.arrival(v.room, v.openRevision))
 		placedCharacters[p] = p.Character
 		if v.watching and v.room == "theatre" then
 			options.seat(p)
 		elseif anchor then
 			walkTo(p, anchor.CFrame)
 		end
+		syncParcel(p)
+	end
+	-- How this player is watching the show from the venue side: seated in the house, or remotely.
+	local function audience(p): string?
+		local v = sessions[p]
+		if v and v.watching then
+			return if v.remoteWatch then "remote" else "house"
+		end
+		return nil
 	end
 	local function leave(p)
+		dropParcel(p)
 		sessions[p] = nil
 		returnSpots[p] = nil
 		placedCharacters[p] = nil
@@ -517,6 +781,7 @@ function Venue.new(options)
 		endStage = endStage,
 		respawn = respawn,
 		leave = leave,
+		audience = audience,
 	}
 end
 return Venue

@@ -1,6 +1,8 @@
 --!strict
--- Landmarks and personal objectives stay in sync with the player's physical position.
+-- Landmarks and personal objectives stay in sync with the player's physical position: the location
+-- strip, the first-minute ticket stub, the objective chevron and the illustrated district map.
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Delivery")
+local Players = game:GetService("Players")
 local Input = game:GetService("UserInputService")
 local Gui = game:GetService("GuiService")
 local Venues = require(Shared:WaitForChild("Venues"))
@@ -9,104 +11,103 @@ local Instruments = require(script.Parent.DeliveryInstruments)
 local FittingPreview = require(script.Parent.FittingPreview)
 local DistrictMap = require(script.Parent.DistrictMap)
 local TownCounters = require(script.Parent.TownCounters)
+local Style = require(script.Parent.GuideStyle)
+local Glyphs = require(script.Parent.GuideGlyphs)
+local GuideShow = require(script.Parent.GuideShow)
+local GuideStrip = require(script.Parent.GuideStrip)
+local GuideStub = require(script.Parent.GuideStub)
+local GuideChevron = require(script.Parent.GuideChevron)
 local Guide = {}
 local ink = Color3.fromRGB(31, 25, 42)
-local paper = Color3.fromRGB(251, 239, 212)
-local cream = Color3.fromRGB(253, 243, 225)
 local muted = Color3.fromRGB(80, 64, 94)
 local gold = Color3.fromRGB(255, 208, 111)
-local violet = Color3.fromRGB(190, 151, 225)
+local cream = Color3.fromRGB(253, 243, 225)
+-- Map card and strip copy. Directions use landmarks only: there is no compass on screen.
 local rooms = {
 	pier = {
 		tag = "WATERFRONT / BUOY WATCH",
-		hint = "Follow Lantern Street west to the pier. Work the crane and reel when the buoy lamp flashes.",
+		hint = "Follow Lantern Street past Dockside Post to the boardwalk. Reel in when the buoy lamp flashes.",
+		goal = "Reel in when the buoy lamp flashes.",
 	},
 	park = {
-		tag = "EAST DISTRICT / SIGNAL RUN",
-		hint = "Follow Lantern Street east to the park. Cross the marked arches in ticket order, then return to the bandstand.",
+		tag = "SIGNAL PARK / SIGNAL RUN",
+		hint = "Follow Lantern Street past Needle Drop to the park. Start Signal Run at the gate by the bandstand.",
+		goal = "Start Signal Run at the gate by the bandstand.",
 	},
 	market = {
-		tag = "SOUTH DISTRICT / NIGHT MARKET",
-		hint = "Follow the street around the rooftop terrace to the market. Find the two wrapping supplies, then stamp the customer’s order.",
+		tag = "MARKET SQUARE / NIGHT MARKET",
+		hint = "Take Market Walk beside the rooftop terrace. Find the two wrapping supplies, then stamp the customer’s order.",
+		goal = "Two wrapping supplies, then stamp the order.",
 	},
 	lobby = {
-		tag = "ARRIVALS",
-		hint = "Take the streetcar to the waterfront or Signal Park. At the marquee, match the three bulbs to the ticket.",
+		tag = "ARRIVALS / LIVE SHOW",
+		hint = "The live show is through the gold doors under the DELIVERY marquee. Lot Line cars stop on Lantern Street.",
+		goal = "The show is through the gold doors.",
 	},
 	theatre = {
 		tag = "LIVE SHOW",
 		hint = "Take an audience seat. Direct, react and rate, or volunteer for a ten-second act.",
+		goal = "Take a seat, react and vote.",
 	},
 	studio = {
 		tag = "SOUND PRACTICE",
 		hint = "Rehearse a three-cue soundtrack on the pads. Earn stage XP for timing.",
+		goal = "Rehearse three sound cues at the console.",
 	},
 	writers = {
 		tag = "CARD WORKSHOP",
 		hint = "Mix a setup and a punchline. Stamp your card and perform it on the main stage.",
+		goal = "Mix a setup and a punchline at the desk.",
 	},
 	warehouse = {
 		tag = "PROP RUN",
 		hint = "Check the dispatch order, find three props in sequence and bring them to the desk.",
+		goal = "Take a three-prop order at the desk.",
 	},
 	atelier = {
 		tag = "COSTUME FITTING",
 		hint = "Try a stage look, inspect your wardrobe and check your dated playbill.",
+		goal = "Try on a stage look at the mirror.",
 	},
 	balcony = {
-		tag = "VIEWING GALLERY",
+		tag = "CRITICS’ BALCONY / PORTRAITS",
 		hint = "Frame a cast portrait at the rooftop camera and optionally save it. From a seat, call three scores to earn Balcony Critic.",
+		goal = "Frame a cast portrait at the rooftop camera.",
+	},
+	clock = {
+		tag = "CLOCK COURT / BELLS",
+		hint = "The clock tower's three bells, benches and the lane between Needle Drop and Market Walk.",
+		goal = "Ring the three bells or take a bench.",
 	},
 }
 for id, shop in TownCounters.shops do
 	rooms[id] = shop
 end
-local function box(parent, name, colour)
-	local b = Instance.new("Frame")
-	b.Name = name
-	b.BorderSizePixel = 0
-	b.BackgroundColor3 = colour
-	b.Parent = parent
-	return b
-end
-local function round(obj, r)
-	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, r)
-	c.Parent = obj
-end
-local function label(parent, name, font, colour, pixels)
-	local t = Instance.new("TextLabel")
-	t.Name = name
-	t.Text = ""
-	t.TextScaled = true
-	t.TextWrapped = true
-	t.BackgroundTransparency = 1
-	t.TextColor3 = colour
-	t.Font = font
-	t.TextXAlignment = Enum.TextXAlignment.Left
-	local size = Instance.new("UITextSizeConstraint")
-	size.MinTextSize = 10
-	size.MaxTextSize = pixels
-	size.Parent = t
-	t.Parent = parent
-	return t
-end
-local function btn(parent, name)
-	local b = Instance.new("TextButton")
-	b.Name = name
-	b.TextSize = 14
-	b.TextWrapped = true
-	b.Font = Enum.Font.GothamBold
-	b.BorderSizePixel = 0
-	b.BackgroundColor3 = muted
-	b.TextColor3 = cream
-	b.Selectable = true
-	round(b, 6)
-	b.Parent = parent
-	return b
-end
+-- Title cards and strip titles for each part of town.
+local places = {
+	lobby = { "Broadcast Plaza", "Home of the Delivery live show" },
+	theatre = { "Main Theatre", "Live comedy on the main stage" },
+	balcony = { "Sky Lounge", "Rooftop portraits and the best seats" },
+	studio = { "Studio B", "Sound practice" },
+	writers = { "Writers’ Room", "Card workshop" },
+	warehouse = { "Props Depot", "Dispatch desk" },
+	atelier = { "Costume Atelier", "Fitting mirror" },
+	pier = { "Waterfront Pier", "Buoy Watch · gulls · the sea" },
+	park = { "Signal Park", "Start Signal Run at the gate by the bandstand" },
+	market = { "Night Market", "Stalls, string lights and the wrap counter" },
+	post = { "Dockside Post", "Parcels for the whole town" },
+	records = { "Needle Drop Records", "The listening deck" },
+	cafe = { "Copper Kettle Bakehouse", "Orders up at the counter" },
+	gallery = { "Pocket Print Gallery", "The postcard press" },
+	street = { "Lantern Street", "From the pier to the park" },
+	marketWalk = { "Market Walk", "Bakehouse and print gallery" },
+	clock = { "Clock Court", "Bells, benches and the clock tower" },
+}
 local function roomName(id)
-	return if Venues.rooms[id] then Venues.rooms[id].title else "Broadcast District"
+	return if places[id]
+		then places[id][1]
+		elseif Venues.rooms[id] then Venues.rooms[id].title
+		else "Broadcast District"
 end
 local function pick(p)
 	local elapsed = workspace:GetServerTimeNow() - p.started
@@ -118,11 +119,11 @@ local function pick(p)
 	return nil, nil, 0
 end
 
-local parcelNames = {
-	VenueCafe = "Bakehouse",
-	VenueRecords = "Needle Drop",
-	VenueGallery = "Print gallery",
-	VenuePost = "Post office",
+local recipientIds = {
+	VenueCafe = "cafe",
+	VenueRecords = "records",
+	VenueGallery = "gallery",
+	VenuePost = "post",
 }
 local targetNames = {
 	ParkGate1 = "Gate 1",
@@ -133,264 +134,426 @@ local targetNames = {
 	MarketRibbon = "Ribbon stall",
 	VenueMarket = "Wrap counter",
 }
+local theatreDoor = Vector3.new(0, 3, 37)
+local tramStops = {
+	{ x = -104, title = "Waterfront Pier" },
+	{ x = 0, title = "Broadcast Plaza" },
+	{ x = 104, title = "Signal Park" },
+}
+local arrivals = {
+	theatre = "You made it! Walk through the gold doors to join the show.",
+	tram = "Wait by the stop. Hold the prompt when the Lot Line car pulls in.",
+	shop = "Walk up to the glowing counter to start.",
+}
 function Guide.new(ui, send, openPage, notify)
-	local fitting = FittingPreview.new(ui.gui)
+	local player = Players.LocalPlayer
+	local root = Style.townRoot(ui)
+	local fitting = FittingPreview.new(ui.gui, root)
 	local counters = TownCounters.new(ui, send, openPage)
+	local chevron = GuideChevron.new(ui.gui.Parent :: PlayerGui, ui.gui)
+	local strip = GuideStrip.new(ui.gui, root, function()
+		return Style.navWidth(ui)
+	end)
 	local selectedLook = nil
 	local soundedRun, soundedIndex = 0, 0
 	local lastNotice = ""
+	local noticeSeen = false
 	local noticeUntil = 0
-	local arrived = os.clock()
+	local arrivalUntil = 0
+	local arrivalText = ""
 	local nextLocation = 0
-	local waypoint: BillboardGui? = nil
-	local waypointName: string? = nil
-	local nextWaypointLookup = 0
-	local function characterRoot()
-		local character = game:GetService("Players").LocalPlayer.Character
-		local root = character and character:FindFirstChild("HumanoidRootPart")
-		return if root and root:IsA("BasePart") then root else nil
+	local exploreSince: number? = nil
+	local lastPlace = ""
+	local placeSince = 0
+	local cardShownAt: { [string]: number } = {}
+	local welcomed = false
+	local latest = nil
+	local function characterRoot(): BasePart?
+		local character = player.Character
+		local part = character and character:FindFirstChild("HumanoidRootPart")
+		return if part and part:IsA("BasePart") then part else nil
 	end
 	local function readZone(fallback)
-		local root = characterRoot()
-		if not root then
+		local body = characterRoot()
+		if not body then
 			return fallback
 		end
-		local pos = root.Position
+		local pos = body.Position
 		return Venues.zone(pos.X, pos.Z, pos.Y)
 	end
-	local function propWaypoint(page, venue)
-		local job = venue and venue.job
-		local trip = venue and venue.outdoor
-		local parcel = venue and venue.business
-		local root = characterRoot()
-		local name: string? = nil
-		local title = ""
-		if page == "explore" and root then
-			local pos = root.Position
-			local id = Venues.zone(pos.X, pos.Z, pos.Y)
-			if id == "warehouse" and job and job.status == "active" then
-				local item = job.order[job.picked + 1]
-				name = if item then Venues.props[item] else Venues.rooms.warehouse.anchor
-				title = item or "Dispatch desk"
-			elseif
-				trip
-				and trip.status == "active"
-				and trip.kind == id
-				and trip.target
-				and trip.kind ~= "pier"
-			then
-				name = trip.target
-				title = targetNames[name] or "Next stop"
-			elseif parcel and parcel.kind == "post" and parcel.status == "active" and parcel.target then
-				name = parcel.target
-				title = parcelNames[name] or "Delivery counter"
-			end
-		end
-		local target = waypoint and waypoint.Adornee
-		if name ~= waypointName or (waypoint and (not target or not target:IsDescendantOf(workspace))) then
-			if waypoint then
-				waypoint:Destroy()
-			end
-			waypoint = nil
-			waypointName = name
-			nextWaypointLookup = 0
-		end
-		if not name or not root then
-			return
-		end
-		if not waypoint and os.clock() >= nextWaypointLookup then
-			nextWaypointLookup = os.clock() + 1
-			local set = workspace:FindFirstChild("ShowSet")
-			local anchor = set and set:FindFirstChild(name, true)
-			if anchor and anchor:IsA("BasePart") then
-				local pin = Instance.new("BillboardGui")
-				pin.Name = "PersonalObjectiveWaypoint"
-				pin.Size = UDim2.fromOffset(92, 22)
-				pin.StudsOffsetWorldSpace = Vector3.new(0, 3.4, 0)
-				pin.MaxDistance = if name and parcelNames[name] then 260 else 75
-				pin.AlwaysOnTop = true
-				pin.LightInfluence = 0
-				pin.Active = false
-				pin.Adornee = anchor
-				local caption = label(pin, "Destination", Enum.Font.GothamBold, ink, 13)
-				caption.Size = UDim2.fromScale(1, 1)
-				caption.BackgroundTransparency = 0
-				caption.BackgroundColor3 = gold
-				caption.TextXAlignment = Enum.TextXAlignment.Center
-				caption.Text = title
-				round(caption, 6)
-				pin.Parent = ui.gui.Parent
-				waypoint = pin
-			end
-		end
-		target = waypoint and waypoint.Adornee
-		if waypoint and target and target:IsA("BasePart") then
-			waypoint.Enabled = (root.Position - target.Position).Magnitude > 7
-		end
+	local function notice(text: string, seconds: number?)
+		arrivalText = text
+		arrivalUntil = os.clock() + (seconds or 4.5)
+		strip.setObjective(text, "arrive")
 	end
-	local roam = box(ui.gui, "VenueLocation", ink)
-	roam.Position = UDim2.fromOffset(12, 6)
-	local cap = Instance.new("UISizeConstraint")
-	cap.MaxSize = Vector2.new(360, 82)
-	cap.Parent = roam
-	round(roam, 9)
-	local rail = box(roam, "Brass", gold)
-	rail.Position = UDim2.fromOffset(0, 8)
-	rail.Size = UDim2.new(0, 3, 1, -16)
-	local place = label(roam, "Place", Enum.Font.GothamBold, cream, 17)
-	place.Position = UDim2.fromOffset(11, 4)
-	place.Size = UDim2.new(1, -17, 0, 20)
-	local objective = label(roam, "Objective", Enum.Font.GothamMedium, violet, 13)
-	objective.Position = UDim2.fromOffset(11, 26)
-	objective.Size = UDim2.new(1, -17, 1, -29)
-	roam.Visible = false
 
-	local shade = box(ui.gui, "VenueMapShade", Color3.fromRGB(16, 13, 23))
-	shade.Size = UDim2.fromScale(1, 1)
-	shade.BackgroundTransparency = 0.35
-	shade.ZIndex = 6
-	shade.Visible = false
-	shade.Active = true
-	local sheet = box(shade, "FoldoutMap", paper)
-	sheet.AnchorPoint = Vector2.new(0.5, 0.5)
-	sheet.Position = UDim2.fromScale(0.5, 0.5)
-	local sizeCap = Instance.new("UISizeConstraint")
-	sizeCap.MaxSize = Vector2.new(790, 470)
-	sizeCap.Parent = sheet
-	round(sheet, 10)
-	local heading = label(sheet, "MapTitle", Enum.Font.GothamBlack, ink, 25)
-	heading.Text = "District map"
-	heading.Position = UDim2.fromOffset(14, 2)
-	local close = btn(sheet, "CloseMap")
-	close.Text = "Close map"
-	close.AnchorPoint = Vector2.new(1, 0)
-	close.Position = UDim2.new(1, -8, 0, 3)
-	close.Size = UDim2.fromOffset(96, 44)
-	close.Activated:Connect(function()
-		openPage("return")
+	-- Chevron targets ------------------------------------------------------------------------------
+	local function shopTarget(id: string): GuideChevron.Target
+		local shop = Venues.rooms[id]
+		return {
+			key = "shop/" .. id,
+			title = roomName(id),
+			icon = Glyphs.place[id] or "pin",
+			accent = Style.accent[id],
+			anchor = shop and shop.anchor,
+			position = shop and Vector3.new(shop.x, 0, shop.z),
+			height = 3.4,
+			arrive = 8,
+		}
+	end
+	local function placeTarget(id: string): GuideChevron.Target
+		if id == "theatre" then
+			return {
+				key = "place/theatre",
+				title = "Main Theatre",
+				icon = "theatre",
+				accent = Style.accent.theatre,
+				position = theatreDoor,
+				height = 4,
+				arrive = 8,
+			}
+		elseif id == "clock" then
+			return {
+				key = "place/clock",
+				title = "Clock Court",
+				icon = "clock",
+				accent = Style.accent.clock,
+				position = Vector3.new(91, 0, 128),
+				height = 4,
+				arrive = 9,
+			}
+		elseif TownCounters.shops[id] then
+			return shopTarget(id)
+		end
+		local def = Venues.rooms[id]
+		return {
+			key = "place/" .. id,
+			title = roomName(id),
+			icon = Glyphs.place[id] or "pin",
+			accent = Style.accent[id],
+			anchor = def and def.anchor,
+			position = def and Vector3.new(def.x, 0, def.z),
+			height = 3.4,
+			arrive = 9,
+		}
+	end
+	local function nearestStop(): (number, string)
+		local body = characterRoot()
+		local best, title, gap = 0, "Broadcast Plaza", math.huge
+		for _, stop in tramStops do
+			local d = if body
+				then math.abs(body.Position.X - stop.x) + math.abs(body.Position.Z - 79.5)
+				else 0
+			if d < gap then
+				best, title, gap = stop.x, stop.title, d
+			end
+		end
+		return best, title
+	end
+	local function errandShop(): string
+		-- Dockside Post hands out parcels, so it wins unless another counter is much closer.
+		local body = characterRoot()
+		if not body then
+			return "post"
+		end
+		local bestId, bestGap = "post", math.huge
+		for _, id in { "post", "records", "cafe", "gallery" } do
+			local shop = Venues.rooms[id]
+			local gap = Vector2.new(body.Position.X - shop.x, body.Position.Z - shop.z).Magnitude
+				- (if id == "post" then 40 else 0)
+			if gap < bestGap then
+				bestId, bestGap = id, gap
+			end
+		end
+		return bestId
+	end
+	local function taskTarget(v): GuideChevron.Target?
+		local parcel = v and v.business
+		if parcel and parcel.kind == "post" and parcel.status == "active" and parcel.target then
+			local id = parcel.recipientId or recipientIds[parcel.target] or "post"
+			return {
+				key = "parcel/" .. parcel.target .. "/" .. tostring(parcel.run),
+				title = "Deliver to " .. roomName(id),
+				icon = Glyphs.place[id] or "parcel",
+				accent = Style.accent[id],
+				anchor = parcel.target,
+				height = 3.6,
+				arrive = 5,
+			}
+		end
+		local job = v and v.job
+		if job and job.status == "active" then
+			local item = job.order[job.picked + 1]
+			return {
+				key = "job/" .. tostring(job.picked) .. "/" .. tostring(item),
+				title = if item then "Find the " .. item else "Dispatch desk",
+				icon = "crate",
+				accent = Style.accent.warehouse,
+				anchor = if item then Venues.props[item] else Venues.rooms.warehouse.anchor,
+				height = 2.6,
+				arrive = 4,
+			}
+		end
+		local trip = v and v.outdoor
+		if trip and trip.status == "active" and trip.target and trip.kind ~= "pier" then
+			return {
+				key = "trip/" .. tostring(trip.run) .. "/" .. trip.target,
+				title = targetNames[trip.target] or "Next stop",
+				icon = if trip.kind == "park" then "flag" else "lantern",
+				accent = Style.accent[trip.kind],
+				anchor = trip.target,
+				height = 3,
+				arrive = 4,
+			}
+		end
+		return nil
+	end
+
+	-- Ticket stub ----------------------------------------------------------------------------------
+	local stub
+	local function stubRows()
+		local v = latest and latest.venue
+		local b = v and v.business
+		stub.setRow("show", {
+			title = "Catch the show",
+			detail = "Main Theatre · " .. GuideShow.line(),
+			icon = "theatre",
+			accent = Style.accent.theatre,
+		})
+		if b and b.kind == "post" and b.status == "active" then
+			stub.setRow("errand", {
+				title = "Deliver your parcel",
+				detail = "To " .. (b.recipient or "the address label"),
+				icon = "parcel",
+				accent = Style.accent.post,
+			})
+		else
+			local id = errandShop()
+			stub.setRow("errand", {
+				title = "Run an errand",
+				detail = roomName(id) .. " · " .. (rooms[id].goal or ""),
+				icon = Glyphs.place[id] or "parcel",
+				accent = Style.accent[id],
+			})
+		end
+		local _, stopTitle = nearestStop()
+		stub.setRow("tram", {
+			title = "Ride the Lot Line",
+			detail = "Nearest stop · " .. stopTitle,
+			icon = "tram",
+			accent = Style.accent.tram,
+		})
+	end
+	stub = GuideStub.new(ui.gui, root, strip.frame, function(choice)
+		local v = latest and latest.venue
+		local b = v and v.business
+		if choice == "show" then
+			chevron.set("plan", placeTarget("theatre"))
+			notice("Follow the marker to the gold doors.", 4)
+		elseif choice == "errand" then
+			if b and b.kind == "post" and b.status == "active" then
+				chevron.set("plan", nil)
+				notice("Follow the marker to " .. (b.recipient or "the counter") .. ".", 4)
+			else
+				local id = errandShop()
+				chevron.set("plan", shopTarget(id))
+				notice("Follow the marker to " .. roomName(id) .. ".", 4)
+			end
+		else
+			local x, title = nearestStop()
+			chevron.set("plan", {
+				key = "tram/" .. title,
+				title = "Lot Line · " .. title,
+				icon = "tram",
+				accent = Style.accent.tram,
+				position = Vector3.new(x, 0, 79.5),
+				height = 3.6,
+				arrive = 7,
+			})
+			notice("Follow the marker to the Lot Line stop.", 4)
+		end
+		stub.fold()
 	end)
-	local guideButton = btn(sheet, "ShowGuide")
-	guideButton.Text = "How to play"
-	guideButton.AnchorPoint = Vector2.new(1, 0)
-	guideButton.Position = UDim2.new(1, -108, 0, 3)
-	guideButton.Size = UDim2.fromOffset(88, 44)
-	guideButton.Activated:Connect(function()
-		openPage("help")
+	strip.ticket.Activated:Connect(function()
+		stubRows()
+		stub.toggle()
 	end)
-	heading.Size = UDim2.new(1, -207, 0, 27)
-	local legendDot = box(sheet, "YourPositionKey", Color3.fromRGB(45, 37, 45))
-	legendDot.Position = UDim2.fromOffset(15, 34)
-	legendDot.Size = UDim2.fromOffset(10, 10)
-	round(legendDot, 6)
-	local centre = box(legendDot, "PositionColour", Color3.fromRGB(75, 225, 225))
-	centre.Position = UDim2.fromOffset(2, 2)
-	centre.Size = UDim2.fromOffset(6, 6)
-	round(centre, 4)
-	local legend = label(sheet, "PositionLegend", Enum.Font.GothamMedium, ink, 12)
-	legend.Text = "Your location"
-	legend.Position = UDim2.fromOffset(30, 29)
-	legend.Size = UDim2.new(1, -228, 0, 18)
-	local floor = box(sheet, "FloorPlan", Color3.fromRGB(217, 200, 177))
-	round(floor, 7)
-	local aside = box(sheet, "RoomGuide", ink)
-	round(aside, 7)
-	local tag = label(aside, "Activity", Enum.Font.GothamBold, gold, 12)
-	local title = label(aside, "SelectedRoom", Enum.Font.GothamBlack, cream, 23)
-	local description = label(aside, "Description", Enum.Font.GothamMedium, cream, 15)
-	local travel = btn(aside, "Travel")
-	travel.BackgroundColor3 = gold
-	travel.TextColor3 = ink
-	local watch = btn(aside, "WatchHere")
-	watch.Text = "Watch show"
-	local selected = "park"
-	local current = "park"
+	chevron.onArrive(function(t)
+		if string.sub(t.key, 1, 5) == "tram/" then
+			notice(arrivals.tram, 5)
+		elseif t.key == "place/theatre" then
+			notice(arrivals.theatre, 5)
+		elseif string.sub(t.key, 1, 5) == "shop/" then
+			notice(arrivals.shop, 4.5)
+		else
+			notice("You've arrived at " .. t.title .. ".", 4)
+		end
+		Style.click("confirm")
+	end)
+	GuideShow.changed:Connect(function()
+		if stub.isOpen() then
+			stubRows()
+		end
+	end)
+
+	-- District map ---------------------------------------------------------------------------------
+	local current = "lobby"
 	local syncing = false
 	local atlas
-	local function describe(id)
-		if not rooms[id] then
-			id = "lobby"
-		end
-		selected = id
-		tag.Text = (if current == id then "YOU ARE HERE  /  " else "") .. rooms[id].tag
-		title.Text = roomName(id)
-		description.Text = rooms[id].hint
-		travel.Text = if id == "lobby"
-			then "Explore plaza"
+	local function travelLabel(id: string): string?
+		return if id == "clock"
+			then nil
+			elseif id == "lobby" then "Explore plaza"
 			elseif id == "balcony" then "Explore rooftop"
 			elseif id == "theatre" then "Walk inside"
 			elseif TownCounters.shops[id] then "Visit shop"
 			elseif id == "pier" or id == "park" or id == "market" then "Visit landmark"
 			else "Visit room"
-		watch.Visible = id == "theatre" or id == "balcony"
-		travel.Size = if watch.Visible then UDim2.new(0.5, -12, 0, 44) else UDim2.new(1, -18, 0, 44)
-		atlas.select(id)
 	end
-	atlas = DistrictMap.new(floor, describe)
-	travel.Activated:Connect(function()
-		if syncing then
-			return
-		end
-		syncing = true
-		travel.Text = "Travelling…"
-		send({
-			op = "travel",
-			room = selected,
-			walk = selected == "balcony" or selected == "theatre" or TownCounters.shops[selected] ~= nil,
-		})
+	local function afterTravel()
 		task.delay(1.2, function()
 			if syncing then
 				syncing = false
-				describe(selected)
+				atlas.refresh()
 			end
 		end)
-	end)
-	watch.Activated:Connect(function()
-		if syncing then
-			return
-		end
-		syncing = true
-		send({ op = "travel", room = selected })
-		task.delay(1.2, function()
-			if syncing then
-				syncing = false
-				describe(selected)
-			end
-		end)
-	end)
-	local function layout()
-		local size = ui.gui.AbsoluteSize
-		roam.Size = UDim2.new(
-			0,
-			math.clamp(size.X - (if size.X < 500 then 168 else 236), 112, 360),
-			0,
-			if size.X < 590 then 66 else 55
-		)
-		local portrait = size.X < 510 and size.Y > size.X
-		sheet.Size = UDim2.fromScale(0.965, if portrait then 0.90 else 0.94)
-		if portrait then
-			floor.Position = UDim2.fromOffset(9, 52)
-			floor.Size = UDim2.new(1, -18, 0.53, -48)
-			aside.Position = UDim2.new(0, 9, 0.53, 12)
-			aside.Size = UDim2.new(1, -18, 0.47, -21)
-		else
-			floor.Position = UDim2.fromOffset(9, 51)
-			floor.Size = UDim2.new(0.61, -13, 1, -61)
-			aside.Position = UDim2.new(0.61, 3, 0, 51)
-			aside.Size = UDim2.new(0.39, -13, 1, -61)
-		end
-		tag.Position = UDim2.fromOffset(10, 7)
-		tag.Size = UDim2.new(1, -20, 0, 17)
-		title.Position = UDim2.fromOffset(10, 25)
-		title.Size = UDim2.new(1, -20, 0, 34)
-		description.Position = UDim2.fromOffset(10, 61)
-		description.Size = UDim2.new(1, -20, 1, -113)
-		travel.Position = UDim2.new(0, 9, 1, -49)
-		travel.Size = if watch.Visible then UDim2.new(0.5, -12, 0, 44) else UDim2.new(1, -18, 0, 44)
-		watch.Position = UDim2.new(0.5, 2, 1, -49)
-		watch.Size = UDim2.new(0.5, -11, 0, 44)
 	end
-	ui.gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(layout)
-	layout()
+	atlas = DistrictMap.new(root, {
+		info = function(id: string): DistrictMap.Info
+			local def = rooms[id] or rooms.lobby
+			local here = id == current
+			return {
+				tag = (if here then "YOU ARE HERE  ·  " else "") .. def.tag,
+				title = roomName(id),
+				body = def.hint,
+				travel = if syncing then "Travelling…" else travelLabel(id),
+				watch = id == "theatre" or id == "balcony",
+				here = here,
+			}
+		end,
+		travel = function(id: string)
+			if syncing or id == "clock" then
+				return
+			end
+			syncing = true
+			atlas.busy("Travelling…")
+			send({
+				op = "travel",
+				room = id,
+				walk = id == "balcony" or id == "theatre" or TownCounters.shops[id] ~= nil,
+			})
+			afterTravel()
+		end,
+		watch = function(id: string)
+			if syncing then
+				return
+			end
+			syncing = true
+			send({ op = "travel", room = id })
+			afterTravel()
+		end,
+		destination = function(id: string)
+			chevron.set("plan", placeTarget(id))
+			openPage("explore")
+			notice("Follow the marker to " .. roomName(id) .. ".", 4)
+		end,
+		close = function()
+			openPage("return")
+		end,
+		help = function()
+			openPage("help")
+		end,
+	})
+
+	-- Location strip -------------------------------------------------------------------------------
+	local function placeKey(v): string
+		local id = readZone(if v then v.room else "lobby")
+		local body = characterRoot()
+		if not body then
+			return id
+		end
+		local pos = body.Position
+		local clockCourt = (math.abs(pos.X - 99) <= 4.5 and pos.Z >= 92 and pos.Z <= 117)
+			or (pos.X >= 78 and pos.X <= 104 and pos.Z >= 115 and pos.Z <= 140)
+			or (math.abs(pos.X - 82) <= 4.5 and pos.Z > 140 and pos.Z <= 150)
+		if clockCourt then
+			return "clock"
+		elseif id == "lobby" and math.abs(pos.X) > 27 and math.abs(pos.Z - 74.5) < 9 then
+			return "street"
+		elseif id == "promenade" then
+			return "street"
+		elseif id == "lobby" and pos.Z > 100 and pos.Z < 149 then
+			return "marketWalk"
+		end
+		return id
+	end
+	local function objectiveFor(key: string, v): (string, GuideStrip.Tone)
+		if os.clock() < noticeUntil and lastNotice ~= "" then
+			return lastNotice, "notice"
+		end
+		if os.clock() < arrivalUntil and arrivalText ~= "" then
+			return arrivalText, "arrive"
+		end
+		local job = v and v.job
+		local trip = v and v.outdoor
+		if trip and trip.status == "active" and (key == trip.kind or not job or job.status ~= "active") then
+			local seconds = math.max(0, math.ceil(trip.deadline - workspace:GetServerTimeNow()))
+			local nextStop = targetNames[trip.target]
+				or (if trip.kind == "pier" then "Reel in on the flash" else "Follow the marker")
+			return string.format("%d/%d  ·  %s  ·  %ds", trip.progress, trip.total, nextStop, seconds),
+				"task"
+		end
+		local b = v and v.business
+		if b and b.kind == "post" and b.status == "active" then
+			return "Deliver the parcel to " .. (b.recipient or "its shop") .. ". Follow the marker.", "task"
+		end
+		if job and job.status == "active" then
+			local item = job.order[job.picked + 1]
+			return if item
+				then string.format("Dispatch %d/%d  ·  Find the %s", job.picked, #job.order, item)
+				else "Dispatch  ·  Bring the props to the desk.",
+				"task"
+		end
+		local plan = chevron.get("plan")
+		if plan then
+			return "Heading to " .. plan.title .. "  ·  follow the marker", "normal"
+		end
+		if key == "lobby" then
+			local status = GuideShow.read()
+			return if status.live
+				then "The show is on now! Walk through the gold doors."
+				else rooms.lobby.goal,
+				"normal"
+		elseif key == "street" then
+			return "Lot Line cars stop along this street. Shops on both sides.", "normal"
+		elseif key == "marketWalk" then
+			return "The bakehouse and print gallery are on this walk.", "normal"
+		elseif rooms[key] and rooms[key].goal then
+			return rooms[key].goal, "normal"
+		end
+		return "Lantern Street links the pier and the park.", "normal"
+	end
+	local function roaming(v)
+		local key = placeKey(v)
+		local info = places[key] or places.lobby
+		strip.setPlace(key, info[1], Glyphs.place[key] or "pin", Style.accent[key])
+		if key ~= lastPlace then
+			lastPlace = key
+			placeSince = os.clock()
+		elseif placeSince > 0 and os.clock() - placeSince >= 0.6 then
+			-- Debounced: a district card at most once every 25 s per place, skipped for the arrival plaza
+			-- while the welcome toast is on screen.
+			placeSince = 0
+			local shown = cardShownAt[key]
+			if (not shown or os.clock() - shown > 25) and not (key == "lobby" and not welcomed) then
+				cardShownAt[key] = os.clock()
+				strip.titleCard(info[1], info[2], Style.accent[key])
+			end
+			welcomed = true
+		end
+		local text, tone = objectiveFor(key, v)
+		strip.setObjective(text, tone)
+	end
 	local setup, ending = 1, 1
 	local draftInitialized = false
 	local lastStamp = 0
@@ -421,109 +584,63 @@ function Guide.new(ui, send, openPage, notify)
 			end
 		end)
 	end
-	local function roaming(v)
-		local id = readZone(if v then v.room else "park")
-		local root = characterRoot()
-		local street = id == "lobby"
-			and root
-			and math.abs(root.Position.X) > 27
-			and math.abs(root.Position.Z - 74.5) < 9
-		local marketWalk = id == "lobby" and root and root.Position.Z > 100 and root.Position.Z < 149
-		local clockCourt = root
-			and (
-				(math.abs(root.Position.X - 99) <= 4.5 and root.Position.Z >= 92 and root.Position.Z <= 117)
-				or (root.Position.X >= 78 and root.Position.X <= 104 and root.Position.Z >= 115 and root.Position.Z <= 140)
-				or (
-					math.abs(root.Position.X - 82) <= 4.5
-					and root.Position.Z > 140
-					and root.Position.Z <= 150
-				)
-			)
-		place.Text = if clockCourt
-			then "Clock Court"
-			elseif street or id == "promenade" then "Lantern Street"
-			elseif marketWalk then "Market Walk"
-			else roomName(id)
-		local job = v and v.job
-		if os.clock() < noticeUntil and lastNotice ~= "" then
-			objective.Text = lastNotice
-		elseif
-			v
-			and v.outdoor
-			and v.outdoor.status == "active"
-			and (id == v.outdoor.kind or not job or job.status ~= "active")
-		then
-			local trip = v.outdoor
-			local seconds = math.max(0, math.ceil(trip.deadline - workspace:GetServerTimeNow()))
-			local nextStop = targetNames[trip.target]
-				or (if trip.kind == "pier" then "Work the buoy crane" else "Follow the marker")
-			objective.Text =
-				string.format("%d/%d  ·  %s  ·  %ds", trip.progress, trip.total, nextStop, seconds)
-		elseif v and v.business and v.business.kind == "post" and v.business.status == "active" then
-			local b = v.business
-			objective.Text = "Parcel for " .. b.recipient .. " · Walk to the marked counter."
-		elseif job and job.status == "active" then
-			local target = job.order[job.picked + 1]
-			objective.Text = if target
-				then string.format("Dispatch · %d/%d · Find %s", job.picked, #job.order, target)
-				else "Dispatch · Return all props to the desk."
-		elseif clockCourt then
-			objective.Text =
-				"Play three bells at the clock tower, take a bench, or follow the lane to Market Walk."
-		elseif street then
-			objective.Text =
-				"Dockside Post is west. Needle Drop Records is east. The streetcar stops along this road."
-		elseif marketWalk then
-			objective.Text = "Explore the bakehouse and print gallery on the way to the Night Market."
-		elseif id == "park" then
-			objective.Text = if os.clock() - arrived < 22
-				then "Walk ahead to Signal Run, or board the streetcar on your left."
-				else "Start Signal Run at the bandstand. The streetcar goes west to the plaza and pier."
-		elseif id == "lobby" then
-			objective.Text = "Ride the streetcar or match the bulbs at Marquee Relay."
-		elseif rooms[id] then
-			objective.Text = rooms[id].hint
-		else
-			objective.Text = "Lantern Street runs from the pier to the park. The Night Market is south."
-		end
-	end
 	local function setView(page, s)
 		local v = s.venue
+		latest = s
 		counters.setView(page, v)
-		propWaypoint(page, v)
-		current = if v and rooms[v.room] then v.room else "park"
+		current = if v and rooms[v.room] then v.room else "lobby"
 		if v and not v.watching and (page == "map" or page == "explore") then
 			local physical = readZone(current)
 			if rooms[physical] then
 				current = physical
 			end
 		end
-		local wasOpen = shade.Visible
-		shade.Visible = page == "map"
-		roam.Visible = page == "explore"
-		if shade.Visible then
-			local root = characterRoot()
-			if root then
-				atlas.track(root.Position)
-			end
-			if not wasOpen then
+		local explore = page == "explore"
+		if page == "map" then
+			local body = characterRoot()
+			if not atlas.isOpen() then
 				syncing = false
 				atlas.open(current)
-				describe(current)
 				if Input.PreferredInput == Enum.PreferredInput.Gamepad then
 					Gui.SelectedObject = atlas.nodes[current]
 				end
 			elseif not syncing then
-				describe(selected)
+				atlas.refresh()
+			end
+			if body then
+				atlas.track(body.Position, body.CFrame.LookVector)
+			end
+		elseif atlas.isOpen() then
+			atlas.close()
+		end
+		-- A1: the first state (revision 0) carries the arrival welcome. Treat it as fresh and show it for
+		-- its full duration, as a toast as well so the ticket stub never hides it.
+		if v and v.notice and v.notice ~= lastNotice then
+			local first = not noticeSeen
+			noticeSeen = true
+			lastNotice = v.notice
+			local isTitle = Venues.rooms[v.room] and v.notice == Venues.rooms[v.room].title
+			if isTitle then
+				noticeUntil = 0
+			else
+				noticeUntil = os.clock() + math.clamp(#v.notice / 15, 3.5, 6.5)
+				if first or (v.revision or 0) == 0 then
+					Style.toast(v.notice, "info", nil, "arrival", math.clamp(#v.notice / 13, 4.5, 7))
+				end
 			end
 		end
-		if v and v.notice and v.notice ~= lastNotice then
-			lastNotice = v.notice
-			noticeUntil = if (v.revision or 0) > 0 then os.clock() + 2.5 else 0
-		end
-		if roam.Visible then
+		chevron.set("task", taskTarget(v))
+		chevron.setEnabled(explore)
+		if explore then
+			exploreSince = exploreSince or os.clock()
 			roaming(v)
+		else
+			if stub.isOpen() then
+				stub.hide()
+			end
+			strip.hideCard()
 		end
+		strip.setVisible(explore and not stub.isOpen())
 		if page ~= "atelier" then
 			selectedLook = nil
 		end
@@ -568,7 +685,9 @@ function Guide.new(ui, send, openPage, notify)
 					trip and trip.status == "expired"
 				then "Time is up. Start a fresh ticket when you are ready."
 				elseif page == "pier" then "Reel when the buoy lamp flashes. Catch all three signals."
-				elseif page == "park" then "Cross three marked arches and return to the bandstand."
+				elseif
+					page == "park"
+				then "Start Signal Run at the gate by the bandstand. Cross the three marked arches, then race back."
 				else "Collect two supplies and stamp the customer’s parcel."
 			local record = "OUTDOOR ACTIVITY"
 			if result then
@@ -629,7 +748,7 @@ function Guide.new(ui, send, openPage, notify)
 				"ACTIVE TICKET",
 				target,
 				if page == "park"
-					then "Cross the numbered gates in order, then return to the start."
+					then "Cross the numbered gates in order, then race back to the gate by the bandstand."
 					else "Collect both wrapping supplies from their marked stalls, then return to the counter."
 			)
 		end
@@ -793,17 +912,33 @@ function Guide.new(ui, send, openPage, notify)
 		end
 		return true
 	end
+	local nextRows = 0
 	local function tick(page, s)
+		latest = s
 		counters.tick(page, s)
-		if page == "explore" and os.clock() >= nextLocation then
-			nextLocation = os.clock() + 0.35
-			propWaypoint(page, s.venue)
-			roaming(s.venue)
+		if page == "explore" then
+			-- Ticket stub: once per session, about 1.5 s after the first walking frame.
+			if not stub.shown() and exploreSince and os.clock() - exploreSince >= 1.5 and characterRoot() then
+				stubRows()
+				stub.open(12)
+			end
+			stub.tick()
+			if stub.isOpen() and os.clock() >= nextRows then
+				nextRows = os.clock() + 1
+				stubRows()
+			end
+			strip.setVisible(not stub.isOpen())
+			strip.setTicket(stub.isOpen(), not stub.shown())
+			if os.clock() >= nextLocation then
+				nextLocation = os.clock() + 0.3
+				chevron.set("task", taskTarget(s.venue))
+				roaming(s.venue)
+			end
 		end
 		if page == "map" then
-			local root = characterRoot()
-			if root then
-				atlas.track(root.Position)
+			local body = characterRoot()
+			if body then
+				atlas.track(body.Position, body.CFrame.LookVector)
 			end
 		end
 		if page == "pier" and pulseButton and s.venue and s.venue.outdoor then
@@ -861,6 +996,14 @@ function Guide.new(ui, send, openPage, notify)
 		tick = tick,
 		roomId = function()
 			return readZone(current)
+		end,
+		-- Pages whose UI is drawn by the town (not the ControlDesk): Main can skip showing ui.panel.
+		ownsSheet = function(page: string): boolean
+			return TownCounters.shops[page] ~= nil
+		end,
+		-- Sets the chevron to a place id (e.g. from a HUD shortcut). Never teleports.
+		guideTo = function(id: string)
+			chevron.set("plan", placeTarget(id))
 		end,
 	}
 end

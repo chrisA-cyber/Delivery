@@ -1,6 +1,11 @@
 --!strict
 -- Open-world activities keep their own clocks and never advance the public show.
 local Outdoor = {}
+-- Venue measures the start gate against the bandstand at runtime and sets this phrase to match.
+Outdoor.parkStart = "the Signal Run gate"
+function Outdoor.setParkStart(phrase: string)
+	Outdoor.parkStart = phrase
+end
 Outdoor.destinations = { pier = true, park = true, market = true }
 Outdoor.stations = {
 	ParkGate1 = { room = "park", title = "First signal arch", action = "Cross arch" },
@@ -76,7 +81,7 @@ function Outdoor.start(v, kind, time)
 		run.total = 4
 		run.route = routes[(v.run - 1) % #routes + 1]
 		run.target = run.route[1]
-		run.notice = "Run through the marked signal arches, then return to the bandstand."
+		run.notice = "Run through the marked signal arches, then race back to " .. Outdoor.parkStart .. "."
 	else
 		local order = orders[(v.run - 1) % #orders + 1]
 		run.title = "Wrap Counter"
@@ -175,7 +180,7 @@ function Outdoor.step(v, kind, runId, station, time, near)
 		)
 	elseif kind == "park" then
 		r.notice = if r.target == "VenuePark"
-			then "Final arch cleared. Run back to the bandstand."
+			then "Final arch cleared. Run back to " .. Outdoor.parkStart .. "."
 			else "Arch cleared. Follow the next signal flag."
 	elseif r.target == "VenueMarket" then
 		r.notice = "Both materials ready. Return to the wrap counter and stamp " .. r.stamp .. "."
@@ -219,7 +224,7 @@ function Outdoor.cancelPark(v)
 	if r and r.kind == "park" and r.status == "active" then
 		r.status = "expired"
 		r.target = nil
-		r.notice = "Timed run ended. Start a new circuit at the bandstand."
+		r.notice = "Timed run ended. Start a new circuit at " .. Outdoor.parkStart .. "."
 		v.notice = r.notice
 	end
 end

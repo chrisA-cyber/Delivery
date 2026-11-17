@@ -11,12 +11,12 @@ local routes = {
 }
 function Activities.new()
 	return {
-		room = "park",
+		room = "lobby",
 		watching = false,
 		revision = 0,
 		openRevision = 0,
 		run = 0,
-		notice = "Welcome to Signal Park. Follow the arches or catch the streetcar to the theatre.",
+		notice = "Welcome to Broadcast Plaza! The show's on through the gold doors — or wander the town.",
 		look = "house",
 	}
 end

@@ -1,13 +1,17 @@
 --!strict
 local Modes = {}
 Modes.names = { "Main stage", "Switch", "Echo", "Face-off", "Daily", "Custom", "Pack night", "Sound booth" }
-Modes.setups = { "I missed the checkpoint.", "My pet ran the tycoon.", "My avatar did the dance." }
-Modes.ends = {
-	"The replay is currently under review.",
-	"Please direct all questions to the floor.",
-	"My entire server has requested a sequel.",
+Modes.setups = {
+	"I fell off the very last jump.",
+	"My pet took over my tycoon.",
+	"I did the default dance at dinner.",
 }
-local phrases = { "Not my problem.", "I'm the manager.", "Please send help.", "I am cooked." }
+Modes.ends = {
+	"The whole server saw it in slow motion.",
+	"Please direct all questions to my little brother.",
+	"My aura respawns in five minutes.",
+}
+local phrases = { "Skill issue.", "I am cooked.", "Who touched the lava?", "Not my pet." }
 Modes.switchCues = { "Normal", "Whisper", "Project", "Whisper" }
 function Modes.mix(combination: number)
 	local setup = math.floor((combination - 1) / 3) + 1
@@ -39,7 +43,7 @@ function Modes.card(s, daily)
 			{
 				id = "switch",
 				label = "Four cues",
-				text = "Repeat the phrase each time the cue changes.",
+				text = "Say the phrase again every time the cue switches.",
 				measure = "switch",
 			},
 		}
@@ -48,7 +52,7 @@ function Modes.card(s, daily)
 			{
 				id = "echo",
 				label = "Copy the beat",
-				text = "Hear the host. Repeat the line in two groups with a beat of silence between.",
+				text = "Listen to Flip, then copy the line in two halves with a beat of silence between.",
 				measure = "pause",
 			},
 		}

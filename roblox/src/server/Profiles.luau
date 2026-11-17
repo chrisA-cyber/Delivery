@@ -35,6 +35,7 @@ local counters = {
 	"propJobs",
 	"writtenMix",
 	"atelierLook",
+	"lastRecord",
 }
 local boolMaps = { "badges", "packs", "categories" }
 function Profiles.blank()
@@ -72,6 +73,8 @@ function Profiles.blank()
 		propJobs = 0,
 		writtenMix = 0,
 		atelierLook = 0,
+		-- Index into ShopCatalogue.records of the last side played through; 0 means none yet.
+		lastRecord = 0,
 		badges = {},
 		packs = {},
 		categories = {},
@@ -242,6 +245,9 @@ function Profiles.mergePending(row, new)
 	end
 	if new.atelierLook >= 1 and new.atelierLook <= 4 then
 		row.atelierLook = new.atelierLook
+	end
+	if new.lastRecord >= 1 then
+		row.lastRecord = new.lastRecord
 	end
 	row.roses = math.max(row.roses, new.roses)
 	if new.takes > 0 then
