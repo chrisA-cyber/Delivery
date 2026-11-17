@@ -7,7 +7,7 @@ test.Name = "DeliveryTest"
 test.Parent = game:GetService("ReplicatedStorage")
 local count = 0
 local seen = {}
-local modes = { "Main stage", "Switch", "Echo", "Daily", "Custom" }
+local modes = { "Sound booth", "Main stage", "Switch", "Echo", "Daily", "Custom" }
 local lastCrowd = 0
 local function finish(msg: string)
 	print("DELIVERY_MULTIPLAYER", msg)
@@ -30,7 +30,9 @@ test.OnServerEvent:Connect(
 		simulated,
 		useMic,
 		heard,
-		dailyLine
+		dailyLine,
+		foleyHits,
+		awardXp
 	)
 		if p.UserId == test:GetAttribute("Performer") or seen[turn] then
 			return
@@ -44,7 +46,10 @@ test.OnServerEvent:Connect(
 			or prediction ~= 2
 			or crowd <= lastCrowd
 			or skin ~= "rose-gold"
-			or simulated ~= true
+			or (mode ~= "Sound booth" and simulated ~= true)
+			or (mode == "Sound booth" and (simulated or foleyHits ~= 3))
+			or not awardXp
+			or awardXp <= 0
 			or useMic ~= false
 			or heard ~= nil
 			or workspace:FindFirstChild("StageAudio") ~= nil
@@ -71,9 +76,9 @@ test.OnServerEvent:Connect(
 		seen[turn] = true
 		count += 1
 		print("DELIVERY_TEST_ROUND", count, turn, mode, overall, crowd, dailyLine)
-		if count == 10 then
+		if count == #modes * 2 then
 			finish(
-				"PASS ten distinct scripted reveals across five modes, two clients, crowd XP growth, one ballot and reaction each, private captions, Studio wardrobe preview and rehearsal with no stage mic"
+				"PASS twelve reveals across six modes, timed sound-pad inputs, fresh stage and crowd XP, one rating each, private captions, Studio wardrobe preview, no microphone"
 			)
 		end
 	end

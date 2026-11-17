@@ -1,5 +1,6 @@
 .tools/
 build/
+__pycache__/
 *.rbxl.lock
 .env*
 roblox.yml

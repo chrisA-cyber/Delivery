@@ -20,6 +20,16 @@ local counters = {
 	"lastDaily",
 	"takeDay",
 	"troupeTotal",
+	"balconyCalls",
+	"pierBest",
+	"parkRuns",
+	"parkBestMs",
+	"marketOrders",
+	"practiceBest",
+	"practiceCount",
+	"propJobs",
+	"writtenMix",
+	"atelierLook",
 }
 local boolMaps = { "badges", "packs", "categories" }
 function Profiles.blank()
@@ -42,6 +52,16 @@ function Profiles.blank()
 		lastVisit = 0,
 		troupe = 0,
 		troupeTotal = 0,
+		balconyCalls = 0,
+		pierBest = 0,
+		parkRuns = 0,
+		parkBestMs = 0,
+		marketOrders = 0,
+		practiceBest = 0,
+		practiceCount = 0,
+		propJobs = 0,
+		writtenMix = 0,
+		atelierLook = 0,
 		badges = {},
 		packs = {},
 		categories = {},
@@ -178,10 +198,25 @@ function Profiles.week(row, week: number, points: number)
 	end
 end
 function Profiles.mergePending(row, new)
-	for _, key in { "crowd", "stage", "calls", "takes", "received" } do
+	for _, key in
+		{ "crowd", "stage", "calls", "takes", "received", "practiceCount", "propJobs", "balconyCalls" }
+	do
 		row[key] += new[key]
 	end
 	row.best = math.max(row.best, new.best)
+	row.parkRuns += new.parkRuns
+	row.marketOrders += new.marketOrders
+	row.pierBest = math.max(row.pierBest, new.pierBest)
+	if new.parkBestMs > 0 and (row.parkBestMs == 0 or new.parkBestMs < row.parkBestMs) then
+		row.parkBestMs = new.parkBestMs
+	end
+	row.practiceBest = math.max(row.practiceBest, new.practiceBest)
+	if new.writtenMix >= 1 and new.writtenMix <= 9 then
+		row.writtenMix = new.writtenMix
+	end
+	if new.atelierLook >= 1 and new.atelierLook <= 4 then
+		row.atelierLook = new.atelierLook
+	end
 	row.roses = math.max(row.roses, new.roses)
 	if new.takes > 0 then
 		row.streak = if new.streak == new.takes then row.streak + new.streak else new.streak

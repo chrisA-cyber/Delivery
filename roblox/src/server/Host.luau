@@ -5,12 +5,28 @@ function Host.new(lines, features)
 	speaker.VoiceId = "1"
 	speaker.Name = "HouseAnnouncer"
 	speaker.Parent = workspace
-	local output = Instance.new("AudioDeviceOutput")
-	output.Parent = speaker
-	local route = Instance.new("Wire")
-	route.SourceInstance = speaker
-	route.TargetInstance = output
-	route.Parent = output
+	local outputs = {}
+	local function listen(player, active)
+		local existing = outputs[player]
+		if existing then
+			if not active then
+				existing:Destroy()
+				outputs[player] = nil
+			end
+			return
+		end
+		if not active then
+			return
+		end
+		local output = Instance.new("AudioDeviceOutput")
+		output.Player = player
+		output.Parent = speaker
+		local route = Instance.new("Wire")
+		route.SourceInstance = speaker
+		route.TargetInstance = output
+		route.Parent = output
+		outputs[player] = output
+	end
 	local generation = 0
 	local pending = false
 	local function silence()
@@ -72,6 +88,6 @@ function Host.new(lines, features)
 			end
 		end)
 	end
-	return { prepare = prepare, speak = speak, silence = silence }
+	return { prepare = prepare, speak = speak, silence = silence, listen = listen }
 end
 return Host

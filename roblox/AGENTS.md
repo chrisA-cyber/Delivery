@@ -19,4 +19,6 @@ local service = game:GetService("StudioTestService")
 print(service:ExecuteMultiplayerTestAsync(2, "delivery"))
 ```
 
+To check the district and shared theatre together, run ./tools/build-campus-qa.ps1, open build/Delivery-CampusQA.rbxl, and run the same command with the scenario string "campus". One client rehearses independently while the other performs, then returns to the audience for the second show.
+
 Run one Studio test at a time. Stop simulated input before taking a human playtest. Keep Studio session files, account details and transcripts out of the repository.

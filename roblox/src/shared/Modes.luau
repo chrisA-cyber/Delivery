@@ -1,6 +1,6 @@
 --!strict
 local Modes = {}
-Modes.names = { "Main stage", "Switch", "Echo", "Face-off", "Daily", "Custom", "Pack night" }
+Modes.names = { "Main stage", "Switch", "Echo", "Face-off", "Daily", "Custom", "Pack night", "Sound booth" }
 Modes.setups = { "I missed the checkpoint.", "My pet ran the tycoon.", "My avatar did the dance." }
 Modes.ends = {
 	"The replay is currently under review.",
@@ -9,6 +9,15 @@ Modes.ends = {
 }
 local phrases = { "Not my problem.", "I'm the manager.", "Please send help.", "I am cooked." }
 Modes.switchCues = { "Normal", "Whisper", "Project", "Whisper" }
+function Modes.mix(combination: number)
+	local setup = math.floor((combination - 1) / 3) + 1
+	local ending = (combination - 1) % 3 + 1
+	return {
+		id = "mix-" .. combination,
+		text = Modes.setups[setup] .. " " .. Modes.ends[ending],
+		pack = "Writers' room",
+	}
+end
 function Modes.card(s, daily)
 	if s.mode == "Pack night" then
 		local _, _, _, weekly = daily()
@@ -22,13 +31,7 @@ function Modes.card(s, daily)
 		s.day = day
 	elseif s.mode == "Custom" then
 		local combination = s.custom[s.actor] or 1
-		local setup = math.floor((combination - 1) / 3) + 1
-		local ending = (combination - 1) % 3 + 1
-		s.line = {
-			id = "mix-" .. combination,
-			text = Modes.setups[setup] .. " " .. Modes.ends[ending],
-			pack = "Writers' room",
-		}
+		s.line = Modes.mix(combination)
 	elseif s.mode == "Switch" then
 		local phrase = phrases[(s.turn - 1) % #phrases + 1]
 		s.line = { id = "switch-" .. s.turn % 4, text = phrase, pack = "Switch" }

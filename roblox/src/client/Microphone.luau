@@ -1,5 +1,6 @@
 --!strict
 local Voice = game:GetService("VoiceChatService")
+local Trove = require(game:GetService("ReplicatedStorage").DeliveryLibraries.Trove)
 local Microphone = {}
 local function wire(source: Instance, target: Instance): Wire
 	local link = Instance.new("Wire")
@@ -9,6 +10,7 @@ local function wire(source: Instance, target: Instance): Wire
 	return link
 end
 function Microphone.new(player: Player, enabled: boolean, submit, message)
+	local owned = Trove.new()
 	local session = 0
 	local root: Folder? = nil
 	local input: AudioDeviceInput? = nil
@@ -16,9 +18,7 @@ function Microphone.new(player: Player, enabled: boolean, submit, message)
 	local baseline = 0
 	local function stop()
 		session += 1
-		if root then
-			root:Destroy()
-		end
+		owned:Clean()
 		root = nil
 		input = nil
 		analyzer = nil
@@ -39,10 +39,10 @@ function Microphone.new(player: Player, enabled: boolean, submit, message)
 				return
 			end
 			if not ok or not eligible then
-				message("Microphone unavailable. Stay in the crowd or use a Studio rehearsal.")
+				message("Microphone unavailable. Try the Sound booth or play from the audience.")
 				return
 			end
-			local folder = Instance.new("Folder")
+			local folder = owned:Add(Instance.new("Folder"))
 			folder.Name = "LocalTake"
 			folder.Parent = player
 			root = folder
@@ -69,7 +69,8 @@ function Microphone.new(player: Player, enabled: boolean, submit, message)
 			end
 			table.sort(samples)
 			if #samples < 3 then
-				message("No mic level. Check your Roblox mute, then take another seat.")
+				stop()
+				message("No mic level. Check your Roblox mute, or play the Sound booth.")
 				return
 			end
 			baseline = samples[math.ceil(#samples / 2)]
@@ -79,7 +80,8 @@ function Microphone.new(player: Player, enabled: boolean, submit, message)
 	end
 	local function take(turn: number, deadline: number)
 		if not root or not analyzer or not input or baseline <= 0 then
-			message("Mic check incomplete. Try another take or play the crowd.")
+			stop()
+			message("Mic check incomplete. Try another take or play the Sound booth.")
 			return
 		end
 		local token = session
@@ -89,7 +91,7 @@ function Microphone.new(player: Player, enabled: boolean, submit, message)
 		local speechWire = wire(input, stt)
 		local heard = {}
 		local length = 0
-		stt:GetPropertyChangedSignal("Text"):Connect(function()
+		owned:Connect(stt:GetPropertyChangedSignal("Text"), function()
 			local text = stt.Text
 			if text ~= "" and length + #text + 1 <= 384 then
 				table.insert(heard, text)

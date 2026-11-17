@@ -1,0 +1,13 @@
+DELIVERY_TEST_ROUND 1 2 Sound booth 97 6 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 2 3 Main stage 54 12 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 3 4 Switch 62 21 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 4 5 Echo 54 27 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 5 6 Daily 91 33 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 6 7 Custom 85 42 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 7 8 Sound booth 97 48 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 8 9 Main stage 91 54 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 9 10 Switch 62 63 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 10 11 Echo 54 69 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 11 12 Daily 91 75 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 12 13 Custom 54 81 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_MULTIPLAYER PASS twelve reveals across six modes, timed sound-pad inputs, fresh stage and crowd XP, one rating each, private captions, Studio wardrobe preview, no microphone

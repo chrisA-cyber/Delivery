@@ -5,6 +5,8 @@ try {
     if ($LASTEXITCODE) { throw 'Catalogue failed' }
     & ./.tools/lune.exe run tests/run
     if ($LASTEXITCODE) { throw 'Pure logic tests failed' }
+    & ./.tools/lune.exe run tests/marquee
+    if ($LASTEXITCODE) { throw 'Marquee puzzle tests failed' }
     & ./.tools/stylua.exe --check src tests
     if ($LASTEXITCODE) { throw 'Format failed' }
     & ./.tools/selene.exe src tests

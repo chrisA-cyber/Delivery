@@ -1,17 +1,22 @@
 --!strict
 local Run = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
 local Tween = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
 local Debris = game:GetService("Debris")
+local Instruments = require(script.Parent.DeliveryInstruments)
 local ShowFX = {}
 local gold = Color3.fromRGB(255, 217, 135)
 local pink = Color3.fromRGB(255, 93, 185)
 local blue = Color3.fromRGB(112, 136, 255)
 local cameras = {
-	wide = { Vector3.new(-1.1, 9.0, 30), Vector3.new(0, 7.9, -12), 48 },
-	take = { Vector3.new(12.5, 6.65, 5.9), Vector3.new(5.0, 5.18, -10), 40 },
-	house = { Vector3.new(-4.8, 6.1, 4), Vector3.new(-9.7, 4.4, -10.4), 39 },
-	host = { Vector3.new(-5.4, 6.0, 0.5), Vector3.new(-10.3, 4.7, -10.2), 40 },
+	campus = { Vector3.new(13.3, 23.3, 100.8), Vector3.new(-1.4, 5.2, 47.5), 54 },
+	wide = { Vector3.new(-1.6, 9.3, 31.1), Vector3.new(0, 6.5, -13.8), 49 },
+	take = { Vector3.new(11.9, 6.35, 4.9), Vector3.new(4.8, 4.78, -9.5), 42 },
+	booth = { Vector3.new(9.0, 8.15, 2.8), Vector3.new(5.0, 4.45, -8.35), 50 },
+	house = { Vector3.new(-4.7, 6.95, 3.8), Vector3.new(-10.35, 5.18, -10.1), 42 },
+	host = { Vector3.new(-5.35, 6.25, 0.35), Vector3.new(-10.35, 5.48, -10.1), 42 },
 	reveal = { Vector3.new(-1.5, 8.1, 11.5), Vector3.new(0, 8.8, -18), 50 },
 	winner = { Vector3.new(4, 4.9, 1.7), Vector3.new(5.1, 5, -10), 48 },
 	daily = { Vector3.new(11.1, 6, -3.7), Vector3.new(14, 5.2, -13.8), 45 },
@@ -40,12 +45,54 @@ function ShowFX.new(gui: ScreenGui, shared)
 	local stem = set:FindFirstChild("MicStem", true) :: BasePart
 	local stemColor = stem.Color
 	local houseLight = set:WaitForChild("ShowRig"):WaitForChild("House"):WaitForChild("House") :: PointLight
-	local mouth = {}
-	for _, obj in set:GetDescendants() do
-		if obj.Name == "HostMouth" and obj:IsA("BasePart") then
-			table.insert(mouth, obj)
+	local mouth, eyes, brows = {}, {}, {}
+	for _, obj in set:WaitForChild("Flip"):GetChildren() do
+		if obj:IsA("BasePart") then
+			if obj.Name == "HostMouth" then
+				table.insert(mouth, obj)
+			elseif obj.Name == "AnimatedPupil" or obj.Name == "EyeGlint" then
+				table.insert(eyes, { part = obj, rest = obj.CFrame })
+			elseif obj.Name == "AnimatedBrow" then
+				table.insert(brows, { part = obj, rest = obj.CFrame })
+			end
 		end
 	end
+	local needle = set.Dial:WaitForChild("TuningNeedle") :: BasePart
+	local pivot = CFrame.new(0, 8.4, -20.85)
+	local restNeedle = pivot:ToObjectSpace(needle.CFrame)
+	local dialAngle = 0
+	local foleyParts, pads = {}, {}
+	for _, obj in set:WaitForChild("FoleyRack"):GetChildren() do
+		if obj:IsA("BasePart") then
+			obj.LocalTransparencyModifier = 1
+			obj.Transparency = 0
+			table.insert(foleyParts, obj)
+			local name = string.match(obj.Name, "^Pad(.+)")
+			if name then
+				pads[name] = { part = obj, rest = obj.CFrame, color = obj.Color }
+			end
+		end
+	end
+	local boothVisible = false
+	local lastPadTurn, lastPadIndex = -1, 0
+	local scoreAnchor =
+		prop(folder, "HouseScorePlate", Vector3.new(12.9, 1.36, 0.05), Vector3.new(0, 5.68, -19.11), gold)
+	scoreAnchor.Transparency = 1
+	local scoreBoard = Instance.new("SurfaceGui")
+	scoreBoard.Name = "HouseScore"
+	scoreBoard.Face = Enum.NormalId.Back
+	scoreBoard.LightInfluence = 0
+	scoreBoard.CanvasSize = Vector2.new(1024, 125)
+	scoreBoard.Adornee = scoreAnchor
+	scoreBoard.Enabled = false
+	scoreBoard.Parent = gui
+	local scoreText = Instance.new("TextLabel")
+	scoreText.BackgroundTransparency = 1
+	scoreText.Size = UDim2.fromScale(1, 1)
+	scoreText.Font = Enum.Font.GothamBold
+	scoreText.TextColor3 = gold
+	scoreText.TextScaled = true
+	scoreText.Parent = scoreBoard
 	local bars = {}
 	for i = 1, 19 do
 		bars[i] = prop(
@@ -56,29 +103,16 @@ function ShowFX.new(gui: ScreenGui, shared)
 			if i % 3 == 0 then pink else gold
 		)
 	end
-	local ring = Instance.new("Frame")
-	ring.Name = "ScoreRing"
-	ring.BackgroundTransparency = 1
-	ring.AnchorPoint = Vector2.new(0.5, 0.5)
-	ring.Position = UDim2.fromScale(0.5, 0.30)
-	ring.Size = UDim2.fromOffset(112, 112)
-	ring.Visible = false
-	ring.Parent = gui
-	local round = Instance.new("UICorner")
-	round.CornerRadius = UDim.new(1, 0)
-	round.Parent = ring
-	local edge = Instance.new("UIStroke")
-	edge.Thickness = 4
-	edge.Color = gold
-	edge.Parent = ring
-	local digits = Instance.new("TextLabel")
-	digits.Size = UDim2.fromScale(1, 1)
-	digits.BackgroundTransparency = 1
-	digits.Font = Enum.Font.GothamBlack
-	digits.TextColor3 = gold
-	digits.TextScaled = true
-	digits.Parent = ring
-	local reduced = false
+
+	local preferences = game:GetService("GuiService")
+	local reduced = preferences.ReducedMotionEnabled
+	preferences:GetPropertyChangedSignal("ReducedMotionEnabled"):Connect(function()
+		reduced = preferences.ReducedMotionEnabled
+	end)
+	local freeCamera = true
+	local campusLighting: boolean? = nil
+	local roamFov = if workspace.CurrentCamera then workspace.CurrentCamera.FieldOfView else 70
+	local lastHumanoid: Humanoid? = nil
 	local s
 	local view = "wide"
 	local currentKey = ""
@@ -87,17 +121,24 @@ function ShowFX.new(gui: ScreenGui, shared)
 	local meterAt = 0
 	local started = 0
 	local function sound(kind, vol, pitch)
+		if freeCamera then
+			return
+		end
 		local asset = ids[kind] or 0
+		if asset <= 0 then
+			Instruments.sting(kind, vol)
+			return
+		end
 		local effect = Instance.new("Sound")
-		effect.SoundId = if asset > 0 then "rbxassetid://" .. asset else "rbxasset://sounds/volume_slider.ogg"
-		effect.Volume = vol * (if asset > 0 then 1 else 0.38)
+		effect.SoundId = "rbxassetid://" .. asset
+		effect.Volume = vol
 		effect.PlaybackSpeed = pitch
 		effect.Parent = SoundService
 		effect:Play()
 		Debris:AddItem(effect, 3)
 	end
 	local function toss(reaction)
-		if reduced then
+		if reduced or freeCamera then
 			return
 		end
 		local start = Vector3.new(math.random(-9, 9), 3.8, 5)
@@ -138,7 +179,7 @@ function ShowFX.new(gui: ScreenGui, shared)
 		end)
 	end
 	local function celebrate()
-		if reduced then
+		if reduced or freeCamera then
 			return
 		end
 		for i = 1, 24 do
@@ -161,11 +202,37 @@ function ShowFX.new(gui: ScreenGui, shared)
 			Debris:AddItem(p, 1.45)
 		end
 	end
-	local function update(state, backstage)
+	local function update(state, backstage, welcome, exploring, overview)
 		s = state
-		view = if backstage
-			then "daily"
-			elseif s.phase == "take" then (if s.actor == 0 then "house" else "take")
+		local accepted = s.actor == Players.LocalPlayer.UserId and s.phase ~= "lineup" and s.phase ~= "lobby"
+		local wantsFree = if exploring ~= nil
+			then exploring
+			else s.venue ~= nil and not s.venue.watching and not accepted and not welcome
+		if wantsFree and not freeCamera then
+			lastHumanoid = nil
+		end
+		freeCamera = wantsFree
+		local outside = wantsFree or welcome == true
+		if campusLighting ~= outside then
+			campusLighting = outside
+			Lighting.ClockTime = if outside then 17.25 else 20
+			Lighting.Brightness = if outside then 2.0 else 2.2
+			Lighting.ExposureCompensation = if outside then -0.20 else 0
+			Lighting.Ambient = if outside then Color3.fromRGB(99, 91, 111) else Color3.fromRGB(82, 69, 97)
+			Lighting.OutdoorAmbient = if outside
+				then Color3.fromRGB(125, 129, 144)
+				else Color3.fromRGB(66, 59, 89)
+			Lighting.EnvironmentDiffuseScale = if outside then 0.60 else 0.5
+			Lighting.EnvironmentSpecularScale = if outside then 0.43 else 0.8
+		end
+		view = if overview
+			then "wide"
+			elseif welcome then "campus"
+			elseif backstage then "daily"
+			elseif s.phase == "take" then (if s.foley
+				then "booth"
+				elseif s.actor == 0 then "house"
+				else "take")
 			elseif s.phase == "host" then "host"
 			elseif s.phase == "reveal" then "reveal"
 			elseif
@@ -175,13 +242,26 @@ function ShowFX.new(gui: ScreenGui, shared)
 				and (s.result.overall or 0) >= 75
 			then "winner"
 			else "wide"
+		local showBooth = s.foley ~= nil and s.phase ~= "intermission"
+		if boothVisible ~= showBooth then
+			boothVisible = showBooth
+			for _, part in foleyParts do
+				part.LocalTransparencyModifier = if showBooth then 0 else 1
+			end
+		end
 		local key = tostring(s.turn) .. "/" .. s.phase
+		scoreBoard.Enabled = not welcome
+				and not backstage
+				and s.phase == "reveal"
+				and s.result
+				and s.result.overall ~= nil
+			or false
 		if key ~= currentKey then
 			currentKey = key
 			started = os.clock()
 			meter = 0
 			reacted = 0
-			ring.Visible = s.phase == "reveal" and s.result and s.result.overall ~= nil
+
 			if s.phase == "countdown" then
 				sound("places", 0.4, 1.2)
 				if s.actorSkin == "gold-entrance" or s.actorSkin == "house-entrance" then
@@ -189,15 +269,27 @@ function ShowFX.new(gui: ScreenGui, shared)
 				end
 			elseif s.phase == "vote" then
 				sound("roll", 0.22, 0.75)
-			elseif ring.Visible then
-				digits.Text = tostring(s.result.overall)
+			elseif scoreBoard.Enabled then
+				scoreText.Text = string.format("HOUSE SCORE    %d  /  100", s.result.overall)
 				sound("reveal", 0.5, 1.45)
-				if not reduced then
-					ring.Size = UDim2.fromOffset(152, 152)
-					Tween:Create(ring, TweenInfo.new(0.19), { Size = UDim2.fromOffset(110, 110) }):Play()
-				end
 				if s.result.overall >= 90 and s.actor ~= 0 then
 					celebrate()
+				end
+			end
+		end
+		if s.foley and s.phase == "take" and not freeCamera then
+			local hit = s.foley.last
+			if hit and (s.turn ~= lastPadTurn or hit.index ~= lastPadIndex) then
+				lastPadTurn, lastPadIndex = s.turn, hit.index
+				Instruments.strike(hit.pad)
+				local pad = pads[hit.pad]
+				if pad then
+					pad.part.Color = Color3.fromRGB(255, 236, 197)
+					if not reduced then
+						pad.part.CFrame = pad.rest * CFrame.new(0, -0.13, 0)
+					end
+					Tween:Create(pad.part, TweenInfo.new(0.26), { CFrame = pad.rest, Color = pad.color })
+						:Play()
 				end
 			end
 		end
@@ -225,7 +317,25 @@ function ShowFX.new(gui: ScreenGui, shared)
 		if not camera then
 			return
 		end
-		local shot = cameras[if reduced and view ~= "daily" then "wide" else view]
+		if freeCamera then
+			local player = Players.LocalPlayer
+			local character = player.Character
+			local humanoid = if character then character:FindFirstChildOfClass("Humanoid") else nil
+			if humanoid and humanoid ~= lastHumanoid and not player:GetAttribute("DeliveryPortraitPose") then
+				lastHumanoid = humanoid
+				camera.CameraType = Enum.CameraType.Custom
+				camera.CameraSubject = humanoid
+				camera.FieldOfView = roamFov
+				local root = humanoid.RootPart
+				if root then
+					local target = root.Position + Vector3.new(0, 1.2, 0)
+					camera.CFrame =
+						CFrame.lookAt(target - root.CFrame.LookVector * 10 + Vector3.new(0, 4, 0), target)
+				end
+			end
+			return
+		end
+		local shot = cameras[if reduced and view ~= "daily" and view ~= "campus" then "wide" else view]
 		local pos, target = shot[1], shot[2]
 		local aspect = camera.ViewportSize.X / math.max(1, camera.ViewportSize.Y)
 		if aspect < 1.35 then
@@ -242,11 +352,17 @@ function ShowFX.new(gui: ScreenGui, shared)
 		lastFrame = now
 		local amplitude = if now - meterAt < 0.65 then meter else 0
 		houseLight.Brightness = 1.2 + amplitude * 0.5
-		stem.Color = if s and s.actorStage >= 60 then blue else stemColor
+		local look = if s and (not s.actorSkin or s.actorSkin == "house-entrance") then s.actorLook else nil
+		stem.Color = if look == "cherry"
+			then Color3.fromRGB(218, 73, 102)
+			elseif look == "cobalt" or (s and s.actorStage >= 60) then blue
+			else stemColor
 		keyLight.Color = if s
-				and (s.actorSkin == "violet-key" or s.actorStage >= 100)
+				and s.actorSkin == "violet-key"
 				and s.phase == "take"
 			then Color3.fromRGB(177, 127, 255)
+			elseif look == "apricot" then Color3.fromRGB(255, 174, 111)
+			elseif s and s.actorStage >= 100 and s.phase == "take" then Color3.fromRGB(177, 127, 255)
 			else Color3.fromRGB(255, 222, 179)
 		keyLight.Brightness = 2 + amplitude * 0.6
 		for i, bar in bars do
@@ -259,9 +375,26 @@ function ShowFX.new(gui: ScreenGui, shared)
 				0.10
 			)
 		end
+		local dialValue = if s
+				and s.result
+				and s.result.overall
+			then s.result.overall / 100
+			elseif s and s.phase == "take" then 0.35 + amplitude * 0.55
+			else 0.46
+		local targetAngle = math.rad(74 - 126 * dialValue)
+		dialAngle = if reduced then targetAngle else dialAngle + (targetAngle - dialAngle) * 0.26
+		needle.CFrame = pivot * CFrame.Angles(0, 0, dialAngle) * restNeedle
 		local talking = s
 			and (s.phase == "host" or (s.actor == 0 and s.phase == "take"))
 			and now - started < 4
+		local glance = if reduced then 0 elseif talking then 0.12 * math.sin(now * 2) else 0.1
+		local brow = if reduced or not talking then 0 else 0.09 * math.sin(now * 6)
+		for _, eye in eyes do
+			eye.part.CFrame = eye.rest * CFrame.new(glance, 0, 0)
+		end
+		for i, b in brows do
+			b.part.CFrame = b.rest * CFrame.new(0, brow * (if i % 2 == 0 then 1 else -1), 0)
+		end
 		for i, p in mouth do
 			p.Size = Vector3.new(
 				0.23,
@@ -272,6 +405,9 @@ function ShowFX.new(gui: ScreenGui, shared)
 	end)
 	return {
 		update = update,
+		isReduced = function()
+			return reduced
+		end,
 		toggle = function()
 			reduced = not reduced
 			return reduced

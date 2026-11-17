@@ -9,6 +9,15 @@
       }
     },
     "ReplicatedStorage": {
+      "DeliveryLibraries": {
+        "$className": "Folder",
+        "Trove": {
+          "$path": "third_party/trove/Trove.luau"
+        },
+        "ThirdPartyNotices": {
+          "$path": "third_party/Notices.model.json"
+        }
+      },
       "Delivery": {
         "$path": "src/shared"
       }
@@ -35,28 +44,29 @@
     "Lighting": {
       "$className": "Lighting",
       "$properties": {
-        "ClockTime": 20,
-        "Brightness": 2.2,
+        "ClockTime": 17.25,
+        "Brightness": 2,
         "Ambient": [
-          0.32,
-          0.27,
-          0.38
+          0.388,
+          0.357,
+          0.435
         ],
         "OutdoorAmbient": [
-          0.26,
-          0.23,
-          0.35
+          0.49,
+          0.506,
+          0.565
         ],
-        "EnvironmentDiffuseScale": 0.5,
-        "EnvironmentSpecularScale": 0.8,
-        "GlobalShadows": true
+        "EnvironmentDiffuseScale": 0.6,
+        "EnvironmentSpecularScale": 0.43,
+        "GlobalShadows": true,
+        "ExposureCompensation": -0.2
       },
       "SoftLenses": {
         "$className": "BloomEffect",
         "$properties": {
-          "Intensity": 0.24,
-          "Size": 20,
-          "Threshold": 1.12
+          "Intensity": 0.09,
+          "Size": 15,
+          "Threshold": 1.46
         }
       }
     }

@@ -1,6 +1,11 @@
 --!strict
 local HostLines = {}
 local book = {
+	pads = {
+		"Cue the squeak. Somebody get that bell an agent.",
+		"The sound booth turned a little scene into a very big noise.",
+	},
+	padsMiss = { "Three cues, one more try. Watch for the first bell." },
 	house = {
 		"The house has read the card. The jury has the good chairs.",
 		"That was our rehearsal. Somebody give the cue card a dressing room.",
@@ -34,6 +39,9 @@ local book = {
 function HostLines.options(house: boolean, claim, measure: string)
 	if house then
 		return "house", book.house
+	end
+	if measure == "pads" then
+		return if claim then "pads" else "padsMiss", if claim then book.pads else book.padsMiss
 	end
 	if not claim then
 		return "miss", book.miss

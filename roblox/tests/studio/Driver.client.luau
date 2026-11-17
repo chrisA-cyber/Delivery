@@ -7,8 +7,9 @@ local stage = shared:WaitForChild("Delivery"):WaitForChild("Stage") :: RemoteEve
 local test = shared:WaitForChild("DeliveryTest") :: RemoteEvent
 local last = ""
 local rounds = 0
-local modes = { "Main stage", "Switch", "Echo", "Daily", "Custom" }
+local modes = { "Sound booth", "Main stage", "Switch", "Echo", "Daily", "Custom" }
 local previewed = false
+local seated = false
 stage.OnClientEvent:Connect(function(s)
 	local leader = test:GetAttribute("Performer")
 	if not leader then
@@ -22,12 +23,27 @@ stage.OnClientEvent:Connect(function(s)
 	local function act(verb: string, arg: any?)
 		stage:FireServer(verb, s.turn, arg)
 	end
+	if p.UserId ~= leader and not seated then
+		seated = true
+		act("venue", { op = "travel", room = "theatre" })
+	end
 	if p.UserId == leader then
 		if s.actor == p.UserId then
 			if s.phase == "lineup" then
-				act("accept", "rehearsal")
+				act("accept", if s.mode == "Sound booth" then "pads" else "rehearsal")
 			elseif s.phase == "take" then
-				act("scripted")
+				if s.foley then
+					for index, beat in s.foley.beats do
+						task.delay(
+							math.max(0, s.deadline - 10 + beat.at - workspace:GetServerTimeNow()),
+							function()
+								stage:FireServer("foleyPad", s.turn, { index = index, pad = beat.pad })
+							end
+						)
+					end
+				else
+					act("scripted")
+				end
 			elseif s.phase == "reveal" then
 				rounds += 1
 			end
@@ -67,7 +83,9 @@ stage.OnClientEvent:Connect(function(s)
 				s.simulated,
 				s.useMic,
 				s.heard,
-				s.dailyLine
+				s.dailyLine,
+				s.result.foleyHits,
+				s.lastAward and s.lastAward.xp
 			)
 		end
 	end

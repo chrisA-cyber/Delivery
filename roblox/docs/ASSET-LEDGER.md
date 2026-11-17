@@ -27,3 +27,15 @@ The icon prompt called for a tight silhouette of the suitcase host, one micropho
 Final Higgsfield balance after five jobs: 3,112.16. Total task spend: **7.5 of 3,100 credits**.
 
 The five before/after pairs, the grey-box screenshot, the phone layout evidence and the gameplay thumbnail use local Studio renders. The comparison sheet and gameplay thumbnail use layout and resizing only. They cost zero generation credits.
+
+## Second theatre and interface
+
+The revised theatre, Flip, concert dial, wing architecture, velvet swags, upholstered seats, Foley console, practical lights and stage placards were authored for Delivery in Blender and Luau. The new render in docs/evidence/blender-stage-review.jpg is an offline lighting proof. Studio captures document the actual player view. This revision used zero Higgsfield credits.
+
+The role and navigation glyphs derive from Feather Icons v4.29.2, MIT. The original SVGs and license ship in third_party/feather. The native drawings use no Roblox asset IDs. See REFERENCE-STUDY.md for pinned upstream repositories and runtime attribution.
+
+The three original Foley WAV masters were synthesized from scratch by art/scripts/sound.py. The portable place uses its own arrangements of four sounds already present in Roblox (volume_slider.ogg, action_jump.mp3, action_jump_land.mp3 and action_footsteps_plastic.mp3). Samples are referenced inside Roblox. The repository distributes the original masters and the score for the arrangements.
+
+## Outdoor district
+
+The waterfront, park and market, studio buildings, dusk lighting, curb signs, crane, park course, wrapping stalls, gulls, flying kites and six-seat sightseeing streetcar are original scenery and interactive objects made for this place. The Blender source and Roblox parts ship together. The open-world revision used zero Higgsfield credits and zero Robux.

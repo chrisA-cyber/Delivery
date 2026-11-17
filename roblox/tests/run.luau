@@ -102,13 +102,14 @@ test("offer timeout, forfeit and fresh reconnect consent", function()
 	Show.join(s, 1, 0)
 	Show.action(s, 1, "queue", nil, 0)
 	Show.tick(s, 0)
-	assert(not Show.action(s, 1, "accept", nil, 7), "Failed: not Show.action(s, 1, 'accept', nil, 7)")
-	Show.tick(s, 7)
-	Show.action(s, 1, "queue", nil, 7)
-	Show.tick(s, 7)
-	Show.action(s, 1, "accept", nil, 7)
-	Show.leave(s, 1, 8)
-	Show.join(s, 1, 9)
+	local expiry = s.untilTime
+	assert(not Show.action(s, 1, "accept", nil, expiry), "expired offer cannot be accepted")
+	Show.tick(s, expiry)
+	Show.action(s, 1, "queue", nil, expiry)
+	Show.tick(s, expiry)
+	Show.action(s, 1, "accept", nil, expiry)
+	Show.leave(s, 1, expiry + 1)
+	Show.join(s, 1, expiry + 2)
 	assert(
 		s.phase == "intermission" and s.queue[1] == 1 and s.actor == 0,
 		"Failed: s.phase == 'intermission' and s.queue[1] == 1 and s.actor == 0"
@@ -335,5 +336,348 @@ test("a repeated souvenir receipt preserves its original stamp", function()
 		"same receipt grants once"
 	)
 	assert(source.stamp(store, "next", 99) == 99, "second purchase has a distinct issue")
+end)
+local Foley = require("../src/shared/Foley")
+test("solo booth starts immediately, uses the chosen sheet and scores three timed sound effects", function()
+	local s = Show.new(Deck.new(Catalogue, "solo-booth"), Score, Modes, nil, Foley)
+	Show.join(s, 1, 0)
+	Show.tick(s, 0)
+	assert(s.actor == 0 and s.phase == "direct", "house is showing an idle card")
+	assert(Show.action(s, 1, "queue", { mode = "Sound booth" }, 1), "request accepted")
+	assert(s.phase == "lineup" and s.actor == 1, "solo gets a stage offer immediately")
+	assert(not Show.action(s, 1, "accept", "mic", 1), "booth cannot opt into voice")
+	assert(Show.action(s, 1, "accept", "pads", 1), "booth offer accepted explicitly")
+	assert(Show.action(s, 1, "direct", 2, 1), "solo can direct their own sheet")
+	Show.tick(s, s.untilTime)
+	assert(s.foley.beats[1].pad == "Thump", "reverse sheet chosen")
+	Show.tick(s, s.untilTime)
+	local start = s.started
+	assert(not Show.action(s, 1, "foleyPad", { index = 1, pad = "Thump" }, start), "early hits ignored")
+	assert(Show.action(s, 1, "foleyPad", { index = 1, pad = "Thump" }, start + 2), "perfect pad lands")
+	assert(
+		not Show.action(s, 1, "foleyPad", { index = 1, pad = "Thump" }, start + 2.1),
+		"replay cannot score twice"
+	)
+	assert(
+		Show.action(s, 1, "foleyPad", { index = 2, pad = "Squeak" }, start + 5.8),
+		"late, in-window pad lands"
+	)
+	assert(
+		Show.action(s, 1, "foleyPad", { index = 3, pad = "Squeak" }, start + 8),
+		"a wrong sound is an attempt"
+	)
+	while s.phase ~= "reveal" do
+		Show.tick(s, s.untilTime)
+	end
+	assert(
+		s.result.foleyHits == 2
+			and s.result.foleyPerfect == 1
+			and s.result.accuracy == 67
+			and s.result.commitment == 57,
+		"independent pad choice and timing scores"
+	)
+	assert(
+		not s.useMic and not s.claim.simulated and not s.result.miss and s.result.voters == 0,
+		"earned solo score without simulated speech or audience"
+	)
+	assert(
+		Show.action(s, 1, "queue", { mode = "Sound booth" }, s.untilTime - 1),
+		"play again joins the next queue directly from reveal"
+	)
+	while s.phase ~= "lineup" do
+		Show.tick(s, s.untilTime)
+	end
+	assert(
+		not s.useMic and not s.foley and s.actor == 1,
+		"replay requires a fresh offer before pads or mic activate"
+	)
+end)
+test("booth does not interrupt another crowd member; no tap is a recoverable miss", function()
+	local s = Show.new(Deck.new(Catalogue, "shared-booth"), Score, Modes, nil, Foley)
+	Show.join(s, 1, 0)
+	Show.join(s, 2, 0)
+	Show.tick(s, 0)
+	local turn = s.turn
+	Show.action(s, 1, "queue", { mode = "Sound booth" }, 1)
+	assert(s.actor == 0 and s.turn == turn, "shared house runs to completion")
+	while s.phase ~= "lineup" do
+		Show.tick(s, s.untilTime)
+	end
+	Show.action(s, 1, "accept", "pads", s.untilTime - 1)
+	assert(not Show.action(s, 1, "direct", 1, s.untilTime - 1), "only crowd directs in multiplayer")
+	Show.tick(s, s.untilTime)
+	Show.tick(s, s.untilTime)
+	assert(
+		not Show.action(s, 2, "foleyPad", { index = 1, pad = "Bell" }, s.started + 2),
+		"crowd cannot fake stage input"
+	)
+	assert(
+		not Show.action(s, 1, "foleyPad", { index = 1, pad = "Unknown" }, s.started + 2),
+		"only authored pads"
+	)
+	while s.phase ~= "reveal" do
+		Show.tick(s, s.untilTime)
+	end
+	assert(
+		s.result.miss and s.result.foleyHits == 0 and s.result.overall == nil,
+		"no fabricated performance on silence"
+	)
+	assert(Show.action(s, 1, "retake", nil, s.untilTime - 1), "retry is opt-in")
+end)
+test("voice calibration belongs to one fresh consented take", function()
+	local s = Show.new(Deck.new(Catalogue, "check"), Score)
+	Show.join(s, 1, 0)
+	Show.join(s, 2, 0)
+	Show.action(s, 1, "queue", nil, 0)
+	Show.tick(s, 0)
+	assert(not Show.action(s, 1, "micChecked", nil, 0), "seat offer has no calibration")
+	Show.action(s, 1, "accept", "mic", 0)
+	assert(not Show.action(s, 2, "micChecked", nil, 1), "crowd cannot authorize stage route")
+	assert(Show.action(s, 1, "micChecked", nil, 3) and s.micChecked, "fresh positive check")
+	Show.tick(s, s.untilTime)
+	Show.tick(s, s.untilTime)
+	assert(not Show.action(s, 1, "micChecked", nil, s.started + 1), "check closes before take")
+	while s.phase ~= "lobby" do
+		Show.tick(s, s.untilTime)
+	end
+	assert(not s.micChecked and not s.useMic, "previous check and consent cleared")
+end)
+local Activities = require("../src/server/VenueActivities")
+local Venues = require("../src/shared/Venues")
+test("Studio B drills have independent clocks, scored input, fresh run IDs and one reward", function()
+	local a, b = Activities.new(), Activities.new()
+	Activities.open(a, "studio", false)
+	Activities.open(b, "warehouse", false)
+	assert(
+		Activities.startPractice(a, Foley, 100) and Activities.startJob(b, 100),
+		"two players start different activities"
+	)
+	local drill = a.practice
+	for i, beat in drill.beats do
+		assert(
+			not Activities.pad(
+				a,
+				Foley,
+				{ run = drill.run - 1, index = i, pad = beat.pad },
+				drill.started + beat.at
+			),
+			"stale drill rejected"
+		)
+		assert(
+			Activities.pad(a, Foley, { run = drill.run, index = i, pad = beat.pad }, drill.started + beat.at),
+			"timed pad accepted"
+		)
+	end
+	assert(
+		Activities.finishPractice(a, Foley, 108).xp == 6 and a.practice.score == 100,
+		"three private perfect hits"
+	)
+	assert(
+		not Activities.finishPractice(a, Foley, 109) and b.job.picked == 0,
+		"duplicate reward rejected and partner unaffected"
+	)
+	Activities.startPractice(a, Foley, 110)
+	Activities.open(a, "lobby", false)
+	assert(
+		a.practice.status == "cancelled" and not Activities.finishPractice(a, Foley, 130),
+		"leaving private studio cancels that run"
+	)
+end)
+test("warehouse dispatch validates distance, ordered packing, fresh tickets and physical return", function()
+	local v = Activities.new()
+	assert(Activities.startJob(v, 10) and not Activities.startJob(v, 11), "one dispatch ticket at a time")
+	local j = v.job
+	assert(not Activities.collect(v, j.run, j.order[2], true, 11), "wrong prop cannot advance")
+	assert(not Activities.collect(v, j.run, j.order[1], false, 12), "pickup requires station proximity")
+	assert(not Activities.collect(v, j.run - 1, j.order[1], true, 13), "stale ticket rejected")
+	for i, prop in j.order do
+		assert(Activities.collect(v, j.run, prop, true, 13 + i), "correct nearby pickup")
+	end
+	assert(
+		not Activities.deliver(v, j.run, false, 20) and Activities.deliver(v, j.run, true, 21),
+		"deliver only at dispatch"
+	)
+	assert(not Activities.deliver(v, j.run, true, 22) and j.xp == 5, "duplicate ticket cannot pay again")
+end)
+test("walkable venue map, earned fits and stamped writer cards survive profile load", function()
+	local visitor = Activities.new()
+	assert(
+		visitor.room == "park"
+			and not visitor.watching
+			and Venues.arrival(visitor.room, visitor.openRevision) == "ParkArrival",
+		"first arrival is free at the park gateway"
+	)
+	Activities.open(visitor, "lobby", false)
+	assert(
+		Venues.arrival(visitor.room, visitor.openRevision) == "VenueLobby",
+		"selected plaza remains the respawn location"
+	)
+	Activities.open(visitor, "park", false)
+	assert(
+		Venues.arrival(visitor.room, visitor.openRevision) == "VenuePark",
+		"explicit park travel returns to its workstation"
+	)
+	for id, room in Venues.rooms do
+		assert(
+			Venues.zone(room.x, room.z, if id == "balcony" then 9 else 3) == id,
+			"arrival belongs to " .. id
+		)
+	end
+	local row, fresh = Profiles.blank(), Profiles.blank()
+	fresh.writtenMix = 8
+	fresh.atelierLook = 3
+	fresh.practiceCount = 2
+	fresh.propJobs = 1
+	fresh.practiceBest = 95
+	fresh.badges["sound-technician"] = true
+	Profiles.mergePending(row, fresh)
+	assert(
+		row.practiceCount == 2 and row.propJobs == 1 and row.practiceBest == 95,
+		"late-loaded progress merged"
+	)
+	assert(
+		Venues.lookAt(row.atelierLook) == "cobalt" and row.badges["sound-technician"],
+		"earned fit retained"
+	)
+	local card = Modes.mix(row.writtenMix)
+	local fake = { mode = "Custom", actor = 8, custom = { [8] = 8 } }
+	Modes.card(fake, nil)
+	assert(
+		card.text == fake.line.text and card.id == fake.line.id,
+		"stamped card is the actual queued stage card"
+	)
+end)
+test("venue spectators determine direction, room weight and quick solo pickup", function()
+	local watchers = {}
+	local s = Show.new(Deck.new(Catalogue, "workshops"), Score, Modes, nil, Foley, function(id)
+		return watchers[id]
+	end)
+	Show.join(s, 1, 0)
+	Show.join(s, 2, 0)
+	Show.tick(s, 0)
+	assert(Show.solo(s, 1) and not next(s.observers), "workshop player does not dilute the audience")
+	Show.action(s, 1, "queue", { mode = "Sound booth" }, 1)
+	assert(
+		s.phase == "lineup" and s.actor == 1,
+		"a venue visitor outside the theatre cannot hold up the queue"
+	)
+	Show.action(s, 1, "accept", "pads", 2)
+	watchers[2] = true
+	Show.attendance(s, 2)
+	assert(not Show.solo(s, 1) and s.observers[2], "voluntary spectator joins the audience")
+	watchers[2] = false
+	Show.attendance(s, 2)
+	assert(not s.observers[2], "leaving restores outside-room attendance")
+end)
+local Outdoor = require("../src/server/Outdoor")
+test("Buoy Watch scores fresh timed nearby reels, partial expiry, and one souvenir", function()
+	local v, row = Activities.new(), Profiles.blank()
+	assert(Outdoor.start(v, "pier", 40), "pier watch starts")
+	local r = v.outdoor
+	assert(not Outdoor.tap(v, r.run + 1, 40 + r.beats[1], true), "previous ticket cannot reel")
+	assert(not Outdoor.tap(v, r.run, 40 + r.beats[1], false), "reel requires proximity")
+	assert(Outdoor.tap(v, r.run, 40.7, true) and r.hits == 0, "early reel gives feedback without scoring")
+	for i, beat in r.beats do
+		assert(Outdoor.tap(v, r.run, 40 + beat, true) and r.reels[tostring(i)], "timed cue recorded by index")
+		assert(not Outdoor.tap(v, r.run, 40 + beat + 0.01, true), "same reel cannot repeat")
+	end
+	assert(
+		r.status == "done" and r.score == 100 and Outdoor.reward(r, row) and not Outdoor.reward(r, row),
+		"final score and one-time payment"
+	)
+	assert(
+		row.stage == 3 and row.pierBest == 100 and row.badges["harbour-hand"],
+		"three signals unlock the souvenir"
+	)
+	assert(Outdoor.start(v, "pier", 100), "second pier watch starts")
+	r = v.outdoor
+	assert(Outdoor.tap(v, r.run, 100 + r.beats[2], true), "one mid-run signal lands")
+	assert(
+		Outdoor.tick(v, 111) and not Outdoor.tick(v, 112) and r.hits == 1 and Outdoor.reward(r, row),
+		"partial result awarded on expiry"
+	)
+	assert(row.stage == 4 and row.pierBest == 100, "personal best survives partial run")
+end)
+test("park circuit enforces station order and foot travel, tracks repeat personal best", function()
+	local v, row = Activities.new(), Profiles.blank()
+	assert(Outdoor.start(v, "park", 30), "first circuit starts")
+	Outdoor.cancelPark(v)
+	assert(
+		v.outdoor.status == "expired" and not Outdoor.reward(v.outdoor, row),
+		"fast travel cancels a circuit"
+	)
+	for attempt = 1, 2 do
+		local time = 100 * attempt
+		assert(Outdoor.start(v, "park", time), "new circuit starts")
+		local r = v.outdoor
+		assert(not Outdoor.step(v, "park", r.run, r.route[2], time + 1, true), "wrong arch cannot count")
+		assert(not Outdoor.step(v, "park", r.run, r.target, time + 1, false), "runner must reach the arch")
+		for i, target in r.route do
+			assert(
+				Outdoor.step(v, "park", r.run, target, time + i * (4 - attempt), true),
+				"ordered arches and finish advance"
+			)
+		end
+		assert(
+			r.status == "done" and Outdoor.reward(r, row) and not Outdoor.reward(r, row),
+			"each race pays once"
+		)
+	end
+	assert(
+		row.parkRuns == 2 and row.parkBestMs == 8000 and row.badges["signal-sprinter"] and row.crowd == 10,
+		"faster circuit updates the record"
+	)
+	assert(
+		Outdoor.start(v, "park", 300) and Outdoor.tick(v, 390) and not Outdoor.reward(v.outdoor, row),
+		"expired race pays no reward"
+	)
+end)
+test("market requires ordered materials and matching stamp at counter, expiry cannot pay", function()
+	local v, row = Activities.new(), Profiles.blank()
+	assert(Outdoor.start(v, "market", 20), "market order starts")
+	local r = v.outdoor
+	assert(not Outdoor.step(v, "market", r.run, r.route[2], 22, true), "material pickup must match order")
+	assert(
+		not Outdoor.step(v, "market", r.run, r.route[1], 22, false),
+		"material must be physically collected"
+	)
+	assert(not Outdoor.wrap(v, r.run, r.stamp, 22, true), "unfinished parcel cannot be stamped")
+	for i = 1, 2 do
+		assert(
+			Outdoor.step(v, "market", r.run, r.route[i], 22 + i, true),
+			"expected material accepted at stall"
+		)
+	end
+	assert(not Outdoor.wrap(v, r.run, r.stamp, 28, false), "wrap requires physical kiosk")
+	assert(
+		Outdoor.wrap(v, r.run, if r.stamp == "Moon" then "Star" else "Moon", 29, true)
+			and r.status == "active",
+		"wrong stamp permits another attempt"
+	)
+	assert(
+		Outdoor.wrap(v, r.run, r.stamp, 30, true) and Outdoor.reward(r, row) and not Outdoor.reward(r, row),
+		"correct stamp completes and pays once"
+	)
+	assert(
+		row.marketOrders == 1 and row.crowd == 4 and row.badges["market-maker"],
+		"order and souvenir saved"
+	)
+	assert(
+		Outdoor.start(v, "market", 100)
+			and Outdoor.tick(v, 221)
+			and not Outdoor.wrap(v, v.outdoor.run, v.outdoor.stamp, 222, true),
+		"expired ticket cannot be stamped"
+	)
+	local saved = Profiles.blank()
+	row.parkBestMs = 13750
+	row.pierBest = 67
+	Profiles.mergePending(saved, row)
+	assert(
+		saved.marketOrders == 1
+			and saved.parkBestMs == 13750
+			and saved.pierBest == 67
+			and saved.badges["market-maker"],
+		"late profile load preserves outdoor records"
+	)
 end)
 print(passed, "groups passed")

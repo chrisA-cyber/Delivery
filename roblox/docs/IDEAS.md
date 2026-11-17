@@ -1,5 +1,5 @@
-# The silent foley booth
+# Sound booth playtest questions
 
-Give the performer three physical cue pads: a squeak, a bell and a curtain thump. The card is delivered by the house voice while the volunteer times two live sound cues. The joke is when the squeak lands. The audience chooses the cue sheet and votes on the result. This gives a non-speaking player a turn under the same spotlight.
+The proposed silent Foley booth is now playable. Six authored scenes use three timed pads. The audience selects a cue sheet, the performer plays the highlighted pad on GO, and the stage console responds to accepted hits. Solo players choose their own sheet. The result panel reports landed cues and personal XP.
 
-This would require original short sounds, a touch interaction and a separate scoring explanation. Sound timing is measurable, comedy stays with the crowd. Do not compare a pad performance with transcript accuracy or rank it against voice takes. Test it with two friends who usually stay in the crowd. The risk is making the stage feel like a rhythm game. Revert by removing the opt-in booth entrance. Owner decision after the main-stage test.
+Watch whether first-time players recognize GO, whether they replay after missing a cue, and which sounds make friends laugh. If listeners describe the sounds as too similar, compare the packaged arrangements with the original WAV masters in the private experience before expanding the instrument set.

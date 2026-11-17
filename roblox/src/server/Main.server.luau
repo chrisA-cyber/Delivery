@@ -31,7 +31,22 @@ local function daily()
 	end
 	return dailyCache.line, dailyCache.cue, day, dailyCache.weekly
 end
-local state = Show.new(Deck.new(catalogue, tostring(os.time())), Score, Modes, daily)
+local venue
+local function watching(p)
+	return venue and venue.snapshot(p).watching or false
+end
+local function watchesShow(id)
+	local p = Players:GetPlayerByUserId(id)
+	return p and watching(p) or false
+end
+local state = Show.new(
+	Deck.new(catalogue, tostring(os.time())),
+	Score,
+	Modes,
+	daily,
+	require(shared.Foley),
+	watchesShow
+)
 local standings = {}
 local Market = game:GetService("MarketplaceService")
 local Analytics = game:GetService("AnalyticsService")
@@ -77,6 +92,7 @@ local function checkFriends(p)
 	end
 end
 local lastAward = 0
+local receipts = {}
 local honours = ""
 local function award()
 	if state.turn == lastAward then
@@ -98,9 +114,9 @@ local function award()
 			observed(player, state.turn)
 			if state.useMic then
 				metrics.take(player, result.miss)
-				if not result.miss then
-					metrics.once(player, "first_take")
-				end
+			end
+			if not result.miss and (state.useMic or state.mode == "Sound booth") then
+				metrics.once(player, "first_take")
 			end
 		end
 		if id == state.actor then
@@ -129,6 +145,12 @@ local function award()
 			then
 				xp += 3
 				row.calls += 1
+				if state.balconyPredictions[id] then
+					row.balconyCalls += 1
+					if row.balconyCalls >= 3 then
+						row.badges["balcony-critic"] = true
+					end
+				end
 			end
 			row.crowd += xp
 		end
@@ -139,7 +161,17 @@ local function award()
 				row.crowd += 1
 			end
 		end
-		Profiles.week(row, math.floor((os.time() / 86400 + 3) / 7), row.stage + row.crowd - before)
+		local xp = row.stage + row.crowd - before
+		if id == state.actor or xp > 0 then
+			receipts[id] = {
+				turn = state.turn,
+				mode = state.mode,
+				role = if id == state.actor then "stage" else "crowd",
+				xp = xp,
+				overall = result.overall,
+			}
+		end
+		Profiles.week(row, math.floor((os.time() / 86400 + 3) / 7), xp)
 	end
 	if state.turn % 4 == 0 then
 		local function leader(key)
@@ -175,7 +207,7 @@ local lastWave = 0
 local limits = {}
 local Measure = require(shared.Measure)
 local features = require(shared.Features)
-local audio = require(script.Parent.StageVoice).new(features.StageVoice)
+local audio = require(script.Parent.StageVoice).new(features.StageVoice, watching)
 local captions = {}
 local host = require(script.Parent.Host).new(require(shared.HostLines), features)
 local send
@@ -235,13 +267,23 @@ local function claim(p, data, simulated)
 end
 send = function(player: Player)
 	local id = player.UserId
+	if not state.online[id] then
+		return
+	end
+	host.listen(player, watching(player) or (id == state.actor and state.phase ~= "lineup"))
 	local today, dailyCue = daily()
 	local actor = Players:GetPlayerByUserId(state.actor)
 	local reactor = state.lastReactor and Players:GetPlayerByUserId(state.lastReactor)
 	remote:FireClient(player, {
 		phase = state.phase,
+		venue = venue.snapshot(player),
+		actorLook = if actor then venue.snapshot(actor).look else "house",
+		soloStage = Show.solo(state, id),
 		mode = state.mode,
+		foley = state.foley,
+		lastAward = receipts[id],
 		useMic = state.useMic,
+		micChecked = state.micChecked,
 		skin = shelf.active[player],
 		actorSkin = if actor
 			then shelf.active[actor] or (if standings[actor.UserId]
@@ -278,7 +320,11 @@ send = function(player: Player)
 		reactions = state.reactionCount,
 		lastReaction = state.lastReaction,
 		studio = RunService:IsStudio(),
-		heard = if id == state.actor and state.claim then (captions[id] or "Caption unavailable") else nil,
+		heard = if id == state.actor
+				and state.claim
+				and not state.foley
+			then (captions[id] or "Caption unavailable")
+			else nil,
 		pace = if state.claim then state.claim.pace else nil,
 		relative = if state.claim then state.claim.relative else nil,
 		simulated = state.claim and state.claim.simulated,
@@ -313,8 +359,8 @@ local function phaseChanged()
 		host.prepare(state)
 	elseif state.phase == "host" then
 		host.speak(state.hostLine or "The room has spoken.", 1.5)
-	elseif state.phase == "take" and state.actor == 0 then
-		host.speak(state.line.text, 4)
+	elseif state.phase == "take" and (state.actor == 0 or state.foley) then
+		host.speak(state.line.text, if state.foley then 8 else 4)
 	elseif state.phase == "direct" or state.phase == "read" or state.phase == "intermission" then
 		host.silence()
 	end
@@ -324,7 +370,7 @@ local function phaseChanged()
 	if state.phase == "lobby" or state.phase == "intermission" then
 		table.clear(captions)
 	end
-	if state.phase == "take" and state.actor ~= 0 and state.useMic then
+	if state.phase == "take" and state.actor ~= 0 and state.useMic and state.micChecked then
 		local p = Players:GetPlayerByUserId(state.actor)
 		if p then
 			audio.start(
@@ -339,13 +385,14 @@ local function phaseChanged()
 		local p = Players:GetPlayerByUserId(state.actor)
 		if p then
 			lastPerformer = p
+			venue.beginStage(p)
 			room.place(p, true)
 		end
 	elseif state.phase == "lobby" and lastPerformer then
 		local p = lastPerformer
 		lastPerformer = nil
 		if p and p.Parent == Players then
-			room.place(p, false)
+			venue.endStage(p)
 		end
 	elseif state.phase == "take" and state.actor == 0 then
 		-- The house bit is authored. It has no microphone, measurements or ranked score.
@@ -353,6 +400,58 @@ local function phaseChanged()
 	end
 	publish()
 end
+local function canExplore(p)
+	return standings[p.UserId] ~= nil and (state.actor ~= p.UserId or state.phase == "lineup")
+end
+venue = require(script.Parent.Venue).new({
+	profile = function(p)
+		return standings[p.UserId]
+	end,
+	changed = send,
+	canExplore = canExplore,
+	attendance = function(p)
+		Show.attendance(state, p.UserId)
+		if not watching(p) then
+			audio.removeListener(p)
+		end
+	end,
+	seat = function(p)
+		room.place(p, false)
+	end,
+	queueCard = function(p, mix)
+		local prior = state.phase
+		if not Show.action(state, p.UserId, "queue", { mode = "Custom", mix = mix }, clock()) then
+			return false
+		end
+		if prior ~= state.phase then
+			phaseChanged()
+		else
+			publish()
+		end
+		return true
+	end,
+})
+require(script.Parent.Streetcar).start(function(p)
+	return canExplore(p) and not watching(p)
+end)
+require(script.Parent.Attractions).bind({
+	canExplore = canExplore,
+	roomOf = function(p)
+		return venue.snapshot(p).room
+	end,
+	grantBadge = function(p, badge)
+		if badge ~= "marquee-relay" and badge ~= "rooftop-portrait" then
+			return false
+		end
+		local row = standings[p.UserId]
+		if not canExplore(p) or not row or row.badges[badge] then
+			return false
+		end
+		row.badges[badge] = true
+		send(p)
+		return true
+	end,
+})
 local function join(p: Player)
 	checkFriends(p)
 	task.spawn(programme.load, p)
@@ -364,13 +463,17 @@ local function join(p: Player)
 	standings[p.UserId] = Profiles.blank()
 	saves.load(p)
 	Show.join(state, p.UserId, clock())
-	p.CharacterAdded:Connect(function(char)
+	local function placeCharacter(char)
 		char:WaitForChild("Humanoid", 8)
 		char:WaitForChild("HumanoidRootPart", 8)
 		if p.Character == char and p.UserId ~= state.actor then
-			room.place(p, false)
+			venue.respawn(p)
 		end
-	end)
+	end
+	p.CharacterAdded:Connect(placeCharacter)
+	if p.Character then
+		task.defer(placeCharacter, p.Character)
+	end
 end
 Players.PlayerAdded:Connect(join)
 for _, p in Players:GetPlayers() do
@@ -381,9 +484,13 @@ Players.PlayerRemoving:Connect(function(p)
 	for _, peers in friends do
 		peers[p] = nil
 	end
+	host.listen(p, false)
+	audio.removeListener(p)
+	venue.leave(p)
 	metrics.leave(p)
 	shelf.leave(p)
 	participation[p] = nil
+	receipts[p.UserId] = nil
 	local previous = state.phase
 	Show.leave(state, p.UserId, clock())
 	standings[p.UserId] = nil
@@ -415,6 +522,10 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 		send(p)
 		return
 	end
+	if verb == "venue" then
+		venue.handle(p, arg, false)
+		return
+	end
 	if turn ~= state.turn then
 		return
 	end
@@ -430,14 +541,15 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 		end
 		return
 	end
-	if verb == "accept" and not RunService:IsStudio() and arg ~= "mic" then
+	if verb == "accept" and not RunService:IsStudio() and arg ~= "mic" and arg ~= "pads" then
 		return
 	end
 	if verb == "encore" and (not state.result or (state.result.overall or 0) < 75) then
 		return
 	end
 	if verb == "micChecked" then
-		if state.useMic and state.actor == id and (state.phase == "direct" or state.phase == "countdown") then
+		if Show.action(state, id, verb, nil, now) then
+			send(p)
 			metrics.once(p, "mic_checked")
 		end
 		return
@@ -470,6 +582,7 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 			state.phase == "take"
 			and state.actor == id
 			and state.useMic
+			and state.micChecked
 			and now < state.untilTime
 			and now - lastWave >= 0.24
 			and type(arg) == "number"
@@ -497,7 +610,7 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 		return
 	end
 	if verb == "claim" then
-		if state.useMic and features.SpeechInput and claim(p, arg, false) then
+		if state.useMic and state.micChecked and features.SpeechInput and claim(p, arg, false) then
 			send(p)
 		end
 		return
@@ -509,6 +622,7 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 			and state.phase == "take"
 			and now < state.untilTime
 			and not state.claim
+			and state.mode ~= "Sound booth"
 			and not state.fixturePending
 			and not state.useMic
 		then
@@ -526,8 +640,22 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 		return
 	end
 	local prior = state.phase
+	if
+		(
+			verb == "rate"
+			or verb == "react"
+			or verb == "predict"
+			or verb == "duelVote"
+			or (verb == "direct" and state.actor ~= id)
+		) and not watching(p)
+	then
+		return
+	end
 	if Show.action(state, id, verb, arg, now) then
-		if verb == "rate" or verb == "direct" then
+		if verb == "predict" and venue.snapshot(p).room == "balcony" then
+			state.balconyPredictions[id] = true
+		end
+		if verb == "rate" or (verb == "direct" and state.actor ~= id) then
 			metrics.once(p, "first_vote")
 			observed(p, state.turn)
 		end
@@ -549,11 +677,17 @@ Market.PromptGamePassPurchaseFinished:Connect(function(p, pass, success)
 		end
 	end
 end)
-task.spawn(function()
-	while true do
-		if Show.tick(state, clock()) then
+-- Interval scheduling adapted from Sleitnick/RbxUtil Timer.simple (MIT).
+-- Source 639440dd551a4d3bfda0f6dbc56ad42e3969f706, modules/timer/init.luau.
+-- License: roblox/third_party/trove/LICENSE.md. Run one authoritative tick per frame at most.
+local nextTick = 0
+RunService.Heartbeat:Connect(function()
+	local now = clock()
+	if now >= nextTick then
+		nextTick = now + 0.05
+		venue.tick(now)
+		if Show.tick(state, now) then
 			phaseChanged()
 		end
-		task.wait(0.1)
 	end
 end)

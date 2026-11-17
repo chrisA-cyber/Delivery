@@ -1,0 +1,8 @@
+DELIVERY_CAMPUS_MARK studio-ready private console reached
+DELIVERY_CAMPUS_MARK private-drill 2 score 100 personal-XP 6 audience-XP 0 voters 0
+DELIVERY_CAMPUS_MARK parallel stage 2 hits 3 voters 0 XP 10
+DELIVERY_CAMPUS_MARK overlap-seconds 1.72
+DELIVERY_CAMPUS_MARK audience-ready optional seat occupied
+DELIVERY_CAMPUS_MARK audience-round 3 dir 2 rating 75 XP 9
+DELIVERY_CAMPUS_MARK audience stage 3 hits 3 voters 1 XP 10
+DELIVERY_CAMPUS_QA PASS separate private drill and stage performance overlapped, outside crowd actions rejected, returning audience seat directed/reacted/predicted/rated the next performer round
