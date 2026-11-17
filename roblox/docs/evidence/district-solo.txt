@@ -1,0 +1,25 @@
+November 17, 2026 • ordinary Studio place, one local client, no microphone.
+The test used native UI plus controlled player movement, physical prompts and timed client inputs on the local server.
+
+Earlier indoor campus, with the same workshop activity logic
+Studio B: three correct cues, score 100, +6 stage XP.
+Writer: stamped mix 8 and received its reviewed combined line.
+Warehouse: walked to Hat, Lantern and Bell in ticket order, used each packing prompt, returned to dispatch, +5 crowd XP.
+Atelier: equipped Apricot, Cobalt and Cherry after the practice and prop unlocks.
+Rooftop: walked to the release, opened Cast Portrait, changed to 42-degree close-up and returned. No gallery save was performed.
+
+Outdoor build before the final move to the park gateway
+{"warehouse":"Success/10","market":"Success/27","balcony":"Success/12","studio":"Success/10","writers":"Success/15","pier":"Success/23","park":"Success/22","theatre":"Success/8","lobby":"at spawn","atelier":"Success/13"}
+Pier: {"elapsed":7.92,"score":100,"progress":3,"status":"done","notice":"Buoy watch complete · 3/3 signals · +3 stage XP.","xp":3}
+Park: {"elapsed":10.27,"progress":4,"status":"done","notice":"Circuit complete · 10.27 seconds · +5 crowd XP.","xp":5}
+Market: {"elapsed":9.65,"progress":3,"status":"done","notice":"Order wrapped · Opening-night parcel · +4 crowd XP.","xp":4}
+Marquee: both physical dial prompts changed 1/1/1 → 2/2/1 → 2/3/2. Crew souvenir awarded.
+Streetcar: boarded in Broadcast Plaza, rode to Signal Park, requested a stop in transit, disembarked and saw the passenger HUD close.
+One desktop avatar / six-second observation: 360 frames, median 16.7 ms, p95 17.9 ms. This measures the development workstation, not a phone.
+
+Final park-gateway release preview
+Normal default spawn: Signal Park (99, 3.258, 80). Desktop 1453 × 1083, custom avatar camera, Map visible, district fixture absent.
+From the starting sidewalk every atlas destination returned a successful Roblox walking path: {"warehouse":"Success/22","market":"Success/34","balcony":"Success/27","studio":"Success/28","writers":"Success/30","pier":"Success/40","park":"Success/5","theatre":"Success/26","lobby":"Success/19","atelier":"Success/19"}.
+Public Sound booth played via actual role selection, Take the stage, Classic cartoon, and keyboard 1/2/3 in the three cue windows. Bell, Squeak and Thump were all Perfect. The reveal scored 100 and credited +10 stage XP.
+Galaxy A16 landscape emulator: 685 × 338 logical viewport. Joystick and jump visible in free roam. Map and live show are 44 pixels tall. Atlas visited Waterfront Pier. Private warehouse waypoint appeared on PropBell (92 × 22 logical pixels). Revised role card and pier instructions both reported TextFits=true.
+Restored desktop preview, restarted for a new player at Signal Park, no simulated input active. No physical-phone performance measurement, account gallery save, real mic, public purchase or published-game test.

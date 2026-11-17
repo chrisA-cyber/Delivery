@@ -1,0 +1,7 @@
+# Who the jokes are for
+
+The performer pool and the room are different audiences. Roblox reported in February 2026 that 35% of its age-checked daily users were under 13, 38% were 13–17 and 27% were adults. The figures describe the age-checked subset at that date. Delivery has no audience measurements of its own yet. Keep the common room readable for younger spectators and give teens and adults something specific to perform. [Roblox age-cohort report](https://about.roblox.com/newsroom/2026/02/moving-beyond-self-reported-age)
+
+Roblox's 2025 search review found strong roleplay, simulation and multiplayer interest. Among the Gen Z users it surveyed, 48% reported using emotes to entertain other people. Those findings motivated setups involving a badly timed emote, a tycoon conveyor, an obby reset and a roleplay shift. They supply creative starting points, not predictions of which Delivery lines will land. [Roblox Replay](https://about.roblox.com/newsroom/2025/12/roblox-replay-decoded-search-style)
+
+Original joke format: recognize the situation in the first breath and leave the performer a turn in the second. “I touched the checkpoint with my hat. Apparently the hat gets to continue.” “I joined the wrong server and somehow became the mayor of a staircase.” The nine preset custom cards combine a choice of setup with an approved ending. This preserves player authorship without a public text field. Record cards players voluntarily quote, redraw or repeat in the friends test before adding another trend pack.

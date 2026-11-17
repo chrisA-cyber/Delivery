@@ -1,0 +1,4 @@
+src/shared/Catalogue.luau
+.tools/
+build/
+src/client/FeatherPaths.luau
