@@ -12,6 +12,10 @@ local green = Color3.fromRGB(172, 189, 146)
 local block = Color3.fromRGB(204, 180, 162)
 local stone = Color3.fromRGB(183, 159, 129)
 local entries = {
+	post = { "Post office", "book-open" },
+	records = { "Needle Drop", "headphones" },
+	cafe = { "Bakehouse", "bell" },
+	gallery = { "Print gallery", "award" },
 	lobby = { "Plaza", "radio" },
 	theatre = { "Theatre", "mic" },
 	balcony = { "Rooftop", "users" },
@@ -23,7 +27,10 @@ local entries = {
 	park = { "Signal Park", "radio" },
 	market = { "Market", "award" },
 }
+local views = { "district", "shops", "studios" }
+local tabNames = { district = "Outdoor district", shops = "Town shops", studios = "Theatre block" }
 local groups = {
+	shops = { post = true, records = true, cafe = true, gallery = true, lobby = true, market = true },
 	district = { lobby = true, theatre = true, balcony = true, pier = true, park = true, market = true },
 	studios = {
 		lobby = true,
@@ -64,8 +71,11 @@ local function button(parent, name, caption)
 end
 -- A schematic spaces stops evenly along the avenue; landmarks and the player's dot use the same projection.
 local function project(which, x, z)
-	local span = if which == "district" then 122 else 51
-	local extent = if which == "district" then { 24, 62, 118, 171 } else { 24, 53, 89, 118 }
+	local span = if which == "district" then 122 elseif which == "shops" then 87 else 51
+	local extent = if which == "district"
+		then { 24, 62, 118, 171 }
+		elseif which == "shops" then { 52, 81, 125, 171 }
+		else { 24, 53, 89, 118 }
 	local pz = 0.1
 	for i = 1, 3 do
 		pz += math.clamp((z - extent[i]) / (extent[i + 1] - extent[i]), 0, 1) * 0.265
@@ -113,7 +123,7 @@ function Map.new(parent, onSelect)
 		stripe.Position = UDim2.fromScale(0.5, 0.5)
 		stripe.Size = UDim2.new(1, -4, 1, -4)
 	end
-	for _, groupId in { "district", "studios" } do
+	for _, groupId in views do
 		local layer = slab(canvas, groupId .. "Features", ground)
 		layer.Size = UDim2.fromScale(1, 1)
 		backgrounds[groupId] = layer
@@ -129,6 +139,61 @@ function Map.new(parent, onSelect)
 				street(layer, groupId, side, 155, 0, 155, "MarketApproach")
 			end
 			street(layer, groupId, 0, 155, 0, 171, "MarketEntry")
+		elseif groupId == "shops" then
+			street(layer, groupId, -103, 74, 103, 74, "LanternStreet")
+			for _, id in { "post", "records", "cafe", "gallery" } do
+				local def = Venues.rooms[id]
+				if def then
+					rectangle(
+						layer,
+						def.x - 13,
+						def.z - 8,
+						def.x + 13,
+						def.z + 8,
+						block,
+						"ShopFrontage",
+						groupId
+					)
+					if id == "post" or id == "records" then
+						street(layer, groupId, def.x, 74, def.x, def.z, "ShopEntrance")
+					else
+						street(
+							layer,
+							groupId,
+							if def.x < 0 then -32 else 32,
+							def.z,
+							def.x,
+							def.z,
+							"ShopEntrance"
+						)
+					end
+				end
+			end
+			street(layer, groupId, 0, 62, 0, 74, "PlazaWalk")
+			for _, side in { -32, 32 } do
+				street(layer, groupId, side, 74, side, 156, "MarketWalk")
+				street(layer, groupId, side, 156, 0, 156, "MarketApproach")
+			end
+			street(layer, groupId, 0, 156, 0, 171, "MarketEntry")
+			-- The walking cut-through bends behind Needle Drop and joins the east Market Walk.
+			street(layer, groupId, 99, 90, 99, 115, "RecordLane")
+			street(layer, groupId, 99, 115, 90, 115, "CourtApproach")
+			street(layer, groupId, 90, 115, 90, 125, "CourtApproach")
+			street(layer, groupId, 90, 125, 82, 125, "ClockCourt")
+			street(layer, groupId, 82, 125, 82, 150, "ClockCourt")
+			street(layer, groupId, 82, 150, 32, 150, "MarketCutThrough")
+			local courtX, courtY = project(groupId, 82, 150)
+			local courtLabel = Instance.new("TextLabel")
+			courtLabel.Name = "ClockCourt"
+			courtLabel.AnchorPoint = Vector2.new(0.5, 0)
+			courtLabel.Position = UDim2.new(courtX, 0, courtY, 4)
+			courtLabel.Size = UDim2.new(0.28, 0, 0, 17)
+			courtLabel.BackgroundTransparency = 1
+			courtLabel.Font = Enum.Font.GothamMedium
+			courtLabel.TextColor3 = ink
+			courtLabel.Text = "Clock Court"
+			courtLabel.TextSize = 12
+			courtLabel.Parent = layer
 		else
 			for _, x in { -51, 51 } do
 				for _, z in { 53, 89 } do
@@ -170,18 +235,21 @@ function Map.new(parent, onSelect)
 			node.BackgroundColor3 = if selected == id then gold else paper
 		end
 	end
-	for index, groupId in { "district", "studios" } do
-		local b = button(
-			tabs,
-			groupId .. "Tab",
-			if groupId == "district" then "Outdoor district" else "Theatre block"
-		)
-		b.Position = UDim2.new((index - 1) * 0.5, 2, 0, 1)
-		b.Size = UDim2.new(0.5, -4, 0, 44)
+	for index, groupId in views do
+		local b = button(tabs, groupId .. "Tab", tabNames[groupId])
+		b.Position = UDim2.new((index - 1) / #views, 2, 0, 1)
+		b.Size = UDim2.new(1 / #views, -4, 0, 44)
+		b.TextScaled = true
+		local cap = Instance.new("UITextSizeConstraint")
+		cap.MinTextSize = 10
+		cap.MaxTextSize = 14
+		cap.Parent = b
 		tabButtons[groupId] = b
 		b.Activated:Connect(function()
 			show(groupId)
-			onSelect(if groups[which][selected] then selected else "lobby")
+			onSelect(
+				if groups[which][selected] then selected elseif which == "shops" then "records" else "lobby"
+			)
 		end)
 	end
 	for _, id in Venues.order do
@@ -230,10 +298,16 @@ function Map.new(parent, onSelect)
 	return {
 		select = function(id)
 			selected = id
-			show(if groups[which][id] then which elseif groups.district[id] then "district" else "studios")
+			show(
+				if groups[which][id]
+					then which
+					elseif groups.district[id] then "district"
+					elseif groups.shops[id] then "shops"
+					else "studios"
+			)
 		end,
 		open = function(id)
-			show(if groups.district[id] then "district" else "studios")
+			show(if groups.district[id] then "district" elseif groups.shops[id] then "shops" else "studios")
 			if nodes[id] then
 				scroll.CanvasPosition = Vector2.zero
 			end
@@ -242,8 +316,8 @@ function Map.new(parent, onSelect)
 			local x, y = project(which, pos.X, pos.Z)
 			position.Visible = x >= 0
 				and x <= 1
-				and pos.Z >= 14
-				and pos.Z <= (if which == "district" then 200 else 132)
+				and pos.Z >= (if which == "shops" then 48 else 14)
+				and pos.Z <= (if which == "district" then 200 elseif which == "shops" then 179 else 132)
 			position.Position = UDim2.fromScale(math.clamp(x, 0.03, 0.97), y)
 		end,
 		nodes = nodes,

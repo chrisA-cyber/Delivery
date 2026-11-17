@@ -1,4 +1,5 @@
 --!strict
+local ShopCatalogue = if script then require(script.Parent.ShopCatalogue) else require("./ShopCatalogue")
 local Venues = {}
 Venues.order =
 	{ "lobby", "theatre", "studio", "writers", "warehouse", "atelier", "balcony", "pier", "park", "market" }
@@ -62,6 +63,11 @@ Venues.rooms = {
 		action = "Watch the show",
 	},
 }
+local shopOrder = { "post", "records", "cafe", "gallery" }
+for _, id in shopOrder do
+	table.insert(Venues.order, id)
+	Venues.rooms[id] = ShopCatalogue.shops[id]
+end
 Venues.props = { Bell = "PropBell", Lantern = "PropLantern", Hat = "PropHat" }
 Venues.looks = {
 	house = { name = "House lights", index = 1 },
@@ -70,6 +76,12 @@ Venues.looks = {
 	cherry = { name = "Cherry cue stand", index = 4, badge = "prop-runner" },
 }
 function Venues.zone(x: number, z: number, y: number): string
+	for _, id in shopOrder do
+		local room = Venues.rooms[id]
+		if math.abs(x - room.x) <= 9 and math.abs(z - room.z) <= 9 then
+			return id
+		end
+	end
 	if x >= 87 and x <= 164 and z >= 39 and z <= 111 then
 		return "park"
 	end

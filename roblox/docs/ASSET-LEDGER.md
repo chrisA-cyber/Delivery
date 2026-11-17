@@ -39,3 +39,5 @@ The three original Foley WAV masters were synthesized from scratch by art/script
 ## Outdoor district
 
 The waterfront, park and market, studio buildings, dusk lighting, curb signs, crane, park course, wrapping stalls, gulls, flying kites and six-seat sightseeing streetcar are original scenery and interactive objects made for this place. The Blender source and Roblox parts ship together. The open-world revision used zero Higgsfield credits and zero Robux.
+
+The town revision adds original Blender storefronts, shop interiors, neighboring façades, street signs, Clock Court clockwork, bell pulls, benches and landscaping. Town residents and the layered postcard illustration are native Roblox constructions authored for this project. The record deck uses the existing three-instrument score. The courtyard bells play the bundled Roblox volume-slider clip at three pitches with distance-limited playback. No external artwork or additional paid generation was used.

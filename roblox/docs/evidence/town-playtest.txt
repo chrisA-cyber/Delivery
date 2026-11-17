@@ -1,0 +1,41 @@
+Delivery | Town streets | November 17, 2026
+Ordinary local Roblox Studio place. Final shipping binary SHA-256
+567E2ABB4FEF9EDF735116EA213DD8A9BA9D31A2B95E5121719653B81874F072
+
+Shop loop (one local player, integrated town development build)
+Walked from Signal Park into Dockside Post. Accepted a striped-sleeve first pressing and
+walked it inside Needle Drop Records. Recipient accepted it once. Crowd XP increased by 3.
+At the record counter, replayed Last Tram Home and entered Bell / Thump / Bell using
+the normal number keys. The round completed for 3 stage XP. The client observed 18 sound
+instances across the demonstration, replay and played notes.
+Took the Clock Court passage between the record shop and Market Walk. Sat on BenchSeat.
+Space released the avatar. Each of the three chimes registered one prompt, one tone and
+two color changes on the server after the individual chime selection was revised.
+At Copper Kettle Bakehouse, filled Honey cloud with Brioche / Honey / Cream for 3 crowd XP.
+At Pocket Print Gallery, printed Signal gazebo in Sea glass with Greetings from Signal Park!
+The local profile held postcard code 12. Crowd XP increased by 3.
+Three sidewalk residents moved 3.71–4.32 studs during a short observation. A fourth stood still.
+
+Camera and controls
+Galaxy A16 landscape Studio emulator, 685 × 338 logical pixels. Used the Town shops tab and
+Visit shop. Map tabs measured 126 × 44, shop targets 114 × 44 and counter choices 147 × 44.
+Walking joystick and jump were available. Opened the four physical counters and checked
+the text fits, shop scene and controls. Printed-postcard, postal, cafe, records and map
+captures in this directory show the phone layout after the counter camera correction.
+
+Final shipping place, ordinary desktop Studio Play mode
+Roblox pathfinding succeeded from the Signal Park spawn to all 14 landmarks. The paths to
+Records, Gallery, Bakehouse and Post had 14, 23, 33 and 36 waypoints respectively.
+All four interiors used the native walking camera with a maximum of 5.5 studs. Using each
+physical counter switched to its dedicated view. Leaving Dockside Post restored native
+camera control and the player's previous maximum of 400 studs. The owner preview was left
+at the open postal entrance. Final park arrival and gallery counter captures document the fix.
+
+Release checks
+30 behavior groups, 729 marquee configurations, content validation, formatting and lint passed.
+Blender collision audit covered 25 routes / 6,594 positions, 23 unique anchors, 7,565
+streetcar corridor samples, seven harbor sightlines and 16 counter-camera clearances.
+The art export contains 4,396 native objects. No paid generations were used in this revision.
+This town playthrough used local Studio and one client. Previous district multiplayer receipts
+cover the shared stage separately. Physical phone performance, cloud saves and live voice
+remain private-release checks.

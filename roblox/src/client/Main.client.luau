@@ -10,6 +10,7 @@ ui.panel.Visible = false
 ui.nav.Visible = false
 local fx = require(script.Parent.ShowFX).new(ui.gui, shared)
 local Modes = require(shared.Modes)
+local ShopCatalogue = require(shared.ShopCatalogue)
 local Shop = require(script.Parent.Shop)
 local Capture = require(script.Parent.Capture)
 local state
@@ -259,7 +260,7 @@ local function menu(s)
 		copy(
 			"Lantern Street",
 			"Pier west. Park east.",
-			"Walk south around the terrace for the Night Market. Board the streetcar at a marked stop and choose Get off when it arrives. Map shows both the street routes and the nearby studios."
+			"Ride the streetcar between the pier and park. In Town shops, look for Clock Court behind Needle Drop. Follow its bells and benches south to Market Walk."
 		)
 		ui.button("District map", function()
 			showPage("map")
@@ -286,6 +287,28 @@ local function menu(s)
 				row.pierBest or 0,
 				row.parkRuns or 0,
 				row.marketOrders or 0
+			)
+		)
+		ui.button("District map", function()
+			showPage("map")
+		end, true, "book-open")
+		ui.button("My badges", function()
+			showPage("badges")
+		end, false, "award")
+		ui.button("Town logbook", function()
+			showPage("townRecords")
+		end, false, "book-open")
+	elseif page == "townRecords" and row then
+		ui.phase.Text = "DELIVERY   /   TOWN LOGBOOK"
+		copy(
+			"Completed shop tickets",
+			"Around town",
+			string.format(
+				"%d parcels delivered  ·  %d records played  ·  %d orders served  ·  %d postcards printed",
+				row.postDeliveries or 0,
+				row.recordSides or 0,
+				row.cafeOrders or 0,
+				row.galleryPrints or 0
 			)
 		)
 		ui.button("District map", function()
@@ -693,6 +716,11 @@ render = function(s)
 		openedRoomRevision = v.openRevision
 		if not mine then
 			local destinations = {
+				explore = "explore",
+				post = "post",
+				records = "records",
+				cafe = "cafe",
+				gallery = "gallery",
 				lobby = "explore",
 				theatre = if v.watching then "show" else "explore",
 				balcony = if v.watching then "show" else "explore",
@@ -749,7 +777,8 @@ render = function(s)
 		(page == "menu" or page == "record") and not mine and not freeCamera,
 		false,
 		freeCamera,
-		page == "welcome"
+		page == "welcome",
+		if ShopCatalogue.shops[page] then page else nil
 	)
 	game:GetService("GuiService").TouchControlsEnabled = walking
 	local offstage = page ~= "show"

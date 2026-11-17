@@ -680,4 +680,140 @@ test("market requires ordered materials and matching stamp at counter, expiry ca
 		"late profile load preserves outdoor records"
 	)
 end)
+local ShopCatalogue = require("../src/shared/ShopCatalogue")
+local Business = require("../src/server/Business")
+test("mail routes rotate recipients and delivered parcels reward only once at the address", function()
+	local v, row = Activities.new(), Profiles.blank()
+	assert(not Business.start(v, ShopCatalogue, "post", row, 10, false), "parcel collection requires counter")
+	local seen = {}
+	for n = 1, 3 do
+		assert(Business.start(v, ShopCatalogue, "post", row, n * 10, true), "take next parcel")
+		local r = v.business
+		assert(not seen[r.target], "first three receipts have distinct recipients")
+		seen[r.target] = true
+		assert(not Business.delivery(v, ShopCatalogue, row, n * 10 + 1, "wrong", true), "address must match")
+		assert(
+			not Business.delivery(v, ShopCatalogue, row, n * 10 + 2, r.target, false),
+			"walk up to destination"
+		)
+		assert(Business.delivery(v, ShopCatalogue, row, n * 10 + 3, r.target, true), "complete delivery")
+		assert(
+			not Business.delivery(v, ShopCatalogue, row, n * 10 + 4, r.target, true),
+			"signed parcel cannot pay twice"
+		)
+	end
+	assert(
+		row.postDeliveries == 3 and row.crowd == 9 and row.badges["town-carrier"],
+		"three saved mail receipts"
+	)
+end)
+test(
+	"record deck plays a full side before input, replays mistakes and validates at the listening deck",
+	function()
+		local v, row = Activities.new(), Profiles.blank()
+		Business.start(v, ShopCatalogue, "records", row, 100, true)
+		local r = v.business
+		assert(
+			not Business.pick(v, ShopCatalogue, row, r.run, r.notes[1], r.listenUntil - 0.01, true),
+			"listen before playing"
+		)
+		assert(
+			not Business.pick(v, ShopCatalogue, row, r.run, r.notes[1], r.listenUntil, false),
+			"cannot play from another shop"
+		)
+		local wrong = if r.notes[1] == "Bell" then "Thump" else "Bell"
+		local endOne = r.listenUntil
+		assert(
+			Business.pick(v, ShopCatalogue, row, r.run, wrong, endOne, true)
+				and r.progress == 0
+				and r.listenUntil > endOne,
+			"mismatch restarts the side"
+		)
+		assert(
+			Business.replay(v, r.run, r.listenUntil + 1, true),
+			"manual replay starts another listening pass"
+		)
+		local time = r.listenUntil
+		for i, note in r.notes do
+			assert(
+				Business.pick(v, ShopCatalogue, row, r.run, note, time + i * 0.3, true),
+				"matching beat accepted"
+			)
+		end
+		assert(
+			r.status == "done" and row.recordSides == 1 and row.stage == 3 and row.badges["crate-digger"],
+			"memorised side awards stage standing"
+		)
+		assert(
+			Business.start(v, ShopCatalogue, "records", row, time + 10, true) and #v.business.notes == 4,
+			"next pressing changes length"
+		)
+	end
+)
+test("café prepares six distinct slips in order, rejects distant or foreign ingredients", function()
+	local v, row = Activities.new(), Profiles.blank()
+	local completed = {}
+	for n = 1, 6 do
+		local time = n * 10
+		assert(Business.start(v, ShopCatalogue, "cafe", row, time, true), "open order")
+		local r = v.business
+		assert(not completed[r.orderName], "distinct order slip")
+		completed[r.orderName] = true
+		assert(
+			not Business.pick(v, ShopCatalogue, row, r.run, "off-menu", time + 1, true),
+			"unknown input rejected"
+		)
+		assert(
+			not Business.pick(v, ShopCatalogue, row, r.run, r.recipe[1], time + 1, false),
+			"must stay at café"
+		)
+		assert(
+			Business.pick(v, ShopCatalogue, row, r.run, r.recipe[2], time + 1, true) and r.progress == 0,
+			"wrong ingredient leaves order intact"
+		)
+		for i, ingredient in r.recipe do
+			assert(
+				Business.pick(v, ShopCatalogue, row, r.run, ingredient, time + 2 + i / 3, true),
+				"add next recipe ingredient"
+			)
+		end
+	end
+	assert(row.cafeOrders == 6 and row.crowd == 18 and row.badges["counter-crew"], "completed tickets saved")
+end)
+test("gallery prints all 27 curated designs and restores the most recent signed postcard", function()
+	local v, row = Activities.new(), Profiles.blank()
+	local seen = {}
+	for _, scene in ShopCatalogue.palette[1] do
+		for _, ink in ShopCatalogue.palette[2] do
+			for _, greeting in ShopCatalogue.palette[3] do
+				assert(Business.start(v, ShopCatalogue, "gallery", row, 10, true), "open press")
+				local r = v.business
+				assert(
+					not Business.pick(v, ShopCatalogue, row, r.run, ink, 11, true),
+					"wrong layer cannot change print"
+				)
+				for i, choice in { scene, ink, greeting } do
+					assert(
+						Business.pick(v, ShopCatalogue, row, r.run, choice, 11 + i, true),
+						"stamp allowed preset layer"
+					)
+				end
+				assert(not seen[row.postcard], "unique folded postcard index")
+				seen[row.postcard] = true
+				local print = ShopCatalogue.print(row.postcard)
+				assert(
+					print.scene == scene and print.ink == ink and print.greeting == greeting,
+					"reloaded exact postcard"
+				)
+			end
+		end
+	end
+	local saved = Profiles.blank()
+	Profiles.mergePending(saved, row)
+	assert(
+		saved.galleryPrints == 27 and saved.postcard == 27 and saved.badges["town-printmaker"],
+		"late-loaded gallery data preserves selections"
+	)
+	assert(not ShopCatalogue.print(28) and not ShopCatalogue.print(0), "unknown stored print stays blank")
+end)
 print(passed, "groups passed")

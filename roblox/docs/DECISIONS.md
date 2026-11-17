@@ -29,3 +29,12 @@
 | Pin Trove for microphone cleanup and Feather for cross-device interface symbols. | Reusing licensed, inspectable GitHub code and paths reduced custom work. The shipped place can open without contacting those repositories. | Replace the scoped cleanup and glyph helpers with native equivalents, then remove their imports and licence bundles. |
 
 The competitor observations, creator listings and pinned GitHub revisions are documented in [the reference study](REFERENCE-STUDY.md).
+
+## Town streets
+
+| Choice | Reason | How to reverse it |
+|---|---|---|
+| Place a business along each of the four formerly sparse approaches. Give each a walk-in storefront and its own playable counter. | Walking from one district to another now presents an activity before the destination, and the counter preserves voluntary participation. | Remove the four shop entries, business state and counters together with their town art. |
+| Use parcel delivery, short record riffs, bakehouse recipes and curated postcard designs. | The post office connects multiple addresses, the other counters reward different skills and all four can run independently of the live show. | Retain the street façades and disable the relevant business entry and counter. |
+| Put Clock Court on a second route to the market and give it working bells, clock hands and seating. | Walking the side streets offers a discovery and a place to meet friends between jobs. | Remove the court geometry, runtime clock and related street signs and atlas label together. |
+| Animate four neighborhood residents locally. | They make the routes legible on a solo visit, offer local directions and leave collision and server performance available for players. | Remove the four route definitions and animation loop from the street crew. |

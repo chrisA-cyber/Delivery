@@ -166,11 +166,11 @@ def build_districts(group, piece, rod, disk, rot, anchor, sign):
         disk("TieredCanopy",(size,.67,size),(x,8.99+j*.56,z),"Cobalt")
     piece("BandstandFinial",(.76,2.34,.76),(x,11.71,z),"Bulb","Ball")
     for i,(x,z,h) in enumerate([(83,47,10),(95,39,12),(109,36,11),(124,41,13),(146,43,11),(156,55,13),
-                                (160,78,11),(152,104,13),(136,112,12),(115,116,10),(96,105,11),(84,88,13)]):
+                                (160,78,11),(152,104,13),(136,112,12),(115,116,10),(96,105,11),(81,110,13)]):
         tree(x,z,["Petal","Lilac","Mulberry"][i%3],h,(-1)**i)
     for x,z in [(95,62),(103,91),(129,107)]:
         bench(x,z)
-    for x,z in [(107,43),(152,70),(106,105),(85,81)]:
+    for x,z in [(107,43),(152,70),(106,105),(91.45,79.95)]:
         lantern(x,z)
     notice("ParkGateSign","SIGNAL PARK",92,68,0,11.80,"Cobalt")
 

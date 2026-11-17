@@ -6,6 +6,7 @@ local Tween = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
 local Debris = game:GetService("Debris")
 local Instruments = require(script.Parent.DeliveryInstruments)
+local ShopWalkingZoom = require(script.Parent.ShopWalkingZoom)
 local ShowFX = {}
 local gold = Color3.fromRGB(255, 217, 135)
 local pink = Color3.fromRGB(255, 93, 185)
@@ -20,6 +21,13 @@ local cameras = {
 	reveal = { Vector3.new(-1.5, 8.1, 11.5), Vector3.new(0, 8.8, -18), 50 },
 	winner = { Vector3.new(4, 4.9, 1.7), Vector3.new(5.1, 5, -10), 48 },
 	daily = { Vector3.new(11.1, 6, -3.7), Vector3.new(14, 5.2, -13.8), 45 },
+}
+-- The shop lenses sit just inside the open portals and point past the visitor toward each workbench.
+local counters = {
+	post = { Vector3.new(-83.4, 5.75, 63.8), Vector3.new(-86.40, 3.20, 51.35), 64 },
+	records = { Vector3.new(89.1, 5.65, 83.20), Vector3.new(84.65, 3.25, 95.65), 65 },
+	cafe = { Vector3.new(-44.35, 5.75, 124.6), Vector3.new(-57.20, 3.20, 120.65), 65 },
+	gallery = { Vector3.new(44.35, 5.75, 126.55), Vector3.new(57.35, 3.35, 130.65), 64 },
 }
 local function prop(parent, name, size, pos, color)
 	local part = Instance.new("Part")
@@ -110,6 +118,11 @@ function ShowFX.new(gui: ScreenGui, shared)
 		reduced = preferences.ReducedMotionEnabled
 	end)
 	local freeCamera = true
+	local counter = nil
+	local priorWalkPose: CFrame? = nil
+	local priorWalkPosition: Vector3? = nil
+	local priorWalkFov: number? = nil
+	local desk = gui:WaitForChild("ControlDesk") :: GuiObject
 	local campusLighting: boolean? = nil
 	local roamFov = if workspace.CurrentCamera then workspace.CurrentCamera.FieldOfView else 70
 	local lastHumanoid: Humanoid? = nil
@@ -202,15 +215,28 @@ function ShowFX.new(gui: ScreenGui, shared)
 			Debris:AddItem(p, 1.45)
 		end
 	end
-	local function update(state, backstage, welcome, exploring, overview)
+	local function update(state, backstage, welcome, exploring, overview, counterId)
 		s = state
 		local accepted = s.actor == Players.LocalPlayer.UserId and s.phase ~= "lineup" and s.phase ~= "lobby"
 		local wantsFree = if exploring ~= nil
 			then exploring
 			else s.venue ~= nil and not s.venue.watching and not accepted and not welcome
-		if wantsFree and not freeCamera then
+		local nextCounter = if wantsFree and counterId then counters[counterId] else nil
+		if nextCounter and not counter then
+			local camera = workspace.CurrentCamera
+			local character = Players.LocalPlayer.Character
+			if camera and character and camera.CameraType == Enum.CameraType.Custom then
+				priorWalkPose = camera.CFrame
+				priorWalkPosition = character:GetPivot().Position
+				priorWalkFov = camera.FieldOfView
+			end
+		elseif counter and not nextCounter and not wantsFree then
+			priorWalkPose, priorWalkPosition, priorWalkFov = nil, nil, nil
+		end
+		if wantsFree and (not freeCamera or (counter and not nextCounter)) then
 			lastHumanoid = nil
 		end
+		counter = nextCounter
 		freeCamera = wantsFree
 		local outside = wantsFree or welcome == true
 		if campusLighting ~= outside then
@@ -310,28 +336,85 @@ function ShowFX.new(gui: ScreenGui, shared)
 			meterAt = os.clock()
 		end
 	end)
+	local player = Players.LocalPlayer
+	local walkingZoom = ShopWalkingZoom.new(player, set)
+	local function resetCharacterCamera()
+		walkingZoom.reset()
+		lastHumanoid = nil
+		priorWalkPose, priorWalkPosition, priorWalkFov = nil, nil, nil
+	end
+	player.CharacterRemoving:Connect(resetCharacterCamera)
+	player.CharacterAdded:Connect(resetCharacterCamera)
+	Run:BindToRenderStep("DeliveryWalkingZoom", Enum.RenderPriority.Camera.Value - 1, function()
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		walkingZoom.update(
+			freeCamera and not counter and gui.Enabled and not player:GetAttribute("DeliveryPortraitPose"),
+			root
+		)
+	end)
+	gui.Destroying:Connect(function()
+		Run:UnbindFromRenderStep("DeliveryWalkingZoom")
+		Run:UnbindFromRenderStep("DeliveryShowCamera")
+		walkingZoom.release()
+	end)
 	local keyLight = set:WaitForChild("ShowRig"):WaitForChild("Key"):WaitForChild("Key") :: PointLight
 	local lastFrame = 0
 	Run:BindToRenderStep("DeliveryShowCamera", Enum.RenderPriority.Camera.Value + 1, function(dt)
 		local camera = workspace.CurrentCamera
-		if not camera then
+		if not camera or not gui.Enabled then
+			return
+		end
+		if counter then
+			local viewport = camera.ViewportSize
+			local aspect = viewport.X / math.max(viewport.Y, 1)
+			local covered = if desk.Visible then desk.AbsoluteSize.Y / math.max(gui.AbsoluteSize.Y, 1) else 0
+			local aimDrop = math.clamp((covered - 0.25) / 0.25, 0, 1) * 1.5
+			local target = counter[2] - Vector3.new(0, aimDrop, 0)
+			camera.CameraType = Enum.CameraType.Scriptable
+			camera.CFrame = CFrame.lookAt(counter[1], target)
+			camera.Focus = CFrame.new(target)
+			camera.FieldOfView = counter[3] + math.clamp((1.30 - aspect) * 13, 0, 12)
 			return
 		end
 		if freeCamera then
-			local player = Players.LocalPlayer
 			local character = player.Character
 			local humanoid = if character then character:FindFirstChildOfClass("Humanoid") else nil
 			if humanoid and humanoid ~= lastHumanoid and not player:GetAttribute("DeliveryPortraitPose") then
 				lastHumanoid = humanoid
 				camera.CameraType = Enum.CameraType.Custom
 				camera.CameraSubject = humanoid
-				camera.FieldOfView = roamFov
+				camera.FieldOfView = priorWalkFov or roamFov
 				local root = humanoid.RootPart
-				if root then
+				local firstPerson = player.CameraMode == Enum.CameraMode.LockFirstPerson
+					or (not priorWalkPose and (camera.CFrame.Position - camera.Focus.Position).Magnitude < 1)
+				if
+					not firstPerson
+					and priorWalkPose
+					and priorWalkPosition
+					and root
+					and (root.Position - priorWalkPosition).Magnitude <= 10
+				then
+					local offset = priorWalkPose.Position - root.Position
+					if walkingZoom.indoors(root.Position) and offset.Magnitude > 5.5 then
+						camera.CFrame = priorWalkPose
+							+ (root.Position + offset.Unit * 5.5 - priorWalkPose.Position)
+					else
+						camera.CFrame = priorWalkPose
+					end
+				elseif root and not firstPerson then
 					local target = root.Position + Vector3.new(0, 1.2, 0)
-					camera.CFrame =
-						CFrame.lookAt(target - root.CFrame.LookVector * 10 + Vector3.new(0, 4, 0), target)
+					local parkArrival = math.abs(root.Position.X - 99) <= 5
+						and math.abs(root.Position.Z - 80) <= 5
+						and root.Position.Y < 12
+					local distance = if parkArrival or walkingZoom.indoors(root.Position) then 4.8 else 10
+					local eye = target
+						- root.CFrame.LookVector * distance
+						+ Vector3.new(0, distance * 0.35, 0)
+					camera.CFrame = CFrame.lookAt(eye, target)
+					camera.Focus = CFrame.new(target)
 				end
+				priorWalkPose, priorWalkPosition, priorWalkFov = nil, nil, nil
 			end
 			return
 		end

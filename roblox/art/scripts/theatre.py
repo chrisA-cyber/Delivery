@@ -16,6 +16,7 @@ scene.render.engine = "CYCLES"
 scene.cycles.samples = 12
 convert = Matrix(((1,0,0,0),(0,0,-1,0),(0,1,0,0),(0,0,0,1)))
 palette = {
+    "PlaneLeaf": ("679b75","SmoothPlastic",.02,.75), "PlaneShade": ("447b70","SmoothPlastic",.02,.82),
     "Ink": ("161524","SmoothPlastic",0.2,.32), "Black":("11101b","Metal",.65,.28),
     "Velvet":("482056","SmoothPlastic",.04,.72), "Violet":("271a47","SmoothPlastic",.03,.74),
     "Seat":("73324e","SmoothPlastic",.12,.56), "Cloth":("3b234c","Fabric",.0,.78),
@@ -478,6 +479,10 @@ from campus import build_campus
 build_campus(group,piece,rod,disk,rotation,anchor,venue_sign)
 from districts import build_districts
 build_districts(group,piece,rod,disk,rotation,anchor,venue_sign)
+from town import build_town
+build_town(group,piece,rod,disk,rotation,anchor,venue_sign)
+from clockcourt import build_clock_court
+build_clock_court(group,piece,rod,disk,rotation,anchor,venue_sign)
 # Save editable PBR sources and a local assembly which never needs asset IDs to render.
 out={"ClassName":"Model","Children":[{"Name":k,"ClassName":"Model","Children":v[1]} for k,v in groups.items()]}
 (ROOT/"ShowSet.model.json").write_text(json.dumps(out,separators=(",",":")),encoding="utf8")
@@ -502,6 +507,10 @@ review_camera("District rooftops",(153,149,289),(-6,2,92),68)
 review_camera("Harbor to theatre",(-154,27,104),(-65,6,63),70)
 review_camera("Signal boulevard",(85,11,74),(138,5,80),76)
 review_camera("Festival walk",(3,8,142),(0,5,181),67)
+review_camera("Post Office facade",(-72.7,14.2,83.9),(-88.6,9.8,60.4),75)
+review_camera("Needle Drop facade",(74.3,12.7,64.4),(86.0,8.8,86.0),76)
+review_camera("Bakehouse entrance",(-28.1,12.8,136.9),(-47.6,10.35,118.6),76)
+review_camera("Pocket Prints facade",(28.5,12.25,112.7),(47.25,8.65,131.0),74)
 review_camera("Campus street",(-2,8.0,82),(0,6,37),60)
 review_camera("Welcome shot",(13.3,23.3,100.8),(-1.4,5.2,47.5),64)
 review_camera("The prop depot",(38,8,61),(60,4,51),56)
@@ -532,6 +541,10 @@ area("Terrace at dusk",(11,28,117),(1,5,119),(.75,.66,1),18500,24)
 area("Harbor daylight",(-117,53,84),(-143,2,74),(.72,.86,1),95000,51)
 area("Honey meadow",(121,45,65),(126,3,84),(1,.84,.69),85000,56)
 area("Market lantern sky",(3,38,166),(0,2,184),(1,.74,.71),90000,44)
+area("Parcel counter window",(-84,9.1,63),(-88,3.2,51),(1,.81,.61),3200,6)
+area("Listening room window",(86,9.2,84),(85,3,95),(.69,.76,1),3600,7)
+area("Bakehouse pendants",(-54,9.3,121),(-58,3.2,121),(1,.79,.59),3600,7)
+area("Pocket gallery daylight",(54,9.4,131),(59,4.0,130),(.88,.85,1),3700,8)
 def engraved_text(name,body,pos,size,mat):
     font=bpy.data.curves.new(name,"FONT")
     font.body=body

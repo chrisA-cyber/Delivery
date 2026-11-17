@@ -1,6 +1,57 @@
 --!strict
 -- The dockhand, gardener and wrapper offer short, authored directions on the street.
+local RunService = game:GetService("RunService")
+local GuiService = game:GetService("GuiService")
+local walkers = {}
 local crew = {
+	{
+		name = "Marnie",
+		x = -85,
+		z = 67,
+		angle = -90,
+		destination = Vector3.new(-108, 0.15, 67),
+		shift = 5,
+		hat = "cap",
+		parcel = true,
+		shirt = Color3.fromRGB(56, 101, 136),
+		tip = "Take a parcel at Dockside Post. The address on your ticket tells you which shop needs it.",
+	},
+	{
+		name = "Bram",
+		x = -32.4,
+		z = 112,
+		angle = 180,
+		destination = Vector3.new(-32.4, 0.15, 142),
+		shift = 13,
+		hat = "brim",
+		basket = true,
+		shirt = Color3.fromRGB(160, 91, 53),
+		tip = "Smell the bread? Copper Kettle is just off Market Walk. Try the order ticket at the counter.",
+	},
+	{
+		name = "Linn",
+		x = 31,
+		z = 111,
+		angle = 180,
+		destination = Vector3.new(31, 0.15, 143),
+		shift = 24,
+		hat = "bow",
+		print = true,
+		shirt = Color3.fromRGB(124, 81, 137),
+		tip = "Pocket Print Gallery lets you choose the view, ink and greeting for a town postcard.",
+	},
+	{
+		name = "Reed",
+		x = 99,
+		z = 94,
+		angle = 180,
+		destination = Vector3.new(99, 0.15, 113),
+		shift = 16,
+		hat = "cap",
+		record = true,
+		shirt = Color3.fromRGB(57, 131, 116),
+		tip = "Needle Drop is around the corner. Or follow this lane to Clock Court and play its three bells.",
+	},
 	{
 		name = "Capstan",
 		x = -117,
@@ -39,7 +90,8 @@ for _, member in crew do
 	local model = Instance.new("Model")
 	model.Name = member.name
 	model.Parent = population
-	local mark = CFrame.new(member.x, 0, member.z) * CFrame.Angles(0, math.rad(member.angle), 0)
+	local mark = CFrame.new(member.x, if member.destination then 0.15 else 0, member.z)
+		* CFrame.Angles(0, math.rad(member.angle), 0)
 	local function part(name, size, pos, color, round)
 		local b = Instance.new("Part")
 		b.Name = name
@@ -97,6 +149,55 @@ for _, member in crew do
 			if member.hat == "brim" then gold else ink
 		)
 	end
+	if member.parcel then
+		part("MailSatchel", Vector3.new(0.71, 0.76, 0.48), Vector3.new(0.87, 1.55, -0.28), ink)
+		part("Envelope", Vector3.new(0.89, 0.55, 0.08), Vector3.new(-0.95, 1.59, -0.36), paper)
+		part("Stamp", Vector3.new(0.18, 0.18, 0.06), Vector3.new(-0.64, 1.72, -0.43), member.shirt)
+	elseif member.basket then
+		part("BreadBasket", Vector3.new(1.01, 0.52, 0.67), Vector3.new(-0.9, 1.26, -0.3), gold)
+		for _, side in { -1, 1 } do
+			part(
+				"Loaf",
+				Vector3.new(0.42, 0.35, 0.62),
+				Vector3.new(-0.91 + side * 0.22, 1.57, -0.3),
+				paper,
+				true
+			)
+		end
+	elseif member.print or member.record then
+		part("Sleeve", Vector3.new(0.96, 0.92, 0.11), Vector3.new(-0.94, 1.52, -0.36), paper)
+		part(
+			"CoverArt",
+			Vector3.new(0.62, 0.61, 0.09),
+			Vector3.new(-0.94, 1.52, -0.45),
+			if member.record then ink else member.shirt,
+			member.record
+		)
+		part("PrintMark", Vector3.new(0.19, 0.18, 0.06), Vector3.new(-0.94, 1.52, -0.50), gold, true)
+	end
+	local walker
+	if member.destination then
+		model.WorldPivot = mark
+		local limbs = {}
+		for _, item in model:GetChildren() do
+			if item:IsA("BasePart") and (item.Name == "Boot" or item.Name == "Leg") then
+				local offset = mark:ToObjectSpace(item.CFrame)
+				table.insert(limbs, { part = item, offset = offset, side = math.sign(offset.Position.X) })
+			end
+		end
+		local start = mark.Position
+		walker = {
+			model = model,
+			origin = start,
+			goal = member.destination,
+			duration = (member.destination - start).Magnitude / 3.6,
+			shift = member.shift,
+			pausedUntil = 0,
+			pauseAmount = 0,
+			limbs = limbs,
+		}
+		table.insert(walkers, walker)
+	end
 	local talk = Instance.new("ProximityPrompt")
 	talk.ObjectText = member.name
 	talk.ActionText = "Ask for a tip"
@@ -132,6 +233,9 @@ for _, member in crew do
 	corner.Parent = speech
 	local token = 0
 	talk.Triggered:Connect(function()
+		if walker then
+			walker.pausedUntil = os.clock() + 6
+		end
 		token += 1
 		local current = token
 		bubble.Enabled = true
@@ -142,3 +246,42 @@ for _, member in crew do
 		end)
 	end)
 end
+
+-- Each resident strolls on a sidewalk and stops to talk. These local models never block player movement.
+local accumulator = 0
+RunService.Heartbeat:Connect(function(dt)
+	accumulator += dt
+	if accumulator < 0.09 then
+		return
+	end
+	local step = accumulator
+	accumulator = 0
+	local camera = workspace.CurrentCamera
+	if not camera or GuiService.ReducedMotionEnabled then
+		return
+	end
+	local now = os.clock()
+	for _, w in walkers do
+		if w.pausedUntil > now then
+			w.pauseAmount += step
+			continue
+		end
+		if (camera.CFrame.Position - w.origin).Magnitude > 100 then
+			continue
+		end
+		local leg = w.duration + 5
+		local elapsed = (now + w.shift - w.pauseAmount) % (leg * 2)
+		local first = elapsed < leg
+		local start = if first then w.origin else w.goal
+		local finish = if first then w.goal else w.origin
+		local travel = elapsed % leg
+		local pos = start:Lerp(finish, math.min(1, travel / w.duration))
+		local stride = if travel < w.duration then math.sin(travel * 6.0) else 0
+		local pivot = CFrame.lookAt(pos, pos + (finish - start).Unit)
+		w.model:PivotTo(pivot)
+		for _, limb in w.limbs do
+			local swing = stride * limb.side
+			limb.part.CFrame = pivot * CFrame.new(0, 0.06 * math.max(0, swing), 0.18 * swing) * limb.offset
+		end
+	end
+end)

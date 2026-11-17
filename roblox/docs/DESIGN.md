@@ -35,3 +35,11 @@ The public show has its own clock. Each visitor also has a private Studio B dril
 ## District streets and the Lot Line
 
 The theatre is a building on public streets. Open-air routes connect the waterfront, park and night market with the production workshops. The sightseeing streetcar runs from the pier through the plaza to Signal Park and reverses through the same stops. It has six seats, signs showing where the car is, and an optional stop-request button for passengers. Moving on foot or by streetcar leaves the shared theatre running independently.
+
+## Streets and shop counters
+
+Lantern Street has an enterable post office on the waterfront side and a listening room on the park side. The west market walk passes a working bakehouse. The east walk passes a print gallery. Upper-storey windows, residential façades and ground-floor displays continue the streets between the four doors. Walk inside to explore. Using a counter starts its activity.
+
+The post office sends parcels to another business, the record deck plays a short sequence for the listener to reproduce, the bakehouse serves a recipe ticket, and the gallery prints a three-layer postcard. Replacing a job is an explicit choice. Each completed ticket awards a souvenir or increases that business's personal count. The gallery restores the latest printed design.
+
+Clock Court is a second pedestrian route between record row and Market Walk. Its four clock faces show UTC. Three bell pulls play different nearby notes, and the court benches offer a seat. Four local residents walk routes between the shopfronts and pause when asked for directions.

@@ -8,6 +8,8 @@ Delivery
 
 Step off Lantern Street into Signal Park. Race the arches ahead, catch the streetcar west to reel in flashing buoys at the pier, or take a wrapping order under the lights of the Night Market.
 
+On the walk, deliver a parcel from Dockside Post, repeat a riff at Needle Drop, or stop at Copper Kettle to make a pastry. Pocket Print Gallery lets you print a town postcard in your own colors.
+
 Hear that crowd? There’s a comedy show on the next block. Read an original line with the delivery the audience picked, play the sound effects, or take a seat and cast your vote. Your tycoon makes a million buttons. So far, none of them make money. Can you announce that like it’s breaking news?
 
 Visit the Writers’ Room to stamp your own card, try an earned look in the Costume Atelier and take a rooftop cast portrait with friends. The Daily brings a fresh card tomorrow.

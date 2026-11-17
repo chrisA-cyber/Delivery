@@ -25,6 +25,11 @@ local counters = {
 	"parkRuns",
 	"parkBestMs",
 	"marketOrders",
+	"postDeliveries",
+	"recordSides",
+	"cafeOrders",
+	"galleryPrints",
+	"postcard",
 	"practiceBest",
 	"practiceCount",
 	"propJobs",
@@ -57,6 +62,11 @@ function Profiles.blank()
 		parkRuns = 0,
 		parkBestMs = 0,
 		marketOrders = 0,
+		postDeliveries = 0,
+		recordSides = 0,
+		cafeOrders = 0,
+		galleryPrints = 0,
+		postcard = 0,
 		practiceBest = 0,
 		practiceCount = 0,
 		propJobs = 0,
@@ -199,11 +209,27 @@ function Profiles.week(row, week: number, points: number)
 end
 function Profiles.mergePending(row, new)
 	for _, key in
-		{ "crowd", "stage", "calls", "takes", "received", "practiceCount", "propJobs", "balconyCalls" }
+		{
+			"crowd",
+			"stage",
+			"calls",
+			"takes",
+			"received",
+			"practiceCount",
+			"propJobs",
+			"balconyCalls",
+			"postDeliveries",
+			"recordSides",
+			"cafeOrders",
+			"galleryPrints",
+		}
 	do
 		row[key] += new[key]
 	end
 	row.best = math.max(row.best, new.best)
+	if new.postcard >= 1 and new.postcard <= 27 then
+		row.postcard = new.postcard
+	end
 	row.parkRuns += new.parkRuns
 	row.marketOrders += new.marketOrders
 	row.pierBest = math.max(row.pierBest, new.pierBest)

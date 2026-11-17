@@ -8,6 +8,7 @@ local Modes = require(Shared.Modes)
 local Instruments = require(script.Parent.DeliveryInstruments)
 local FittingPreview = require(script.Parent.FittingPreview)
 local DistrictMap = require(script.Parent.DistrictMap)
+local TownCounters = require(script.Parent.TownCounters)
 local Guide = {}
 local ink = Color3.fromRGB(31, 25, 42)
 local paper = Color3.fromRGB(251, 239, 212)
@@ -57,6 +58,9 @@ local rooms = {
 		hint = "Frame a cast portrait at the rooftop camera and optionally save it. From a seat, call three scores to earn Balcony Critic.",
 	},
 }
+for id, shop in TownCounters.shops do
+	rooms[id] = shop
+end
 local function box(parent, name, colour)
 	local b = Instance.new("Frame")
 	b.Name = name
@@ -114,6 +118,12 @@ local function pick(p)
 	return nil, nil, 0
 end
 
+local parcelNames = {
+	VenueCafe = "Bakehouse",
+	VenueRecords = "Needle Drop",
+	VenueGallery = "Print gallery",
+	VenuePost = "Post office",
+}
 local targetNames = {
 	ParkGate1 = "Gate 1",
 	ParkGate2 = "Gate 2",
@@ -125,6 +135,7 @@ local targetNames = {
 }
 function Guide.new(ui, send, openPage, notify)
 	local fitting = FittingPreview.new(ui.gui)
+	local counters = TownCounters.new(ui, send, openPage)
 	local selectedLook = nil
 	local soundedRun, soundedIndex = 0, 0
 	local lastNotice = ""
@@ -150,6 +161,7 @@ function Guide.new(ui, send, openPage, notify)
 	local function propWaypoint(page, venue)
 		local job = venue and venue.job
 		local trip = venue and venue.outdoor
+		local parcel = venue and venue.business
 		local root = characterRoot()
 		local name: string? = nil
 		local title = ""
@@ -169,6 +181,9 @@ function Guide.new(ui, send, openPage, notify)
 			then
 				name = trip.target
 				title = targetNames[name] or "Next stop"
+			elseif parcel and parcel.kind == "post" and parcel.status == "active" and parcel.target then
+				name = parcel.target
+				title = parcelNames[name] or "Delivery counter"
 			end
 		end
 		local target = waypoint and waypoint.Adornee
@@ -192,7 +207,7 @@ function Guide.new(ui, send, openPage, notify)
 				pin.Name = "PersonalObjectiveWaypoint"
 				pin.Size = UDim2.fromOffset(92, 22)
 				pin.StudsOffsetWorldSpace = Vector3.new(0, 3.4, 0)
-				pin.MaxDistance = 75
+				pin.MaxDistance = if name and parcelNames[name] then 260 else 75
 				pin.AlwaysOnTop = true
 				pin.LightInfluence = 0
 				pin.Active = false
@@ -303,6 +318,7 @@ function Guide.new(ui, send, openPage, notify)
 			then "Explore plaza"
 			elseif id == "balcony" then "Explore rooftop"
 			elseif id == "theatre" then "Walk inside"
+			elseif TownCounters.shops[id] then "Visit shop"
 			elseif id == "pier" or id == "park" or id == "market" then "Visit landmark"
 			else "Visit room"
 		watch.Visible = id == "theatre" or id == "balcony"
@@ -316,7 +332,11 @@ function Guide.new(ui, send, openPage, notify)
 		end
 		syncing = true
 		travel.Text = "Travelling…"
-		send({ op = "travel", room = selected, walk = selected == "balcony" or selected == "theatre" })
+		send({
+			op = "travel",
+			room = selected,
+			walk = selected == "balcony" or selected == "theatre" or TownCounters.shops[selected] ~= nil,
+		})
 		task.delay(1.2, function()
 			if syncing then
 				syncing = false
@@ -409,8 +429,19 @@ function Guide.new(ui, send, openPage, notify)
 			and math.abs(root.Position.X) > 27
 			and math.abs(root.Position.Z - 74.5) < 9
 		local marketWalk = id == "lobby" and root and root.Position.Z > 100 and root.Position.Z < 149
-		place.Text = if street or id == "promenade"
-			then "Lantern Street"
+		local clockCourt = root
+			and (
+				(math.abs(root.Position.X - 99) <= 4.5 and root.Position.Z >= 92 and root.Position.Z <= 117)
+				or (root.Position.X >= 78 and root.Position.X <= 104 and root.Position.Z >= 115 and root.Position.Z <= 140)
+				or (
+					math.abs(root.Position.X - 82) <= 4.5
+					and root.Position.Z > 140
+					and root.Position.Z <= 150
+				)
+			)
+		place.Text = if clockCourt
+			then "Clock Court"
+			elseif street or id == "promenade" then "Lantern Street"
 			elseif marketWalk then "Market Walk"
 			else roomName(id)
 		local job = v and v.job
@@ -428,15 +459,22 @@ function Guide.new(ui, send, openPage, notify)
 				or (if trip.kind == "pier" then "Work the buoy crane" else "Follow the marker")
 			objective.Text =
 				string.format("%d/%d  ·  %s  ·  %ds", trip.progress, trip.total, nextStop, seconds)
+		elseif v and v.business and v.business.kind == "post" and v.business.status == "active" then
+			local b = v.business
+			objective.Text = "Parcel for " .. b.recipient .. " · Walk to the marked counter."
 		elseif job and job.status == "active" then
 			local target = job.order[job.picked + 1]
 			objective.Text = if target
 				then string.format("Dispatch · %d/%d · Find %s", job.picked, #job.order, target)
 				else "Dispatch · Return all props to the desk."
+		elseif clockCourt then
+			objective.Text =
+				"Play three bells at the clock tower, take a bench, or follow the lane to Market Walk."
 		elseif street then
-			objective.Text = "Pier to the west · Signal Park to the east · Streetcar stops on this road."
+			objective.Text =
+				"Dockside Post is west. Needle Drop Records is east. The streetcar stops along this road."
 		elseif marketWalk then
-			objective.Text = "Follow the terrace path south to the Night Market."
+			objective.Text = "Explore the bakehouse and print gallery on the way to the Night Market."
 		elseif id == "park" then
 			objective.Text = if os.clock() - arrived < 22
 				then "Walk ahead to Signal Run, or board the streetcar on your left."
@@ -451,6 +489,7 @@ function Guide.new(ui, send, openPage, notify)
 	end
 	local function setView(page, s)
 		local v = s.venue
+		counters.setView(page, v)
 		propWaypoint(page, v)
 		current = if v and rooms[v.room] then v.room else "park"
 		if v and not v.watching and (page == "map" or page == "explore") then
@@ -608,7 +647,9 @@ function Guide.new(ui, send, openPage, notify)
 		if not v then
 			return false
 		end
-		if page == "pier" or page == "park" or page == "market" then
+		if TownCounters.shops[page] then
+			counters.draw(page, s)
+		elseif page == "pier" or page == "park" or page == "market" then
 			outdoorSheet(page, v, s.standing)
 		elseif page == "studio" then
 			ui.phase.Text = "STUDIO B   /   FOLEY REHEARSAL"
@@ -753,6 +794,7 @@ function Guide.new(ui, send, openPage, notify)
 		return true
 	end
 	local function tick(page, s)
+		counters.tick(page, s)
 		if page == "explore" and os.clock() >= nextLocation then
 			nextLocation = os.clock() + 0.35
 			propWaypoint(page, s.venue)

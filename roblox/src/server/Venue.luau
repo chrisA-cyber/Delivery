@@ -7,6 +7,8 @@ local Modes = require(Shared.Modes)
 local Activities = require(script.Parent.VenueActivities)
 local Profiles = require(script.Parent.Profiles)
 local Outdoor = require(script.Parent.Outdoor)
+local Business = require(script.Parent.Business)
+local ShopCatalogue = require(Shared.ShopCatalogue)
 local Venue = {}
 local function now()
 	return workspace:GetServerTimeNow()
@@ -88,6 +90,12 @@ function Venue.new(options)
 		end
 		return true
 	end
+	local function creditShop(v, row)
+		local r = v.business
+		if r.status == "done" then
+			Profiles.week(row, math.floor((os.time() / 86400 + 3) / 7), r.xp)
+		end
+	end
 	local function update(p)
 		local v = session(p)
 		v.revision += 1
@@ -147,9 +155,36 @@ function Venue.new(options)
 			end
 			travelAt[p] = time + 0.6
 			openRoom(p, v, id, not physical or id == "balcony", input.walk == true)
+			if ShopCatalogue.shops[id] and not physical and input.walk == true then
+				v.open = "explore"
+			end
 			if physical and id == "lobby" then
 				v.open = "map"
 			end
+		elseif op == "shopStart" then
+			local kind = input.kind
+			local shop = ShopCatalogue.shops[kind]
+			if not shop or not Business.start(v, ShopCatalogue, kind, row, time, near(p, shop.anchor, 9)) then
+				return
+			end
+			if kind == "post" then
+				v.open = "explore"
+				v.openRevision += 1
+			end
+		elseif op == "shopPick" or op == "shopReplay" then
+			local r = v.business
+			if not r or r.status ~= "active" then
+				return
+			end
+			local close = near(p, ShopCatalogue.shops[r.kind].anchor, 9)
+			if op == "shopReplay" then
+				if not Business.replay(v, input.run, time, close) then
+					return
+				end
+			elseif not Business.pick(v, ShopCatalogue, row, input.run, input.choice, time, close) then
+				return
+			end
+			creditShop(v, row)
 		elseif op == "practice" or op == "practicePad" then
 			if not near(p, Venues.rooms.studio.anchor, 14) then
 				v.notice = "Start a sound drill at Studio B's console."
@@ -363,6 +398,10 @@ function Venue.new(options)
 				end
 			end
 			v.look = Venues.lookAt(row.atelierLook)
+			if v.printCode ~= row.postcard then
+				v.printCode = row.postcard
+				v.lastPrint = ShopCatalogue.print(row.postcard)
+			end
 		end
 		return v
 	end
@@ -396,6 +435,19 @@ function Venue.new(options)
 						update(p)
 					end
 				end
+			end
+			local shop = v.business
+			if
+				row
+				and checkGates
+				and shop
+				and shop.kind == "post"
+				and shop.status == "active"
+				and options.canExplore(p)
+				and Business.delivery(v, ShopCatalogue, row, time, shop.target, near(p, shop.target, 7))
+			then
+				creditShop(v, row)
+				update(p)
 			end
 			local r = v.outdoor
 			if row and r and r.status == "active" then

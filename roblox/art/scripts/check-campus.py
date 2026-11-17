@@ -86,6 +86,12 @@ def main():
       "Prop Lantern": [(51,53),(60,53),(60,47)],
       "Prop Hat": [(51,53),(60,53),(60,61)],
       "Waterfront Pier": [(0,62), (0,74.5),(-122,74.5),(-122,74)],
+      "Dockside Post": [(-122,74),(-87,74),(-87,65),(-87,56),(-87,54.65)],
+      "Needle Drop Records": [(99,80),(99,74.5),(85,74.5),(85,82),(85,90),(85,92.25)],
+      "Copper Kettle Bakehouse": [(-31,100),(-31,121),(-43,121),(-52,121),(-53.65,121)],
+      "Pocket Print Gallery": [(31,148),(31,130),(43,130),(52,130),(54.34,130)],
+      "Clock Court passage": [(99,91),(99,115),(82,125),(82,150),(32,151)],
+      "Clock Court bells": [(82,125),(88,125.45),(89,125.45),(89,128.45),(89,131.45)],
       "Park gateway": [(99,80),(102,80),(109,80),(119,76),(120,74)],
       "Signal Park": [(0,62), (0,74.5),(120,74.5),(120,74)],
       "Night Market via west": [(0,62),(0,74.5),(-30.8,74.5),(-30.8,151),(0,151),(0,171)],
@@ -98,7 +104,7 @@ def main():
     }
     total=sum(route(name,pts) for name,pts in routes.items())
     arrivals={name for name,_ in objects if name.startswith("Venue") or name.startswith("ParkGate") and name[-1].isdigit() or name in ("PropBell","PropLantern","PropHat","MarketPaper","MarketRibbon","ParkArrival")}
-    assert len(arrivals)==19, f"Expected nineteen actor and collection anchors, found {arrivals}"
+    assert len(arrivals)==23, f"Expected twenty-three actor and collection anchors, found {arrivals}"
     for name in sorted(arrivals):
         matches=[p for key,p in objects if key==name]
         assert len(matches)==1 and not matches[0]['CanCollide'], f"Anchor must be unique and noncollidable: {name}"

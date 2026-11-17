@@ -38,3 +38,9 @@ Start walking immediately using normal Roblox controls. From the Signal Park gat
 | Critics’ Balcony · rooftop | Choose **Explore rooftop**. At **Cast Portraits**, select **Pose for a portrait**, **Change framing**, then **Take photo**. The player chooses whether to save. To vote from the gallery, use **Watch show** on the map. | Returning to the venue should restore the walking camera. Three accurate predictions from a balcony seat earn Balcony Critic. |
 
 For a first microphone test, choose **Live show → Perform a voice line → Use my microphone**. Speak normally during the check and read the line when **On air** appears. Studio also offers **Try a scripted take → Play scripted take** for a synthetic performance. Ask first-time players to choose their own route before showing them this walkthrough. Record where they hesitate, what they try first and which joke they volunteer to repeat.
+
+## A walk through the town
+
+From Signal Park, walk west on Lantern Street. Needle Drop Records is the first playable storefront on the park side. Dockside Post is on the pier side. Pick up a parcel at the postal counter and bring it to the address printed on the ticket. To play the listening game, use the record deck, listen to the labeled riff and repeat it on the three pads.
+
+Follow the west pedestrian lane toward the Night Market for Copper Kettle Bakehouse. Use the counter and assemble the printed recipe in order. On the east lane, step inside Pocket Print Gallery to pick a skyline, ink and greeting. Your most recent postcard stays in the gallery. **Map → Town shops** shows all four addresses. Between Needle Drop and the market, the Clock Court footpath has three musical bell pulls and benches. Use the normal jump control to leave a bench.

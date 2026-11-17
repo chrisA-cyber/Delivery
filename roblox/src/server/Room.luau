@@ -130,6 +130,10 @@ function Room.build()
 			{ "LoftDaylight", Vector3.new(-54, 9, 89), Color3.fromRGB(255, 222, 190), 1.42, 29 },
 			{ "DerrickLantern", Vector3.new(-121, 9, 72), Color3.fromRGB(242, 208, 165), 1.22, 37 },
 			{ "SignalParkCanopy", Vector3.new(131, 10, 90), Color3.fromRGB(230, 199, 232), 1.2, 37 },
+			{ "PostCounter", Vector3.new(-87, 8, 54), Color3.fromRGB(255, 215, 167), 1.08, 18 },
+			{ "ListeningDesk", Vector3.new(85, 8, 94), Color3.fromRGB(193, 194, 255), 1.12, 17 },
+			{ "Bakehouse", Vector3.new(-56, 8, 121), Color3.fromRGB(255, 206, 157), 1.18, 18 },
+			{ "GalleryLamps", Vector3.new(56, 8, 130), Color3.fromRGB(239, 219, 234), 1.13, 17 },
 			{ "FestivalLight", Vector3.new(0, 14, 173), Color3.fromRGB(255, 200, 163), 1.36, 46 },
 			{ "TerraceLanterns", Vector3.new(0, 14, 119), Color3.fromRGB(202, 184, 246), 1.22, 31 },
 		}
