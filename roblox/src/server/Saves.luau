@@ -25,7 +25,11 @@ function Saves.new(standings)
 	local status = {}
 	local pending = {}
 	local closing = false
+	local closingSaves = 0
 	local function syncTroupe(p, row)
+		if row.week == 0 or row.troupe == 0 then
+			return
+		end
 		local key = tostring(row.week) .. "/" .. tostring(row.troupe)
 		local ok, total = pcall(Profiles.contribute, groups, key, p.UserId, row.weekly)
 		if ok and total and key == tostring(row.week) .. "/" .. tostring(row.troupe) then
@@ -55,6 +59,11 @@ function Saves.new(standings)
 					if row.troupe == 0 then
 						row.troupe = p.UserId
 					end
+					local interim = standings[p.UserId]
+					if interim then
+						Profiles.mergePending(row, interim)
+					end
+					Profiles.week(row, math.floor((os.time() / 86400 + 3) / 7), 0)
 					standings[p.UserId] = row
 					status[p] = if localOnly then "Studio session" else "Progress saved"
 					break
@@ -75,6 +84,7 @@ function Saves.new(standings)
 			return
 		end
 		sessions[p] = nil
+		closingSaves += 1
 		local limit = os.clock() + 23
 		repeat
 			if not session.busy and (session.closed or session.save(true)) then
@@ -82,6 +92,8 @@ function Saves.new(standings)
 			end
 			task.wait(0.3)
 		until os.clock() >= limit
+		syncTroupe(p, session.row)
+		closingSaves -= 1
 		status[p] = nil
 	end
 	local function troupe(p, friendId)
@@ -136,7 +148,7 @@ function Saves.new(standings)
 			end)
 		end
 		local start = os.clock()
-		while (remaining > 0 or next(pending)) and os.clock() - start < 25 do
+		while (remaining > 0 or closingSaves > 0 or next(pending)) and os.clock() - start < 25 do
 			task.wait(0.1)
 		end
 	end)

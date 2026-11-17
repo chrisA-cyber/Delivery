@@ -41,6 +41,7 @@ local function label(parent, name, font, col, maxSize)
 	return t
 end
 function Hud.new(parent: PlayerGui)
+	game:GetService("GuiService").TouchControlsEnabled = false -- Stage marks and seats are assigned by the show.
 	local gui = Instance.new("ScreenGui")
 	gui.Name = "DeliveryShow"
 	gui.ResetOnSpawn = false
@@ -89,9 +90,13 @@ function Hud.new(parent: PlayerGui)
 		if not camera then
 			return
 		end
-		local compact = camera.ViewportSize.X < 610
+		local shortLandscape = camera.ViewportSize.Y < 490 and camera.ViewportSize.X > camera.ViewportSize.Y
+		local compact = camera.ViewportSize.X < 610 and not shortLandscape
 		panel.Size = if compact then UDim2.fromScale(0.96, 0.38) else UDim2.fromScale(0.92, 0.26)
 		cap.MaxSize = if compact then Vector2.new(940, 236) else Vector2.new(940, 159)
+		if shortLandscape then
+			panel.Size = UDim2.new(0.94, 0, 0, 131)
+		end
 		if compact then
 			face.Position = UDim2.fromOffset(10, 29)
 			face.Size = UDim2.new(1, -24, 0.46, -5)

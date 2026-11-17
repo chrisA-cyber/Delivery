@@ -3,6 +3,7 @@
 local Profiles = {}
 local counters = {
 	"stage",
+	"streak",
 	"crowd",
 	"best",
 	"roses",
@@ -174,6 +175,33 @@ function Profiles.week(row, week: number, points: number)
 	row.weekly += points
 	if row.stage >= 20 or row.crowd >= 20 then
 		row.packs["Pack night"] = true
+	end
+end
+function Profiles.mergePending(row, new)
+	for _, key in { "crowd", "stage", "calls", "takes", "received" } do
+		row[key] += new[key]
+	end
+	row.best = math.max(row.best, new.best)
+	row.roses = math.max(row.roses, new.roses)
+	if new.takes > 0 then
+		row.streak = if new.streak == new.takes then row.streak + new.streak else new.streak
+	end
+	for _, key in boolMaps do
+		for name in new[key] do
+			row[key][name] = true
+		end
+	end
+	if new.takeDay > 0 and new.takeDay >= row.takeDay then
+		row.dayTakes = if new.takeDay == row.takeDay then row.dayTakes + new.dayTakes else new.dayTakes
+		row.takeDay = new.takeDay
+	end
+	if new.lastDaily > row.lastDaily then
+		row.dailyRun = if new.lastDaily == row.lastDaily + 1 then row.dailyRun + 1 else new.dailyRun
+		row.lastDaily = new.lastDaily
+		row.firstDailyScore = new.firstDailyScore
+	end
+	if new.week > 0 then
+		Profiles.week(row, new.week, new.weekly)
 	end
 end
 function Profiles.contribute(store, key: string, id: number, points: number)

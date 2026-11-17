@@ -17,3 +17,9 @@ The grey box uses a riser, a back screen, ten seats, one host stand and a phone-
 - [Filtering](https://create.roblox.com/docs/ui/text-filtering) requires appropriate filtering for user-derived text. Keep transcripts private to their speaker and filter even that view. Audience can read the original line.
 - [CaptureService](https://create.roblox.com/docs/reference/engine/classes/CaptureService) records up to 30 seconds and mutes all player voices in video. Design the share moment around the visual reveal. [Discovery](https://create.roblox.com/docs/discovery) lists intentional co-play among several signals without promising its relative rank.
 - [Mesh specifications](https://create.roblox.com/docs/art/modeling/specifications) give a 20,000-triangle per-mesh ceiling. Six shadow lights and 1024 textures are production budgets pending phone measurement.
+
+## Implemented timing and playtest revisions
+
+The seat offer lasts six seconds. The take lasts ten, the result holds for 1.8 and the house can play as soon as a spectator joins. The owner's grey-box feedback supported developing the theatre and replacing generic material with original Roblox-specific lines. The response was 60 revised lines and a nine-combination preset writer. The actual audience and graphics verdict await the friends test.
+
+A same-card retake goes to the back of the queue and asks again at the offer. A successful encore also requires the performer to opt in. A verified friend in the room adds one progression point to participating players. Twenty points in either track opens Pack night and the subtle Echo stage effect. Stage ranks unlock an entrance at 40 points, a blue mic stem at 60, a confetti tint at 80 and a follow-spot tint at 100. Forty crowd points unlock gold roses. These affect presentation and progression only. The house read supplies the line and direction publicly. A successfully filtered heard-text caption goes to its performer.

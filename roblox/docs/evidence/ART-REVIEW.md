@@ -11,3 +11,5 @@ The five before captures use the first production set. The earlier greybox-take.
 | Daily | The board was surrounded by disconnected curtains and stage rails. | Corrected the apron, filled the wing and kept the individual Daily card in the HUD. stage-daily.jpg |
 
 The published asset budget, ten-avatar phone frame rate and human art acceptance remain open. The host, materials and theatre take their shapes from the concepts. The offline build has simpler geometry and lighting than the key art.
+
+The Galaxy A16 layout simulation also changed the HUD. The original mobile controls obscured the two bottom corners and the action area clipped even a single button. Phone-before.jpg shows that issue. Phone-revised.jpg shows the same set with stock movement controls hidden and two rows of 44-pixel buttons fully visible.

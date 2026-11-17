@@ -48,6 +48,8 @@ local metrics = require(script.Parent.Metrics).new(function(p, key)
 		end)
 	end
 end)
+local findShow = require(script.Parent.BusierShow).new()
+local programme = require(script.Parent.Playbills).start(require(shared.Programme))
 local participation = {}
 local function observed(p, turn)
 	local entry = participation[p]
@@ -59,6 +61,21 @@ local function observed(p, turn)
 end
 local Profiles = require(script.Parent.Profiles)
 local saves = require(script.Parent.Saves).new(standings)
+local friends = {}
+local function checkFriends(p)
+	friends[p] = {}
+	for _, other in Players:GetPlayers() do
+		if other ~= p and friends[other] then
+			task.spawn(function()
+				local ok, connected = pcall(p.IsFriendsWithAsync, p, other.UserId)
+				if ok and connected and friends[p] and friends[other] then
+					friends[p][other] = true
+					friends[other][p] = true
+				end
+			end)
+		end
+	end
+end
 local lastAward = 0
 local honours = ""
 local function award()
@@ -115,6 +132,13 @@ local function award()
 			end
 			row.crowd += xp
 		end
+		if row.stage + row.crowd > before and player and friends[player] and next(friends[player]) then
+			if id == state.actor then
+				row.stage += 1
+			else
+				row.crowd += 1
+			end
+		end
 		Profiles.week(row, math.floor((os.time() / 86400 + 3) / 7), row.stage + row.crowd - before)
 	end
 	if state.turn % 4 == 0 then
@@ -154,6 +178,7 @@ local features = require(shared.Features)
 local audio = require(script.Parent.StageVoice).new(features.StageVoice)
 local captions = {}
 local host = require(script.Parent.Host).new(require(shared.HostLines), features)
+local send
 local function claim(p, data, simulated)
 	local now = clock()
 	if
@@ -202,12 +227,13 @@ local function claim(p, data, simulated)
 				and filtered:match("[^#%s]")
 			then
 				captions[p.UserId] = filtered
+				send(p)
 			end
 		end)
 	end
 	return true
 end
-local function send(player: Player)
+send = function(player: Player)
 	local id = player.UserId
 	local today, dailyCue = daily()
 	local actor = Players:GetPlayerByUserId(state.actor)
@@ -217,12 +243,21 @@ local function send(player: Player)
 		mode = state.mode,
 		useMic = state.useMic,
 		skin = shelf.active[player],
-		actorSkin = if actor then shelf.active[actor] else nil,
+		actorSkin = if actor
+			then shelf.active[actor] or (if standings[actor.UserId]
+					and standings[actor.UserId].stage >= 40
+				then "house-entrance"
+				else nil)
+			else nil,
 		reactionSkin = if reactor then shelf.active[reactor] else nil,
+		actorStage = if actor and standings[actor.UserId] then standings[actor.UserId].stage else 0,
+		reactorCrowd = if reactor and standings[reactor.UserId] then standings[reactor.UserId].crowd else 0,
 		predicted = state.predictions[id],
 		duel = state.duel and { first = state.duel.first, second = state.duel.second },
 		duelVoted = state.duelVotes[id],
 		winner = state.duelWinner,
+		encore = state.encore and state.result ~= nil and (state.result.overall or 0) >= 75,
+		alone = #Players:GetPlayers() == 1,
 		standing = standings[id],
 		saveStatus = saves.status[player],
 		dailyLine = today.text,
@@ -258,16 +293,22 @@ local function publish()
 	local line = state.line
 	room.sign.Text = if state.phase == "reveal" and state.result
 		then (state.result.band .. "   " .. tostring(state.result.overall or "—"))
+		elseif state.phase == "host" and state.hostLine then state.hostLine
+		elseif line and state.mode == "Echo" then Modes.beat(line.text) .. "\nCopy the beat"
+		elseif line and state.cue then line.text .. "\n" .. state.cue.label
 		elseif line then line.text
 		else "DELIVERY"
 end
 local lastPerformer: Player? = nil
 local function phaseChanged()
+	if state.phase == "lobby" or state.phase == "intermission" then
+		state.claim = nil
+	end
 	if state.phase == "reveal" then
 		award()
 	end
 	if state.phase == "direct" and state.mode == "Echo" then
-		host.speak(state.line.text, 2)
+		host.speak(Modes.beat(state.line.text), 5)
 	elseif state.phase == "vote" then
 		host.prepare(state)
 	elseif state.phase == "host" then
@@ -286,7 +327,12 @@ local function phaseChanged()
 	if state.phase == "take" and state.actor ~= 0 and state.useMic then
 		local p = Players:GetPlayerByUserId(state.actor)
 		if p then
-			audio.start(p)
+			audio.start(
+				p,
+				state.mode == "Echo"
+					and standings[p.UserId]
+					and standings[p.UserId].packs["Pack night"] == true
+			)
 		end
 	end
 	if state.phase == "countdown" and state.actor ~= 0 then
@@ -308,6 +354,8 @@ local function phaseChanged()
 	publish()
 end
 local function join(p: Player)
+	checkFriends(p)
+	task.spawn(programme.load, p)
 	metrics.once(p, "join")
 	local arrival = p:GetJoinData()
 	if (arrival.ReferredByPlayerId or 0) > 0 then
@@ -329,15 +377,24 @@ for _, p in Players:GetPlayers() do
 	join(p)
 end
 Players.PlayerRemoving:Connect(function(p)
+	friends[p] = nil
+	for _, peers in friends do
+		peers[p] = nil
+	end
 	metrics.leave(p)
 	shelf.leave(p)
 	participation[p] = nil
+	local previous = state.phase
 	Show.leave(state, p.UserId, clock())
 	standings[p.UserId] = nil
 	task.spawn(saves.close, p)
 	limits[p.UserId] = nil
 	captions[p.UserId] = nil
-	phaseChanged()
+	if previous ~= state.phase then
+		phaseChanged()
+	else
+		publish()
+	end
 end)
 remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 	local now = clock()
@@ -361,6 +418,24 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 	if turn ~= state.turn then
 		return
 	end
+	if verb == "busier" then
+		if not bucket.match and not state.useMic and state.actor ~= id then
+			bucket.match = true
+			task.spawn(function()
+				local message = findShow(p)
+				if p.Parent == Players then
+					p:SetAttribute("RoomFinder", message)
+				end
+			end)
+		end
+		return
+	end
+	if verb == "accept" and not RunService:IsStudio() and arg ~= "mic" then
+		return
+	end
+	if verb == "encore" and (not state.result or (state.result.overall or 0) < 75) then
+		return
+	end
 	if verb == "micChecked" then
 		if state.useMic and state.actor == id and (state.phase == "direct" or state.phase == "countdown") then
 			metrics.once(p, "mic_checked")
@@ -369,6 +444,11 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 	end
 	if verb == "inviteOpened" then
 		metrics.once(p, "invite_opened")
+		return
+	end
+	if verb == "playbillPreview" and RunService:IsStudio() then
+		programme.preview(p)
+		send(p)
 		return
 	end
 	if verb == "style" or verb == "stylePreview" then
@@ -389,6 +469,7 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 		if
 			state.phase == "take"
 			and state.actor == id
+			and state.useMic
 			and now < state.untilTime
 			and now - lastWave >= 0.24
 			and type(arg) == "number"
@@ -428,7 +509,10 @@ remote.OnServerEvent:Connect(function(p: Player, verb: any, turn: any, arg: any)
 			and state.phase == "take"
 			and now < state.untilTime
 			and not state.claim
+			and not state.fixturePending
+			and not state.useMic
 		then
+			state.fixturePending = true
 			local sample = Measure.synthetic(Modes.expected(state))
 			-- A fixture follows the same duration and validation path as a real report.
 			local key = state.turn

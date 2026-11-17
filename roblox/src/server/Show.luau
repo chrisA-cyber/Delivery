@@ -36,6 +36,8 @@ local function clearRound(s)
 	s.lastReaction = nil
 	s.lastReactor = nil
 	s.predictions = {}
+	s.encore = false
+	s.fixturePending = false
 	s.duelVotes = {}
 	s.day = nil
 	s.hostLine = nil
@@ -59,6 +61,7 @@ function Show.new(draw, score, modes, daily)
 		daily = daily,
 		choices = {},
 		custom = {},
+		retries = {},
 		mode = "Main stage",
 	}
 	clearRound(s)
@@ -73,6 +76,13 @@ local function enter(s, phase: string, now: number)
 		s.line, s.cues = s.draw()
 		if s.modes then
 			s.modes.card(s, s.daily)
+		end
+		local retry = s.retries[s.actor]
+		if retry then
+			s.retries[s.actor] = nil
+			if retry.mode == s.mode and (s.mode ~= "Daily" or retry.day == s.day) then
+				s.line, s.cues = retry.line, { retry.cue }
+			end
 		end
 		for id in s.online do
 			if id ~= s.actor then
@@ -143,6 +153,11 @@ end
 
 function Show.leave(s, id: number, now: number)
 	s.online[id] = nil
+	s.retries[id] = nil
+	if not table.find(s.queue, id) and s.actor ~= id then
+		s.choices[id] = nil
+		s.custom[id] = nil
+	end
 	if s.champion == id then
 		s.champion = nil
 	end
@@ -164,6 +179,8 @@ end
 function Show.tick(s, now: number)
 	for id, expiry in s.grace do
 		if now > expiry then
+			s.choices[id] = nil
+			s.custom[id] = nil
 			s.grace[id] = nil
 		end
 	end
@@ -220,7 +237,33 @@ function Show.action(s, id: number, action: string, arg: any, now: number): bool
 	if not s.online[id] then
 		return false
 	end
-	if action == "queue" then
+	if action == "retake" then
+		if
+			id ~= s.actor
+			or (s.phase ~= "reveal" and s.phase ~= "intermission")
+			or not s.result
+			or not s.result.miss
+			or table.find(s.queue, id)
+		then
+			return false
+		end
+		local mode = if s.mode == "Face-off" then "Main stage" else s.mode
+		s.choices[id] = mode
+		s.retries[id] = { mode = mode, day = s.day, line = s.line, cue = s.cue }
+		table.insert(s.queue, id)
+	elseif action == "encore" then
+		if
+			id ~= s.actor
+			or s.phase ~= "reveal"
+			or now >= s.untilTime
+			or not s.encore
+			or table.find(s.queue, id)
+		then
+			return false
+		end
+		s.choices[id] = "Main stage"
+		table.insert(s.queue, id)
+	elseif action == "queue" then
 		if id == s.actor or table.find(s.queue, id) then
 			return false
 		end
@@ -247,8 +290,10 @@ function Show.action(s, id: number, action: string, arg: any, now: number): bool
 	elseif action == "leave" then
 		local index = table.find(s.queue, id)
 		if index then
+			s.retries[id] = nil
 			table.remove(s.queue, index)
 		elseif s.actor == id then
+			s.duel = nil
 			s.actor = 0
 			enter(s, "intermission", now)
 		else
@@ -298,6 +343,9 @@ function Show.action(s, id: number, action: string, arg: any, now: number): bool
 			return false
 		end
 		s.ratings[id] = arg
+		if arg == 100 then
+			s.encore = true
+		end
 	elseif action == "react" then
 		if
 			s.phase ~= "take"

@@ -11,7 +11,7 @@ function StageVoice.new(enabled: boolean)
 			graph = nil
 		end
 	end
-	local function start(p: Player)
+	local function start(p: Player, echo: boolean?)
 		stop()
 		if not enabled then
 			return
@@ -28,7 +28,20 @@ function StageVoice.new(enabled: boolean)
 		output.Parent = folder
 		local wire = Instance.new("Wire")
 		wire.SourceInstance = mic
-		wire.TargetInstance = output
+		if echo then
+			local effect = Instance.new("AudioEcho")
+			effect.DelayTime = 0.11
+			effect.WetLevel = -22
+			effect.Feedback = 0.06
+			effect.Parent = folder
+			wire.TargetInstance = effect
+			local final = Instance.new("Wire")
+			final.SourceInstance = effect
+			final.TargetInstance = output
+			final.Parent = folder
+		else
+			wire.TargetInstance = output
+		end
 		wire.Parent = folder
 		folder.Parent = workspace
 		local allowed = {}

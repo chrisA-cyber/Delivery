@@ -13,7 +13,8 @@ function Shelf.new(items, provider, studio: boolean)
 			return false
 		end
 		local item = byKey[key]
-		busy[p] = true
+		local request = {}
+		busy[p] = request
 		local ok, allowed = pcall(function()
 			if studio and preview then
 				simulated[p] = simulated[p] or {}
@@ -28,6 +29,9 @@ function Shelf.new(items, provider, studio: boolean)
 			end
 			return provider(p, item.passId)
 		end)
+		if busy[p] ~= request then
+			return false
+		end
 		busy[p] = nil
 		if ok and allowed then
 			active[p] = key

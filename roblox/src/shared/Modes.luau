@@ -54,6 +54,14 @@ function Modes.card(s, daily)
 		s.cues = { s.duel.cue }
 	end
 end
+function Modes.beat(text: string): string
+	local groups = string.split(text, " ")
+	if #groups < 2 then
+		return text
+	end
+	local split = math.ceil(#groups / 2)
+	return table.concat(groups, " ", 1, split) .. " … " .. table.concat(groups, " ", split + 1, #groups)
+end
 function Modes.expected(s): string
 	if s.mode == "Switch" then
 		return table.concat(table.create(4, s.line.text), " ")

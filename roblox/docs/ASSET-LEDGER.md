@@ -25,3 +25,5 @@ Three further completed GPT Image 2.6 high jobs used the two original concept jo
 The icon prompt called for a tight silhouette of the suitcase host, one microphone, an ivory cue card and pink/cobalt lighting. The thumbnail prompt placed one generic block avatar on the actual radio-dial set and gave a spectator one rose. The director's board prompt specified three frames: a cue choice, a whispered delivery, and the score reveal. No third-party character or voice was used.
 
 Final Higgsfield balance after five jobs: 3,112.16. Total task spend: **7.5 of 3,100 credits**.
+
+The five before/after pairs, the grey-box screenshot, the phone layout evidence and the gameplay thumbnail use local Studio renders. The comparison sheet and gameplay thumbnail use layout and resizing only. They cost zero generation credits.

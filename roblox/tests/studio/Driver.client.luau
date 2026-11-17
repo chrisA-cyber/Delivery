@@ -6,6 +6,9 @@ local shared = game:GetService("ReplicatedStorage")
 local stage = shared:WaitForChild("Delivery"):WaitForChild("Stage") :: RemoteEvent
 local test = shared:WaitForChild("DeliveryTest") :: RemoteEvent
 local last = ""
+local rounds = 0
+local modes = { "Main stage", "Switch", "Echo", "Daily", "Custom" }
+local previewed = false
 stage.OnClientEvent:Connect(function(s)
 	local leader = test:GetAttribute("Performer")
 	if not leader then
@@ -22,12 +25,14 @@ stage.OnClientEvent:Connect(function(s)
 	if p.UserId == leader then
 		if s.actor == p.UserId then
 			if s.phase == "lineup" then
-				act("accept")
+				act("accept", "rehearsal")
 			elseif s.phase == "take" then
 				act("scripted")
+			elseif s.phase == "reveal" then
+				rounds += 1
 			end
 		elseif not s.queued then
-			act("queue")
+			act("queue", { mode = modes[rounds % #modes + 1], mix = 5 })
 		end
 		if s.phase == "intermission" and s.actor == p.UserId then
 			task.delay(1.15, function()
@@ -35,10 +40,15 @@ stage.OnClientEvent:Connect(function(s)
 			end)
 		end
 	elseif s.actor == leader then
+		if not previewed then
+			previewed = true
+			act("stylePreview", "rose-gold")
+		end
 		if s.phase == "direct" then
-			act("direct", 2)
+			act("direct", math.min(2, #s.cues))
 		elseif s.phase == "take" then
 			act("react", "Rose")
+			act("predict", 2)
 		elseif s.phase == "vote" then
 			act("rate", 75)
 		elseif s.phase == "reveal" then
@@ -49,7 +59,15 @@ stage.OnClientEvent:Connect(function(s)
 				s.result.overall,
 				s.directed,
 				s.reacted,
-				s.rated
+				s.rated,
+				s.mode,
+				s.predicted,
+				s.standing.crowd,
+				s.skin,
+				s.simulated,
+				s.useMic,
+				s.heard,
+				s.dailyLine
 			)
 		end
 	end

@@ -1,0 +1,11 @@
+DELIVERY_TEST_ROUND 1 2 Main stage 54 6 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 2 3 Switch 62 15 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 3 4 Echo 54 21 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 4 5 Daily 91 27 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 5 6 Custom 91 33 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 6 7 Main stage 91 39 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 7 8 Switch 62 48 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 8 9 Echo 54 54 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 9 10 Daily 91 60 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_TEST_ROUND 10 11 Custom 91 66 I wished myself happy birthday from the group account. Nobody corrected me.
+DELIVERY_MULTIPLAYER PASS ten distinct scripted reveals across five modes, two clients, crowd XP growth, one ballot and reaction each, private captions, Studio wardrobe preview and rehearsal with no stage mic

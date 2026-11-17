@@ -10,6 +10,7 @@ local title = ""
 local notice = false
 local backstage = false
 local shopping = false
+local shopPage = nil
 local Shop = require(script.Parent.Shop)
 local Capture = require(script.Parent.Capture)
 local Modes = require(Storage.Delivery.Modes)
@@ -62,7 +63,10 @@ local function render(s)
 		.. "   /   "
 		.. performer
 		.. (if s.mode and s.mode ~= "Main stage" then "   ·   " .. s.mode else "")
-	ui.card.Text = if s.line then s.line.text else "The next seat is open."
+	ui.card.Text = if s.line and s.mode == "Echo"
+		then Modes.beat(s.line.text)
+		elseif s.line then s.line.text
+		else "The next seat is open."
 	ui.note.Text = if s.cue
 		then s.cue.label .. "  ·  " .. s.cue.text
 		else "Choose a direction for the next take."
@@ -76,10 +80,23 @@ local function render(s)
 		title = "BACKSTAGE   /   Daily show"
 		local row = s.standing
 		if shopping then
-			Shop.draw(ui, s, player, require(Storage.Delivery.Wardrobe), act, function()
-				shopping = false
-				render(s)
-			end)
+			Shop.draw(
+				ui,
+				s,
+				player,
+				require(Storage.Delivery.Wardrobe),
+				act,
+				function()
+					shopPage = nil
+					shopping = false
+					render(s)
+				end,
+				shopPage,
+				function(page)
+					shopPage = page
+					render(state)
+				end
+			)
 			return
 		end
 		ui.card.Text = s.dailyLine or "Daily show"
@@ -95,6 +112,12 @@ local function render(s)
 			backstage = false
 			render(s)
 		end, true)
+		if s.alone then
+			ui.button("Find a busier show", function()
+				act("busier")
+				ui.note.Text = "Looking for an open seat…"
+			end)
+		end
 		ui.button("Dressing room", function()
 			shopping = true
 			render(s)
@@ -173,7 +196,7 @@ local function render(s)
 		if house then
 			ui.note.Text = "Scripted house take  ·  " .. s.cue.label
 		end
-		if mine and s.studio then
+		if mine and s.studio and not s.useMic then
 			action("Use scripted take", "scripted", nil, true)
 		end
 		if not mine and not s.reacted then
@@ -204,7 +227,7 @@ local function render(s)
 				else "Another take?"
 			ui.note.Text = if s.simulated
 				then "Studio rehearsal · simulated words and volume."
-				elseif result.miss then "No words came through. Queue again for a fresh take."
+				elseif result.miss then "No words came through. You can try the same card again."
 				else string.format(
 					"Words %s   ·   Commitment %s   ·   Comedy %s   ·   Chaos %s",
 					tostring(result.accuracy or "—"),
@@ -239,6 +262,18 @@ local function render(s)
 		ui.note.Text = if s.honours ~= ""
 			then s.honours
 			else "Crowd points: " .. s.standing.crowd .. "   ·   Hot streak: " .. s.standing.streak
+	end
+	if
+		(s.phase == "reveal" or s.phase == "intermission")
+		and mine
+		and s.result
+		and s.result.miss
+		and not s.queued
+	then
+		action("Retake this card", "retake", nil, true)
+	end
+	if s.phase == "reveal" and mine and s.encore and not s.queued then
+		action("Take the encore", "encore", nil, true)
 	end
 	if s.phase == "reveal" and s.result and (s.result.overall or 0) >= 75 then
 		ui.button("Capture the reveal", function()
@@ -318,12 +353,22 @@ local function render(s)
 		end
 	end
 end
+player:GetAttributeChangedSignal("LatestPlaybill"):Connect(function()
+	if shopping and state then
+		render(state)
+	end
+end)
+player:GetAttributeChangedSignal("RoomFinder"):Connect(function()
+	if backstage then
+		ui.note.Text = player:GetAttribute("RoomFinder")
+	end
+end)
 stage.OnClientEvent:Connect(render)
 stage:FireServer("sync", 0)
 task.spawn(function()
 	while ui.panel.Parent do
 		if state then
-			if state.phase == "take" and state.mode == "Switch" then
+			if not backstage and state.phase == "take" and state.mode == "Switch" then
 				local idx = math.clamp(
 					1 + math.floor((10 - state.deadline + workspace:GetServerTimeNow()) / 2.5),
 					1,

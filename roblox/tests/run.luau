@@ -283,4 +283,57 @@ test("privacy-safe funnel adapters emit distinct observed milestones", function(
 	m.take(5, false)
 	assert(counts.voice_take == 2 and counts.transcription_miss == 1, "take denominator")
 end)
+test("silent card recovery obtains a fresh offer and retains the card", function()
+	local s = Show.new(Deck.new(Catalogue, "retake"), Score)
+	Show.join(s, 1, 0)
+	assert(Show.action(s, 1, "queue", nil, 0))
+	Show.tick(s, 0)
+	assert(Show.action(s, 1, "accept", "mic", 0) and s.useMic, "mic consent set")
+	local line = s.line
+	while s.phase ~= "reveal" do
+		Show.tick(s, s.untilTime)
+	end
+	assert(s.result.miss and Show.action(s, 1, "retake", nil, s.untilTime - 0.5), "silent actor can retry")
+	while s.phase ~= "lineup" do
+		Show.tick(s, s.untilTime)
+	end
+	assert(
+		not s.useMic and Show.action(s, 1, "accept", "rehearsal", s.untilTime - 1),
+		"fresh consent required"
+	)
+	assert(s.line == line and not s.useMic and #s.cues == 1, "same card and direction without mic")
+end)
+test("loaded data merges an in-flight result and retains the first Daily", function()
+	local row = Profiles.blank()
+	row.streak = 2
+	row.stage = 20
+	row.lastDaily = 5
+	row.firstDailyScore = 78
+	local fresh = Profiles.blank()
+	fresh.takes = 1
+	fresh.stage = 10
+	fresh.streak = 1
+	fresh.lastDaily = 5
+	fresh.firstDailyScore = 98
+	Profiles.mergePending(row, fresh)
+	assert(
+		row.stage == 30 and row.streak == 3 and row.firstDailyScore == 78,
+		"progress merged once and Daily score immutable"
+	)
+end)
+test("a repeated souvenir receipt preserves its original stamp", function()
+	local tickets = {}
+	local store = {
+		UpdateAsync = function(_, key, fn)
+			tickets[key] = fn(tickets[key])
+			return tickets[key]
+		end,
+	}
+	local source = require("../src/server/Playbills")
+	assert(
+		source.stamp(store, "first", 25) == 25 and source.stamp(store, "first", 98) == 25,
+		"same receipt grants once"
+	)
+	assert(source.stamp(store, "next", 99) == 99, "second purchase has a distinct issue")
+end)
 print(passed, "groups passed")

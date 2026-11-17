@@ -37,6 +37,9 @@ function ShowFX.new(gui: ScreenGui, shared)
 	local folder = Instance.new("Folder")
 	folder.Name = "LocalShowFX"
 	folder.Parent = workspace
+	local stem = set:FindFirstChild("MicStem", true) :: BasePart
+	local stemColor = stem.Color
+	local houseLight = set:WaitForChild("ShowRig"):WaitForChild("House"):WaitForChild("House") :: PointLight
 	local mouth = {}
 	for _, obj in set:GetDescendants() do
 		if obj.Name == "HostMouth" and obj:IsA("BasePart") then
@@ -104,7 +107,7 @@ function ShowFX.new(gui: ScreenGui, shared)
 			"Reaction",
 			Vector3.one * 0.45,
 			start,
-			if reaction == "Rose" and s.reactionSkin == "rose-gold"
+			if reaction == "Rose" and (s.reactionSkin == "rose-gold" or s.reactorCrowd >= 40)
 				then gold
 				elseif reaction == "Rose" or reaction == "Tomato" then pink
 				elseif reaction == "Gasp" then blue
@@ -147,6 +150,7 @@ function ShowFX.new(gui: ScreenGui, shared)
 				if s.actorSkin == "blue-finale"
 					then blue
 					elseif s.actorSkin == "gold-entrance" and s.phase == "countdown" then gold
+					elseif s.actorStage >= 80 then pink
 					else ({ pink, blue, gold })[i % 3 + 1]
 			)
 			Tween:Create(p, TweenInfo.new(0.75 + i % 5 * 0.13), {
@@ -180,7 +184,7 @@ function ShowFX.new(gui: ScreenGui, shared)
 			ring.Visible = s.phase == "reveal" and s.result and s.result.overall ~= nil
 			if s.phase == "countdown" then
 				sound("places", 0.4, 1.2)
-				if s.actorSkin == "gold-entrance" then
+				if s.actorSkin == "gold-entrance" or s.actorSkin == "house-entrance" then
 					celebrate()
 				end
 			elseif s.phase == "vote" then
@@ -237,8 +241,10 @@ function ShowFX.new(gui: ScreenGui, shared)
 		end
 		lastFrame = now
 		local amplitude = if now - meterAt < 0.65 then meter else 0
+		houseLight.Brightness = 1.2 + amplitude * 0.5
+		stem.Color = if s and s.actorStage >= 60 then blue else stemColor
 		keyLight.Color = if s
-				and s.actorSkin == "violet-key"
+				and (s.actorSkin == "violet-key" or s.actorStage >= 100)
 				and s.phase == "take"
 			then Color3.fromRGB(177, 127, 255)
 			else Color3.fromRGB(255, 222, 179)

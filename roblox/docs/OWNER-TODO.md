@@ -2,14 +2,19 @@
 
 ## Tool check • November 17, 2026
 
-- Roblox Studio is installed. Its MCP endpoint answered with “Place is not open” at intake. A built local place is the target.
-- Blender 4.5.15 LTS returned its version. Headless modelling is available. No Blender connector was listed.
-- Higgsfield's balance call returned 3,119.66 credits on Ultra. Task ceiling is 3,100. The asset ledger records task usage.
-- GitHub reports admin access. The original worktree contains ongoing web work. An isolated checkout starts at origin/main 242289a.
+| Tool | Intake and result |
+|---|---|
+| Roblox Studio | Installed. At intake the connector answered “Place is not open.” Opening the local build enabled editing, local multiplayer, measurement and viewport capture. |
+| Blender | Blender 4.5.15 LTS ran headless and exported the original theatre. No Blender connector was listed. |
+| Higgsfield | The opening balance was 3,119.66. Five completed images cost 7.5 credits in total against the 3,100 task cap. The closing balance was 3,112.16. |
+| GitHub | The web checkout had ongoing changes. The draft PR starts at remote main 242289a in a separate checkout. All project changes are under roblox/. |
 
-## Account work
+## From this branch to a public show
 
-1. Test the local file using TEST-PLAN.md. Confirm consent, eligible listener isolation, personal mutes and blocks with verified accounts before enabling stage voice for an audience.
-2. In your own private test experience, set capacity to ten, configure communication, and complete Maturity and Compliance truthfully, including voice and any enabled generative features. Choose regions and age guidance. Use a separate test universe for persistent data.
-3. Run the friends and phone test. Record gaps and decide whether the grey-box round is fun enough to justify production art.
-4. Configure any approved passes, badges and free private servers. Publish and open access only after your acceptance checks. No external keys or environment variables are required by the game.
+1. **Try the local place.** Open `roblox/Delivery.rbxl` and press Play. As a spectator choose a direction. Use **Step up → Join performer queue → Studio rehearsal → Use scripted take** for a supervised take without voice. Backstage opens Daily and the dressing room. Take the phone-friendly card and the five stage captures to a few people who actually play Roblox. Record the cards they repeat, the ones they skip, and what they want to say in their own version.
+2. **Create an owner-controlled private test experience.** Publish a private test copy there, set the player cap to ten and give only the test group access. The private test universe keeps its real data separate from release. Local Studio uses an in-memory store even when Studio API access is allowed. Hold public access until the later checks pass.
+3. **Set the permitted audience and communication features.** The owner completes Maturity and Compliance truthfully and makes region and age decisions. Enable microphone access and approve Chat & Voice Groups APIs under Communication if using the stage route. The place requests the Audio API and disables default voice. Test eligible friends, incompatible pairs, personal mute and block in Team Test or on private Roblox servers. A failed permission check should leave the route silent. Check current eligibility in [Roblox voice documentation](https://create.roblox.com/docs/chat/voice-chat) and [voice group requirements](https://create.roblox.com/docs/reference/engine/classes/VoiceChatService#GetChatGroupsAsync).
+4. **Set audio and host features.** Upload or grant this experience access to the five original masters under `art/sound/`. Enter the asset IDs in `src/shared/SoundIds.luau`. Test stings, speech, stage level and the Echo cue using actual devices. The local place uses short stock preview sounds. The generated host selector starts off. Enable `HostText` in `src/shared/Features.luau` only when your experience is eligible and your questionnaire matches. On failure the show uses reviewed host lines and a visible cue.
+5. **Configure cosmetics and social settings.** Enable free private servers if desired. Create the five cosmetic passes, decide prices and enter the IDs in `Wardrobe.luau`. The optional dated-playbill developer product uses `Programme.luau`. Use a private test to verify prompts, a receipt retry, grants, rejoin and restoration. ID zero keeps an item unavailable for sale. The ten badges are in-game. Roblox account badges would require a separate BadgeService integration if you choose to offer them.
+6. **Run the friends test.** Use [the 30-minute protocol](TEST-PLAN.md). Check persistent Daily records across two live servers, friend and troupe rewards, a working invite link and public-room matching in the private universe with appropriate test servers. Compare the observed funnel against Creator Analytics after its reporting delay. A physical mid-range phone with ten avatars and multiple real microphones is essential to the decision.
+7. **Choose whether to launch.** Resolve any failed privacy, persistence, store, frame-rate or readability checks first. Review the description, real gameplay thumbnail, illustrated key art, icon and trailer plan in [the store handoff](STORE.md). Rebuild from the chosen revision. The owner controls the merge, Roblox publication, listing and opening public access.
